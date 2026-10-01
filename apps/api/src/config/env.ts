@@ -74,6 +74,15 @@ export const env = {
     pass: process.env.SMTP_PASS || '',
     from: process.env.MAIL_FROM || 'Dawai <no-reply@dawai.local>',
   },
+  security: {
+    /**
+     * Whether every console operator must use two-factor. On by default, and it
+     * should stay on in production: an operator account can suspend, export and
+     * delete every shop. `OPERATOR_2FA_REQUIRED=false` makes it a choice instead,
+     * turned on and off from the console's Security page like a shop user's.
+     */
+    operatorTwoFactorRequired: (process.env.OPERATOR_2FA_REQUIRED ?? 'true').toLowerCase() !== 'false',
+  },
   scheduler: {
     // Off on the extra instances of a multi-instance deployment. See jobs/scheduler.ts.
     enabled: (process.env.SCHEDULER || 'on') !== 'off',

@@ -1,3 +1,4 @@
+import { env } from '../config/env.js';
 import type { Request, Response, NextFunction } from 'express';
 import { verifyAccessToken } from '../utils/tokens.js';
 import { AppError, unauthorized, forbidden } from '../utils/AppError.js';
@@ -55,8 +56,13 @@ declare global {
  *
  * Shop roles are untouched: two-factor is offered to them and not required.
  */
-export function needsTwoFactorSetup(role: Role, twoFactorEnabled: boolean, path: string): boolean {
-  if (!PLATFORM_ROLES.includes(role) || twoFactorEnabled) return false;
+export function needsTwoFactorSetup(
+  role: Role,
+  twoFactorEnabled: boolean,
+  path: string,
+  required: boolean = env.security.operatorTwoFactorRequired,
+): boolean {
+  if (!required || !PLATFORM_ROLES.includes(role) || twoFactorEnabled) return false;
   /*
    * Matched on a *suffix*, not a prefix.
    *

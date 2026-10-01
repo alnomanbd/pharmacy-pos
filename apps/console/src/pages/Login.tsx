@@ -48,7 +48,7 @@ const APP_URL = BRAND.shopUrl;
 
 const TERMS = [
   { icon: History, head: 'Every action is recorded', body: 'Your name, the time and your address, on a trail nobody can edit.' },
-  { icon: KeyRound, head: 'Two-factor, always', body: 'An authenticator code on every sign-in.' },
+  { icon: KeyRound, head: 'Two-factor', body: 'An authenticator code keeps this account yours.' },
   { icon: Lock, head: 'Team only', body: 'Shop logins are refused here, even correct ones.' },
 ] as const;
 

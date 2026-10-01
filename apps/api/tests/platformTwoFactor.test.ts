@@ -79,4 +79,8 @@ describe('the way out', () => {
       expect(needsTwoFactorSetup('platformStaff', false, path)).toBe(true);
     }
   });
+  it('asks nothing of an operator when the deployment makes it optional', () => {
+    expect(needsTwoFactorSetup('platformAdmin', false, '/api/platform/organizations', false)).toBe(false);
+    expect(needsTwoFactorSetup('platformStaff', false, '/api/platform/organizations', false)).toBe(false);
+  });
 });

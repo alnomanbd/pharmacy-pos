@@ -1,3 +1,4 @@
+import { env } from '../config/env.js';
 import crypto from 'node:crypto';
 import { generateSecret, verify as verifyTotp, generateURI } from 'otplib';
 import QRCode from 'qrcode';
@@ -169,6 +170,7 @@ export async function twoFactorStatus(userId: string) {
     recoveryCodesLeft: ((user.twoFactorRecoveryCodes as string[]) ?? []).length,
     // Not enforced until it is set up: an operator who cannot sign in to switch
     // it on is an operator who cannot sign in.
-    required: user.role === 'platformAdmin',
+    // Operators only, and only while the deployment requires it (see env.security).
+    required: env.security.operatorTwoFactorRequired && ['platformAdmin', 'platformStaff'].includes(user.role),
   };
 }

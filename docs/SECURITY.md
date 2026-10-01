@@ -18,8 +18,10 @@
   `packages/shared/src/lib/password.ts` and are enforced by the API.
 - Password reset links are single-use and expire. The "forgot password" answer
   is the same whether or not the address exists.
-- TOTP two-factor (issuer "Dawai") is available to every account and required
-  for the platform admin. Recovery codes are shown once and stored only as
+- TOTP two-factor (issuer "Dawai") is available to every account. Console
+  operators must use it while `OPERATOR_2FA_REQUIRED=true`, the default; set it
+  to `false` only for local development. An operator can reset another
+  person's two-factor when a phone is lost. Recovery codes are shown once and stored only as
   hashes.
 
 ## Tenancy
