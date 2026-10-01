@@ -1,0 +1,116 @@
+# Dawai, the whole stack on one host.
+#
+#   cp .env.example .env    # fill in the secrets
+#   docker compose up -d --build
+#   docker compose exec api node dist/seed/run.js all             # plans + catalogue
+#   docker compose exec api node dist/seed/run.js platform-admin  # the operator login
+#
+# Put TLS in front (Caddy, Traefik, a cloud load balancer) and point the four
+# hostnames at the published ports. See docs/OPERATIONS.md.
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    ports:
+      # Loopback only. Published as "27017:27017" this listens on every
+      # interface, and a Mongo with no authentication reachable from the internet
+      # is how a shop's books end up for sale. The api reaches it over the
+      # compose network; this port is for admin work and backups from the host.
+      - "127.0.0.1:27017:27017"
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ping:1}).ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # The API. Not published: the shop app and the console proxy /api to it on
+  # their own origins, and the marketing site posts to the shop app's /api.
+  api:
+    build: ./apps/api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 5100
+      MONGODB_URI: ${MONGODB_URI:-mongodb://mongo:27017/dawai}
+      CLIENT_URL: ${SHOP_URL:-http://localhost:8082}
+      CONSOLE_URL: ${CONSOLE_URL:-http://localhost:8083}
+      SITE_URL: ${SITE_URL:-http://localhost:8084}
+      APP_TZ: ${APP_TZ:-Asia/Dhaka}
+      # nginx sits in front of this, so the client address is in X-Forwarded-For.
+      TRUST_PROXY: "1"
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?set a real secret in .env}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?set a real secret in .env}
+      STORAGE_DRIVER: ${STORAGE_DRIVER:-local}
+      UPLOAD_DIR: /app/uploads
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      MAIL_FROM: ${MAIL_FROM:-}
+      SMS_PROVIDER: ${SMS_PROVIDER:-log}
+      BULKSMS_URL: ${BULKSMS_URL:-}
+      BULKSMS_API_KEY: ${BULKSMS_API_KEY:-}
+      BULKSMS_SENDER: ${BULKSMS_SENDER:-}
+      PAY_BKASH: ${PAY_BKASH:-}
+      PAY_NAGAD: ${PAY_NAGAD:-}
+      PAY_UPAY: ${PAY_UPAY:-}
+      PAY_ROCKET: ${PAY_ROCKET:-}
+      PAY_BANK: ${PAY_BANK:-}
+      INVOICE_ISSUER: ${INVOICE_ISSUER:-Dawai}
+      PLATFORM_ADMIN_EMAIL: ${PLATFORM_ADMIN_EMAIL:-}
+      PLATFORM_ADMIN_PASSWORD: ${PLATFORM_ADMIN_PASSWORD:-}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+    volumes:
+      # Shop logos and payment screenshots. Not regenerable; back them up.
+      - uploads:/app/uploads
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:5100/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  # The shop app: shop.dawai.com.bd
+  shop:
+    build:
+      context: .
+      dockerfile: apps/shop/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8082:80"
+    depends_on:
+      - api
+
+  # The operator console: console.dawai.com.bd. Put an IP allowlist in
+  # apps/console/nginx.conf before exposing it.
+  console:
+    build:
+      context: .
+      dockerfile: apps/console/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8083:80"
+    depends_on:
+      - api
+
+  # The marketing site: dawai.com.bd. The browser posts its sign-up and enquiry
+  # forms to the API's public origin, baked in at build time.
+  site:
+    build:
+      context: ./apps/site
+      args:
+        NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:8082/api}
+        NEXT_PUBLIC_APP_URL: ${SHOP_URL:-http://localhost:8082}
+        NEXT_PUBLIC_SITE_URL: ${SITE_URL:-http://localhost:8084}
+    restart: unless-stopped
+    ports:
+      - "8084:80"
+
+volumes:
+  mongo-data:
+  uploads:
