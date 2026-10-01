@@ -18,6 +18,8 @@ import {
   CalendarClock,
   Pill,
   ShoppingBag,
+  Inbox,
+  MessageSquarePlus,
 } from 'lucide-react';
 import {
   shopApi,
@@ -36,6 +38,7 @@ import Modal from '../components/Modal';
 import ExportCsv from '../components/ExportCsv';
 import ConfirmWithReason from '../components/ConfirmWithReason';
 import { useAlertStore } from '../alerts/useStockAlerts';
+import { AskForMedicine, MedicineRequestsPanel } from '../components/MedicineRequests';
 
 /**
  * What is on the shelf.
@@ -186,7 +189,10 @@ export default function Stock() {
   const [status, setStatus] = useState<Status>('all');
   const [sort, setSort] = useState<Sort>('name');
   const [page, setPage] = useState(1);
-  const [adding, setAdding] = useState(false);
+  /* A string, not a flag: an added request opens "new item" with its brand
+     already typed in. */
+  const [adding, setAdding] = useState<string | false>(false);
+  const [requests, setRequests] = useState(false);
   const [open, setOpen] = useState<ShopProduct | null>(null);
 
   const n = useCallback(
@@ -275,10 +281,15 @@ export default function Stock() {
           <Link to="/purchases" className="btn btn-ghost h-9">
             <Truck className="h-4 w-4" /> {t('Receive stock')}
           </Link>
+          {/* What the shop asked Dawai to put in the catalogue. Here, beside
+              "new item", because that is where a missing medicine is noticed. */}
+          <button type="button" className="btn btn-ghost h-9" onClick={() => setRequests(true)}>
+            <Inbox className="h-4 w-4" /> {t('Medicine requests')}
+          </button>
           <button
             type="button"
             className="btn h-9"
-            onClick={() => setAdding(true)}
+            onClick={() => setAdding('')}
             title={t('A new name on the list — the stock itself comes in on a delivery')}
           >
             <Plus className="h-4 w-4" /> {t('New item')}
@@ -429,7 +440,7 @@ export default function Stock() {
                     'Add what you sell — the medicines come from the shared catalogue every shop sells from, and everything else you can type in yourself.',
                   )}
                 </p>
-                <button type="button" className="btn mt-2 h-9" onClick={() => setAdding(true)}>
+                <button type="button" className="btn mt-2 h-9" onClick={() => setAdding('')}>
                   <Plus className="h-4 w-4" /> {t('Add the first item')}
                 </button>
               </>
@@ -569,13 +580,23 @@ export default function Stock() {
           }}
         />
       )}
-      {adding && (
+      {adding !== false && (
         <AddItem
           racks={racks}
+          initialQ={adding}
           onClose={() => setAdding(false)}
           onAdded={() => {
             setAdding(false);
             void load();
+          }}
+        />
+      )}
+      {requests && (
+        <MedicineRequestsPanel
+          onClose={() => setRequests(false)}
+          onStock={(brand) => {
+            setRequests(false);
+            setAdding(brand);
           }}
         />
       )}
@@ -1278,16 +1299,23 @@ function AddItem({
   onClose,
   onAdded,
   racks,
+  initialQ = '',
 }: {
   onClose: () => void;
   onAdded: () => void;
   racks: ShopRack[];
+  /** A brand to start the search with — one that was just added on request. */
+  initialQ?: string;
 }) {
   const t = useT();
   const { toast } = useToast();
   const [tab, setTab] = useState<'medicine' | 'other'>('medicine');
-  const [q, setQ] = useState('');
+  const [q, setQ] = useState(initialQ);
   const [hits, setHits] = useState<CatalogueMedicine[]>([]);
+  /* The text the hits are for, so "nothing found" is only said once the
+     search has actually come back, not while it is still on its way. */
+  const [searched, setSearched] = useState('');
+  const [asking, setAsking] = useState(false);
   const [picked, setPicked] = useState<CatalogueMedicine | null>(null);
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({
@@ -1307,15 +1335,18 @@ function AddItem({
   useEffect(() => {
     if (tab !== 'medicine' || q.trim().length < 2) {
       setHits([]);
+      setSearched('');
       return;
     }
     const t = setTimeout(async () => {
+      const asked = q.trim();
       try {
-        const res = await shopApi.catalogue(q.trim());
+        const res = await shopApi.catalogue(asked);
         setHits(Array.isArray(res) ? res : res.data);
       } catch {
         setHits([]);
       }
+      setSearched(asked);
     }, 250);
     return () => clearTimeout(t);
   }, [q, tab]);
@@ -1353,7 +1384,10 @@ function AddItem({
   const ready = tab === 'medicine' ? !!picked : form.name.trim().length > 1;
 
   return (
-    <Modal onClose={onClose} className="w-full max-w-lg">
+    <>
+    {/* Not dismissable while the request form is on top of it, so one Escape
+        closes the form and not both. */}
+    <Modal onClose={asking ? undefined : onClose} className="w-full max-w-lg">
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
             <h3 className="mb-0 text-base">{t('Add an item')}</h3>
@@ -1415,6 +1449,29 @@ function AddItem({
                       </span>
                     </button>
                   ))}
+                  <button
+                    type="button"
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-semibold text-primary hover:bg-muted"
+                    onClick={() => setAsking(true)}
+                  >
+                    <MessageSquarePlus className="h-3.5 w-3.5 shrink-0" />
+                    {t('Can’t find it? Ask us to add it')}
+                  </button>
+                </div>
+              )}
+              {/* Nothing in the catalogue by that name: the way on is to ask
+                  for it, so it is spelled once for every shop — or, for what
+                  is not a medicine at all, the other tab. */}
+              {!picked && hits.length === 0 && searched !== '' && searched === q.trim() && (
+                <div className="mt-1 rounded-lg border border-dashed border-border px-3 py-3 text-sm">
+                  <p className="text-muted-foreground">{t('Nothing in the catalogue by that name.')}</p>
+                  <button
+                    type="button"
+                    className="btn btn-ghost mt-2 h-9 w-full justify-center text-primary sm:w-auto"
+                    onClick={() => setAsking(true)}
+                  >
+                    <MessageSquarePlus className="h-4 w-4" /> {t('Can’t find it? Ask us to add it')}
+                  </button>
                 </div>
               )}
             </div>
@@ -1547,5 +1604,7 @@ function AddItem({
           </div>
         </form>
     </Modal>
+    {asking && <AskForMedicine initialBrand={q} onClose={() => setAsking(false)} />}
+    </>
   );
 }

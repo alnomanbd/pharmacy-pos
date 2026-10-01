@@ -1204,6 +1204,55 @@ export const staffApi = {
     getData<{ _id: string; name: string }>(api.post(`/shop/staff/${id}/password`, { password })),
 };
 
+/* ------------------------------------------------ asking for a medicine -- */
+
+/**
+ * A medicine the shared catalogue does not have yet, asked for by this shop.
+ *
+ * Dawai adds it to the catalogue — once, for every shop — and the request then
+ * points at the new row, which the shop adds to its own list like any other.
+ */
+export type MedicineRequestStatus = 'pending' | 'added' | 'rejected';
+
+export interface MedicineRequest {
+  _id: string;
+  organization: string | { _id: string; name: string };
+  requestedBy: string | { _id: string; name: string } | null;
+  brandName: string;
+  genericName?: string;
+  companyName?: string;
+  strength?: string;
+  dosageForm?: string;
+  packSize?: string;
+  note?: string;
+  status: MedicineRequestStatus;
+  /** Set once it is in the catalogue. */
+  medicine: string | { _id: string; brandName: string; strength?: string; dosageForm?: string } | null;
+  reviewedAt?: string | null;
+  rejectionReason?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MedicineRequestInput {
+  brandName: string;
+  genericName?: string;
+  companyName?: string;
+  strength?: string;
+  dosageForm?: string;
+  packSize?: string;
+  note?: string;
+}
+
+export const medicineRequestsApi = {
+  create: (payload: MedicineRequestInput) =>
+    getData<MedicineRequest>(api.post('/shop/medicine-requests', payload)),
+  /** This shop's own, newest first. */
+  list: () => getData<MedicineRequest[]>(api.get('/shop/medicine-requests')),
+  /** Only while it is still pending. */
+  withdraw: (id: string) => getData<unknown>(api.delete(`/shop/medicine-requests/${id}`)),
+};
+
 /* ------------------------------------------------------- the shop's paper -- */
 
 export interface ShopSettings {

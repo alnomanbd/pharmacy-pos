@@ -6,6 +6,7 @@ import { useToast } from '@dawai/shared/components/Toast';
 import ChangePasswordDialog from '@dawai/shared/components/ChangePasswordDialog';
 import { initialsOf } from '../components/ProfileMenu';
 import SessionList from '@dawai/shared/components/SessionList';
+import TwoFactorSetup from '@dawai/shared/components/TwoFactorSetup';
 import { useT, useUiLang, bnNumerals } from '../i18n/ui';
 
 /**
@@ -185,6 +186,9 @@ export default function Profile() {
               <KeyRound className="h-4 w-4" /> {t('Change password')}
             </button>
           </div>
+
+          {/* The card is the shared one, in the shop's own words. */}
+          <TwoFactorSetup t={t} n={(v) => (lang === 'bn' ? bnNumerals(v) : v)} />
 
           <div className="card">
             <h3>{t('Where you are signed in')}</h3>
