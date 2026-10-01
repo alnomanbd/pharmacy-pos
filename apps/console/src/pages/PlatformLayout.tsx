@@ -23,6 +23,8 @@ import {
   MoreHorizontal,
   X,
   KeyRound,
+  Pill,
+  ClipboardList,
 } from 'lucide-react';
 import { platformApi } from '../api';
 import { useAuthStore } from '@dawai/shared/store/auth.store';
@@ -126,6 +128,20 @@ const NAV_SECTIONS: { heading: string; links: ConsoleLink[] }[] = [
     ],
   },
   {
+    heading: 'Catalogue',
+    links: [
+      { to: '/medicines', label: 'Medicines', icon: Pill, end: false, needs: ['catalogue.view'] },
+      {
+        /* What shops asked to have added; badged with the pending count. */
+        to: '/requests',
+        label: 'Requests',
+        icon: ClipboardList,
+        end: false,
+        needs: ['catalogue.view'],
+      },
+    ],
+  },
+  {
     heading: 'Platform',
     links: [
       { to: '/team', label: 'Team', icon: Users, end: false, needs: ['team.manage'] },
@@ -137,6 +153,9 @@ const NAV_SECTIONS: { heading: string; links: ConsoleLink[] }[] = [
         end: false,
         needs: ['audit.view'],
       },
+      /* Your own second factor and signed-in devices. Everyone has one, so it
+         needs no permission. */
+      { to: '/security', label: 'Security', icon: ShieldCheck, end: false, needs: [] },
     ],
   },
 ];
@@ -214,7 +233,7 @@ export default function PlatformLayout() {
     const may = (...needed: string[]) => needed.some((p) => access.permissions.includes(p));
 
     const poll = async () => {
-      const [payments, stats, leads] = await Promise.all([
+      const [payments, stats, leads, catalogue] = await Promise.all([
         may('payments.view', 'payments.verify')
           ? platformApi.payments({ status: 'pending', limit: 4 }).catch(() => null)
           : null,
@@ -222,13 +241,20 @@ export default function PlatformLayout() {
         may('leads.view', 'leads.manage')
           ? platformApi.leads({ status: 'new', limit: 3 }).catch(() => null)
           : null,
+        // The platform stats carry the request count; a catalogue-only member
+        // cannot read them, so ask the catalogue instead.
+        may('catalogue.view') && !may('shops.view')
+          ? platformApi.catalogueStats().catch(() => null)
+          : null,
       ]);
 
       setCounts({
         payments: payments?.total ?? 0,
         shops: stats?.pending ?? 0,
         support: 0,
-        requests: 0,
+        requests: may('catalogue.view')
+          ? stats?.pendingMedicineRequests ?? catalogue?.pendingRequests ?? 0
+          : 0,
         leads: leads?.waiting ?? 0,
       });
       const next: Alert[] = [];
@@ -311,14 +337,14 @@ export default function PlatformLayout() {
   // Until the answer arrives, show nothing rather than everything: a flash of
   // links somebody cannot use is worse than a moment of none.
   const visible = access
-    ? LINKS.filter((l) => l.needs.some((p) => access.permissions.includes(p)))
+    ? LINKS.filter((l) => l.needs.length === 0 || l.needs.some((p) => access.permissions.includes(p)))
     : [];
 
   /** The same filter, kept in sections, with the empty ones dropped. */
   const visibleSections = access
     ? NAV_SECTIONS.map((section) => ({
         ...section,
-        links: section.links.filter((l) => l.needs.some((p) => access.permissions.includes(p))),
+        links: section.links.filter((l) => l.needs.length === 0 || l.needs.some((p) => access.permissions.includes(p))),
       })).filter((section) => section.links.length > 0)
     : [];
 
@@ -466,6 +492,7 @@ export default function PlatformLayout() {
                         ['payment', 'payments', counts.payments, 'to verify', '/payments?status=pending', <Receipt key="i" className="h-4 w-4" />],
                         ['sign-up', 'sign-ups', counts.shops, 'awaiting approval', '/?status=pending', <Building2 key="i" className="h-4 w-4" />],
                         ['enquiry', 'enquiries', counts.leads, 'unanswered', '/leads', <Inbox key="i" className="h-4 w-4" />],
+                        ['medicine request', 'medicine requests', counts.requests, 'waiting', '/requests', <ClipboardList key="i" className="h-4 w-4" />],
                       ] as [string, string, number, string, string, JSX.Element][]
                     )
                       .filter(([, , count]) => count > 0)

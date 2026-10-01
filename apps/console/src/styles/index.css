@@ -1642,3 +1642,38 @@ label.field span {
 @media (prefers-reduced-motion: reduce) {
   .dw-glow, .dw-glow-slow, .dw-rise, .dw-rise-2, .dw-rise-3 { animation: none; }
 }
+
+/* ====================== password strength (shared PasswordMeter) ====================== */
+.pwm {
+  margin-top: 6px;
+}
+
+.pwm-bars {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+
+.pwm-bars span {
+  height: 4px;
+  border-radius: 4px;
+  background: hsl(var(--muted));
+}
+
+.pwm-bars span.is-on.is-s1 { background: hsl(var(--destructive)); }
+.pwm-bars span.is-on.is-s2 { background: #f59e0b; }
+.pwm-bars span.is-on.is-s3 { background: hsl(var(--primary)); }
+
+.pwm-text {
+  margin-top: 4px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 11.5px;
+  color: hsl(var(--muted-foreground));
+}
+
+.pwm-text b.is-s0,
+.pwm-text b.is-s1 { color: hsl(var(--destructive)); }
+.pwm-text b.is-s2 { color: #b45309; }
+.pwm-text b.is-s3 { color: hsl(var(--primary)); }

@@ -12,6 +12,8 @@ import Plans from './pages/Plans';
 import Team from './pages/Team';
 import Leads from './pages/Leads';
 import Audit from './pages/Audit';
+import Medicines from './pages/Medicines';
+import MedicineRequests from './pages/MedicineRequests';
 import Security from './pages/Security';
 
 /**
@@ -78,6 +80,9 @@ export default function App() {
         <Route path="revenue" element={<Revenue />} />
         <Route path="plans" element={<Plans />} />
         <Route path="team" element={<Team />} />
+        {/* The shared catalogue, and what shops asked to have added to it. */}
+        <Route path="medicines" element={<Medicines />} />
+        <Route path="requests" element={<MedicineRequests />} />
         {/* People who are not customers yet: the marketing site's contact form. */}
         <Route path="leads" element={<Leads />} />
         {/* What this team did to customer accounts. Read-only. */}

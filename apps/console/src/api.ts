@@ -80,8 +80,93 @@ export interface ShopMonth {
   purchases: number;
 }
 
+/** The platform's own counts, plus the medicine requests the nav badge shows. */
+export type ConsoleStats = PlatformStats & { pendingMedicineRequests?: number };
+
+/** A company, generic or group in the shared catalogue. */
+export interface CatalogueRef {
+  _id: string;
+  name: string;
+  /** How many medicines use it. */
+  count?: number;
+}
+
+export type RefKind = 'companies' | 'generics' | 'groups';
+
+/** A row of the shared medicine catalogue every shop picks from. */
+export interface CatalogueMedicine {
+  _id: string;
+  brandName: string;
+  genericName: string;
+  strength: string;
+  dosageForm: string;
+  packSize: string;
+  price: number | null;
+  dar: string;
+  description?: string;
+  indications?: string;
+  sideEffects?: string;
+  isActive: boolean;
+  company: CatalogueRef | null;
+  generic: CatalogueRef | null;
+  group: CatalogueRef | null;
+  /** How many shops stock it; only an unstocked medicine may be deleted. */
+  usedByShops: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface MedicineInput {
+  brandName: string;
+  genericName: string;
+  strength?: string;
+  dosageForm?: string;
+  packSize?: string;
+  price?: number | null;
+  dar?: string;
+  description?: string;
+  indications?: string;
+  sideEffects?: string;
+  companyId?: string | null;
+  genericId?: string | null;
+  groupId?: string | null;
+  isActive?: boolean;
+}
+
+export interface CatalogueStats {
+  medicines: number;
+  active: number;
+  companies: number;
+  generics: number;
+  groups: number;
+  pendingRequests: number;
+}
+
+export type MedicineRequestStatus = 'pending' | 'added' | 'rejected';
+
+/** A shop asking for a medicine the catalogue does not have. */
+export interface MedicineRequest {
+  _id: string;
+  organization: { _id: string; name: string } | string | null;
+  requestedBy: { _id: string; name: string } | string | null;
+  brandName: string;
+  genericName?: string;
+  companyName?: string;
+  strength?: string;
+  dosageForm?: string;
+  packSize?: string;
+  note?: string;
+  status: MedicineRequestStatus;
+  medicine?: { _id: string; brandName: string; strength?: string; dosageForm?: string } | string | null;
+  reviewedBy?: { _id: string; name: string } | string | null;
+  reviewedAt?: string | null;
+  rejectionReason?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
 export const platformApi = {
-  stats: () => getData<PlatformStats>(api.get('/platform/stats')),
+  stats: () => getData<ConsoleStats>(api.get('/platform/stats')),
   organizations: (params?: { q?: string; status?: OrgStatus; plan?: string; page?: number; limit?: number }) =>
     getData<Paged<Shop>>(api.get('/platform/organizations', { params })),
   organization: (id: string) =>
@@ -179,6 +264,61 @@ export const platformApi = {
   updateTeamMember: (id: string, payload: Record<string, unknown>) =>
     getData<unknown>(api.patch(`/platform/team/${id}`, payload)),
   removeTeamMember: (id: string) => getData<unknown>(api.delete(`/platform/team/${id}`)),
+
+  /* ---------- the shared medicine catalogue ---------- */
+  catalogueStats: () => getData<CatalogueStats>(api.get('/platform/catalogue/stats')),
+  catalogueMedicines: (params?: {
+    q?: string;
+    company?: string;
+    generic?: string;
+    group?: string;
+    dosageForm?: string;
+    active?: 'true' | 'false';
+    page?: number;
+    limit?: number;
+  }) => getData<Paged<CatalogueMedicine>>(api.get('/platform/catalogue/medicines', { params })),
+  catalogueMedicine: (id: string) =>
+    getData<CatalogueMedicine>(api.get(`/platform/catalogue/medicines/${id}`)),
+  createMedicine: (payload: MedicineInput) =>
+    getData<CatalogueMedicine>(api.post('/platform/catalogue/medicines', payload)),
+  updateMedicine: (id: string, payload: Partial<MedicineInput>) =>
+    getData<CatalogueMedicine>(api.patch(`/platform/catalogue/medicines/${id}`, payload)),
+  /** Refused while any shop stocks it — deactivate it instead. */
+  deleteMedicine: (id: string) =>
+    getData<{ id: string; deleted: true }>(api.delete(`/platform/catalogue/medicines/${id}`)),
+  dosageForms: () => getData<string[]>(api.get('/platform/catalogue/dosage-forms')),
+  catalogueRefs: (kind: RefKind, params?: { q?: string; page?: number; limit?: number }) =>
+    getData<Paged<CatalogueRef>>(api.get(`/platform/catalogue/${kind}`, { params })),
+  createRef: (kind: RefKind, name: string) =>
+    getData<CatalogueRef>(api.post(`/platform/catalogue/${kind}`, { name })),
+  renameRef: (kind: RefKind, id: string, name: string) =>
+    getData<CatalogueRef>(api.patch(`/platform/catalogue/${kind}/${id}`, { name })),
+  /** Refused while any medicine uses it. */
+  deleteRef: (kind: RefKind, id: string) => getData<unknown>(api.delete(`/platform/catalogue/${kind}/${id}`)),
+
+  /* ---------- what shops asked to be added ---------- */
+  medicineRequests: (params?: { status?: MedicineRequestStatus; page?: number; limit?: number }) =>
+    getData<Paged<MedicineRequest>>(api.get('/platform/medicine-requests', { params })),
+  /** Either link to a row already in the catalogue, or create one. */
+  approveMedicineRequest: (id: string, body: { medicineId: string } | { medicine: MedicineInput }) =>
+    getData<MedicineRequest>(api.post(`/platform/medicine-requests/${id}/approve`, body)),
+  rejectMedicineRequest: (id: string, reason: string) =>
+    getData<MedicineRequest>(api.post(`/platform/medicine-requests/${id}/reject`, { reason })),
+
+  /** The signed-in operator's own name and phone. */
+  updateMe: (payload: { name?: string; phone?: string }) =>
+    getData<PlatformMember>(api.patch('/platform/me', payload)),
+  /** Sets another member's password and ends their sessions. Not for yourself. */
+  /** A lost phone: clears a shop user's two-factor. The reason is audited. */
+  resetShopUserTwoFactor: (orgId: string, userId: string, reason: string) =>
+    getData<{ id: string; email: string; name: string }>(
+      api.post(`/platform/organizations/${orgId}/users/${userId}/two-factor/reset`, { reason }),
+    ),
+  /** A colleague's lost phone. They set it up again on their next sign-in. */
+  resetTeamMemberTwoFactor: (id: string) =>
+    getData<{ id: string }>(api.post(`/platform/team/${id}/two-factor/reset`)),
+  setTeamMemberPassword: (id: string, newPassword: string) =>
+    getData<{ id: string }>(api.post(`/platform/team/${id}/password`, { newPassword })),
 
   /** The plan catalogue. Editing here changes what shops are held to. */
   plans: () => getData<ShopPlan[]>(api.get('/platform/plans')),

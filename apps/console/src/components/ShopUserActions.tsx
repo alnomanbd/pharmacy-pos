@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { KeyRound, Loader2, Pencil, ShieldAlert, X } from 'lucide-react';
+import { KeyRound, Loader2, Pencil, ShieldAlert, ShieldOff, X } from 'lucide-react';
 import { platformApi } from '../api';
 import { useToast } from '@dawai/shared/components/Toast';
 import type { User } from '@dawai/shared/types';
@@ -29,7 +29,7 @@ export default function ShopUserActions({
   onChanged: () => void;
 }) {
   const { toast } = useToast();
-  const [mode, setMode] = useState<'' | 'edit' | 'password'>('');
+  const [mode, setMode] = useState<'' | 'edit' | 'password' | 'twoFactor'>('');
   const [busy, setBusy] = useState(false);
 
   const [form, setForm] = useState({ name: user.name, email: user.email, phone: user.phone });
@@ -67,6 +67,62 @@ export default function ShopUserActions({
       setBusy(false);
     }
   };
+
+  /* A lost phone: clears their second factor so the password alone signs them in,
+     and they can turn it on again from their Profile. */
+  const resetTwoFactor = async () => {
+    setBusy(true);
+    try {
+      await platformApi.resetShopUserTwoFactor(shopId, user._id, reason);
+      toast(`Two-factor reset for ${user.email}. They can sign in with their password.`);
+      setMode('');
+      setReason('');
+      onChanged();
+    } catch (e: unknown) {
+      const res = (e as { response?: { data?: { message?: string } } }).response;
+      toast(res?.data?.message || 'Could not reset two-factor.', 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (mode === 'twoFactor') {
+    return (
+      <div className="flex flex-col gap-2">
+        <p className="flex items-start gap-1.5 text-xs text-amber-700 dark:text-amber-400">
+          <ShieldAlert className="mt-px h-3.5 w-3.5 shrink-0" />
+          <span>
+            For a lost phone. {user.name} is signed out everywhere and signs in with the password
+            alone until they turn it on again. The reason goes in the audit trail.
+          </span>
+        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            id={`reason2fa-${user._id}`}
+            className="input h-8 w-64 text-sm"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Why — e.g. phone lost, called the office"
+            aria-label="Reason"
+          />
+          <button
+            className="btn btn-sm"
+            disabled={busy || reason.trim().length < 5}
+            onClick={() => void resetTwoFactor()}
+          >
+            {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />} Reset two-factor
+          </button>
+          <button
+            className="rounded p-1 text-muted-foreground hover:text-foreground"
+            onClick={() => setMode('')}
+            aria-label="Cancel"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (mode === 'edit') {
     return (
@@ -167,6 +223,15 @@ export default function ShopUserActions({
       >
         <KeyRound className="h-3.5 w-3.5" /> Password
       </button>
+      {user.twoFactorEnabled && (
+        <button
+          className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs font-semibold hover:bg-secondary"
+          onClick={() => setMode('twoFactor')}
+          title="Lost phone? Clear their two-factor"
+        >
+          <ShieldOff className="h-3.5 w-3.5" /> 2FA
+        </button>
+      )}
     </div>
   );
 }

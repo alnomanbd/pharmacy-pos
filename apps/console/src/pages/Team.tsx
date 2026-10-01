@@ -1,10 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
-import { UserPlus, Shield, X, Save, Trash2, KeyRound, Check } from 'lucide-react';
+import { UserPlus, Shield, ShieldOff, X, Save, Trash2, KeyRound, Check, Pencil, Lock, Power } from 'lucide-react';
 import { platformApi } from '../api';
 import { useToast } from '@dawai/shared/components/Toast';
-import { LoadingBlock } from '@dawai/shared/components/Spinner';
+import { LoadingBlock, Spinner } from '@dawai/shared/components/Spinner';
 import ConfirmDialog from '@dawai/shared/components/ConfirmDialog';
+import PasswordMeter from '@dawai/shared/components/PasswordMeter';
+import { passwordProblem } from '@dawai/shared/lib/password';
+import { useAuthStore } from '@dawai/shared/store/auth.store';
 import type { PlatformMember, PermissionPreset } from '@dawai/shared/types';
+import Modal from '../components/Modal';
+import { BTN_OUTLINE, BTN_OUTLINE_DANGER, BTN_SECONDARY, errorMessage } from '../lib/ui';
 
 /**
  * The people who run this deployment.
@@ -27,8 +32,12 @@ const GROUPS: { title: string; prefix: string }[] = [
   { title: 'Plans', prefix: 'plans.' },
   { title: 'Medicines', prefix: 'formulary.' },
   { title: 'Medicine Requests', prefix: 'requests.' },
+  { title: 'Catalogue', prefix: 'catalogue.' },
   { title: 'Team', prefix: 'team.' },
 ];
+
+/** Whatever no group above claims, so a new permission is never ungrantable. */
+const inAnyGroup = (p: string) => GROUPS.some((g) => p.startsWith(g.prefix));
 
 /** The three that should never be handed out casually. */
 const DANGEROUS = new Set(['shops.delete', 'plans.manage', 'team.manage']);
@@ -45,6 +54,14 @@ export default function Team() {
   const [editing, setEditing] = useState<string>('');
   const [editPerms, setEditPerms] = useState<string[]>([]);
   const [removeTarget, setRemoveTarget] = useState<PlatformMember | null>(null);
+  const [resetTarget, setResetTarget] = useState<PlatformMember | null>(null);
+  const me = useAuthStore((s) => s.user);
+  /** Whose name, email and phone are being corrected. */
+  const [detailsTarget, setDetailsTarget] = useState<PlatformMember | null>(null);
+  const [details, setDetails] = useState({ name: '', email: '', phone: '' });
+  const [passwordTarget, setPasswordTarget] = useState<PlatformMember | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const isMe = (m: PlatformMember) => Boolean(me && (me.id === m._id || me.email === m.email));
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -103,8 +120,9 @@ export default function Team() {
   const toggleActive = async (m: PlatformMember) => {
     setBusy(m._id);
     try {
-      await platformApi.updateTeamMember(m._id, { isActive: !m.isActive });
-      toast(m.isActive ? `${m.name} disabled.` : `${m.name} enabled.`);
+      const on = m.isActive !== false;
+      await platformApi.updateTeamMember(m._id, { isActive: !on });
+      toast(on ? `${m.name} disabled.` : `${m.name} enabled.`);
       await load();
     } catch (e: any) {
       toast(e?.response?.data?.message || 'Could not update.', 'error');
@@ -128,6 +146,73 @@ export default function Team() {
     }
   };
 
+  /* A colleague's lost phone. They are sent to setup on their next sign-in. */
+  const resetTwoFactor = async () => {
+    if (!resetTarget) return;
+    setBusy(resetTarget._id);
+    try {
+      await platformApi.resetTeamMemberTwoFactor(resetTarget._id);
+      toast(`${resetTarget.name}'s two-factor is reset. They set it up again when they sign in.`);
+      setResetTarget(null);
+      await load();
+    } catch (e: any) {
+      toast(e?.response?.data?.message || 'Could not reset two-factor.', 'error');
+    } finally {
+      setBusy('');
+    }
+  };
+
+  const openDetails = (m: PlatformMember) => {
+    setDetailsTarget(m);
+    setDetails({ name: m.name, email: m.email, phone: m.phone ?? '' });
+  };
+
+  const saveDetails = async () => {
+    const m = detailsTarget;
+    if (!m) return;
+    const name = details.name.trim();
+    const email = details.email.trim();
+    if (!name || (!isMe(m) && !email)) {
+      toast('A name and an email are required.', 'error');
+      return;
+    }
+    setBusy(`details-${m._id}`);
+    try {
+      if (isMe(m)) {
+        await platformApi.updateMe({ name, phone: details.phone.trim() });
+        // The account menu shows the name too.
+        if (me) useAuthStore.getState().setUser({ ...me, name });
+      } else {
+        await platformApi.updateTeamMember(m._id, { name, email, phone: details.phone.trim() });
+      }
+      toast(isMe(m) ? 'Your details are saved.' : `${name} updated.`);
+      setDetailsTarget(null);
+      await load();
+    } catch (e) {
+      toast(errorMessage(e, 'Could not save those details.'), 'error');
+    } finally {
+      setBusy('');
+    }
+  };
+
+  const pwProblem = newPassword ? passwordProblem(newPassword) : null;
+
+  const savePassword = async () => {
+    const m = passwordTarget;
+    if (!m || passwordProblem(newPassword)) return;
+    setBusy(`pw-${m._id}`);
+    try {
+      await platformApi.setTeamMemberPassword(m._id, newPassword);
+      toast(`Password set. ${m.name} is signed out everywhere — tell them the new one in person.`);
+      setPasswordTarget(null);
+      setNewPassword('');
+    } catch (e) {
+      toast(errorMessage(e, 'Could not set that password.'), 'error');
+    } finally {
+      setBusy('');
+    }
+  };
+
   const PermissionGrid = ({
     value,
     onChange,
@@ -136,8 +221,10 @@ export default function Team() {
     onChange: (next: string[]) => void;
   }) => (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-      {GROUPS.map((g) => {
-        const inGroup = permissions.filter((p) => p.startsWith(g.prefix));
+      {[...GROUPS, { title: 'Other', prefix: '' }].map((g) => {
+        const inGroup = permissions.filter((p) =>
+          g.prefix ? p.startsWith(g.prefix) : !inAnyGroup(p),
+        );
         if (inGroup.length === 0) return null;
         return (
           <div key={g.prefix}>
@@ -153,7 +240,7 @@ export default function Team() {
                   }
                 />
                 <span className={DANGEROUS.has(p) ? 'font-semibold text-destructive' : ''}>
-                  {p.split('.')[1]}
+                  {g.prefix ? p.split('.')[1] : p}
                   {DANGEROUS.has(p) && <span className="ml-1 text-[10px]">(careful)</span>}
                 </span>
               </label>
@@ -265,98 +352,262 @@ export default function Team() {
         {loading ? (
           <LoadingBlock />
         ) : (
-          members.map((m) => (
-            <div className="mt-3 rounded-lg border border-border p-3 first:mt-0" key={m._id}>
-              <div className="flex flex-wrap items-center gap-2">
-                <Shield className={`h-4 w-4 ${m.isOwner ? 'text-primary' : 'text-muted-foreground'}`} />
-                <strong>{m.name}</strong>
-                <span className="text-sm text-muted-foreground">{m.email}</span>
-                {m.isOwner && <span className="pill booked">owner</span>}
-                {!m.isActive && <span className="pill cancelled">disabled</span>}
-                {m.twoFactorEnabled && (
-                  <span className="pill completed inline-flex items-center gap-1">
-                    <KeyRound className="h-3 w-3" /> 2FA
+          members.map((m) => {
+            const self = isMe(m);
+            return (
+              <div className="mt-3 rounded-lg border border-border p-3 first:mt-0" key={m._id}>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Shield className={`h-4 w-4 ${m.isOwner ? 'text-primary' : 'text-muted-foreground'}`} />
+                  <strong>{m.name}</strong>
+                  {self && <span className="pill called">you</span>}
+                  {m.isOwner && <span className="pill booked">owner</span>}
+                  {m.isActive === false && <span className="pill cancelled">disabled</span>}
+                  {m.twoFactorEnabled && (
+                    <span className="pill completed inline-flex items-center gap-1">
+                      <KeyRound className="h-3 w-3" /> 2FA
+                    </span>
+                  )}
+                  <span className="ml-auto text-xs text-muted-foreground">
+                    {m.lastLoginAt
+                      ? `last seen ${new Date(m.lastLoginAt).toLocaleDateString()}`
+                      : 'never signed in'}
                   </span>
-                )}
-                <span className="ml-auto text-xs text-muted-foreground">
-                  {m.lastLoginAt
-                    ? `last seen ${new Date(m.lastLoginAt).toLocaleDateString()}`
-                    : 'never signed in'}
-                </span>
-              </div>
-
-              {editing === m._id ? (
-                <div className="mt-3 border-t border-border pt-3">
-                  <PermissionGrid value={editPerms} onChange={setEditPerms} />
-                  <div className="mt-3 flex gap-2">
-                    <button
-                      className="btn btn-sm"
-                      onClick={() => void savePerms(m)}
-                      disabled={busy === m._id}
-                    >
-                      <Check className="h-3.5 w-3.5" /> Save
-                    </button>
-                    <button
-                      className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-1.5 text-xs font-semibold hover:bg-muted"
-                      onClick={() => setEditing('')}
-                    >
-                      Cancel
-                    </button>
-                  </div>
                 </div>
-              ) : (
-                <>
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    {m.isOwner ? (
-                      <span className="text-xs text-muted-foreground">
-                        Everything — the owner's access is not editable here.
-                      </span>
-                    ) : (
-                      m.permissions.map((p) => (
-                        <span
-                          key={p}
-                          className={`pill ${DANGEROUS.has(p) ? 'noShow' : 'booked'}`}
-                          style={{ fontSize: 11 }}
-                        >
-                          {p}
-                        </span>
-                      ))
-                    )}
-                  </div>
+                <div className="mt-0.5 flex flex-wrap gap-x-3 text-sm text-muted-foreground">
+                  <span className="break-all">{m.email}</span>
+                  {m.phone && <span>{m.phone}</span>}
+                </div>
 
-                  {!m.isOwner && (
-                    <div className="mt-2 flex flex-wrap gap-2">
+                {editing === m._id ? (
+                  <div className="mt-3 border-t border-border pt-3">
+                    <PermissionGrid value={editPerms} onChange={setEditPerms} />
+                    <div className="mt-3 flex gap-2">
                       <button
-                        className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-semibold hover:bg-muted"
-                        onClick={() => {
-                          setEditing(m._id);
-                          setEditPerms(m.permissions);
-                        }}
-                      >
-                        Change access
-                      </button>
-                      <button
-                        className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-semibold hover:bg-muted"
+                        className="btn btn-sm"
+                        onClick={() => void savePerms(m)}
                         disabled={busy === m._id}
-                        onClick={() => void toggleActive(m)}
                       >
-                        {m.isActive ? 'Disable' : 'Enable'}
+                        <Check className="h-3.5 w-3.5" /> Save
                       </button>
-                      <button
-                        className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-destructive hover:bg-destructive/10"
-                        disabled={busy === m._id}
-                        onClick={() => setRemoveTarget(m)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" /> Remove
+                      <button className={BTN_OUTLINE} onClick={() => setEditing('')}>
+                        Cancel
                       </button>
                     </div>
-                  )}
-                </>
-              )}
-            </div>
-          ))
+                  </div>
+                ) : (
+                  <>
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {m.isOwner ? (
+                        <span className="text-xs text-muted-foreground">Full access.</span>
+                      ) : m.permissions.length === 0 ? (
+                        <span className="text-xs text-muted-foreground">No access yet.</span>
+                      ) : (
+                        m.permissions.map((p) => (
+                          <span
+                            key={p}
+                            className={`pill ${DANGEROUS.has(p) ? 'noShow' : 'booked'}`}
+                            style={{ fontSize: 11 }}
+                          >
+                            {p}
+                          </span>
+                        ))
+                      )}
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-3">
+                      <button type="button" className={BTN_OUTLINE} onClick={() => openDetails(m)}>
+                        <Pencil className="h-3.5 w-3.5" /> {self ? 'Edit my details' : 'Edit details'}
+                      </button>
+                      {!self && (
+                        <button
+                          type="button"
+                          className={BTN_OUTLINE}
+                          onClick={() => {
+                            setPasswordTarget(m);
+                            setNewPassword('');
+                          }}
+                        >
+                          <KeyRound className="h-3.5 w-3.5" /> Set password
+                        </button>
+                      )}
+                      {!self && m.twoFactorEnabled && (
+                        <button
+                          type="button"
+                          className={BTN_OUTLINE}
+                          disabled={busy === m._id}
+                          onClick={() => setResetTarget(m)}
+                          title="Lost phone? Clear their two-factor"
+                        >
+                          <ShieldOff className="h-3.5 w-3.5" /> Reset 2FA
+                        </button>
+                      )}
+                      {m.isOwner ? (
+                        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                          <Lock className="h-3 w-3" /> Owner access is fixed.
+                        </span>
+                      ) : self ? (
+                        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                          <Lock className="h-3 w-3" /> Another member manages your access.
+                        </span>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            className={BTN_OUTLINE}
+                            onClick={() => {
+                              setEditing(m._id);
+                              setEditPerms(m.permissions);
+                            }}
+                          >
+                            <Shield className="h-3.5 w-3.5" /> Change access
+                          </button>
+                          <button
+                            type="button"
+                            className={BTN_OUTLINE}
+                            disabled={busy === m._id}
+                            onClick={() => void toggleActive(m)}
+                          >
+                            <Power className="h-3.5 w-3.5" /> {m.isActive === false ? 'Enable' : 'Disable'}
+                          </button>
+                          <button
+                            type="button"
+                            className={BTN_OUTLINE_DANGER}
+                            disabled={busy === m._id}
+                            onClick={() => setRemoveTarget(m)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" /> Remove
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            );
+          })
         )}
       </div>
+
+      <Modal
+        open={Boolean(detailsTarget)}
+        onClose={() => setDetailsTarget(null)}
+        title={detailsTarget && isMe(detailsTarget) ? 'Edit my details' : `Edit ${detailsTarget?.name ?? ''}`}
+        footer={
+          <>
+            <button type="button" className={BTN_SECONDARY} onClick={() => setDetailsTarget(null)}>
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="btn"
+              disabled={!details.name.trim() || busy.startsWith('details-')}
+              onClick={() => void saveDetails()}
+            >
+              {busy.startsWith('details-') ? <Spinner /> : <Save className="h-4 w-4" />} Save
+            </button>
+          </>
+        }
+      >
+        <form
+          className="grid grid-cols-1 gap-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void saveDetails();
+          }}
+        >
+          <label className="label">
+            Name
+            <input
+              className="input mt-1"
+              value={details.name}
+              onChange={(e) => setDetails({ ...details, name: e.target.value })}
+              autoFocus
+            />
+          </label>
+          <label className="label">
+            Email
+            <input
+              className="input mt-1"
+              type="email"
+              value={details.email}
+              disabled={Boolean(detailsTarget && isMe(detailsTarget))}
+              onChange={(e) => setDetails({ ...details, email: e.target.value })}
+            />
+            {detailsTarget && isMe(detailsTarget) && (
+              <span className="mt-0.5 block text-[11px] font-normal text-muted-foreground">
+                Your sign-in email. Another member with team access can change it.
+              </span>
+            )}
+          </label>
+          <label className="label">
+            Phone
+            <input
+              className="input mt-1"
+              type="tel"
+              value={details.phone}
+              onChange={(e) => setDetails({ ...details, phone: e.target.value })}
+            />
+          </label>
+          <button type="submit" className="hidden" aria-hidden="true" tabIndex={-1} />
+        </form>
+      </Modal>
+
+      <Modal
+        open={Boolean(passwordTarget)}
+        onClose={() => setPasswordTarget(null)}
+        title={`Set a password for ${passwordTarget?.name ?? ''}`}
+        footer={
+          <>
+            <button type="button" className={BTN_SECONDARY} onClick={() => setPasswordTarget(null)}>
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="btn"
+              disabled={!newPassword || Boolean(pwProblem) || busy.startsWith('pw-')}
+              onClick={() => void savePassword()}
+            >
+              {busy.startsWith('pw-') ? <Spinner /> : <KeyRound className="h-4 w-4" />} Set password
+            </button>
+          </>
+        }
+      >
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void savePassword();
+          }}
+        >
+          <label className="label">
+            New password
+            <input
+              className="input mt-1"
+              type="password"
+              autoComplete="new-password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              autoFocus
+            />
+          </label>
+          <PasswordMeter value={newPassword} />
+          <p className="mt-3 text-xs text-muted-foreground">
+            They are signed out everywhere. Tell them the new password in person.
+          </p>
+        </form>
+      </Modal>
+
+      <ConfirmDialog
+        open={Boolean(resetTarget)}
+        title="Reset two-factor?"
+        message={
+          resetTarget
+            ? `For a lost phone. ${resetTarget.name} is signed out everywhere and must scan a new QR code at their next sign-in.`
+            : ''
+        }
+        confirmLabel="Reset two-factor"
+        onCancel={() => setResetTarget(null)}
+        onConfirm={() => void resetTwoFactor()}
+      />
 
       <ConfirmDialog
         open={Boolean(removeTarget)}

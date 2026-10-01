@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
   Users as UsersIcon,
@@ -9,12 +9,20 @@ import {
   Banknote,
   TrendingDown,
   Download,
+  Pencil,
+  Ban,
+  CheckCircle2,
+  Trash2,
+  AlertTriangle,
+  Save,
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { platformApi, downloadBlob, type Shop, type ShopMonth, type SeatUsage } from '../api';
 import ShopUserActions from '../components/ShopUserActions';
 import { useToast } from '@dawai/shared/components/Toast';
-import { LoadingBlock } from '@dawai/shared/components/Spinner';
+import { LoadingBlock, Spinner } from '@dawai/shared/components/Spinner';
+import Modal from '../components/Modal';
+import { BTN_DANGER, BTN_OUTLINE, BTN_OUTLINE_DANGER, BTN_SECONDARY, can, errorMessage, useAccess } from '../lib/ui';
 import type { User } from '@dawai/shared/types';
 
 /**
@@ -28,6 +36,22 @@ const monthLabel = (m: string) =>
   new Date(`${m}-01T00:00:00Z`).toLocaleDateString('en-GB', { month: 'short', year: '2-digit' });
 const seat = (s?: SeatUsage) => (s ? `${s.used} / ${s.limit ?? '∞'}` : '—');
 
+/** The address as the profile endpoint takes it. */
+const ADDRESS_FIELDS: { key: string; label: string }[] = [
+  { key: 'street', label: 'Street' },
+  { key: 'area', label: 'Area' },
+  { key: 'city', label: 'City' },
+  { key: 'district', label: 'District' },
+  { key: 'postalCode', label: 'Postcode' },
+];
+
+const EMPTY_PROFILE = {
+  name: '',
+  contactPhone: '',
+  contactEmail: '',
+  address: { street: '', area: '', city: '', district: '', postalCode: '' } as Record<string, string>,
+};
+
 export default function ShopDetail() {
   const { id = '' } = useParams();
   const { toast } = useToast();
@@ -37,6 +61,15 @@ export default function ShopDetail() {
   const [plan, setPlan] = useState<{ planName: string; terminals: SeatUsage; shopUsers: SeatUsage } | null>(null);
   const [usage, setUsage] = useState<ShopMonth[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const access = useAccess();
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [profile, setProfile] = useState(EMPTY_PROFILE);
+  const [busy, setBusy] = useState('');
+  const [suspendOpen, setSuspendOpen] = useState(false);
+  const [suspendReason, setSuspendReason] = useState('');
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -59,6 +92,67 @@ export default function ShopDetail() {
     void load();
   }, [load]);
 
+  const openProfile = () => {
+    if (!org) return;
+    setProfile({
+      name: org.name ?? '',
+      contactPhone: org.contactPhone ?? '',
+      contactEmail: org.contactEmail ?? '',
+      address: Object.fromEntries(ADDRESS_FIELDS.map((f) => [f.key, org.address?.[f.key] ?? ''])),
+    });
+    setProfileOpen(true);
+  };
+
+  const emailBad = Boolean(profile.contactEmail.trim()) && !/^\S+@\S+\.\S+$/.test(profile.contactEmail.trim());
+  const nameBad = profile.name.trim().length < 2;
+
+  const saveProfile = async () => {
+    if (nameBad || emailBad) return;
+    setBusy('profile');
+    try {
+      await platformApi.updateShopProfile(id, {
+        name: profile.name.trim(),
+        contactPhone: profile.contactPhone.trim(),
+        contactEmail: profile.contactEmail.trim(),
+        address: Object.fromEntries(Object.entries(profile.address).map(([k, v]) => [k, v.trim()])),
+      });
+      toast('Shop details saved.');
+      setProfileOpen(false);
+      await load();
+    } catch (e) {
+      toast(errorMessage(e, 'Could not save those details.'), 'error');
+    } finally {
+      setBusy('');
+    }
+  };
+
+  const setStatus = async (status: 'active' | 'suspended', reason?: string) => {
+    setBusy('status');
+    try {
+      await platformApi.updateOrganization(id, status === 'suspended' ? { status, suspendedReason: reason } : { status });
+      toast(status === 'suspended' ? 'Shop suspended.' : 'Shop reactivated.');
+      setSuspendOpen(false);
+      await load();
+    } catch (e) {
+      toast(errorMessage(e, 'Could not update that shop.'), 'error');
+    } finally {
+      setBusy('');
+    }
+  };
+
+  const remove = async () => {
+    if (!org) return;
+    setBusy('delete');
+    try {
+      const res = await platformApi.deleteOrganization(id, deleteConfirm.trim());
+      toast(`${res.name} deleted permanently.`);
+      navigate('/', { replace: true });
+    } catch (e) {
+      toast(errorMessage(e, 'Could not delete that shop.'), 'error');
+      setBusy('');
+    }
+  };
+
   if (loading) {
     return (
       <div className="page">
@@ -72,6 +166,9 @@ export default function ShopDetail() {
   const [prev, last] = usage.slice(-2);
   const trend = prev && last && prev.bills > 0 ? Math.round(((last.bills - prev.bills) / prev.bills) * 100) : null;
   const lapsed = org.trialEndsAt ? new Date(org.trialEndsAt) < new Date() : false;
+  const canEdit = can(access, 'shops.edit');
+  const canSuspend = can(access, 'shops.suspend');
+  const canDelete = can(access, 'shops.delete');
 
   return (
     <div className="page">
@@ -91,17 +188,24 @@ export default function ShopDetail() {
             )}
           </p>
         </div>
-        <button
-          className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-4 py-2 text-sm font-semibold hover:bg-muted"
-          onClick={() =>
-            void platformApi
-              .exportOrganization(id)
-              .then((b) => downloadBlob(b, `${org.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.json`))
-              .catch(() => toast('Could not export that shop.', 'error'))
-          }
-        >
-          <Download className="h-4 w-4" /> Export data
-        </button>
+        <div className="flex flex-wrap gap-2">
+          {canEdit && (
+            <button type="button" className={BTN_SECONDARY} onClick={openProfile}>
+              <Pencil className="h-4 w-4" /> Edit
+            </button>
+          )}
+          <button
+            className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-4 py-2 text-sm font-semibold hover:bg-muted"
+            onClick={() =>
+              void platformApi
+                .exportOrganization(id)
+                .then((b) => downloadBlob(b, `${org.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.json`))
+                .catch(() => toast('Could not export that shop.', 'error'))
+            }
+          >
+            <Download className="h-4 w-4" /> Export data
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -215,6 +319,254 @@ export default function ShopDetail() {
           </table>
         </div>
       </div>
+      <div className="card">
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <h3 className="mb-0 flex-1">Shop details</h3>
+          {canEdit && (
+            <button type="button" className={BTN_OUTLINE} onClick={openProfile}>
+              <Pencil className="h-3.5 w-3.5" /> Edit shop details
+            </button>
+          )}
+        </div>
+        <dl className="grid grid-cols-1 gap-x-6 gap-y-2 text-sm sm:grid-cols-3">
+          <div className="min-w-0">
+            <dt className="text-xs text-muted-foreground">Phone</dt>
+            <dd className="break-words">{org.contactPhone || '—'}</dd>
+          </div>
+          <div className="min-w-0">
+            <dt className="text-xs text-muted-foreground">Email</dt>
+            <dd className="break-all">{org.contactEmail || '—'}</dd>
+          </div>
+          <div className="min-w-0">
+            <dt className="text-xs text-muted-foreground">Address</dt>
+            <dd className="break-words">
+              {ADDRESS_FIELDS.map((f) => org.address?.[f.key])
+                .filter(Boolean)
+                .join(', ') || '—'}
+            </dd>
+          </div>
+        </dl>
+      </div>
+
+      {(canSuspend || canDelete) && (
+        <div className="card" style={{ borderColor: 'hsl(var(--destructive) / 0.45)' }}>
+          <h3 className="mb-1 flex items-center gap-2 text-destructive">
+            <AlertTriangle className="h-4 w-4" /> Danger zone
+          </h3>
+          <p className="mb-3 text-sm text-muted-foreground">
+            Suspend first. A suspended shop can then be deleted.
+          </p>
+          <div className="divide-y divide-border rounded-lg border border-border">
+            {canSuspend && (
+              <div className="flex flex-wrap items-center gap-3 p-3">
+                <div className="min-w-0 flex-1 basis-56">
+                  <strong className="block text-sm">
+                    {org.status === 'suspended' ? 'Reactivate' : 'Suspend'}
+                  </strong>
+                  <span className="block text-xs text-muted-foreground">
+                    {org.status === 'suspended'
+                      ? org.suspendedReason
+                        ? `Suspended: ${org.suspendedReason}`
+                        : 'Suspended. Everyone is refused at login.'
+                      : 'Signs everyone out and refuses them at login.'}
+                  </span>
+                </div>
+                {org.status === 'suspended' ? (
+                  <button
+                    type="button"
+                    className={BTN_OUTLINE}
+                    disabled={busy === 'status'}
+                    onClick={() => void setStatus('active')}
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5" /> Reactivate
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className={BTN_OUTLINE_DANGER}
+                    disabled={busy === 'status'}
+                    onClick={() => {
+                      setSuspendReason('');
+                      setSuspendOpen(true);
+                    }}
+                  >
+                    <Ban className="h-3.5 w-3.5" /> Suspend
+                  </button>
+                )}
+              </div>
+            )}
+            {canDelete && (
+              <div className="flex flex-wrap items-center gap-3 p-3">
+                <div className="min-w-0 flex-1 basis-56">
+                  <strong className="block text-sm">Delete permanently</strong>
+                  <span className="block text-xs text-muted-foreground">
+                    {org.status === 'suspended'
+                      ? 'Removes its bills, stock, khata and files. No undo.'
+                      : 'Suspend the shop first.'}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  className={BTN_DANGER}
+                  disabled={org.status !== 'suspended'}
+                  onClick={() => {
+                    setDeleteConfirm('');
+                    setDeleteOpen(true);
+                  }}
+                >
+                  <Trash2 className="h-4 w-4" /> Delete permanently
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      <Modal
+        open={profileOpen}
+        onClose={() => setProfileOpen(false)}
+        title="Edit shop details"
+        width="max-w-lg"
+        footer={
+          <>
+            <button type="button" className={BTN_SECONDARY} onClick={() => setProfileOpen(false)}>
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="btn"
+              disabled={nameBad || emailBad || busy === 'profile'}
+              onClick={() => void saveProfile()}
+            >
+              {busy === 'profile' ? <Spinner /> : <Save className="h-4 w-4" />} Save
+            </button>
+          </>
+        }
+      >
+        <form
+          className="grid grid-cols-1 gap-3 sm:grid-cols-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void saveProfile();
+          }}
+        >
+          <label className="label sm:col-span-2">
+            Shop name
+            <input
+              className="input mt-1"
+              value={profile.name}
+              maxLength={160}
+              onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+              autoFocus
+            />
+          </label>
+          <label className="label">
+            Contact phone
+            <input
+              className="input mt-1"
+              type="tel"
+              value={profile.contactPhone}
+              onChange={(e) => setProfile({ ...profile, contactPhone: e.target.value })}
+            />
+          </label>
+          <label className="label">
+            Contact email
+            <input
+              className="input mt-1"
+              type="email"
+              value={profile.contactEmail}
+              aria-invalid={emailBad}
+              onChange={(e) => setProfile({ ...profile, contactEmail: e.target.value })}
+            />
+            {emailBad && <span className="mt-0.5 block text-[11px] text-destructive">Not an email.</span>}
+          </label>
+          {ADDRESS_FIELDS.map((f) => (
+            <label key={f.key} className={`label ${f.key === 'street' ? 'sm:col-span-2' : ''}`}>
+              {f.label}
+              <input
+                className="input mt-1"
+                value={profile.address[f.key] ?? ''}
+                onChange={(e) =>
+                  setProfile({ ...profile, address: { ...profile.address, [f.key]: e.target.value } })
+                }
+              />
+            </label>
+          ))}
+          <button type="submit" className="hidden" aria-hidden="true" tabIndex={-1} />
+        </form>
+      </Modal>
+
+      {/* The shop is shown this reason at the login screen. */}
+      <Modal
+        open={suspendOpen}
+        onClose={() => setSuspendOpen(false)}
+        title={`Suspend ${org.name}?`}
+        footer={
+          <>
+            <button type="button" className={BTN_SECONDARY} onClick={() => setSuspendOpen(false)}>
+              Cancel
+            </button>
+            <button
+              type="button"
+              className={BTN_DANGER}
+              disabled={!suspendReason.trim() || busy === 'status'}
+              onClick={() => void setStatus('suspended', suspendReason.trim())}
+            >
+              <Ban className="h-4 w-4" /> Suspend
+            </button>
+          </>
+        }
+      >
+        <label className="label">
+          Reason
+          <input
+            className="input mt-1"
+            placeholder="e.g. Payment overdue since 12 August"
+            value={suspendReason}
+            onChange={(e) => setSuspendReason(e.target.value)}
+            autoFocus
+          />
+          <span className="mt-0.5 block text-[11px] font-normal text-muted-foreground">
+            They see this when they try to sign in.
+          </span>
+        </label>
+      </Modal>
+
+      {/* Typing the name back is the guard: there is no undo. */}
+      <Modal
+        open={deleteOpen}
+        onClose={() => setDeleteOpen(false)}
+        title={`Delete ${org.name}?`}
+        footer={
+          <>
+            <button type="button" className={BTN_SECONDARY} onClick={() => setDeleteOpen(false)}>
+              Cancel
+            </button>
+            <button
+              type="button"
+              className={BTN_DANGER}
+              disabled={deleteConfirm.trim() !== org.name || busy === 'delete'}
+              onClick={() => void remove()}
+            >
+              {busy === 'delete' ? <Spinner /> : <Trash2 className="h-4 w-4" />} Delete permanently
+            </button>
+          </>
+        }
+      >
+        <p className="text-sm text-muted-foreground">
+          This removes {counts.bills.toLocaleString()} bills, {counts.products.toLocaleString()} products,
+          the stock, the khata and every uploaded file. It cannot be undone. Export the data first.
+        </p>
+        <label className="label mt-3">
+          Type <strong className="text-foreground">{org.name}</strong> to confirm
+          <input
+            className="input mt-1"
+            value={deleteConfirm}
+            onChange={(e) => setDeleteConfirm(e.target.value)}
+            autoFocus
+          />
+        </label>
+      </Modal>
     </div>
   );
 }

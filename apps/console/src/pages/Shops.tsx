@@ -14,6 +14,7 @@ import {
   Download,
   Trash2,
   Plus,
+  Pencil,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { platformApi, downloadBlob } from '../api';
@@ -381,6 +382,14 @@ export default function Shops() {
                     </td>
                     <td>
                       <div className="flex items-center gap-1">
+                        {/* Details, suspend and delete all live on the shop's own page. */}
+                        <Link
+                          to={`/shops/${o._id}`}
+                          className="inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1 text-xs font-semibold hover:bg-muted"
+                          aria-label={`Edit ${o.name}`}
+                        >
+                          <Pencil className="h-3.5 w-3.5" /> Edit
+                        </Link>
                         {o.status === 'pending' && (
                           <button
                             className="inline-flex items-center gap-1 rounded-md bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground disabled:opacity-50"
