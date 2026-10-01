@@ -792,7 +792,7 @@ const en = {
     privacy: 'Privacy policy',
     refund: 'Refund policy',
     rights: 'All rights reserved.',
-    builtFor: 'Built in Dhaka, for a shop in Dhaka.',
+    poweredBy: 'Powered by {name}',
   },
 } as const;
 
@@ -1544,7 +1544,7 @@ const bn: DeepPartial<Dictionary> = {
     privacy: 'গোপনীয়তা নীতি',
     refund: 'ফেরতের নীতি',
     rights: 'সর্বস্বত্ব সংরক্ষিত।',
-    builtFor: 'ঢাকায় তৈরি, ঢাকার একটি দোকানের জন্য।',
+    poweredBy: '{name} দ্বারা পরিচালিত',
   },
 };
 

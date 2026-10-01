@@ -1,15 +1,20 @@
 import * as React from 'react';
 import Link from 'next/link';
-import { ArrowUpRight, Mail, MapPin, ShieldCheck } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, Mail, MapPin, ShieldCheck } from 'lucide-react';
 import { siteConfig, type Lang } from '@/lib/site';
 import { translate } from '@/i18n/dictionary';
 import { Logo, Mark } from '@/components/logo';
 import { Orb } from '@/components/motion/primitives';
+import { Button } from '@/components/ui/button';
 
 /**
  * The footer is a dark band on every page, which is what gives the site its
- * pulse: light, light, dark, light, dark. It ends with the counter switched off and the billing screen's glow still
- * on, which is the last thing a shop owner should see before they sleep.
+ * pulse: light, light, dark, light, dark.
+ *
+ * Three rows. The brand with the one action worth taking, then the links,
+ * then the small print, and under all of it the name, spread letter by letter
+ * across the full width of the band and cut off by its bottom edge, like a
+ * sign on a shopfront seen from across the road.
  */
 export function SiteFooter({ lang }: { lang: Lang }) {
   const t = (p: string) => translate(lang, p);
@@ -44,6 +49,10 @@ export function SiteFooter({ lang }: { lang: Lang }) {
     },
   ];
 
+  // Sized from the name's length, so a rename still spans the band and never clips.
+  const letters = Array.from(siteConfig.wordmark);
+  const wordSize = `min(${(110 / letters.length).toFixed(1)}vw, 20rem)`;
+
   return (
     <footer className="ink-band grain bg-background relative isolate overflow-hidden">
       <div className="aurora-field">
@@ -51,97 +60,123 @@ export function SiteFooter({ lang }: { lang: Lang }) {
         <Orb className="-start-32 top-1/3" color="rgb(34 211 238 / 0.22)" size="36rem" duration={24} delay={4} />
       </div>
 
-      <div className="shell relative py-16 sm:py-20">
-        {/* The wordmark, set enormous and clipped by the band's bottom edge.
-            It is the one piece of pure scale on the site, and it costs nothing
-            because it is text. */}
-        <div className="pointer-events-none mb-12 select-none overflow-hidden">
-          <p
-            aria-hidden
-            className="whitespace-nowrap text-center font-extrabold leading-[0.78] tracking-[-0.055em] text-white/[0.07]"
-            /* Sized from the name's length so a rename never clips it. */
-            style={{ fontSize: `min(${(110 / siteConfig.wordmark.length).toFixed(1)}vw, 15rem)` }}
-          >
-            {siteConfig.wordmark}
-          </p>
-        </div>
-
-        <div className="grid gap-12 lg:grid-cols-[1.4fr_2fr]">
-          <div>
+      <div className="shell relative pt-16 sm:pt-20">
+        {/* Row one: who we are, and the one thing to do next. */}
+        <div className="flex flex-col gap-8 border-b border-white/10 pb-12 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-md">
             <Link href={`/${lang}`} className="inline-block">
               <Logo wordmark={siteConfig.wordmark} product={siteConfig.product} markClassName="size-10" />
             </Link>
-            <p className="measure mt-5 text-sm leading-relaxed text-muted-foreground">
-              {t('footer.blurb')}
-            </p>
-
-            <div className="mt-7 flex flex-col gap-2.5 text-sm text-muted-foreground">
-              <a
-                href={`mailto:${siteConfig.contactEmail}`}
-                className="inline-flex items-center gap-2.5 transition-colors hover:text-foreground"
-              >
-                <Mail className="size-4 text-primary" />
-                {siteConfig.contactEmail}
-              </a>
-              <span className="inline-flex items-center gap-2.5">
-                <MapPin className="size-4 text-primary" />
-                {lang === 'bn' ? siteConfig.addressBn : siteConfig.address}
-              </span>
-            </div>
-
-            <div className="mt-7 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-3.5 py-2 text-2xs font-medium text-muted-foreground">
-              <ShieldCheck className="size-3.5 text-primary" />
-              {t('cta.points.1')}
-            </div>
+            <p className="mt-5 text-sm leading-relaxed text-muted-foreground">{t('footer.blurb')}</p>
           </div>
 
-          <div className="grid gap-8 sm:grid-cols-3">
-            {columns.map((col) => (
-              <div key={col.title}>
-                <h3 className="text-2xs font-bold uppercase tracking-[0.18em] text-primary">
-                  {col.title}
-                </h3>
-                <ul className="mt-4 flex flex-col gap-2.5">
-                  {col.links.map((link) => {
-                    const external = link.href.startsWith('http');
-                    return (
-                      <li key={link.href}>
-                        {external ? (
-                          <a
-                            href={link.href}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="group inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-                          >
-                            {link.label}
-                            <ArrowUpRight className="size-3 opacity-0 transition-opacity group-hover:opacity-70" />
-                          </a>
-                        ) : (
-                          <Link
-                            href={link.href}
-                            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-                          >
-                            {link.label}
-                          </Link>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            ))}
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Button asChild size="lg">
+              <Link href={`/${lang}/register`}>
+                {t('nav.getStarted')}
+                <ArrowRight className="size-4" />
+              </Link>
+            </Button>
+            <Button asChild size="lg" variant="outline" className="border-white/15 bg-white/[0.04] hover:bg-white/[0.08]">
+              <Link href={`/${lang}/demo`}>{t('nav.demo')}</Link>
+            </Button>
           </div>
         </div>
 
-        <div className="mt-14 flex flex-col gap-4 border-t border-white/10 pt-7 sm:flex-row sm:items-center sm:justify-between">
+        {/* Row two: the links, and how to reach us. Two columns on a phone, so
+            the list is half as long to scroll past. */}
+        <div className="grid grid-cols-2 gap-x-6 gap-y-10 py-12 sm:grid-cols-4">
+          {columns.map((col) => (
+            <div key={col.title}>
+              <h3 className="text-2xs font-bold uppercase tracking-[0.18em] text-primary">{col.title}</h3>
+              <ul className="mt-4 flex flex-col gap-3">
+                {col.links.map((link) => {
+                  const external = link.href.startsWith('http');
+                  const cls =
+                    'group inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground';
+                  return (
+                    <li key={link.href}>
+                      {external ? (
+                        <a href={link.href} target="_blank" rel="noopener noreferrer" className={cls}>
+                          {link.label}
+                          <ArrowUpRight className="size-3 opacity-60 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                        </a>
+                      ) : (
+                        <Link href={link.href} className={cls}>
+                          {link.label}
+                        </Link>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
+
+          {/* Full width on a phone: an email address does not break nicely. */}
+          <div className="col-span-2 sm:col-span-1">
+            <h3 className="text-2xs font-bold uppercase tracking-[0.18em] text-primary">{t('footer.company')}</h3>
+            <div className="mt-4 flex flex-col gap-3 text-sm text-muted-foreground">
+              <a
+                href={`mailto:${siteConfig.contactEmail}`}
+                className="inline-flex min-w-0 items-start gap-2 transition-colors hover:text-foreground"
+              >
+                <Mail className="mt-0.5 size-4 shrink-0 text-primary" />
+                {siteConfig.contactEmail}
+              </a>
+              <span className="inline-flex items-start gap-2">
+                <MapPin className="mt-0.5 size-4 shrink-0 text-primary" />
+                {lang === 'bn' ? siteConfig.addressBn : siteConfig.address}
+              </span>
+              <span className="inline-flex items-start gap-2">
+                <ShieldCheck className="mt-0.5 size-4 shrink-0 text-primary" />
+                {t('cta.points.1')}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Row three: the small print. */}
+        <div className="flex flex-col gap-3 border-t border-white/10 py-6 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-2xs text-muted-foreground/70">
             © {year} {siteConfig.company}. {t('footer.rights')}
           </p>
           <p className="inline-flex items-center gap-2 text-2xs text-muted-foreground/70">
             <Mark className="size-5" />
-            {t('footer.builtFor')}
+            {/* The name in full colour, the words around it muted, in either
+                language's word order. */}
+            {t('footer.poweredBy')
+              .split(/(\{name\})/)
+              .map((part, i) =>
+                part === '{name}' ? (
+                  <span key={i} className="font-semibold text-foreground/90">
+                    {siteConfig.poweredBy}
+                  </span>
+                ) : (
+                  part
+                ),
+              )}
           </p>
         </div>
+      </div>
+
+      {/* The name, letter by letter across the full width, its foot cut by the
+          band's edge. Text, not an image, so it costs nothing and a rename in
+          lib/site.ts redraws it. */}
+      <div aria-hidden className="pointer-events-none relative select-none overflow-hidden px-4 sm:px-8">
+        <p
+          className="flex justify-between font-extrabold leading-[0.8] tracking-normal"
+          style={{ fontSize: wordSize, marginBottom: '-0.1em' }}
+        >
+          {letters.map((ch, i) => (
+            <span
+              key={i}
+              className="bg-gradient-to-b from-white/[0.2] via-white/[0.09] to-white/[0.02] bg-clip-text text-transparent"
+            >
+              {ch}
+            </span>
+          ))}
+        </p>
       </div>
     </footer>
   );

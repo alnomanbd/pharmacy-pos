@@ -33,6 +33,8 @@ export const siteConfig = {
   product: 'Pharmacy POS',
   /** Who sells it — the footer ©, the legal pages and the JSON-LD publisher. */
   company: 'Dawai',
+  /** The studio behind it, credited in the footer's last line. */
+  poweredBy: 'CyberLab',
   domain: (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://dawai.com.bd').replace(/^https?:\/\//, ''),
   url: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://dawai.com.bd',
   /*
