@@ -1622,3 +1622,23 @@ label.field span {
   box-shadow: 0 1px hsl(var(--border));
   transition: background-color .1s ease,border-color .1s ease,transform .06s ease,box-shadow .1s ease;
 }
+
+/* ------------------------------ the sign-in door ------------------------------ */
+/* A slow drift for the glow behind the brand panel, and a short rise for the
+   form. Both are transform and opacity only, and both stop for reduced motion. */
+@keyframes dw-drift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(4%, -3%, 0) scale(1.08); }
+}
+@keyframes dw-rise {
+  from { opacity: 0; transform: translate3d(0, 12px, 0); }
+  to { opacity: 1; transform: none; }
+}
+.dw-glow { animation: dw-drift 18s ease-in-out infinite; }
+.dw-glow-slow { animation: dw-drift 26s ease-in-out infinite reverse; }
+.dw-rise { animation: dw-rise .55s cubic-bezier(.22, 1, .36, 1) both; }
+.dw-rise-2 { animation: dw-rise .55s cubic-bezier(.22, 1, .36, 1) .08s both; }
+.dw-rise-3 { animation: dw-rise .55s cubic-bezier(.22, 1, .36, 1) .16s both; }
+@media (prefers-reduced-motion: reduce) {
+  .dw-glow, .dw-glow-slow, .dw-rise, .dw-rise-2, .dw-rise-3 { animation: none; }
+}
