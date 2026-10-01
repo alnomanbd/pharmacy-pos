@@ -1,0 +1,537 @@
+/**
+ * The design system both apps wear.
+ *
+ * The shop app and the operator console each keep their own `index.css` — the
+ * till's layout is not the console's business and the reverse —
+ * but the *system* is one thing: the type stack, the surfaces, the controls, the
+ * status colours, the rail. It lived in one app's stylesheet, so the
+ * console came up in Segoe UI with none of it, which is the same shape of bug as
+ * a shared component whose styles live in one app.
+ *
+ * Imported after each app's own stylesheet, so these rules are the ones that
+ * stand where both define the same selector.
+ */
+
+:root {
+  /*
+   * Figtree for the interface and Hind Siliguri for Bangla, in one stack: a
+   * Bangla glyph is not in Figtree, so the browser falls through to the second
+   * family for exactly the characters that need it and for nothing else.
+   */
+  --font-sans: 'Figtree', 'Hind Siliguri', 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+/*
+ * Set on `html` rather than through Tailwind's config so it also reaches the
+ * print stylesheets and the two hand-written CSS files, which do not go through
+ * the utility classes.
+ */
+html,
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'cv02', 'cv03', 'cv04';
+}
+
+/*
+ * Headings tighten as they grow, which is what makes a type scale look drawn
+ * rather than resized.
+ */
+h1 { letter-spacing: -0.022em; }
+h2 { letter-spacing: -0.018em; }
+h3 { letter-spacing: -0.01em; }
+
+/*
+ * One surface, one edge.
+ *
+ * A border *and* a shadow on every card meant every block on the page shouted
+ * equally, which reads as flat rather than as ordered. The border does the
+ * separating; the shadow is kept for things that genuinely float — dialogs, the
+ * keyboard, a dropdown.
+ */
+.card {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.card h3 {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin-bottom: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: hsl(var(--foreground));
+}
+
+/* A line under the heading, for a card that is a section rather than a tile. */
+.card h3 + .card-sub {
+  margin: -10px 0 14px;
+  font-size: 12.5px;
+  color: hsl(var(--muted-foreground));
+}
+
+/*
+ * A figure, not a poster.
+ *
+ * The number was violet, 28px and bold on every tile, beside a pastel circle
+ * holding an icon that carried no information. Ink for the figure — it is data,
+ * and data is read, not branded — tabular digits so a column of them lines up,
+ * and the label above it in the small caps a dashboard uses for a measure's
+ * name. The accent is left for the one thing on the tile you can press.
+ */
+/*
+ * A ceiling on the content column.
+ *
+ * Most pages already centre themselves in a 72rem column, but the ones that
+ * never did ran the full width of the window — on a 2560px monitor that put a
+ * message's date 2,300px from its sender, with the eye asked to cross the desk
+ * to join them up. This is the backstop, not the design: a page that wants the
+ * narrower column still asks for it, and a page that forgets is merely wide
+ * rather than broken.
+ */
+/*
+ * The rail's icons, one size in both apps.
+ *
+ * One app passed lucide no size at all and got its 24px default; the
+ * console asked for 16px. Side by side that read as two products, and the
+ * console's looked undersized against the same 14px label. 20px is the size
+ * the collapsed rail already used in both.
+ */
+.nav-link .nav-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+}
+
+.main > * {
+  margin-inline: auto;
+  max-width: 120rem;
+}
+
+.stat {
+  /*
+   * No `display` here.
+   *
+   * This sheet is loaded after each app's Tailwind build, so `display: block`
+   * on `.stat` silently beat `.flex` on the same element — every tile written
+   * as `stat flex items-start justify-between` laid its icon out as a block
+   * below the figure, as a tall strip down the left of the card. One page had
+   * already been patched with `!flex`, which hid the cause and left the rest
+   * broken. A div is block anyway; the anchor form is given it below.
+   */
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  transition: border-color .15s ease, background-color .15s ease;
+}
+
+/*
+ * No `display` on the anchor form either — `a.stat` would outrank a `flex`
+ * utility on the same element, which is the bug above wearing a different hat.
+ * A clickable tile says `block` or `flex` in its own class list.
+ */
+
+a.stat:hover {
+  border-color: hsl(var(--primary) / 0.45);
+  background: hsl(var(--primary) / 0.03);
+}
+
+.stat .value {
+  font-size: 30px;
+  line-height: 1.1;
+  font-weight: 650;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  color: hsl(var(--foreground));
+}
+
+.stat .label {
+  margin-top: 4px;
+  color: hsl(var(--muted-foreground));
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+/* The icon beside a figure: quiet, and the same weight as the label. */
+.stat-icon {
+  display: grid;
+  place-items: center;
+  /* A wrapping label on a phone was squeezing it into the text beside it. */
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
+}
+
+a.stat:hover .stat-icon {
+  background: hsl(var(--primary) / 0.1);
+  color: hsl(var(--primary));
+}
+
+/*
+ * Where you are, said once.
+ *
+ * A filled lilac pill on a sidebar of eighteen items made the whole rail look
+ * like a toy. The active item is a quiet surface with a rail against the edge
+ * and the icon in the accent — the accent appears once on the screen rather
+ * than everywhere.
+ */
+.nav-link.active {
+  position: relative;
+  background-color: hsl(var(--muted));
+  color: hsl(var(--foreground));
+  font-weight: 600;
+}
+
+.nav-link.active::before {
+  content: '';
+  position: absolute;
+  left: -0.5rem;
+  top: 50%;
+  height: 1.15rem;
+  width: 3px;
+  transform: translateY(-50%);
+  border-radius: 0 3px 3px 0;
+  background: hsl(var(--primary));
+}
+
+.nav-link.active .nav-icon {
+  color: hsl(var(--primary));
+}
+
+/* A copyright line is not a card. */
+.sidebar-foot {
+  margin: .5rem .75rem 0;
+  flex-shrink: 0;
+  padding: .625rem .25rem;
+  text-align: center;
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: hsl(var(--muted-foreground) / 0.75);
+}
+
+/* ---------------------------------------------------------------------------
+   Page furniture
+   ------------------------------------------------------------------------ */
+
+/*
+ * The title was smaller than the figures underneath it, so a screen opened with
+ * no clear first thing to read. Tightened and set above the content it names.
+ */
+.page h1,
+h1.page-title {
+  font-size: 22px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  color: hsl(var(--foreground));
+}
+
+/* Money and counts, wherever they are read in a column. */
+.tabular,
+.table td.num,
+.stat .value {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------------------------
+   commercial pass: controls
+   ---------------------------------------------------------------------------
+   A button, an input and a pill are the three things touched on every screen,
+   so they are where "unfinished" is felt first: flat fills with no pressed
+   state, inputs whose focus ring is the browser's, and status chips that were
+   all the brand colour whatever they meant.
+   ------------------------------------------------------------------------ */
+
+/*
+ * The two quiet button variants.
+ *
+ * Four places in the console were already asking for `btn-ghost`,
+ * `btn-secondary` and `btn-primary`, and none of the three existed in any
+ * stylesheet — so a "Cancel" beside a primary action rendered as bare text,
+ * and one dialog's Cancel rendered as a second violet button inviting the
+ * press its label warns against. Written as modifiers on `.btn`, which is
+ * where the size, radius and focus behaviour already live.
+ */
+.btn-primary {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+.btn-secondary,
+.btn.btn-secondary {
+  background-color: hsl(var(--secondary));
+  color: hsl(var(--secondary-foreground));
+  box-shadow: none;
+}
+
+.btn-secondary:hover,
+.btn.btn-secondary:hover {
+  background-color: hsl(var(--secondary) / 0.75);
+}
+
+.btn-ghost,
+.btn.btn-ghost {
+  background-color: transparent;
+  color: hsl(var(--foreground));
+  box-shadow: none;
+}
+
+/*
+ * For the button that takes something away.
+ *
+ * A cancel, a delete, a write-off. Red because the colour is the whole of the
+ * warning at a counter where somebody is moving fast — and only on the button
+ * that does it, never on the one beside it.
+ */
+.btn-danger,
+.btn.btn-danger {
+  background-color: hsl(var(--destructive));
+  color: hsl(var(--destructive-foreground));
+}
+
+.btn-danger:hover,
+.btn.btn-danger:hover {
+  background-color: hsl(var(--destructive) / 0.9);
+}
+
+.btn-ghost:hover,
+.btn.btn-ghost:hover {
+  background-color: hsl(var(--muted));
+}
+
+.btn {
+  border-radius: 8px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  box-shadow: 0 1px 2px hsl(258 70% 30% / 0.14);
+  transition: background-color .15s ease, box-shadow .15s ease, transform .06s ease;
+}
+
+.btn:hover {
+  background: hsl(var(--primary) / 0.92);
+}
+
+/* A press should be felt. One pixel is enough; more reads as a toy. */
+.btn:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+.btn:focus-visible,
+.input:focus-visible,
+.input:focus,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  border-color: hsl(var(--primary) / 0.55);
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.16);
+}
+
+.input,
+select.input,
+textarea.input {
+  border-radius: 8px;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.input::placeholder {
+  color: hsl(var(--muted-foreground) / 0.7);
+}
+
+/*
+ * Status, by meaning rather than by brand.
+ *
+ * Every pill on the page was violet — open, closed, paid, pending, all of it —
+ * so the colour said "this product" instead of "this state", and a glance told
+ * you nothing.
+ */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  border-radius: 999px;
+  padding: 2px 9px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: .01em;
+  border: 1px solid transparent;
+}
+
+.pill.open,
+.pill.paid,
+.pill.completed,
+.pill.success {
+  background: hsl(152 55% 94%);
+  color: hsl(152 60% 26%);
+  border-color: hsl(152 40% 82%);
+}
+
+.pill.pending,
+.pill.waiting {
+  background: hsl(38 92% 94%);
+  color: hsl(30 70% 32%);
+  border-color: hsl(38 70% 82%);
+}
+
+.pill.closed,
+.pill.cancelled,
+.pill.noshow,
+.pill.danger {
+  background: hsl(0 72% 96%);
+  color: hsl(0 62% 40%);
+  border-color: hsl(0 55% 88%);
+}
+
+.dark .pill.open,
+.dark .pill.paid,
+.dark .pill.completed,
+.dark .pill.success {
+  background: hsl(152 45% 16%);
+  color: hsl(152 55% 72%);
+  border-color: hsl(152 35% 26%);
+}
+
+.dark .pill.pending,
+.dark .pill.waiting {
+  background: hsl(35 45% 16%);
+  color: hsl(38 75% 70%);
+  border-color: hsl(35 35% 28%);
+}
+
+.dark .pill.closed,
+.dark .pill.cancelled,
+.dark .pill.noshow,
+.dark .pill.danger {
+  background: hsl(0 40% 17%);
+  color: hsl(0 75% 76%);
+  border-color: hsl(0 30% 30%);
+}
+
+/* ---------------------------------------------------------------------------
+   commercial pass: tables and empty states
+   ------------------------------------------------------------------------ */
+
+.table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: hsl(var(--card));
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+  border-bottom: 1px solid hsl(var(--border));
+  padding: 10px 12px;
+}
+
+.table tbody tr {
+  transition: background-color .12s ease;
+}
+
+.table tbody tr:hover {
+  background: hsl(var(--muted) / 0.6);
+}
+
+.table tbody td {
+  padding: 11px 12px;
+}
+
+/* A blank area with one grey sentence reads as a page that failed to load. */
+.empty {
+  display: grid;
+  place-items: center;
+  gap: 2px;
+  padding: 28px 16px;
+  border-radius: 10px;
+  background: hsl(var(--muted) / 0.5);
+  color: hsl(var(--muted-foreground));
+  font-size: 13px;
+  text-align: center;
+}
+
+/* ---------------------------------------------------------------------------
+   commercial pass: native controls
+   ---------------------------------------------------------------------------
+   A `<select>` and a `<input type="date">` come with the operating system's own
+   look, and beside a styled button they are the thing that says "this was
+   assembled, not designed". Given the same border, radius and height as every
+   other field, with the chevron drawn rather than inherited.
+   ------------------------------------------------------------------------ */
+
+select.input,
+select:not([multiple]):not([size]) {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 30px;
+}
+
+.dark select.input,
+.dark select:not([multiple]):not([size]) {
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+
+input[type='date'],
+input[type='time'] {
+  font-family: var(--font-sans);
+}
+
+/* The picker button is the browser's; at least let it take the app's colour. */
+input[type='date']::-webkit-calendar-picker-indicator,
+input[type='time']::-webkit-calendar-picker-indicator {
+  opacity: .55;
+  cursor: pointer;
+}
+
+input[type='date']:hover::-webkit-calendar-picker-indicator,
+input[type='time']:hover::-webkit-calendar-picker-indicator {
+  opacity: .9;
+}
+
+/* ---------------------------------------------------------------------------
+   The sidebar's sections
+   ---------------------------------------------------------------------------
+   Eighteen links in one column told you nothing about which of them you were
+   going to use tonight. The headings are deliberately quiet — they are a way of
+   reading the rail, not items on it.
+   ------------------------------------------------------------------------ */
+
+.nav-section + .nav-section {
+  margin-top: 11px;
+}
+
+.nav-section-heading {
+  margin: 0 0 4px .75rem;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground) / 0.65);
+}
+
+/* Collapsed to icons, a word does not fit — but the grouping still should. */
+.nav-section-rule {
+  display: block;
+  margin: 0 auto 6px;
+  width: 18px;
+  height: 1px;
+  background: hsl(var(--border));
+}
+
+.nav-section:first-child .nav-section-rule {
+  display: none;
+}

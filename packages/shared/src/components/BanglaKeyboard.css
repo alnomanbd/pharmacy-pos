@@ -1,0 +1,337 @@
+/**
+ * The on-screen Bangla keyboard.
+ *
+ * Beside the component rather than in an app's stylesheet, and imported by the
+ * component itself, so it cannot be left behind. It was left behind: these rules
+ * lived in one app's own stylesheet, the operator console imports only its own
+ * `index.css`, and the keyboard came up there as an unstyled pile of
+ * buttons that looked broken and was reported as "the keyboard does not work".
+ *
+ * A shared component carries its own styles for the same reason it carries its
+ * own markup — the next app to use it should have to do nothing.
+ */
+
+/* from rx-builder.css */
+/* ---------- the on-screen Bangla keyboard ----------
+ *
+ * A small floating window, dressed like the rest of the app: the same tokens,
+ * the same radius, the same border, so it reads as part of the product rather
+ * than a widget dropped on top of it. It is used with one hand while the other
+ * is on the mouse, so the keys are large, evenly sized and unambiguous — a
+ * chart, not a QWERTY board.
+ */
+.bnk {
+  border: 1px solid hsl(var(--border));
+  border-radius: 14px;
+  background: hsl(var(--card));
+  padding: 0 10px 10px;
+  font-size: 13px;
+  color: hsl(var(--foreground));
+}
+
+/* A floating window, not an inline panel.
+ *
+ * Inline, it sat directly under the switch that opened it and covered the field
+ * being typed into — five rows of keys on top of the text you were writing.
+ * Fixed to the viewport and draggable by its title bar instead, so it can be
+ * parked wherever the typist's own text is not.
+ *
+ * The z-index sits above the page and its dropdowns and below a modal dialog:
+ * the keyboard is a tool used *with* the page, never something that blocks it.
+ */
+.bnk--float {
+  position: fixed;
+  z-index: 55;
+  overflow: hidden;
+  /* Two shadows: a wide soft one to lift it off the page, and a tight one to
+     give the edge definition against a card of the same colour. */
+  box-shadow:
+    0 18px 44px -12px hsl(258 40% 12% / 0.28),
+    0 2px 6px hsl(258 40% 12% / 0.1);
+  /* Opaque: it overlaps text by design, and a translucent keyboard over prose
+     is unreadable in both directions. */
+  background: hsl(var(--card));
+}
+
+.bnk--float.is-dragging {
+  user-select: none;
+  cursor: grabbing;
+  /* Lifted a little further while it is in the air. */
+  box-shadow:
+    0 26px 60px -14px hsl(258 40% 12% / 0.34),
+    0 3px 8px hsl(258 40% 12% / 0.12);
+}
+
+/* ---- title bar, which is also the drag handle */
+.bnk-drag {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 -10px 8px;
+  padding: 7px 10px 7px 12px;
+  border-bottom: 1px solid hsl(var(--border));
+  /* A quiet tint of the brand colour: enough to read as a window chrome, not
+     enough to compete with the keys. */
+  background: linear-gradient(
+    to bottom,
+    hsl(var(--primary) / 0.09),
+    hsl(var(--primary) / 0.04)
+  );
+  cursor: grab;
+  /* Without this a touch drag scrolls the page instead of moving the panel. */
+  touch-action: none;
+}
+
+.bnk-drag:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: -2px;
+}
+
+.is-dragging .bnk-drag {
+  cursor: grabbing;
+}
+
+.bnk-grip {
+  color: hsl(var(--primary) / 0.6);
+  flex-shrink: 0;
+}
+
+.bnk-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: hsl(var(--primary));
+}
+
+.bnk-spacer {
+  flex: 1 1 auto;
+}
+
+/* The close button reads as window chrome, so it is quiet until hovered. */
+.bnk-win {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: hsl(var(--muted-foreground));
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.bnk-win:hover {
+  background: hsl(var(--destructive) / 0.12);
+  color: hsl(var(--destructive));
+}
+
+/* ---- the pane switcher, and the two keys that live beside it */
+.bnk-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+/* A segmented control: one track, three segments. Three loose pills read as
+   three unrelated buttons. */
+.bnk-tabs {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 999px;
+  background: hsl(var(--muted));
+}
+
+.bnk-tab {
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  padding: 4px 11px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.6;
+  color: hsl(var(--muted-foreground));
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.bnk-tab:hover {
+  color: hsl(var(--foreground));
+}
+
+.bnk-tab.is-on {
+  background: hsl(var(--card));
+  color: hsl(var(--primary));
+  box-shadow: 0 1px 2px hsl(258 40% 12% / 0.12);
+}
+
+/* ---- captioned groups */
+.bnk-pad {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.bnk-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* A hairline caption: it orients the eye and then gets out of the way. */
+.bnk-cap {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: hsl(var(--muted-foreground) / 0.85);
+}
+
+.bnk-group-keys {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bnk-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* ---- the keys */
+.bnk-key {
+  /* Even widths make it a chart. A key that grows to fit its glyph turns the
+     rows into ragged columns and the eye has to hunt for every letter. */
+  min-width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 9px;
+  /* A one-pixel highlight along the top and a slightly darker floor: the whole
+     of the "key cap" effect, without an image. */
+  background: linear-gradient(to bottom, hsl(var(--card)), hsl(var(--muted) / 0.55));
+  box-shadow: 0 1px 0 hsl(var(--border));
+  /* Bengali needs the extra room: the vowel signs sit above the letter and the
+     matras below it, and at a Latin cap height they are clipped. */
+  font-size: 16px;
+  line-height: 1;
+  color: hsl(var(--foreground));
+  cursor: pointer;
+  transition: background-color 0.1s ease, border-color 0.1s ease, transform 0.06s ease,
+    box-shadow 0.1s ease;
+}
+
+.bnk-key:hover {
+  border-color: hsl(var(--primary) / 0.55);
+  background: hsl(var(--primary) / 0.08);
+  color: hsl(var(--primary));
+}
+
+/* Pressed, and it looks pressed — the only feedback that a tap registered,
+   since the character lands in a field somewhere else on the screen. */
+.bnk-key:active {
+  transform: translateY(1px);
+  box-shadow: none;
+  background: hsl(var(--primary) / 0.16);
+}
+
+.bnk-key:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 1px;
+}
+
+/* A sign is not a letter: the dotted circle it hangs on is drawn faintly so the
+   mark itself is what the eye lands on. */
+.bnk-key--mark {
+  color: hsl(var(--muted-foreground));
+  background: hsl(var(--muted) / 0.4);
+}
+
+.bnk-key--mark:hover {
+  color: hsl(var(--primary));
+}
+
+/* space and backspace: the same cap, in the bar rather than the chart. */
+.bnk-key--util {
+  height: 30px;
+  min-width: 30px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.bnk-wide {
+  min-width: 74px;
+}
+
+.bnk-hint {
+  margin-top: 2px;
+  font-size: 11.5px;
+  line-height: 1.75;
+  color: hsl(var(--muted-foreground));
+}
+
+.bnk-hint b {
+  color: hsl(var(--foreground));
+  font-weight: 700;
+}
+
+/* Rows fill the panel: every key the same size, ten across, and the row
+   lengths balanced in `rows()` so no line is a stub. */
+.bnk-row {
+  display: flex;
+  gap: 4px;
+}
+
+.bnk-key {
+  /* `flex: 1` with a floor: the keys share the row exactly, so a nine-key row
+     and a ten-key row both reach the right edge instead of leaving a ragged
+     margin — and a Bangla glyph still gets its 36px. */
+  flex: 1 1 0;
+}
+
+/* from index.css */
+.bnk--float {
+  box-shadow: 0 18px 44px -12px #1a122b47,0 2px 6px #1a122b1a;
+}
+
+.bnk--float.is-dragging {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  box-shadow: 0 26px 60px -14px #1a122b57,0 3px 8px #1a122b1f;
+}
+
+.bnk-win {
+  transition: background-color .12s ease,color .12s ease;
+}
+
+.bnk-tab {
+  transition: background-color .12s ease,color .12s ease;
+}
+
+.bnk-tab.is-on {
+  box-shadow: 0 1px 2px #1a122b1f;
+}
+
+.bnk-key {
+  box-shadow: 0 1px hsl(var(--border));
+  transition: background-color .1s ease,border-color .1s ease,transform .06s ease,box-shadow .1s ease;
+}
+
+/* Shown only when a tap would go nowhere — see the component. */
+.bnk-nowhere {
+  margin: 0 0 6px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: hsl(var(--secondary));
+  color: hsl(var(--secondary-foreground));
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
+}

@@ -1,0 +1,250 @@
+/* ============================== toasts ==============================
+ *
+ * The app's answer to "did that work?", shared by all three apps.
+ *
+ * It lives here and is imported by the component itself, because it has gone
+ * missing twice from an app that had its own copy: without it `position:
+ * static` puts the stack in normal flow *below* the page — off screen, for
+ * every confirmation and every error. The pharmacy was the last to lose it.
+ *
+ * Top right, under the top bar and clear of a page's own actions; a close
+ * button; a bar that runs down as the clock does; and a little bounce in and
+ * a slide out, so it is noticed arriving and does not blink away mid-read.
+ */
+.toast-stack {
+  position: fixed;
+  top: 4.25rem;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  width: min(370px, calc(100vw - 32px));
+  /* The stack never swallows a click; the toasts opt back in. */
+  pointer-events: none;
+}
+
+/* A phone's top edge is where the status bar lives. */
+@media (max-width: 767px) {
+  .toast-stack {
+    top: calc(0.5rem + env(safe-area-inset-top, 0px));
+    right: 16px;
+    gap: 8px;
+  }
+  /* Two at a time on a phone: four covered the whole bill. */
+  .toast-stack > .toast:nth-last-child(n + 3) {
+    display: none;
+  }
+}
+
+.toast {
+  /* Each kind sets its own hue; everything below is drawn from it. */
+  --toast-h: 152 55% 42%;
+
+  pointer-events: auto;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 11px 12px 13px 11px;
+  border: 1px solid hsl(var(--toast-h) / 0.28);
+  border-radius: 16px;
+  /* The tint is layered on the solid card, never translucent on its own — the
+     page underneath must not show through the message. */
+  background:
+    linear-gradient(135deg, hsl(var(--toast-h) / 0.13), hsl(var(--toast-h) / 0.04) 60%),
+    hsl(var(--card));
+  box-shadow:
+    0 16px 34px -14px hsl(var(--toast-h) / 0.45),
+    0 2px 8px hsl(220 30% 10% / 0.08);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: hsl(var(--card-foreground));
+  animation: toast-in 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(24px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.toast.is-leaving {
+  animation: toast-out 0.22s ease-in forwards;
+}
+
+@keyframes toast-out {
+  to {
+    opacity: 0;
+    transform: translateX(40px) scale(0.96);
+  }
+}
+
+/* The icon sits in a soft round bubble of its own colour, and pops in just
+   after the card lands. */
+.toast-icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: hsl(var(--toast-h) / 0.16);
+  color: hsl(var(--toast-h));
+  animation: toast-pop 0.5s 0.12s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes toast-pop {
+  from {
+    transform: scale(0.3) rotate(-25deg);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+.toast-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Quiet until hovered: it is a way out, not the point of the message. */
+.toast-close {
+  flex-shrink: 0;
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: hsl(var(--muted-foreground));
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease, transform 0.12s ease;
+}
+
+.toast-close:hover {
+  background: hsl(var(--toast-h) / 0.14);
+  color: hsl(var(--foreground));
+  transform: rotate(90deg);
+}
+
+/*
+ * The clock, drawn along the bottom edge.
+ *
+ * `scaleX` from a left origin rather than an animated `width`: a transform is
+ * composited, so the bar does not lay out the page sixty times a second. The
+ * duration is set inline from the same number the timer uses.
+ */
+.toast-bar {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 4px;
+  height: 3px;
+  border-radius: 999px;
+  background: hsl(var(--toast-h) / 0.75);
+  transform-origin: left;
+  animation-name: toast-run;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes toast-run {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+/* Hovering stops the bar — and the component stops the clock with it. */
+.toast.is-paused .toast-bar {
+  animation-play-state: paused;
+}
+
+.toast-success {
+  --toast-h: 152 55% 40%;
+}
+
+.toast-info {
+  --toast-h: var(--primary);
+}
+
+.toast-warning {
+  --toast-h: 35 92% 46%;
+}
+
+/* An error gives a small shake as it lands: it is asking to be read. */
+.toast-error {
+  --toast-h: var(--destructive);
+  animation:
+    toast-in 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) both,
+    toast-shake 0.4s 0.4s ease-in-out;
+}
+
+@keyframes toast-shake {
+  20%,
+  60% {
+    transform: translateX(-4px);
+  }
+  40%,
+  80% {
+    transform: translateX(4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast,
+  .toast-error,
+  .toast-icon,
+  .toast.is-leaving {
+    animation: none;
+  }
+  /* The bar still has to run: it is information, not decoration. */
+}
+
+/*
+ * A screen can ask for its toasts somewhere else.
+ *
+ * The POS keeps the figure being paid and the payment boxes in the top-right
+ * corner — exactly where a toast lands — so a warning about a strip's date
+ * covered the number the counter was reading off to the customer. It puts
+ * `toasts-bottom-left` on the body and they rise over the bill instead.
+ */
+.toasts-bottom-left .toast-stack {
+  top: auto;
+  right: auto;
+  left: 20px;
+  bottom: 5.5rem;
+  flex-direction: column-reverse;
+}
+
+/* A phone stacks the payment under the bill, so there the free space is the
+   top of the bill, just under the search box. */
+@media (max-width: 767px) {
+  .toasts-bottom-left .toast-stack {
+    top: 7.5rem;
+    bottom: auto;
+    left: 16px;
+    right: 16px;
+    width: auto;
+    flex-direction: column;
+  }
+}
