@@ -6,6 +6,8 @@ export const BRAND = {
   name: 'Dawai',
   console: 'Operator console',
   /** Where shop owners sign in, for an operator who landed on the wrong door. */
-  shopUrl: import.meta.env.VITE_SHOP_URL || 'https://shop.dawai.com.bd',
+  shopUrl:
+    import.meta.env.VITE_SHOP_URL ||
+    (import.meta.env.DEV ? 'http://localhost:5175' : 'https://shop.dawai.com.bd'),
   consoleHost: 'console.dawai.com.bd',
 } as const;
