@@ -12,11 +12,14 @@ import * as leads from '../services/lead.service.js';
 import { requireAuth, requireRole, requirePermission } from '../middlewares/auth.js';
 import { PLATFORM_ROLES, PLATFORM_OWNER_ROLES } from '../types/roles.js';
 import * as team from '../services/platformTeam.service.js';
+import catalogueRoutes from './catalogue.routes.js';
 import { PERMISSIONS } from '../types/permissions.js';
 import { validate } from '../middlewares/validate.js';
 import {
   createOrganizationSchema,
   setUserPasswordSchema,
+  resetTwoFactorSchema,
+  teamPasswordSchema,
   shopProfileSchema,
   shopUserSchema,
 } from '../validators/auth.validator.js';
@@ -63,6 +66,23 @@ router.get(
     isOwner: req.user!.role === 'platformAdmin',
   })),
 );
+
+/** Your own name and phone. Anything that is access goes through a colleague. */
+router.patch(
+  '/me',
+  validate(
+    z
+      .object({
+        name: z.string().trim().min(1).max(80).optional(),
+        phone: z.string().trim().max(20).optional(),
+      })
+      .refine((v) => Object.keys(v).length > 0, { message: 'Nothing to update' }),
+  ),
+  handle((req) => team.updateSelf(req.user!.id, req.body), 'Saved'),
+);
+
+/* The shared catalogue and the shops' requests for it — see catalogue.routes.ts. */
+router.use(catalogueRoutes);
 
 /* ---------------------------------- shops ---------------------------------- */
 
@@ -326,6 +346,26 @@ router.post(
   }, 'Password set. The user has been emailed and signed out everywhere.'),
 );
 
+/**
+ * A shop user's lost phone. Behind `shops.credentials`, like setting their
+ * password: either one hands the account to whoever asked.
+ */
+router.post(
+  '/organizations/:id/users/:userId/two-factor/reset',
+  requirePermission('shops.credentials'),
+  validate(resetTwoFactorSchema),
+  handle(async (req) => {
+    const target = await platform.resetShopUserTwoFactor(req.params.id, req.params.userId);
+    await audit(
+      req,
+      'user.platform_2fa_reset',
+      { model: 'User', id: target.id, label: target.email },
+      { after: { reason: req.body.reason, shop: req.params.id } },
+    );
+    return { id: target.id, email: target.email, name: target.name };
+  }, 'Two-factor reset. They can sign in with their password and turn it on again.'),
+);
+
 /* ---------------------------------- audit ---------------------------------- */
 
 /**
@@ -412,6 +452,8 @@ const teamCreateSchema = z.object({
 
 const teamUpdateSchema = z.object({
   name: z.string().trim().min(1).max(80).optional(),
+  email: z.string().trim().email().optional(),
+  phone: z.string().trim().max(20).optional(),
   permissions: z.array(z.enum(PERMISSIONS)).optional(),
   preset: z.string().trim().max(30).optional(),
   isActive: z.boolean().optional(),
@@ -448,7 +490,57 @@ router.patch(
   '/team/:id',
   requirePermission('team.manage'),
   validate(teamUpdateSchema),
-  handle((req) => team.updateMember(req.params.id, req.user!.id, req.body), 'Access updated'),
+  handle(async (req) => {
+    const member = await team.updateMember(
+      req.params.id,
+      { id: req.user!.id, role: req.user!.role },
+      req.body,
+    );
+    await audit(
+      req,
+      'team.member_update',
+      { model: 'User', id: member.id, label: `platform team: ${member.email}` },
+      { after: req.body },
+    );
+    return member;
+  }, 'Saved'),
+);
+
+/**
+ * Setting a colleague's password, for the one locked out of the console.
+ *
+ * Not for your own — that is Change password, which asks for the current one.
+ * Every session the colleague had ends.
+ */
+router.post(
+  '/team/:id/password',
+  requirePermission('team.manage'),
+  validate(teamPasswordSchema),
+  handle(async (req) => {
+    const target = await team.setMemberPassword(
+      req.params.id,
+      { id: req.user!.id, role: req.user!.role },
+      req.body.newPassword,
+    );
+    // Who and when, never the password.
+    await audit(req, 'team.member_password', {
+      model: 'User',
+      id: target.id,
+      label: `platform team: ${target.email}`,
+    });
+    return { id: target.id };
+  }, 'Password set. They have been signed out everywhere.'),
+);
+
+/** A colleague's lost phone. Same guard as their password. */
+router.post(
+  '/team/:id/two-factor/reset',
+  requirePermission('team.manage'),
+  handle(async (req) => {
+    const target = await team.resetMemberTwoFactor(req.params.id, { id: req.user!.id, role: req.user!.role });
+    await audit(req, 'team.member_2fa_reset', { model: 'User', id: target.id, label: `platform team: ${target.email}` });
+    return { id: target.id };
+  }, 'Two-factor reset. They set it up again on their next sign-in.'),
 );
 
 router.delete(

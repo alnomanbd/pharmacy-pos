@@ -110,6 +110,26 @@ export async function disableTwoFactor(userId: string, code: string) {
 }
 
 /**
+ * Clears somebody's second factor for them: the phone is lost and so are the
+ * recovery codes. Done by an operator, never by the person, because the person
+ * cannot prove who they are without it. Their sessions end too, so whoever
+ * holds the lost phone is not left signed in. An operator account is sent
+ * straight to setup on the next sign-in; a shop account simply signs in with
+ * the password again and can turn it back on.
+ */
+export async function resetTwoFactor(userId: string) {
+  const user = await UserModel.findById(userId);
+  if (!user) throw notFound('User');
+  user.set('twoFactorEnabled', false);
+  user.set('twoFactorSecret', '');
+  user.set('twoFactorRecoveryCodes', []);
+  user.set('sessions', []);
+  await user.save();
+  logger.warn({ userId }, 'Two-factor authentication reset by an operator');
+  return { id: String(user._id), email: user.email, name: user.name };
+}
+
+/**
  * Checks a code at sign-in — a TOTP, or one recovery code, used once.
  *
  * A spent recovery code is removed rather than marked, so there is no state to

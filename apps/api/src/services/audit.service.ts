@@ -149,6 +149,23 @@ const PLATFORM_ACTIONS: readonly string[] = [
   'organization.platform_profile',
   'user.platform_update',
   'user.platform_password',
+
+  /* The shared catalogue, and the shops' requests for what it lacks. */
+  'catalogue.medicine_create',
+  'catalogue.medicine_update',
+  'catalogue.medicine_delete',
+  'catalogue.ref_create',
+  'catalogue.ref_update',
+  'catalogue.ref_delete',
+  'catalogue.request_approve',
+  'catalogue.request_reject',
+
+  /* The console's own people. */
+  'user.update',
+  'team.member_update',
+  'team.member_password',
+  'team.member_2fa_reset',
+  'user.platform_2fa_reset',
 ];
 
 export async function listPlatformAuditLogs(

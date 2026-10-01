@@ -112,6 +112,18 @@ export const setUserPasswordSchema = z.object({
   reason: z.string().trim().min(5, 'Say why this password is being set').max(300),
 });
 
+/** Why a shop user's second factor is being cleared. Read by people, in the audit trail. */
+export const resetTwoFactorSchema = z.object({
+  reason: z.string().trim().min(5, 'Say why two-factor is being reset').max(300),
+});
+
+/**
+ * Setting a colleague's console password. The same rule as every other
+ * password; no reason field, because the trail already names who did it and a
+ * colleague is not a customer.
+ */
+export const teamPasswordSchema = z.object({ newPassword: password });
+
 /**
  * An account opened by an operator for a customer who asked over the phone.
  *

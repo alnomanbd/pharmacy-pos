@@ -35,6 +35,7 @@ import { validate } from '../middlewares/validate.js';
 import { csvFilename } from '../utils/csv.js';
 import { bdMobile, BD_MOBILE_MESSAGE } from '../utils/phone.js';
 import { ok, created } from '../utils/response.js';
+import medicineRequestRoutes from './shopMedicineRequest.routes.js';
 
 /**
  * The shop's own API.
@@ -51,6 +52,9 @@ const router = Router();
  * separately in `till.routes.ts` and admits the salesman, who may sell and may
  * not see what anything cost.
  */
+/* Any shop role may ask for a missing medicine, so these sit ahead of the gate. */
+router.use('/medicine-requests', medicineRequestRoutes);
+
 router.use(requireAuth, requireWritableTenant, requireRole(...SHOP_ADMIN_ROLES));
 
 /* Every change that succeeds goes on the owner's Activity page. */

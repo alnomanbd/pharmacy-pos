@@ -1,7 +1,9 @@
+import { resetTwoFactor } from './twoFactor.service.js';
 import {
   OrganizationModel,
   UserModel,
   PaymentModel,
+  MedicineRequestModel,
   SaleModel,
   ShopProductModel,
   ShopCounterModel,
@@ -26,12 +28,14 @@ export const TRIAL_DAYS = 14;
 const DAY_MS = 86_400_000;
 
 export async function platformStats() {
-  const [byStatus, byPlan, total, signupsThisWeek, pendingPayments] = await Promise.all([
+  const [byStatus, byPlan, total, signupsThisWeek, pendingPayments, pendingMedicineRequests] = await Promise.all([
     OrganizationModel.aggregate<{ _id: string; n: number }>([{ $group: { _id: '$status', n: { $sum: 1 } } }]),
     OrganizationModel.aggregate<{ _id: string; n: number }>([{ $group: { _id: '$plan', n: { $sum: 1 } } }]),
     OrganizationModel.countDocuments({}),
     OrganizationModel.countDocuments({ createdAt: { $gte: new Date(Date.now() - 7 * DAY_MS) } }),
     PaymentModel.countDocuments({ status: 'pending' }),
+    // For the console's nav badge: shops waiting on the catalogue team.
+    MedicineRequestModel.countDocuments({ status: 'pending' }),
   ]);
 
   const tally = (rows: { _id: string; n: number }[]) =>
@@ -44,6 +48,7 @@ export async function platformStats() {
     byPlan: tally(byPlan),
     pending: byStatus.find((r) => r._id === 'pending')?.n ?? 0,
     pendingPayments,
+    pendingMedicineRequests,
   };
 }
 
@@ -347,6 +352,12 @@ export async function setShopUserPassword(
   });
 
   return { id: String(user._id), email: user.email, name: user.name };
+}
+
+/** A shop user who lost their phone: see `resetTwoFactor`. */
+export async function resetShopUserTwoFactor(orgId: string, userId: string) {
+  const user = await shopUserOf(orgId, userId);
+  return resetTwoFactor(String(user._id));
 }
 
 /**

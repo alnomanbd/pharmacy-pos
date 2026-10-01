@@ -17,6 +17,13 @@ export {
   type MedicineGeneric,
 } from './MedicineReference.js';
 export {
+  MedicineRequestModel,
+  MEDICINE_REQUEST_STATUS,
+  type MedicineRequest,
+  type MedicineRequestDoc,
+  type MedicineRequestStatus,
+} from './MedicineRequest.js';
+export {
   NotificationLogModel,
   type NotificationLog,
   type NotificationLogDoc,

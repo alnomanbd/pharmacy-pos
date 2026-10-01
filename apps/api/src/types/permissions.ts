@@ -68,6 +68,18 @@ export const PERMISSIONS = [
   /** Edit the catalogue every shop stocks from. */
   'formulary.manage',
 
+  /**
+   * See the shared medicine catalogue and the queue of medicines shops have
+   * asked for. Read-only: a support agent answering "why can't I find Napa
+   * Extend?" needs to look, not to edit.
+   */
+  'catalogue.view',
+  /**
+   * Add, edit, deactivate or delete catalogue rows, and approve or reject a
+   * shop's request. One wrong edit reaches every shop on the deployment.
+   */
+  'catalogue.manage',
+
   'requests.view',
   'requests.manage',
 
@@ -119,6 +131,7 @@ export const PERMISSION_PRESETS: Record<string, { label: string; description: st
       'shops.view',
       'payments.view',
       'requests.view',
+      'catalogue.view',
       'support.view',
       'support.reply',
       'leads.view',
@@ -140,7 +153,14 @@ export const PERMISSION_PRESETS: Record<string, { label: string; description: st
   catalogue: {
     label: 'Catalogue',
     description: 'Curate the shared medicine list and answer shops’ requests.',
-    permissions: ['formulary.view', 'formulary.manage', 'requests.view', 'requests.manage'],
+    permissions: [
+      'formulary.view',
+      'formulary.manage',
+      'requests.view',
+      'requests.manage',
+      'catalogue.view',
+      'catalogue.manage',
+    ],
   },
   operations: {
     label: 'Operations',
@@ -157,6 +177,8 @@ export const PERMISSION_PRESETS: Record<string, { label: string; description: st
       'plans.view',
       'requests.view',
       'requests.manage',
+      'catalogue.view',
+      'catalogue.manage',
       'support.view',
       'support.reply',
       'leads.view',

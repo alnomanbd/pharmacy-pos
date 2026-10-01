@@ -446,3 +446,42 @@ export async function verifyEmail(to: { email: string; name: string; url: string
     ),
   });
 }
+
+/* ------------------------------------------------------------------ */
+/* The catalogue                                                       */
+/* ------------------------------------------------------------------ */
+
+const escapeHtml = (s: string) =>
+  s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+
+/**
+ * Tells a shop its medicine request was answered.
+ *
+ * Without it the request disappears into a queue and the pharmacist asks again
+ * next week, or stops asking. The brand and the reason were typed by people, so
+ * both are escaped before they go into the HTML.
+ */
+export async function medicineRequestDecided(to: {
+  email: string;
+  name: string;
+  brandName: string;
+  added: boolean;
+  reason?: string;
+}) {
+  const b = BRAND;
+  const what = to.added
+    ? `${to.brandName} is now in the ${b.name} catalogue. Search for it on the Products page to add it to your shop.`
+    : `We could not add ${to.brandName} to the catalogue.${to.reason ? ` Reason: ${to.reason}` : ''}`;
+  await sendEmail({
+    fromName: b.name,
+    to: to.email,
+    subject: to.added ? `${to.brandName} has been added to ${b.name}` : `Your request for ${to.brandName}`,
+    text: `Dear ${to.name},\n\n${what}\n\n— ${b.name}`,
+    html: wrap(
+      to.added ? 'Your medicine was added' : 'About your medicine request',
+      `<p>Dear ${escapeHtml(to.name)},</p><p>${escapeHtml(what)}</p>`,
+      undefined,
+      b,
+    ),
+  });
+}

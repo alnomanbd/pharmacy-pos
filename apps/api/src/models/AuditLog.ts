@@ -99,6 +99,26 @@ export const AUDIT_ACTIONS = [
    * shop, the user and the reason they had to type. Never the password.
    */
   'user.platform_password',
+
+  /*
+   * The shared catalogue. One edit here reaches every shop on the deployment,
+   * so each one carries the operator who made it.
+   */
+  'catalogue.medicine_create',
+  'catalogue.medicine_update',
+  'catalogue.medicine_delete',
+  'catalogue.ref_create',
+  'catalogue.ref_update',
+  'catalogue.ref_delete',
+  /** A shop's medicine request, answered. */
+  'catalogue.request_approve',
+  'catalogue.request_reject',
+
+  /** A colleague's details or access changed, or their password set for them. */
+  'team.member_update',
+  'team.member_password',
+  'team.member_2fa_reset',
+  'user.platform_2fa_reset',
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 

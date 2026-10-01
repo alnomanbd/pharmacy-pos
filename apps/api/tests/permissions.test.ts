@@ -101,6 +101,24 @@ describe('the presets', () => {
     expect(hasPermission(cat, 'payments.verify')).toBe(false);
   });
 
+  it('let support look at the catalogue and the operations team curate it', () => {
+    // Support answers "why can't I find this brand?" by looking; operations
+    // answers the request by adding it.
+    expect(PERMISSIONS).toContain('catalogue.view');
+    expect(PERMISSIONS).toContain('catalogue.manage');
+    const support = { role: 'platformStaff', permissions: PERMISSION_PRESETS.support.permissions };
+    expect(hasPermission(support, 'catalogue.view')).toBe(true);
+    expect(hasPermission(support, 'catalogue.manage')).toBe(false);
+    const ops = { role: 'platformStaff', permissions: PERMISSION_PRESETS.operations.permissions };
+    expect(hasPermission(ops, 'catalogue.view')).toBe(true);
+    expect(hasPermission(ops, 'catalogue.manage')).toBe(true);
+    const cat = { role: 'platformStaff', permissions: PERMISSION_PRESETS.catalogue.permissions };
+    expect(hasPermission(cat, 'catalogue.manage')).toBe(true);
+    const billing = { role: 'platformStaff', permissions: PERMISSION_PRESETS.billing.permissions };
+    expect(hasPermission(billing, 'catalogue.view')).toBe(false);
+    expect(hasPermission({ role: 'platformAdmin' }, 'catalogue.manage')).toBe(true);
+  });
+
   it('keep the dangerous four out of every preset', () => {
     // Deleting a shop, changing prices for everyone, granting access to the
     // console, and setting a customer's password are the owner's to do — a
