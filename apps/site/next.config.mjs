@@ -11,6 +11,9 @@ const nextConfig = {
   output: 'export',
   trailingSlash: true,
   images: { unoptimized: true },
+  // The floating "N" badge in development sits over the page's own corner
+  // buttons and gets mistaken for part of the design in phone reviews.
+  devIndicators: false,
 
   turbopack: {
     /*

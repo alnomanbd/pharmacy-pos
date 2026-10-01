@@ -21,6 +21,10 @@ import { translate } from '@/i18n/dictionary';
  * before you press it. Pressing it hands the page to the browser's own smooth
  * scroll — the same ride every in-page anchor on this site already takes.
  *
+ * On a phone it is the cap alone, a 44px round button tucked into the corner.
+ * The labelled capsule is wider than a third of a 360px screen, and floating
+ * over the page it covered a line of every card and FAQ answer it passed.
+ *
  * Reduced motion is honoured: without the transition the jump is instant.
  */
 
@@ -111,8 +115,8 @@ export function GoToTop({ lang }: { lang: Lang }) {
           exit="closed"
           whileHover="hover"
           className={cn(
-            'group fixed bottom-6 end-6 z-40 inline-flex items-center overflow-hidden rounded-full',
-            'border border-border bg-background/85 py-2.5 ps-2.5 pe-4 text-sm font-semibold',
+            'group fixed bottom-4 end-4 z-40 inline-flex items-center overflow-hidden rounded-full sm:bottom-6 sm:end-6',
+            'border border-border bg-background/85 p-1.5 text-sm font-semibold sm:py-2.5 sm:ps-2.5 sm:pe-4',
             'text-foreground shadow-lift backdrop-blur-xl',
             'transition-colors duration-300 hover:border-primary/40',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
@@ -138,7 +142,7 @@ export function GoToTop({ lang }: { lang: Lang }) {
             </svg>
           </motion.span>
 
-          <motion.span variants={label} className="overflow-hidden ps-2.5">
+          <motion.span variants={label} className="hidden overflow-hidden ps-2.5 sm:block">
             <span className="block whitespace-nowrap">{translate(lang, 'nav.backToTop')}</span>
           </motion.span>
 

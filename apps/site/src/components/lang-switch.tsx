@@ -46,7 +46,7 @@ export function LangSwitch({ lang, className }: { lang: Lang; className?: string
       title={`${from.label} → ${to.label}`}
       className={cn(
         'group relative inline-flex h-9 items-center gap-1.5 overflow-hidden rounded-full',
-        'border border-border bg-card/60 px-3 text-2xs font-bold tracking-wide text-foreground backdrop-blur',
+        'border border-border bg-card/60 px-2.5 text-2xs sm:px-3 font-bold tracking-wide text-foreground backdrop-blur',
         'transition-all duration-300 hover:border-primary/40 hover:bg-card hover:shadow-glass',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
         className,
@@ -55,7 +55,7 @@ export function LangSwitch({ lang, className }: { lang: Lang; className?: string
       {/* Spins on press, so the swap reads as the same object turning over.
           Transform only, so it cannot move anything around it. */}
       <motion.span
-        className="relative z-10 grid size-3.5 place-items-center"
+        className="relative z-10 hidden size-3.5 place-items-center sm:grid"
         whileTap={{ rotate: 180 }}
         transition={{ type: 'spring', stiffness: 320, damping: 18 }}
       >

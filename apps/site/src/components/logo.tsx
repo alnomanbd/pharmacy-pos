@@ -61,18 +61,21 @@ export function Logo({
   wordmark = siteConfig.wordmark,
   product = siteConfig.product,
   markClassName,
+  productClassName,
 }: {
   className?: string;
   wordmark?: string;
   product?: string;
   markClassName?: string;
+  /** The header hides the product line on the narrowest phones; see site-header. */
+  productClassName?: string;
 }) {
   return (
     <span className={cn('inline-flex items-center gap-2.5', className)}>
       <Mark className={cn('size-9', markClassName)} />
       <span className="flex flex-col leading-none">
         <span className="text-[0.95rem] font-extrabold tracking-[-0.03em]">{wordmark}</span>
-        <span className="mt-0.5 text-2xs font-semibold uppercase tracking-[0.2em] text-primary">
+        <span className={cn('mt-0.5 text-2xs font-semibold uppercase tracking-[0.2em] text-primary', productClassName)}>
           {product}
         </span>
       </span>

@@ -275,11 +275,11 @@
    * rather than as a rectangle drawn on the page.
    */
   .shell {
-    @apply relative z-10 mx-auto w-full max-w-[1240px] px-5 sm:px-8;
+    @apply relative z-10 mx-auto w-full max-w-[1240px] px-4 sm:px-8;
   }
 
   .shell-wide {
-    @apply relative z-10 mx-auto w-full max-w-[1440px] px-5 sm:px-8;
+    @apply relative z-10 mx-auto w-full max-w-[1440px] px-4 sm:px-8;
   }
 
   /* The ramp, as text. Used exactly once per page, on the hero's last line. */

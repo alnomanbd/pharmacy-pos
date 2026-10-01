@@ -4,7 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, ArrowUpRight, Sparkles } from 'lucide-react';
+import { Menu, ArrowUpRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { siteConfig, type Lang } from '@/lib/site';
 import { translate } from '@/i18n/dictionary';
@@ -33,6 +33,12 @@ import {
  * The nav underline is a shared `layoutId` between the active link and a
  * background pill, so switching pages slides the highlight across rather than
  * cutting to the new one.
+ *
+ * It has to fit a 300px phone: the logo, the language and theme switches and
+ * the menu button in one row. Below `sm` the gaps tighten, the language switch
+ * drops its globe, and below 360px the logo drops its product line. Without
+ * that the menu button is pushed off the right edge, and on a phone the menu
+ * is the only way around the site.
  */
 
 function navItems(lang: Lang) {
@@ -70,7 +76,7 @@ export function SiteHeader({ lang }: { lang: Lang }) {
         <div className="shell-wide">
           <div
             className={cn(
-              'flex items-center gap-3 rounded-full px-3 py-2.5 transition-all duration-500 ease-spring sm:px-4',
+              'flex items-center gap-2 rounded-full px-2 py-2 transition-all duration-500 ease-spring sm:gap-3 sm:px-4 sm:py-2.5',
               scrolled
                 ? 'border border-border bg-background/80 shadow-lift backdrop-blur-xl'
                 : 'border border-transparent bg-transparent',
@@ -78,10 +84,14 @@ export function SiteHeader({ lang }: { lang: Lang }) {
           >
             <Link
               href={`/${lang}`}
-              className="shrink-0 rounded-full pr-1 outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="min-w-0 shrink-0 rounded-full pr-1 outline-none focus-visible:ring-2 focus-visible:ring-ring"
               aria-label={siteConfig.shortName}
             >
-              <Logo wordmark={siteConfig.wordmark} product={siteConfig.product} />
+              <Logo
+                wordmark={siteConfig.wordmark}
+                product={siteConfig.product}
+                productClassName="hidden min-[360px]:block"
+              />
             </Link>
 
             <nav className="mx-auto hidden items-center gap-1 lg:flex">
@@ -111,7 +121,7 @@ export function SiteHeader({ lang }: { lang: Lang }) {
               })}
             </nav>
 
-            <div className="ms-auto flex items-center gap-2 lg:ms-0">
+            <div className="ms-auto flex shrink-0 items-center gap-1.5 sm:gap-2 lg:ms-0">
               <LangSwitch lang={lang} />
               <ThemeToggle />
 
@@ -165,15 +175,6 @@ export function SiteHeader({ lang }: { lang: Lang }) {
                         </Link>
                       </SheetClose>
                     ))}
-                    <SheetClose asChild>
-                      <Link
-                        href={`/${lang}/demo`}
-                        className="mt-2 flex items-center gap-2 rounded-2xl bg-primary/10 px-4 py-3.5 text-lg font-semibold tracking-tight text-primary transition-colors hover:bg-primary/15"
-                      >
-                        <Sparkles className="size-4" />
-                        {translate(lang, 'nav.demo')}
-                      </Link>
-                    </SheetClose>
                   </nav>
 
                   <div className="flex flex-col gap-2.5 border-t border-border p-4">
