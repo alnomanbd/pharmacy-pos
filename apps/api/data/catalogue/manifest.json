@@ -1,0 +1,26 @@
+{
+  "exportedAt": "2026-10-01T19:59:13.391Z",
+  "format": "ndjson+gzip, canonical extended JSON",
+  "collections": {
+    "medicinegroups": {
+      "file": "medicinegroups.ndjson.gz",
+      "count": 467,
+      "sha256": "ddf58ae904e9f00551c1a930c2225dcbc9a526002e276c3b42333fc66898748d"
+    },
+    "medicinecompanies": {
+      "file": "medicinecompanies.ndjson.gz",
+      "count": 358,
+      "sha256": "ab8fc2df07abc6a231c87ec75edb2046a69443743b73a967592778c92fbf023e"
+    },
+    "medicinegenerics": {
+      "file": "medicinegenerics.ndjson.gz",
+      "count": 2039,
+      "sha256": "a4a35fa9e5a85ceee73f142227850792147cc50e33ecb04ef8e7758bea2a7345"
+    },
+    "medicines": {
+      "file": "medicines.ndjson.gz",
+      "count": 46303,
+      "sha256": "aeee9b46abe989ee7b15805cc63459583a5111117fe4d54ffc11529da2fe2cdc"
+    }
+  }
+}
