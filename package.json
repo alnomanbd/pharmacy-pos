@@ -1,0 +1,35 @@
+{
+  "name": "dawai",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Dawai - pharmacy POS sold as SaaS: the API, the shop app, the operator console and the marketing site",
+  "scripts": {
+    "install:all": "npm install && npm --prefix apps/api install && npm --prefix apps/site install",
+    "dev": "concurrently -n api,shop,console -c blue,green,magenta \"npm --prefix apps/api run dev\" \"npm run dev -w @dawai/shop\" \"npm run dev -w @dawai/console\"",
+    "dev:api": "npm --prefix apps/api run dev",
+    "dev:shop": "npm run dev -w @dawai/shop",
+    "dev:console": "npm run dev -w @dawai/console",
+    "dev:site": "npm --prefix apps/site run dev",
+    "build": "npm --prefix apps/api run build && npm run build -w @dawai/shop -w @dawai/console && npm --prefix apps/site run build",
+    "typecheck": "npm --prefix apps/api run typecheck && npm run typecheck --workspaces --if-present && npm --prefix apps/site run typecheck",
+    "test": "npm --prefix apps/api run test && npm run test --workspaces --if-present",
+    "test:api": "npm --prefix apps/api run test",
+    "test:shop": "npm run test -w @dawai/shop",
+    "test:console": "npm run test -w @dawai/console",
+    "test:shared": "npm run test -w @dawai/shared",
+    "seed": "npm --prefix apps/api run seed:all",
+    "catalog:restore": "npm --prefix apps/api run catalog:restore",
+    "catalog:export": "npm --prefix apps/api run catalog:export"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "workspaces": [
+    "packages/shared",
+    "apps/shop",
+    "apps/console"
+  ],
+  "engines": {
+    "node": ">=20"
+  }
+}

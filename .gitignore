@@ -1,0 +1,25 @@
+node_modules/
+dist/
+coverage/
+*.log
+*.tsbuildinfo
+.DS_Store
+.vscode/
+.idea/
+
+# Secrets. Every app ships an .env.example instead.
+.env
+.env.*
+!.env.example
+
+# The marketing site's build output.
+apps/site/.next/
+apps/site/out/
+apps/site/next-env.d.ts
+
+# Uploaded files: shop logos, payment screenshots. Customer data, never in git.
+uploads/
+
+# The catalogue CSV is a build intermediate. The catalogue itself is kept in
+# apps/api/data/catalogue (see docs/CATALOGUE.md).
+apps/api/dgda-products.csv
