@@ -1,0 +1,4 @@
+# Fonts are the deployer's choice and ~400KB of binary each — see README.md.
+*.ttf
+*.otf
+*.ttc

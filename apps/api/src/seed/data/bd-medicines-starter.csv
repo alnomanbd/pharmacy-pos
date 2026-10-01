@@ -1,0 +1,701 @@
+﻿id,brandName,genericName,companyName,groupName,dosageForm,strength,packSize,price,description,indications,sideEffects,status,dar
+,2 A A,Paracetamol,Mystic Pharmaceuticals Ltd.,,Tablet,500 mg,,,,,,active,121-0013-006
+,3 Bion,Cyanocobalamin + Pyridoxine Hydrochloride + Vitamin B1,Jenphar Bangladesh Ltd.,Specific combined vitamin preparations,Tablet,200 mcg + 200 mg + 100 mg,60's pack,,,,,active,351-0019-078
+,3 D,Cholecalciferol (Vit. D3),Jenphar Bangladesh Ltd.,,Tablet,2000 IU,,,,,,active,351-0223-078
+,3 F,Levofloxacin,Edruc Ltd.,4-Quinolone preparations,Tablet,500 mg,20's pack,,,,,active,009-0140-023
+,3-C,Cefixime,Edruc Ltd.,,Tablet,400 mg,,,,,,active,009-0230-023
+,3-F,Levofloxacin,Edruc Ltd.,,Tablet,750 mg,,,,,,active,009-0235-023
+,3rd Cef,Cefixime,Medimet Pharmaceuticals Ltd.,Third generation Cephalosporins,Tablet,400 mg,4's pack,,,,,active,201-0105-023
+,5X,Ulipristal Acetate,Renata Limited,Drugs acting on the Uterus,Tablet,30 mg,,,,,,active,002-0760-039
+,A B1,Thiamine Hydrochloride,The ACME Laboratories Ltd.,Vitamin-B preparations,Tablet,100 mg,100's pack,,,,,active,036-0159-078
+,A Ben DS,Albendazole,Team Pharmaceuticals Ltd.,Anthelmintic,Tablet,400 mg,100's pack,,,,,active,301-0041-008
+,A Cal 500,Calcium Carbonate,The ACME Laboratories Ltd.,,Tablet,1250 mg,,,,,,active,036-0280-062
+,A Cal Chewable 250,Calcium Carbonate,The ACME Laboratories Ltd.,,Tablet,625 mg,,,,,,active,036-0279-062
+,A Card,Isosorbide Mononitrate,The ACME Laboratories Ltd.,Nitrates: Coronary vasodilators,Tablet,20 mg,100's pack,,,,,active,036-0298-040
+,A Care,Betacarotene + Vitamin C + Vitamin E,Asiatic Laboratories Ltd.,Anti-oxidant Multivitamin preparations,Tablet,6 mg + 200 mg + 50 mg,20's pack,,,,,active,023-0097-078
+,A Fenac,Diclofenac Sodium,The ACME Laboratories Ltd.,Drugs for Osteoarthritis,Tablet,25 mg,100's pack,,,,,active,036-0090-064
+,A Fenac K,Diclofenac Sodium,The ACME Laboratories Ltd.,Drugs for Osteoarthritis,Tablet,50 mg,50's pack,,,,,active,036-0206-064
+,A Flox,Flucloxacillin,The ACME Laboratories Ltd.,Penicillinase-resistant penicillins,Capsule,250 mg,48's pack,,,,,active,036-0194-023
+,A Mycin,Erythromycin,Aristopharma Limited,Macrolides,Tablet,250 mg,100's pack,,,,,active,143-0061-023
+,A Rox,Roxithromycin,Ambee Pharmaceuticals Ltd.,Macrolides,Tablet,150 mg,30's pack,,,,,active,192-0136-023
+,A S A,Aspirin,Apex Pharma Ltd.,,Tablet,300 mg,,,,,,active,170-0097-006
+,A Spasm,Oxyphenonium Bromide,The ACME Laboratories Ltd.,Anticholinergics (antimuscarinics)/ Anti-spasmodics,Tablet,5 mg,100's pack,,,,,active,036-0122-011
+,A vastrol 20 Tablet,Atorvastatin,Centeon Pharma Ltd.,,Tablet,20 mg,,,,,,active,386-0018-061
+,A Zyme,Pancreatin,The ACME Laboratories Ltd.,Digestive Enzyme,Tablet,325 mg,100's pack,,,,,active,036-0154-051
+,A-Cal D,Calcium + Vitamin D3,The ACME Laboratories Ltd.,Specific mineral & vitamin combined preparations,Tablet,500 mg + 200 IU,15's pack,,,,,active,036-0537-062
+,A-Meb,Mebeverine Hydrochloride,The ACME Laboratories Ltd.,Anticholinergics,Tablet,135 mg,50's pack,,,,,active,036-0750-011
+,A-Mectin,Ivermectin,The ACME Laboratories Ltd.,Anthelmintic,Tablet,3 mg,10's pack,,,,,active,036-1045-008
+,A-One XR,Paracetamol,Apex Pharma Ltd.,Non opioid analgesics,Xr Tablet,665 mg,100's pack,,,,,active,170-0274-006
+,A-Pak,Aceclofenac,Benham Pharmaceuticals Ltd.,Drugs for Osteoarthritis,Tablet,100 mg,100's pack,,,,,active,125-0048-064
+,A-Pak SR Tablet,Aceclofenac,Benham Pharmaceuticals Ltd.,,Er Tablet,200 mg,,,,,,active,125-0153-064
+,A-Statin,Atorvastatin,Doctor TIMS Pharmaceuticals Ltd.,Other Anti-anginal & Anti-ischaemic drugs,Tablet,10 mg,50's pack,,,,,active,289-0092-061
+,A.S.A CV,Aspirin,Apex Pharma Ltd.,,Tablet,75 mg,,,,,,active,170-0098-026
+,Ab Flu,Flucloxacillin,Premier Pharmaceuticals Ltd.,,Capsule,500 mg,,,,,,active,071-0043-023
+,AB-DS,Albendazole,Prime Pharmaceuticals Ltd.,Anthelmintic,Tablet,400 mg,,,,,,active,313-0037-008
+,Abacten,Azithromycin,Arges Life Science Ltd.,,Tablet,500 mg,6's pack,,,,,active,222-0013-023
+,Abandi,Albendazole,RN Pharmaceuticals,,Tablet,400 mg,,,,,,active,172-0027-008
+,Abdolax,Sodium Picosulfate,Incepta Pharmaceuticals Ltd.,Osmotic purgatives,Tablet,10 mg,30's pack,,,,,active,116-1454-060
+,Abdorin,Dicycloverine Hydrochloride,Opsonin Pharma Limited,Anticholinergics (antimuscarinics)/ Anti-spasmodics,Tablet,10 mg,50's pack,,,,,active,025-0523-011
+,Abecab 5/20,Amlodipine + Olmesartan Medoxomil,Advanced Chemical Industries Limited,,Tablet,5 mg + 20 mg,,,,,,active,005-0766-022
+,Abecab 5/40,Amlodipine + Olmesartan Medoxomil,Advanced Chemical Industries Limited,,Tablet,5 mg + 40 mg,,,,,,active,005-0936-022
+,Abeclib,Abemaciclib,"Eskayef Pharmaceuticals Ltd., Narayanganj",Protein kinase inhibitor,Tablet,200 mg,14's pack,,,,,active,387-0118-010
+,Abentel,Albendazole,Aristopharma Limited,Anthelmintic,Tablet,400 mg,50's pack,,,,,active,143-0080-008
+,Abetis,Olmesartan Medoxomil,Advanced Chemical Industries Limited,Angiotensin-ll receptor blocker,Tablet,20 mg,50's pack,,,,,active,005-0587-022
+,Abetis Plus,Hydrochlorothiazide + Olmesartan Medoxomil,Advanced Chemical Industries Limited,Combined antihypertensive preparations,Tablet,12.5 mg + 20 mg,50's pack,,,,,active,005-0753-022
+,Abiret,Abiraterone Acetate,"Drug International Ltd., Squib Road",Cytotoxic Chemotherapy,Tablet,250 mg,7's pack,,,,,active,309-0135-010
+,Ac PR,Aceclofenac,Pacific Pharmaceuticals Ltd.,Drugs for Osteoarthritis,Tablet,100 mg,50's pack,,,,,active,160-0091-064
+,Acaril,Acarbose,The White Horse Pharmaceuticals Ltd.,Alpha-Glucosidase inhibitor,Tablet,50 mg,30's pack,,,,,active,214-0057-015
+,Accuzith,Azithromycin,DBL Pharmaceuticals Limited,,Tablet,500 mg,6's pack,,,,,active,403-0017-023
+,Ace,Paracetamol,"Square Pharmaceuticals PLC, Pabna",,Tablet,500 mg,,,,,,active,012-0049-006
+,Ace Plus,Caffeine + Paracetamol,Square Formulations Ltd.,Non opioid analgesics,Tablet,65 mg + 500 mg,200's pack,,,,,active,372-0013-006
+,Ace Power,Paracetamol,"Square Pharmaceuticals PLC, Pabna",Non opioid analgesics,Tablet,1000 mg,100's pack,,,,,active,012-1320-006
+,Ace XR,Paracetamol,"Square Pharmaceuticals PLC, Gazipur",Non opioid analgesics,Xr Tablet,665 mg,100's pack,,,,,active,321-0495-006
+,Acecard,Ramipril,Healthcare Pharmaceuticals Ltd.,Angiotensin-converting enzyme (ACE) inhibitors,Tablet,5 mg,30's pack,,,,,active,323-0081-022
+,Acedone Z,Aluminium Hydroxide + Magnesium Hydroxide,Zenith Pharmaceuticals Ltd.,Antacids,Tablet,250 mg + 400 mg,250's pack,,,,,active,080-0012-007
+,Acedone Z Plus,Aluminium Hydroxide + Magnesium Hydroxide + Simethicone,Zenith Pharmaceuticals Ltd.,Antacids,Tablet,400 mg + 400 mg + 30 mg,200's pack,,,,,active,080-0160-007
+,Acemox,Acetazolamide,The ACME Laboratories Ltd.,Carbonic anhydrase inhibitor,Tablet,250 mg,100's pack,,,,,active,036-0069-042
+,Acep,Paracetamol,Zenith Pharmaceuticals Ltd.,Non opioid analgesics,Tablet,500 mg,100's pack,,,,,active,080-0022-006
+,Acepril,Lisinopril,Drug International Ltd.,Angiotensin-converting enzyme (ACE) inhibitors,Tablet,10 mg,30's pack,,,,,active,210-0056-022
+,Aceril,Ramipril,Ibn Sina Pharmaceutical Ind. Ltd.,Angiotensin-converting enzyme (ACE) inhibitors,Tablet,2.5 mg,30's pack,,,,,active,239-0448-022
+,Acerux,Acyclovir,Opsonin Pharma Limited,Herpes simplex & Varicella-zoster virus infections,Tablet,200 mg,30's pack,,,,,active,025-0923-032
+,Aces PLUS,Ascorbic Acid + Copper + Manganese + Selenium + Vitamin A + Vitamin E + Vitamin K + Zinc,Ambee Pharmaceuticals Ltd.,,Tablet,200 mg + 1 mg + 3 mg + 70 mcg + 2000 IU + 50 IU + 75 mcg + 15 mg,,,,,,active,192-0145-078
+,Aceta,Paracetamol,Biopharma Ltd.,Non opioid analgesics,Tablet,500 mg,200's pack,,,,,active,064-0021-006
+,Aceta-T,Paracetamol + Tramadol Hydrochloride,Biopharma Ltd.,Non-steroidal Anti-inflammatory Drugs (NSAIDs),Tablet,325 mg + 37.5 mg,30's pack,,,,,active,064-0407-006
+,Aceten,Acetylcysteine,"Eskayef Pharmaceuticals Ltd., Tongi,Gazipur",Antidote preparations,Dispersible Tablet,600 mg,10's pack,,,,,active,308-0837-031
+,Acetor,Captopril,Drug International Ltd.,Angiotensin-converting enzyme (ACE) inhibitors,Tablet,25 mg,100's pack,,,,,active,210-0105-022
+,Acetram,Paracetamol + Tramadol Hydrochloride,"Square Pharmaceuticals PLC, Pabna",Non-steroidal Anti-inflammatory Drugs (NSAIDs),Tablet,325 mg + 37.5 mg,30's pack,,,,,active,012-1100-006
+,Acical 500,Calcium Carbonate,Advanced Chemical Industries Limited,,Tablet,1250 mg,,,,,,active,005-0297-062
+,Acical M,Boron + Calcium + Copper + Magnesium + Manganese + Vitamin D + Zinc,Advanced Chemical Industries Limited,,Tablet,250 mcg + 600 mg + 1 mg + 40 mg + 1.8 mg + 200 IU + 7 mg,,,,,,active,005-0457-062
+,Acical-C,Calcium Carbonate + Calcium Lactate Gluconate + Vitamin C,Advanced Chemical Industries Limited,Specific mineral & vitamin combined preparations,Tablet,327 mg + 1 gm + 500 mg,10's pack,,,,,active,005-0471-062
+,Acical-MX Effervescent Tablet,Boron + Calcium + Copper + Magnesium + Manganese + Vitamin D3 + Zinc,Advanced Chemical Industries Limited,,Tablet,250 mcg + 600 mg + 1 mg + 40 mg + 1.8 mg + 5 mcg + 7.5 mg,,,,,,active,005-1162-062
+,Acidrox M,Magaldrate,MST Pharma and Healthcare Ltd.,Antacids,Tablet,400 mg,150's pack,,,,,active,018-0002-007
+,Acifix,Rabeprazole Sodium,Beximco Pharmaceuticals Ltd.,Proton Pump Inhibitor,Tablet,20 mg,60's pack,,,,,active,186-0712-067
+,Aciflox,Sparfloxacin,Advanced Chemical Industries Limited,4-Quinolone preparations,Tablet,200 mg,10's pack,,,,,active,005-0262-023
+,Acilog Biopen,Insulin Aspart,Advanced Chemical Industries Limited,,Injection,300 IU/3 ml,,,,,,active,593-1026-015
+,Acilog mix cartrideg,Insulin Aspart,Advanced Chemical Industries Limited,,Injection,100 IU/ml,,,,,,active,005-1334-015
+,Acipam,Escitalopram,Ibn Sina Pharmaceuticals Ltd.,SSRIs & related anti-depressant drugs,Tablet,10 mg,30's pack,,,,,active,239-0371-014
+,Aciprin CV,Aspirin,Advanced Chemical Industries Limited,,Tablet,75 mg,,,,,,active,005-0278-026
+,Acitrin,Cetirizine Dihydrochloride,Advanced Chemical Industries Limited,Sedating Anti-histamine,Tablet,10 mg,100's pack,,,,,active,005-0202-021
+,Acitrin-L,Levocetirizine Hydrochloride,Advanced Chemical Industries Limited,Non-sedating antihistamines,Tablet,5 mg,100's pack,,,,,active,005-0737-021
+,Aclav 375,Amoxicillin + Clavulanic Acid,Navana Pharmaceuticals Ltd.,,Tablet,250 mg + 125 mg,,,,,,active,267-0194-023
+,Aclav 625,Amoxicillin + Clavulanic Acid,Navana Pharmaceuticals Ltd.,,Tablet,500 mg + 125 mg,,,,,,active,267-0193-023
+,Acliz,Meclizine Hydrochloride,Aristopharma Limited,Anti-emetic drugs,Tablet,50 mg,100's pack,,,,,active,143-0224-018
+,Acliz PLUS,Meclizine Hydrochloride + Pyridoxine Hydrochloride,Aristopharma Limited,Anti-emetic drugs,Tablet,25 mg + 50 mg,100's pack,,,,,active,143-0362-018
+,Acmegra,Sildenafil,The ACME Laboratories Ltd.,Drugs for Erectile Dysfunction,Tablet,25 mg,4's pack,,,,,active,036-0752-043
+,Acora,Ticagrelor,Advanced Chemical Industries Limited,Anti-platelet drugs,Tablet,90 mg,10's pack,,,,,active,005-1048-026
+,Acos,Azithromycin,Radiant Pharmaceuticals Ltd.,,Tablet,500 mg,6's pack,,,,,active,052-0056-023
+,Actifast,Ketorolac Tromethamine,SMC Enterprise Limited,Drugs used for Rheumatoid Arthritis,Tablet,10 mg,30's pack,,,,,active,333-0015-064
+,Actimom,Beta Carotene + Calcium + Cholecalciferol (Vit. D3) + Cyanocobalamin + Folic Acid + Iodine + Iron + Magnesium + Nicotinamide + Phosphorous + Pyridoxine Hydrochloride + Riboflavin + Thiamine Nitrate + Vitamin C + Vitamin E + Zinc,Nuvista Pharma Ltd.,,Tablet,3 mg + 59 mg + 250 IU + 1.5 mcg + 250 mcg + 125 mcg + 5 mg + 15 mg + 7.5 mg + 45.6 mg + 750 mcg + 750 mcg + 500 mcg + 15 mg + 5.2 IU + 8 mg,,,,,,active,006-0223-078
+,Actisal,Levosalbutamol,Silva Pharmaceuticals Ltd.,Short-acting selective & β2-adrenoceptor stimulants,Tablet,1 mg,100's pack,,,,,active,317-0156-044
+,Activa,Sildenafil,Pacific Pharmaceuticals Ltd.,Drugs for Erectile Dysfunction,Tablet,25 mg,4's pack,,,,,active,160-0244-043
+,Active A to Z Gold,Ascorbic Acid + Biotin + Boron + Calcium + Chromium + Copper + Cyanocobalamin + Elemental Iron + Folic Acid + Iodine + Lutein + Magnesium + Manganese + Molybdenum + Niacin + Nickel + Pantothenic acid + Phosphorous + Pottassium + Pyridoxine Hydrochloride + Riboflavin + Selenium + Silicon + Tin + Vanadium + Vitamin A + Vitamin B1 + Vitamin D3 + Vitamin E + Vitamin K + Zinc,JR Pharmaceuticals Ltd.,,Tablet,60 mg + 30 mcg + 150 mcg + 162 mg + 120 mcg + 2 mg + 6 mcg + 18 mg + 400 mcg + 150 mcg + 250 mcg + 100 mg + 2 mg + 75 mcg + 20 mg + 5 mcg + 10 mg + 109 mg + 80 mg + 2 mg + 1.7 mg + 20 mcg + 2 mg + 10 mcg + 10 mcg + 5000 IU + 1.5 mg + 400 IU + 30 IU + 25 mcg + 15 mg,,,,,,active,420-0013-078
+,Active A to Z Silver,Ascorbic Acid + Biotin + Boron + Calcium Carbonate + Chromium + Copper + Cyanocobalamin + Diabasic Calcium Phosphate + Elemental Iron + Folic Acid + Iodine + Lutein + Magnesium + Manganese + Molybdenum + Niacin + Nickel + Pantothenic acid + Potassium Chloride + Pyridoxine Hydrochloride + Riboflavin + Selenium + Silicon + Tin + Vanadium + Vitamin B1 + Vitamin D + Vitamin E + Vitamin K + Zinc,JR Pharmaceuticals Ltd.,,Tablet,60 mg + 30 mcg + 150 mcg + 52.49 mg + 120 mcg + 2 mg + 6 mcg + 478.695 mg + 18 mg + 400 mcg + 150 mcg + 250 mcg + 100 mg + 2 mg + 75 mcg + 20 mg + 5 mcg + 10 mg + 152.52 mg + 2 mg + 1.7 mg + 20 mcg + 2 mg + 10 mcg + 10 mcg + 1.5 mg + 400 IU + 30 IU + 25 mcg + 15 mg,,,,,,active,420-0014-078
+,Active PLUS,Betacarotene + Vitamin C + Vitamin E,The White Horse Pharmaceuticals Ltd.,Anti-oxidant Multivitamin preparations,Tablet,6 mg + 200 mg + 50 mg,30's pack,,,,,active,214-0015-078
+,Actizen,Cetirizine Dihydrochloride,Ambee Pharmaceuticals Ltd.,Sedating Anti-histamine,Tablet,10 mg,100's pack,,,,,active,192-0107-021
+,Actolin,Salbutamol,Globe Pharmaceuticals Ltd.,Short-acting selective & β2-adrenoceptor stimulants,Tablet,4 mg,100's pack,,,,,active,083-0071-044
+,Actomeg,Metformin Hydrochloride + Pioglitazone,Unimed Unihealth Pharmaceuticals Ltd.,Combination Oral hypoglycemic preparations,Tablet,500 mg + 15 mg,20's pack,,,,,active,225-0238-015
+,Actose,Pioglitazone Hydrochloride,Unimed Unihealth Pharmaceuticals Ltd.,Thiazolidinedione Group,Tablet,15 mg,30's pack,,,,,active,225-0111-015
+,Acubis,Bisoprolol Hemifumarate,Concord Pharmaceuticals Ltd.,Anti adrenergic agent (Beta blockers),Tablet,5 mg,30's pack,,,,,active,274-0075-022
+,Acudipin,Amlodipine,Concord Pharmaceuticals Ltd.,Calcium-channel blockers,Tablet,5 mg,50's pack,,,,,active,274-0070-022
+,Acudipin Plus,Amlodipine + Atenolol,Concord Pharmaceuticals Ltd.,Combined antihypertensive preparations,Tablet,5 mg + 50 mg,30's pack,,,,,active,274-0071-022
+,Acupain,Ketorolac Tromethamine,Beacon Pharmaceuticals PLC,Drugs used for Rheumatoid Arthritis,Tablet,10 mg,30's pack,,,,,active,341-0008-064
+,Acuren,Hydrochlorothiazide,Incepta Pharmaceuticals Ltd.,Thiazide diuretics & related drugs,Tablet,25 mg,100's pack,,,,,active,116-0127-042
+,Acusan,Losartan Potassium,Concord Pharmaceuticals Ltd.,Angiotensin-ll receptor blocker,Tablet,50 mg,30's pack,,,,,active,274-0050-022
+,Acusan Plus,Hydrochlorothiazide + Losartan Potassium,Concord Pharmaceuticals Ltd.,Combined antihypertensive preparations,Tablet,12.5 mg + 50 mg,30's pack,,,,,active,274-0051-022
+,Adafil,Tadalafil,Beximco Pharmaceuticals Ltd.,Drugs for Erectile Dysfunction,Tablet,10 mg,4's pack,,,,,active,186-0570-043
+,Adair,Roflumilast,Advanced Chemical Industries Limited,Antihistamines anti-allergies & hypo-sensitisation,Tablet,500 mcg,30's pack,,,,,active,005-1060-044
+,Adam,Prednisolone,Nuvista Pharma Ltd.,,Tablet,5 mg,,,,,,active,006-0101-072
+,Adarbi,Azilsartan Medoxomil,NIPRO JMI Pharma Ltd.,Angiotensin-ll receptor blocker,Tablet,40 mg,20's pack,,,,,active,352-0145-
+,Adcal D,Calcium + Vitamin D3,Amulet Pharmaceuticals Ltd.,Specific mineral & vitamin combined preparations,Tablet,500 mg + 200 IU,15's pack,,,,,active,246-0019-062
+,Adecin,Ciprofloxacin,Supreme Pharmaceuticals Ltd.,Anti-diarrhoeal Antimicrobial drugs,Tablet,500 mg,30's pack,,,,,active,092-0034-023
+,Adegra,Sildenafil,Advanced Chemical Industries Limited,Drugs for Erectile Dysfunction,Tablet,25 mg,4's pack,,,,,active,005-0944-043
+,Adegut,Domperidone,Supreme Pharmaceuticals Ltd.,Motility Stimulants,Tablet,10 mg,50's pack,,,,,active,092-0083-018
+,Adelev,Levofloxacin,Supreme Pharmaceuticals Ltd.,,Tablet,250 mg,,,,,,active,092-0132-023
+,Adempa,Empagliflozin,Unimed Unihealth Pharmaceuticals Ltd.,Sodium-glucose Cotransporter-2 (SGLT2) Inhibitors,Tablet,10 mg,10's pack,,,,,active,225-0573-015
+,Adetil,Cefuroxime,Supreme Pharmaceuticals Ltd.,Second generation Cephalosporins,Tablet,250 mg,10's pack,,,,,active,092-0129-023
+,Adfovir,Adefovir Dipivoxil,Sun Pharmaceuticals Ltd.,Hepatic viral infections (Hepatitis B),Tablet,10 mg,10's pack,,,,,active,334-0054-032
+,Adglim,Glimepiride,Unimed Unihealth Pharmaceuticals Ltd.,Sulfonylureas,Tablet,1 mg,30's pack,,,,,active,225-0159-015
+,Adifex,Fexofenadine Hydrochloride,United Chemicals & Pharmaceuticals Ltd.,Non-sedating antihistamines,Tablet,120 mg,30's pack,,,,,active,020-0168-021
+,Adiva,Efavirenz,"Square Pharmaceuticals PLC, Pabna",Drugs for HIV / Anti-retroviral drugs,Tablet,600 mg,10's pack,,,,,active,012-0672-032
+,Adlina,Linagliptin,Unimed Unihealth Pharmaceuticals Ltd.,Dipeptidyl Peptidase-4 (DPP-4) inhibitor,Tablet,5 mg,20's pack,,,,,active,225-0420-015
+,Adlinameg 2.5/500,Linagliptin + Metformin Hydrochloride,Unimed Unihealth Pharmaceuticals Ltd.,,Tablet,2.5 mg + 500 mg,,,,,,active,225-0524-015
+,Adlorin,Desloratadine,Ad-din Pharmaceuticals Ltd.,Non-sedating antihistamines,Tablet,5 mg,100's pack,,,,,active,084-0070-021
+,Admira,Gliclazide,Unimed Unihealth Pharmaceuticals Ltd.,Sulfonylureas,Tablet,80 mg,30's pack,,,,,active,225-0261-015
+,Admira MR,Gliclazide,Unimed Unihealth Pharmaceuticals Ltd.,Sulfonylureas,Tablet,30 mg,30's pack,,,,,active,225-0260-015
+,Adnix,Nitazoxanide,Alco Pharma Limited,Anti-diarrhoeal Antiprotozoal,Tablet,500 mg,12's pack,,,,,active,272-0204-027
+,Adnor,Doxepin,Apex Pharma Ltd.,Tricyclic & related anti-depressant drugs,Tablet,3 mg,30's pack,,,,,active,170-0257-
+,Adonid,Nitazoxanide,Rephco Pharmaceuticals Ltd.,Anti-diarrhoeal Antiprotozoal,Tablet,500 mg,30's pack,,,,,active,047-0214-027
+,Adorbis,Bisoprolol Hemifumarate,Ziska Pharmaceuticals Ltd.,,Tablet,2.5 mg,,,,,,active,242-0452-022
+,Adorex,Domperidone,Ambee Pharmaceuticals Ltd.,Motility Stimulants,Tablet,10 mg,100's pack,,,,,active,192-0109-018
+,Adrox CV,Cefuroxime + Clavulanic Acid,Ad-din Pharmaceuticals Ltd.,,Tablet,500 mg + 125 mg,,,,,,active,084-0209-023
+,Adtrizin,Cetirizine Dihydrochloride,Team Pharmaceuticals Ltd.,Sedating Anti-histamine,Tablet,10 mg,100's pack,,,,,active,301-0039-021
+,Advel,Ibuprofen,Opsonin Pharma Limited,Drugs for Osteoarthritis,Tablet,400 mg,100's pack,,,,,active,025-0136-064
+,Adze,Albendazole,Kemiko Pharmaceuticals Ltd.,Anthelmintic,Tablet,400 mg,50's pack,,,,,active,237-0096-008
+,Aerodyl,Bambuterol Hydrochloride,Silva Pharmaceuticals Ltd.,Short-acting selective & β2-adrenoceptor stimulants,Tablet,20 mg,100's pack,,,,,active,317-0071-044
+,Aerofen,Ketotifen,Silva Pharmaceuticals Ltd.,Cromoglycate & related drugs,Tablet,1 mg,50's pack,,,,,active,317-0090-021
+,Aeron,Montelukast,Healthcare Pharmaceuticals Ltd.,Leukotriene receptor antagonists,Tablet,10 mg,30's pack,,,,,active,323-0048-044
+,Aeron Flash,Montelukast,Healthcare Pharmaceuticals Ltd.,,Tablet,5 mg,,,,,,active,323-0268-044
+,Aeron FT,Montelukast,Healthcare Pharmaceuticals Ltd.,Leukotriene receptor antagonists,Tablet,4 mg,30's pack,,,,,active,323-0228-044
+,Afix,Cefixime,Aristopharma Limited,Third generation Cephalosporins,Tablet,200 mg,12's pack,,,,,active,143-0401-023
+,Afun VT,Clotrimazole,"Square Pharmaceuticals PLC, Pabna",Topical Antifungal preparations,Vaginal Tablet,500 mg,3's pack,,,,,active,012-1080-020
+,Afuvin,Griseofulvin,Ambee Pharmaceuticals Ltd.,Other Antifungal preparations,Tablet,500 mg,100's pack,,,,,active,192-0054-020
+,Age M,Betacarotene + Vitamin C + Vitamin E,Mystic Pharmaceuticals Ltd.,Anti-oxidant Multivitamin preparations,Tablet,6 mg + 200 mg + 50 mg,20's pack,,,,,active,121-0019-078
+,Agedefy,Betacarotene + Vitamin C + Vitamin E,Medimet Pharmaceuticals Ltd.,Anti-oxidant Multivitamin preparations,Tablet,6 mg + 200 mg + 50 mg,20's pack,,,,,active,201-0107-078
+,Aggra,Sildenafil,"Eskayef Pharmaceuticals Ltd., Tongi,Gazipur",Drugs for Erectile Dysfunction,Tablet,25 mg,4's pack,,,,,active,308-0243-043
+,Agorest,Agomelatine,Everest Pharmaceuticals Ltd.,Atypical anti-depressant drugs,Tablet,25 mg,20's pack,,,,,active,157-0196-014
+,Agotin,Agomelatine,Beacon Pharmaceuticals PLC,Atypical anti-depressant drugs,Tablet,25 mg,10's pack,,,,,active,341-0181-014
+,Agoxin,Digoxin,Aristopharma Limited,Positive Inotropic drugs,Tablet,250 mcg,100's pack,,,,,active,143-0232-035
+,Aire,Levosalbutamol,Delta Pharma Ltd.,Short-acting selective & β2-adrenoceptor stimulants,Tablet,1 mg,50's pack,,,,,active,048-0160-044
+,Airflow,Montelukast,Ad-din Pharmaceuticals Ltd.,Leukotriene receptor antagonists,Tablet,10 mg,,,,,,active,084-0173-044
+,Airup,Montelukast,Pharmasia Ltd.,Leukotriene receptor antagonists,Tablet,5 mg,30's pack,,,,,active,118-0137-044
+,Airway,Montelukast,One Pharma Ltd.,Leukotriene receptor antagonists,Tablet,5 mg,20's pack,,,,,active,049-0067-044
+,Ajardy,Empagliflozin,Ziska Pharmaceuticals Ltd.,Sodium-glucose Cotransporter-2 (SGLT2) Inhibitors,Tablet,10 mg,30's pack,,,,,active,242-0405-015
+,Ajwa,Atorvastatin,Desh Pharmaceuticals Ltd.,,Tablet,10 mg,,,,,,active,268-0132-061
+,Aktivex,Naproxen Sodium,OSL Pharma Ltd.,Drugs for Osteoarthritis,Tablet,250 mg,50's pack,,,,,active,259-0139-064
+,Al DS,Albendazole,Globe Pharmaceuticals Ltd.,Anthelmintic,Tablet,400 mg,40's pack,,,,,active,083-0078-008
+,Al-Metro,Metronidazole,Albion Laboratories Ltd.,,Tablet,500 mg,,,,,,active,096-0554-027
+,Alaclov,Valacyclovir,Advanced Chemical Industries Limited,Herpes simplex & Varicella-zoster virus infections,Tablet,500 mg,10's pack,,,,,active,005-0495-032
+,Alafree,Fexofenadine Hydrochloride,Apex Pharma Ltd.,Non-sedating antihistamines,Tablet,120 mg,30's pack,,,,,active,170-0247-021
+,Alargol,Cetirizine Dihydrochloride,Ethical Drug Ltd.,Sedating Anti-histamine,Tablet,10 mg,100's pack,,,,,active,078-0107-021
+,Alarid,Ketotifen,"Square Pharmaceuticals PLC, Pabna",Cromoglycate & related drugs,Tablet,1 mg,100's pack,,,,,active,012-0749-021
+,Alaron,Loratadine,Advanced Chemical Industries Limited,Non-sedating antihistamines,Tablet,10 mg,100's pack,,,,,active,005-0671-021
+,Alat,Cetirizine Dihydrochloride,Premier Pharmaceuticals Ltd.,Sedating Anti-histamine,Tablet,10 mg,100's pack,,,,,active,071-0048-021
+,Alater,Cetirizine Dihydrochloride,Bengal Drugs & Chemical Works Pharm. Ltd.,Sedating Anti-histamine,Tablet,10 mg,100's pack,,,,,active,090-0042-021
+,Albafen,Baclofen,Allied Pharmaceuticals Ltd.,Centrally acting Skeletal Muscle Relaxants,Tablet,10 mg,30's pack,,,,,active,373-0004-070
+,Albasine,Almitrine Bismesylate + Raubasine,Drug International Ltd.,Cerebral vasodilator & Neurosensory oxygenator drugs,Tablet,30 mg + 10 mg,42's pack,,,,,active,210-0491-036
+,Alcot,Sulphamethoxazole + Trimethoprim,Pacific Pharmaceuticals Ltd.,Sulphonamides & Trimethoprim,Tablet,400 mg + 80 mg,100's pack,,,,,active,160-0023-023
+,Alcox,Etoricoxib,Guardian Healthcare Ltd.,,Tablet,90 mg,,,,,,active,346-0105-064
+,Aldocort,Fludrocortisone Acetate,Incepta Pharmaceuticals Ltd.,Corticosteroid,Tablet,100 mcg,30's pack,,,,,active,116-1149-072
+,Aldonist,Eplerenone,Unimed Unihealth Pharmaceuticals Ltd.,Potassium-sparing diuretics,Tablet,25 mg,28's pack,,,,,active,225-0257-042
+,Aldorin,Epalrestat,Eskayef Pharmaceuticals Ltd. Mirpur.,Aldose reductase inhibitor,Tablet,50 mg,30's pack,,,,,active,188-0260-076
+,Alendon,Alendronic Acid,Beximco Pharmaceuticals Ltd.,Bisphosphonate preparations,Tablet,10 mg,30's pack,,,,,active,186-0214-048
+,Alert,Loratadine,Apollo Pharmaceuticals Ltd.,Non-sedating antihistamines,Tablet,10 mg,100's pack,,,,,active,076-0058-021
+,Alexid,Pivmecillinam,Aristopharma Limited,Mecillinams,Tablet,200 mg,50's pack,,,,,active,143-0184-023
+,Alfa E,Vitamin E,Aristopharma Limited,Vitamin-E Preparations,Tablet,200 mg,15's pack,,,,,active,143-0108-078
+,Alfasin XR,Alfuzosin Hydrochloride,Incepta Pharmaceuticals Ltd.,BPH/ Urinary retention/ Urinary incontinence,Er Tablet,10 mg,24's pack,,,,,active,116-0588-
+,Alfavir,Tenofovir Alafenamide,Incepta Pharmaceuticals Ltd.,Hepatic viral infections (Hepatitis B),Tablet,25 mg,10's pack,,,,,active,116-1269-032
+,Alflam,Ibuprofen,Albion Laboratories Ltd.,,Tablet,400 mg,,,,,,active,096-0091-064
+,Alfumax ER,Alfuzosin Hydrochloride,Unimed Unihealth Pharmaceuticals Ltd.,BPH/ Urinary retention/ Urinary incontinence,Er Tablet,10 mg,30's pack,,,,,active,225-0429-
+,Algecal DX,Calcium (Algae Source) + Vitamin D3,Opsonin Pharma Limited,Specific mineral & vitamin combined preparations,Tablet,600 mg + 400 IU,30's pack,,,,,active,025-1440-062
+,Algex,Aluminium Hydroxide + Magnesium Hydroxide,Doctors Chemical Works Ltd.,Antacids,Tablet,250 mg + 400 mg,200's pack,,,,,active,029-0067-007
+,Algicid,Potassium Bicarbonate + Sodium Alginate,Incepta Pharmaceuticals Ltd.,Antacids,Tablet,100 mg + 500 mg,100's pack,,,,,active,116-0953-007
+,Algicon,Potassium Bicarbonate + Sodium Alginate,Leon Pharmaceuticals Ltd.,Antacids,Tablet,100 mg + 500 mg,100's pack,,,,,active,230-0085-007
+,Algin,Tiemonium Methylsulphate,Renata Limited,Anticholinergics,Tablet,50 mg,100's pack,,,,,active,002-0428-011
+,Algirex,Etoricoxib,Ibn Sina Pharmaceutical Ind. Ltd.,Non-steroidal Anti-inflammatory Drugs (NSAIDs),Tablet,60 mg,30's pack,,,,,active,239-0238-064
+,Algita D,Calcium (Algae Source) + Vitamin D3,Labaid Pharmaceuticals Ltd.,Specific mineral & vitamin combined preparations,Tablet,500 mg + 200 IU,30's pack,,,,,active,278-0109-062
+,Algita DX,Calcium (Algae Source) + Vitamin D3,Labaid Pharmaceuticals Ltd.,Specific mineral & vitamin combined preparations,Tablet,600 mg + 400 IU,30's pack,,,,,active,278-0134-062
+,Alia,Allystrenol,The ACME Laboratories Ltd.,Female Sex hormones,Tablet,5 mg,30's pack,,,,,active,036-0999-049
+,Alinix,Nitazoxanide,Healthcare Pharmaceuticals Ltd.,Anti-diarrhoeal Antiprotozoal,Tablet,500 mg,30's pack,,,,,active,323-0173-027
+,Alkenib,Lapatinib,Jenphar Bangladesh Ltd.,Cytotoxic Chemotherapy,Tablet,250 mg,30's pack,,,,,active,351-0201-010
+,Allygest,Allystrenol,Nuvista Pharma Ltd.,Female Sex hormones,Tablet,5 mg,30's pack,,,,,active,006-0125-049
+,Allynol,Allystrenol,Popular Pharmaceuticals PLC,Female Sex hormones,Tablet,5 mg,45's pack,,,,,active,336-0508-049
+,Almigut,Domperidone,Al-Madina Pharmaceuticals Ltd.,Motility Stimulants,Tablet,10 mg,100's pack,,,,,active,294-0126-018
+,Almitan,Almotriptan,Opsonin Pharma Limited,5-HT Agonists,Tablet,6.25 mg,4's pack,,,,,active,025-0920-047
+,Aloglip,Alogliptin,Navana Pharmaceuticals Ltd.,Dipeptidyl Peptidase-4 (DPP-4) inhibitor,Tablet,6.25 mg,30's pack,,,,,active,267-0535-015
+,Aloten,Esomeprazole,General Pharmaceuticals Ltd.,,Tablet,20 mg,,,,,,active,240-0200-067
+,Aloten Forte,Amlodipine + Atenolol,Kemiko Pharmaceuticals Ltd.,Combined antihypertensive preparations,Tablet,5 mg + 50 mg,50's pack,,,,,active,237-0204-022
+,Alphalok,Prazosin,Opsonin Pharma Limited,Alpha adrenoceptor blocking drugs,Tablet,1 mg,42's pack,,,,,active,025-1552-022
+,Alphalok xr,Prazosin,Opsonin Pharma Limited,Alpha adrenoceptor blocking drugs,Tablet,500 mcg,28's pack,,,,,active,025-1554-022
+,Alphapress,Prazosin,Renata Limited,Alpha adrenoceptor blocking drugs,Tablet,1 mg,100's pack,,,,,active,002-0088-022
+,Alphapress XR,Prazosin,Renata Limited,Alpha adrenoceptor blocking drugs,Xr Tablet,5 mg,30's pack,,,,,active,002-0729-022
+,Alprax XR,Alprazolam,Opsonin Pharma Limited,Benzodiazepine sedatives,Xr Tablet,1 mg,30's pack,,,,,active,025-0692-057
+,Alproxen,Naproxen Sodium,Allied Pharmaceuticals Ltd.,,Tablet,500 mg,,,,,,active,373-0013-064
+,Alrin,Alverine Citrate,Renata Limited,Anticholinergics,Tablet,60 mg,,,,,,active,002-0728-011
+,Alton,Esomeprazole,General Pharmaceuticals Ltd.,,Tablet,40 mg,30's pack,,,,,active,240-0201-067
+,Altorec,Ketorolac Tromethamine,Allied Pharmaceuticals Ltd.,Drugs used for Rheumatoid Arthritis,Tablet,10 mg,,,,,,active,373-0011-064
+,Altovas,Atorvastatin,Albion Laboratories Ltd.,Other Anti-anginal & Anti-ischaemic drugs,Tablet,10 mg,50's pack,,,,,active,096-0180-061
+,Altrip,Almotriptan,NIPRO JMI Pharma Ltd.,5-HT Agonists,Tablet,6.25 mg,10's pack,,,,,active,352-0101-047
+,Alurol,Allopurinol,Incepta Pharmaceuticals Ltd.,Drugs used in Gout,Tablet,100 mg,100's pack,,,,,active,116-0683-076
+,Alve,Alverine Citrate,Orion Pharma Ltd.,Anticholinergics,Tablet,60 mg,50's pack,,,,,active,030-0248-011
+,Alvenor,Diosmin + Hesperidin,Beacon Pharmaceuticals PLC,Phlebotonic & Vascular protecting preparation,Tablet,450 mg + 50 mg,30's pack,,,,,active,341-0321-075
+,Alverate,Alverine Citrate,Ibn Sina Pharmaceutical Ind. Ltd.,Anticholinergics,Tablet,60 mg,50's pack,,,,,active,239-0442-011
+,Alverin,Alverine Citrate,Rangs Pharmaceuticals Ltd.,Anticholinergics,Tablet,60 mg,30's pack,,,,,active,082-0092-011
+,Alysa,Allystrenol,Beacon Pharmaceuticals PLC,Female Sex hormones,Tablet,5 mg,,,,,,active,341-0199-049
+,Alzide,Gliclazide,Al-Madina Pharmaceuticals Ltd.,,Tablet,80 mg,,,,,,active,294-0170-015
+,Amaryl,Glimepiride,Synovia Pharma PLC.,Sulfonylureas,Tablet,1 mg,30's pack,,,,,active,003-0173-015
+,Amason,Dexamethasone,Ambee Pharmaceuticals Ltd.,,Tablet,.5 mg,100's pack,,,,,active,192-0162-072
+,Ambar,Rosuvastatin,Desh Pharmaceuticals Ltd.,,Tablet,5 mg,,,,,,active,268-0140-061
+,Ambeecal,Calcium Carbonate,Ambee Pharmaceuticals Ltd.,Minerals in bone formation,Tablet,1250 mg,50's pack,,,,,active,192-0153-062
+,Ambrisan,Ambrisentan,"Square Pharmaceuticals PLC, Pabna",Anti-hypertensive,Tablet,5 mg,20's pack,,,,,active,012-1190-022
+,Amdin,Amlodipine,Alco Pharma Limited,Calcium-channel blockers,Tablet,10 mg,30's pack,,,,,active,272-0133-022
+,Amdocal,Amlodipine,Beximco Pharmaceuticals Ltd.,Calcium-channel blockers,Tablet,10 mg,60's pack,,,,,active,186-0125-022
+,Amdova,Amlodipine + Atorvastatin,Beximco Pharmaceuticals Ltd.,Anti-anginal & lipid lowering drugs,Tablet,5 mg + 10 mg,30's pack,,,,,active,186-0651-022
+,Ameloss,Donepezil Hydrochloride,Incepta Pharmaceuticals Ltd.,Drugs for Dementia,Tablet,10 mg,30's pack,,,,,active,116-0162-028
+,Ametil,Prochlorperazine Maleate,Aristopharma Limited,Anti vertigo drugs,Tablet,5 mg,500's pack,,,,,active,143-0030-018
+,Ametri,Metronidazole,United Chemicals & Pharmaceuticals Ltd.,,Tablet,400 mg,,,,,,active,020-0129-027
+,Ametrol,Metronidazole + Miconazole Nitrate,Ambee Pharmaceuticals Ltd.,,Vaginal Tablet,100 mg + 100 mg,,,,,,active,192-0120-027
+,Amezol,Metronidazole,Cosmic Pharma Ltd.,Amoebicides,Tablet,400 mg,100's pack,,,,,active,100-0024-027
+,Amiclo,Amitriptyline Hydrochloride + Chlordiazepoxide,Popular Pharmaceuticals PLC,Combined anxiolytics & anti-depressant drugs,Tablet,12.5 mg + 5 mg,40's pack,,,,,active,336-0689-014
+,AmiCoxib,Etoricoxib,Amico Laboratories Ltd.,Non-steroidal Anti-inflammatory Drugs (NSAIDs),Tablet,90 mg,30's pack,,,,,active,028-0219-064
+,Amiflox,Ciprofloxacin,Amico Laboratories Ltd.,Anti-diarrhoeal Antimicrobial drugs,Tablet,250 mg,30's pack,,,,,active,028-0058-023
+,Amilin,Amitriptyline Hydrochloride,Opsonin Pharma Limited,Tricyclic Anti-depressant,Tablet,10 mg,112's pack,,,,,active,025-0286-014
+,Amilin Plus,Amitriptyline Hydrochloride + Chlordiazepoxide,Opsonin Pharma Limited,Combined anxiolytics & anti-depressant drugs,Tablet,12.5 mg + 5 mg,56's pack,,,,,active,025-1366-014
+,Aminol,Atenolol,Apollo Pharmaceuticals Ltd.,,Tablet,50 mg,,,,,,active,076-0036-022
+,Aminophylline,Aminophylline,Ambee Pharmaceuticals Ltd.,Bronchodilator,Tablet,100 mg,500's pack,,,,,active,192-0013-044
+,Amipride,Amisulpride,Beacon Pharmaceuticals PLC,Atypical neuroleptic drugs,Tablet,50 mg,30's pack,,,,,active,341-0415-028
+,Amirid,Metronidazole,Veritas Pharmaceuticals Ltd.,Amoebicides,Tablet,400 mg,100's pack,,,,,active,365-0070-027
+,Amiron,Mirtazapine,Orion Pharma Ltd.,Atypical anti-depressant drugs,Tablet,7.5 mg,30's pack,,,,,active,030-0453-014
+,Amit,Amitriptyline Hydrochloride,General Pharmaceuticals Ltd.,Tricyclic Anti-depressant,Tablet,10 mg,100's pack,,,,,active,240-0180-014
+,Amitip,Amitriptyline Hydrochloride,Pacific Pharmaceuticals Ltd.,Tricyclic Anti-depressant,Tablet,10 mg,100's pack,,,,,active,160-0324-014
+,Amivas,Rosuvastatin,Amico Laboratories Ltd.,,Tablet,5 mg,,,,,,active,028-0242-061
+,Amlocard,Amlodipine,Drug International Ltd.,Calcium-channel blockers,Tablet,10 mg,50's pack,,,,,active,210-0199-022
+,Amlocard Plus,Amlodipine + Atenolol,Drug International Ltd.,Combined antihypertensive preparations,Tablet,5 mg + 25 mg,56's pack,,,,,active,210-0297-022
+,Amlohil,Amlodipine,Goodman Pharmaceuticals Ltd,Calcium-channel blockers,Tablet,5 mg,50's pack,,,,,active,338-0044-022
+,Amlopin,Amlodipine,The ACME Laboratories Ltd.,Calcium-channel blockers,Tablet,10 mg,30's pack,,,,,active,036-0170-022
+,Amlovas VS,Amlodipine + Valsartan,Popular Pharmaceuticals PLC,Combined antihypertensive preparations,Tablet,10 mg + 160 mg,30's pack,,,,,active,336-0422-022
+,Amobin,Metronidazole,Doctors Chemical Works Ltd.,Amoebicides,Tablet,200 mg,100's pack,,,,,active,029-0035-027
+,Amoclav,Amoxicillin + Clavulanic Acid,"Techno Drugs Ltd., Satipara, Narshingdi",Broad spectrum penicillins,Tablet,875 mg + 125 mg,12's pack,,,,,active,304-0211-023
+,Amodis,Metronidazole,"Square Pharmaceuticals PLC, Pabna",Amoebicides,Tablet,200 mg,240's pack,,,,,active,012-0047-027
+,Amogit,Metronidazole,Marksman Pharmaceuticals Ltd.,Amoebicides,Tablet,400 mg,100's pack,,,,,active,331-0047-027
+,Amotrex,Metronidazole,Advanced Chemical Industries Limited,Amoebicides,Tablet,200 mg,100's pack,,,,,active,005-0111-027
+,Amovast,Amlodipine + Atorvastatin,Beacon Pharmaceuticals PLC,Anti-anginal & lipid lowering drugs,Tablet,5 mg + 10 mg,20's pack,,,,,active,341-0109-022
+,Amtylin,Amitriptyline Hydrochloride,Edruc Ltd.,Tricyclic Anti-depressant,Tablet,10 mg,100's pack,,,,,active,009-0213-014
+,Amynil,Glimepiride,Globex Pharmaceuticals Ltd.,Sulfonylureas,Tablet,2 mg,30's pack,,,,,active,180-0052-015
+,Anacare,Anastrozole,"Drug International Ltd., Squib Road",Hormonal Chemotherapy,Tablet,1 mg,28's pack,,,,,active,309-0101-010
+,Anaflex Max,Esomeprazole + Naproxen,Advanced Chemical Industries Limited,Drugs for Osteoarthritis,Dr Tablet,20 mg + 500 mg,50's pack,,,,,active,005-0881-064
+,Analac,Ketorolac Tromethamine,Ziska Pharmaceuticals Ltd.,Drugs used for Rheumatoid Arthritis,Tablet,10 mg,20's pack,,,,,active,242-0140-064
+,Anapril,Enalapril Maleate,Eskayef Pharmaceuticals Ltd. Mirpur.,Angiotensin-converting enzyme (ACE) inhibitors,Tablet,10 mg,100's pack,,,,,active,188-0067-022
+,Anaroxyl,Adrenochrome Monosemicarbazone,Nuvista Pharma Ltd.,Anti-fibrinolytic drugs,Tablet,2.5 mg,30's pack,,,,,active,006-0003-001
+,Anaxyl,Tranexamic Acid,Advanced Chemical Industries Limited,Anti-fibrinolytic drugs,Tablet,500 mg,20's pack,,,,,active,005-0868-019
+,Ancipro,Ciprofloxacin,Unimed Unihealth Pharmaceuticals Ltd.,Anti-diarrhoeal Antimicrobial drugs,Tablet,250 mg,20's pack,,,,,active,225-0021-023
+,Anclog,Clopidogrel,"Square Pharmaceuticals PLC, Pabna",,Tablet,75 mg,,,,,,active,012-0493-026
+,Anclog Plus,Aspirin + Clopidogrel,"Square Pharmaceuticals PLC, Gazipur",Anti-platelet drugs,Tablet,75 mg + 75 mg,40's pack,,,,,active,321-0140-026
+,Ancopan,Hyoscine Butylbromide,Bristol Pharmaceuticals Ltd.,Anticholinergics (antimuscarinics)/ Anti-spasmodics,Tablet,20 mg,50's pack,,,,,active,054-0058-011
+,Ancor,Bisoprolol Hemifumarate,Aristopharma Limited,Anti adrenergic agent (Beta blockers),Tablet,10 mg,10's pack,,,,,active,143-0444-022
+,Ancotil,Bromazepam,Rangs Pharmaceuticals Ltd.,Benzodiazepine sedatives,Tablet,3 mg,50's pack,,,,,active,082-0038-057
+,Andep,Sertraline Hydrochloride,Healthcare Pharmaceuticals Ltd.,SSRIs & related anti-depressant drugs,Tablet,50 mg,50's pack,,,,,active,323-0101-014
+,Andepram,Escitalopram,Radiant Pharmaceuticals Ltd.,SSRIs & related anti-depressant drugs,Tablet,5 mg,42's pack,,,,,active,052-0152-014
+,Anet,Domperidone,Kemiko Pharmaceuticals Ltd.,Motility Stimulants,Tablet,10 mg,100's pack,,,,,active,237-0070-018
+,Anetol,Atenolol,Ambee Pharmaceuticals Ltd.,Beta-adrenoceptor blocking drugs,Tablet,100 mg,100's pack,,,,,active,192-0057-022
+,Angesic,Ketorolac Tromethamine,The White Horse Pharmaceuticals Ltd.,Drugs used for Rheumatoid Arthritis,Tablet,10 mg,30's pack,,,,,active,214-0086-064
+,Angifix,Isosorbide Mononitrate,Incepta Pharmaceuticals Ltd.,Nitrates: Coronary vasodilators,Tablet,50 mg,50's pack,,,,,active,116-0117-040
+,Angilock,Losartan Potassium,"Square Pharmaceuticals PLC, Pabna",Angiotensin-ll receptor blocker,Tablet,25 mg,50's pack,,,,,active,012-0414-022
+,Angimet,Trimetazidine Dihydrochloride,Orion Pharma Ltd.,Other Anti-anginal & Anti-ischaemic drugs,Tablet,20 mg,50's pack,,,,,active,030-0184-040
+,Angimet MR,Trimetazidine Dihydrochloride,Orion Pharma Ltd.,Other Anti-anginal & Anti-ischaemic drugs,Tablet,35 mg,30's pack,,,,,active,030-0301-040
+,Anginox MR,Trimetazidine Dihydrochloride,General Pharmaceuticals Ltd.,Other Anti-anginal & Anti-ischaemic drugs,Tablet,35 mg,60's pack,,,,,active,240-0460-040
+,Angirid MR,Trimetazidine Dihydrochloride,The ACME Laboratories Ltd.,Other Anti-anginal & Anti-ischaemic drugs,Tablet,35 mg,60's pack,,,,,active,036-0590-040
+,Angist SR,Glyceryl Trinitrate,The ACME Laboratories Ltd.,Nitrates: Coronary vasodilators,Tablet,2.6 mg,30's pack,,,,,active,036-0501-040
+,Angitan,Losartan Potassium,Chemist Laboratories Ltd.,Angiotensin-ll receptor blocker,Tablet,50 mg,30's pack,,,,,active,050-0319-022
+,Angiten,Captopril,Ibn Sina Pharmaceutical Ind. Ltd.,Angiotensin-converting enzyme (ACE) inhibitors,Tablet,25 mg,100's pack,,,,,active,239-0045-022
+,Anilic,Tolfenamic Acid,Drug International Ltd.,Other drugs for migraine,Tablet,200 mg,30's pack,,,,,active,210-0656-047
+,Anin,Losartan Potassium,Delta Pharma Ltd.,Angiotensin-ll receptor blocker,Tablet,50 mg,30's pack,,,,,active,048-0196-022
+,Anlet,Clopidogrel,Globe Pharmaceuticals Ltd.,Anti-platelet drugs,Tablet,75 mg,30's pack,,,,,active,083-0200-026
+,Anlet PLUS,Aspirin + Clopidogrel,Globe Pharmaceuticals Ltd.,Anti-platelet drugs,Tablet,75 mg + 75 mg,30's pack,,,,,active,083-0237-026
+,Anol,Atenolol,Medicon Pharmaceuticals Ltd.,Beta-adrenoceptor blocking drugs,Tablet,50 mg,100's pack,,,,,active,238-0040-022
+,Anolol,Atenolol,Euro Pharma Ltd.,Beta-adrenoceptor blocking drugs,Tablet,50 mg,100's pack,,,,,active,337-0042-022
+,Anosea Plus,Meclizine Hydrochloride + Pyridoxine Hydrochloride,Ibn Sina Pharmaceutical Ind. Ltd.,Anti-emetic drugs,Tablet,25 mg + 50 mg,50's pack,,,,,active,239-0291-018
+,Anoxa,Oxazepam,"Square Pharmaceuticals PLC, Pabna",Tricyclic Anti-depressant,Tablet,10 mg,30's pack,,,,,active,012-0758-057
+,Anoxiv,Betacarotene + Vitamin C + Vitamin E,Unimed Unihealth Pharmaceuticals Ltd.,Anti-oxidant Multivitamin preparations,Tablet,6 mg + 200 mg + 50 mg,30's pack,,,,,active,225-0024-078
+,Anplat,Clopidogrel,Jenphar Bangladesh Ltd.,Anti-platelet drugs,Tablet,75 mg,30's pack,,,,,active,351-0007-026
+,Anquil,Midazolam,General Pharmaceuticals Ltd.,Benzodiazepine hypnotics,Tablet,15 mg,10's pack,,,,,active,240-0076-057
+,Anset,Ondansetron,Opsonin Pharma Limited,Anti-emetic drugs,Tablet,4 mg,30's pack,,,,,active,025-0241-018
+,Ansulin 30/70,Insulin (Human) 30/70,"Square Pharmaceuticals PLC, Gazipur",,Injection,1.388 mg/ml,,,,,,active,321-0162-015
+,Antaluk,Montelukast,United Chemicals & Pharmaceuticals Ltd.,Leukotriene receptor antagonists,Tablet,10 mg,20's pack,,,,,active,020-0166-044
+,Antepsin,Sucralfate,Kemiko Pharmaceuticals Ltd.,Chelating complex,Tablet,500 mg,100's pack,,,,,active,237-0022-007
+,Antigall,Ursodeoxycholic Acid,Incepta Pharmaceuticals Ltd.,Anti-gallstones drugs: Bile Acids,Tablet,150 mg,30's pack,,,,,active,116-1169-075
+,Antigrain,Pizotifen,Ibn Sina Pharmaceutical Ind. Ltd.,Other drugs for migraine,Tablet,500 mcg,50's pack,,,,,active,239-0223-047
+,Antiplet,Clopidogrel,Rangs Pharmaceuticals Ltd.,Anti-platelet drugs,Tablet,75 mg,30's pack,,,,,active,082-0115-026
+,Antiva,Adefovir Dipivoxil,"Square Pharmaceuticals PLC, Pabna",Hepatic viral infections (Hepatitis B),Tablet,10 mg,10's pack,,,,,active,012-0840-032
+,Antixa,Apixaban,General Pharmaceuticals Ltd.,Fibrinolytics (Thrombolytics),Tablet,2.5 mg,30's pack,,,,,active,240-0547-012
+,Antox,Betacarotene + Vitamin C + Vitamin E,The ACME Laboratories Ltd.,Anti-oxidant Multivitamin preparations,Tablet,6 mg + 200 mg + 50 mg,20's pack,,,,,active,036-0198-078
+,Antrenex,Oxyphenonium Bromide,Opsonin Pharma Limited,Anticholinergics (antimuscarinics)/ Anti-spasmodics,Tablet,5 mg,100's pack,,,,,active,025-0072-011
+,Antrenyl,Oxyphenonium Bromide,Novartis (Bangladesh) Ltd.,Anticholinergics (antimuscarinics)/ Anti-spasmodics,Tablet,5 mg,100's pack,,,,,active,276-0018-011
+,Anvert,Meclizine Hydrochloride + Pyridoxine Hydrochloride,Orion Pharma Ltd.,Anti-emetic drugs,Tablet,25 mg + 50 mg,50's pack,,,,,active,030-0401-018
+,Anxio,Bromazepam,Unimed Unihealth Pharmaceuticals Ltd.,Benzodiazepine sedatives,Tablet,3 mg,30's pack,,,,,active,225-0247-057
+,Anxionil,Bromazepam,NIPRO JMI Pharma Ltd.,Benzodiazepine sedatives,Tablet,3 mg,50's pack,,,,,active,352-0012-057
+,Anxirel,Bromazepam,Novo Healthcare and Pharma Ltd.,Benzodiazepine sedatives,Tablet,3 mg,50's pack,,,,,active,335-0049-057
+,Apcard,Atenolol,APC Pharma Ltd.,Beta-adrenoceptor blocking drugs,Tablet,50 mg,100's pack,,,,,active,135-0093-022
+,Apcetrim,Sulphamethoxazole + Trimethoprim,APC Pharma Ltd.,Sulphonamides & Trimethoprim,Tablet,800 mg + 160 mg,,,,,,active,135-0044-023
+,Apedom,Domperidone,Apollo Pharmaceuticals Ltd.,Motility Stimulants,Tablet,10 mg,100's pack,,,,,active,076-0068-018
+,Apiban,Apixaban,NIPRO JMI Pharma Ltd.,Fibrinolytics (Thrombolytics),Tablet,2.5 mg,10's pack,,,,,active,352-0217-012
+,Apidone,Domperidone,Team Pharmaceuticals Ltd.,Motility Stimulants,Tablet,10 mg,100's pack,,,,,active,301-0038-018
+,Apilast,Apremilast,Labaid Pharmaceuticals Ltd.,Disease-modifying antirheumatic drugs (DMARDs),Tablet,10 mg,30's pack,,,,,active,278-0070-064
+,Apixa,Apixaban,Beximco Pharmaceuticals Ltd.,Fibrinolytics (Thrombolytics),Tablet,5 mg,20's pack,,,,,active,186-1064-012
+,Apixan,Apixaban,Unimed Unihealth Pharmaceuticals Ltd.,Fibrinolytics (Thrombolytics),Tablet,2.5 mg,30's pack,,,,,active,225-0617-012
+,Apoket,Ketorolac Tromethamine,Apollo Pharmaceuticals Ltd.,Drugs used for Rheumatoid Arthritis,Tablet,10 mg,30's pack,,,,,active,076-0091-064
+,Apoxyclav,Amoxicillin + Clavulanic Acid,Apex Pharma Ltd.,Broad spectrum penicillins,Tablet,500 mg + 125 mg,20's pack,,,,,active,170-0261-023
+,Aprila,Apremilast,Drug International Ltd.,Disease-modifying antirheumatic drugs (DMARDs),Tablet,30 mg,14's pack,,,,,active,210-0705-064
+,Aprima,Apremilast,Incepta Pharmaceuticals Ltd.,Disease-modifying antirheumatic drugs (DMARDs),Tablet,10 mg,20's pack,,,,,active,116-1109-064
+,Aprocin,Ciprofloxacin,Aristopharma Limited,Anti-diarrhoeal Antimicrobial drugs,Tablet,500 mg,30's pack,,,,,active,143-0079-023
+,Aptin,Vildagliptin,Advanced Chemical Industries Limited,Dipeptidyl Peptidase-4 (DPP-4) inhibitor,Tablet,50 mg,30's pack,,,,,active,005-1093-015
+,Aptrim,Sulphamethoxazole + Trimethoprim,Apollo Pharmaceuticals Ltd.,Sulphonamides & Trimethoprim,Tablet,400 mg + 80 mg,,,,,,active,076-0033-023
+,Apulset,Ondansetron,Aristopharma Limited,Anti-emetic drugs,Tablet,8 mg,30's pack,,,,,active,143-0596-018
+,Arain,Tolfenamic Acid,Opsonin Pharma Limited,Other drugs for migraine,Tablet,200 mg,30's pack,,,,,active,025-0708-047
+,Ardium,Diosmin + Hesperidin,Drug International Ltd.,Phlebotonic & Vascular protecting preparation,Tablet,450 mg + 50 mg,30's pack,,,,,active,210-0669-075
+,Argolin,Cabergoline,Opsonin Pharma Limited,Antiparkinson drugs,Tablet,500 mcg,4's pack,,,,,active,025-0959-049
+,Arilol,Carvedilol,Pacific Pharmaceuticals Ltd.,Alpha adrenoceptor blocking drugs,Tablet,25 mg,30's pack,,,,,active,160-0130-022
+,Arinet,Artesunate,Alco Pharma Limited,Anti-malarial drugs,Tablet,50 mg,20's pack,,,,,active,272-0174-024
+,Aripen,Aripiprazole,Opsonin Pharma Limited,Atypical neuroleptic drugs,Tablet,10 mg,30's pack,,,,,active,025-0492-028
+,Aripra,Aripiprazole,Incepta Pharmaceuticals Ltd.,Atypical neuroleptic drugs,Tablet,10 mg,50's pack,,,,,active,116-0378-028
+,Ariprazole,Aripiprazole,General Pharmaceuticals Ltd.,Atypical neuroleptic drugs,Tablet,10 mg,30's pack,,,,,active,240-0240-028
+,Ariprex,Aripiprazole,"Square Pharmaceuticals PLC, Pabna",Atypical neuroleptic drugs,Tablet,10 mg,30's pack,,,,,active,012-1267-028
+,Aristo D3,Cholecalciferol (Vit. D3),Aristopharma Limited,Vitamin in bone formation,Tablet,2000 IU,30's pack,,,,,active,143-0680-078
+,Arlin,Linezolid,Beximco Pharmaceuticals Ltd.,Macrolides,Tablet,400 mg,20's pack,,,,,active,186-0336-023
+,Armoda,Armodafinil,Advanced Chemical Industries Limited,CNS stimulant drugs,Tablet,150 mg,30's pack,,,,,active,005-1098-001
+,Arodex,Anastrozole,"Techno Drugs Ltd., Satipara, Narshingdi",Hormonal Chemotherapy,Tablet,1 mg,30's pack,,,,,active,304-0320-010
+,Arofil SR,Theophylline,Incepta Pharmaceuticals Ltd.,Bronchodilator,Tablet,300 mg,50's pack,,,,,active,116-0216-044
+,Arolax,Levosalbutamol,Navana Pharmaceuticals Ltd.,Short-acting selective & β2-adrenoceptor stimulants,Tablet,1 mg,100's pack,,,,,active,267-0182-044
+,Aromatin,Anastrozole,Aristopharma Limited,Hormonal Chemotherapy,Tablet,1 mg,30's pack,,,,,active,143-0607-010
+,Arotril,Clonazepam,Aristopharma Limited,Adjunct anti-epileptic drugs,Tablet,2 mg,30's pack,,,,,active,143-0209-046
+,Aroxia,Etoricoxib,Ad-din Pharmaceuticals Ltd.,Non-steroidal Anti-inflammatory Drugs (NSAIDs),Tablet,60 mg,30's pack,,,,,active,084-0095-064
+,Arpolax,Citalopram Hydrobromide,Incepta Pharmaceuticals Ltd.,SSRIs & related anti-depressant drugs,Tablet,20 mg,30's pack,,,,,active,116-0213-014
+,Arsenor,Apremilast,Beacon Pharmaceuticals PLC,Disease-modifying antirheumatic drugs (DMARDs),Tablet,10 mg,30's pack,,,,,active,341-0286-
+,Artemet,Artemether + Lumefantrine,Incepta Pharmaceuticals Ltd.,Anti-malarial drugs,Tablet,20 mg + 120 mg,24's pack,,,,,active,116-0813-024
+,Artex,Artesunate,Jayson Pharmaceuticals Ltd.,Anti-malarial drugs,Tablet,50 mg,12's pack,,,,,active,013-0380-024
+,Arth A,Chondroitin + Glucosamine,The ACME Laboratories Ltd.,Stimulation of Cartilage formation,Tablet,200 mg + 250 mg,50's pack,,,,,active,036-0413-064
+,Arth-A Max,Diacerein + Glucosamine Sulphate,The ACME Laboratories Ltd.,Stimulation of Cartilage formation,Tablet,50 mg + 750 mg,30's pack,,,,,active,036-0845-064
+,Arth-A TS,Chondroitin + Glucosamine,The ACME Laboratories Ltd.,Stimulation of Cartilage formation,Tablet,600 mg + 750 mg,30's pack,,,,,active,036-0997-064
+,Arthanib,Tofacitinib,Aristopharma Limited,Immunosuppressant,Tablet,5 mg,10's pack,,,,,active,143-0692-058
+,Arthanib XR,Tofacitinib,Aristopharma Limited,Immunosuppressant,Xr Tablet,11 mg,10's pack,,,,,active,143-0693-058
+,Arthofix,Chondroitin + Glucosamine,Euro Pharma Ltd.,Stimulation of Cartilage formation,Tablet,200 mg + 250 mg,,,,,,active,337-0054-064
+,Arthrocare,Chondroitin + Glucosamine,Doctor TIMS Pharmaceuticals Ltd.,Stimulation of Cartilage formation,Tablet,200 mg + 250 mg,50's pack,,,,,active,289-0063-064
+,Arthrosin,Chondroitin + Glucosamine,Unimed Unihealth Pharmaceuticals Ltd.,Stimulation of Cartilage formation,Tablet,200 mg + 250 mg,30's pack,,,,,active,225-0279-064
+,Artigo,Cinnarizine + Dimenhydrinate,Advanced Chemical Industries Limited,Anti vertigo drugs,Tablet,20 mg + 40 mg,50's pack,,,,,active,005-0921-021
+,Aruxil,Almitrine Bismesylate + Raubasine,Opsonin Pharma Limited,Cerebral vasodilator & Neurosensory oxygenator drugs,Tablet,30 mg + 10 mg,30's pack,,,,,active,025-0962-036
+,Ascobex,Vitamin C,Beximco Pharmaceuticals Ltd.,Vitamin-C Preparations,Tablet,250 mg,200's pack,,,,,active,186-0063-078
+,Ascofer,Ferrous Ascorbate,Ibn Sina Pharmaceutical Ind. Ltd.,,Tablet,275 mg,,,,,,active,239-0489-045
+,Ascorin,Vitamin C,Bristol Pharmaceuticals Ltd.,Vitamin-C Preparations,Tablet,250 mg,100's pack,,,,,active,054-0042-078
+,Ascoson,Vitamin C,Jayson Pharmaceuticals Ltd.,Vitamin-C Preparations,Tablet,250 mg,200's pack,,,,,active,013-0139-078
+,Ascova,Doxophylline,Labaid Pharmaceuticals Ltd.,Bronchodilator,Tablet,200 mg,50's pack,,,,,active,278-0095-044
+,Asibion,Cyanocobalamin + Pyridoxine Hydrochloride + Vitamin B1,Asiatic Laboratories Ltd.,Specific combined vitamin preparations,Tablet,200 mcg + 200 mg + 100 mg,50's pack,,,,,active,023-0166-078
+,Asilee,Levofloxacin,Asiatic Laboratories Ltd.,4-Quinolone preparations,Tablet,500 mg,24's pack,,,,,active,023-0072-023
+,Askorel SR,Butamirate Citrate,Incepta Pharmaceuticals Ltd.,Cough suppressant,Tablet,50 mg,30's pack,,,,,active,116-1029-031
+,Asmacon SR,Theophylline,Pacific Pharmaceuticals Ltd.,Bronchodilator,Tablet,400 mg,50's pack,,,,,active,160-0144-044
+,Asmafen,Ketotifen,Globe Pharmaceuticals Ltd.,Cromoglycate & related drugs,Tablet,1 mg,100's pack,,,,,active,083-0321-021
+,Asprofen,Ketotifen,Rephco Pharmaceuticals Ltd.,Cromoglycate & related drugs,Tablet,1 mg,100's pack,,,,,active,047-0231-021
+,Atanib,Afatinib,Aristopharma Limited,Tyrosine Kinase Inhibitor,Tablet,40 mg,10's pack,,,,,active,143-0733-010
+,Atebit,Atenolol,Asiatic Laboratories Ltd.,Beta-adrenoceptor blocking drugs,Tablet,50 mg,100's pack,,,,,active,023-0211-022
+,Atenolol,Atenolol,Albion Laboratories Ltd.,Beta-adrenoceptor blocking drugs,Tablet,50 mg,100's pack,,,,,active,096-0130-022
+,Atinid,Nitazoxanide,Biopharma Ltd.,Anti-diarrhoeal Antiprotozoal,Tablet,500 mg,20's pack,,,,,active,064-0255-027
+,Atopen-X,Paracetamol + Tramadol Hydrochloride,Kemiko Pharmaceuticals Ltd.,Non-steroidal Anti-inflammatory Drugs (NSAIDs),Tablet,325 mg + 37.5 mg,20's pack,,,,,active,237-0304-006
+,ATV Plus,Amlodipine + Atorvastatin,Delta Pharma Ltd.,Anti-anginal & lipid lowering drugs,Tablet,5 mg + 10 mg,30's pack,,,,,active,048-0195-022
+,Augment,Amoxicillin + Clavulanic Acid,"Eskayef Pharmaceuticals Ltd., Narayanganj",Broad spectrum penicillins,Tablet,875 mg + 125 mg,12's pack,,,,,active,387-0017-023
+,AUP,Pantoprazole,Decent Pharma Laboratories Ltd.,Proton Pump Inhibitor,Tablet,40 mg,30's pack,,,,,active,077-0044-067
+,Avidol,Carvedilol,Ad-din Pharmaceuticals Ltd.,Alpha adrenoceptor blocking drugs,Tablet,6.25 mg,60's pack,,,,,active,084-0113-022
+,Avidro,Pizotifen,Beximco Pharmaceuticals Ltd.,Other drugs for migraine,Tablet,1.5 mg,50's pack,,,,,active,186-0319-047
+,Avifanz,Efavirenz,Beximco Pharmaceuticals Ltd.,Drugs for HIV / Anti-retroviral drugs,Tablet,600 mg,10's pack,,,,,active,186-0331-032
+,Avifix,Nelfinavir,Beximco Pharmaceuticals Ltd.,Drugs for HIV / Anti-retroviral drugs,Tablet,250 mg,10's pack,,,,,active,186-0330-032
+,Avilam,Lamivudine,Beximco Pharmaceuticals Ltd.,Drugs for HIV / Anti-retroviral drugs,Tablet,150 mg,10's pack,,,,,active,186-0332-032
+,Avintol,Vinpocetine,Advanced Chemical Industries Limited,Cerebral vasodilator & Neurosensory oxygenator drugs,Tablet,5 mg,50's pack,,,,,active,005-0780-036
+,Avloquin,Chloroquine Phosphate,Advanced Chemical Industries Limited,Anti-malarial drugs,Tablet,250 mg,100's pack,,,,,active,005-0001-024
+,Avlotrin,Sulphamethoxazole + Trimethoprim,Advanced Chemical Industries Limited,Sulphonamides & Trimethoprim,Tablet,400 mg + 80 mg,250's pack,,,,,active,005-0099-023
+,Avonoid,Diosmin + Hesperidin,Unimed Unihealth Pharmaceuticals Ltd.,Phlebotonic & Vascular protecting preparation,Tablet,450 mg + 50 mg,30's pack,,,,,active,225-0316-075
+,Avotil,Prochlorperazine Maleate,Rephco Pharmaceuticals Ltd.,Anti vertigo drugs,Tablet,5 mg,200's pack,,,,,active,047-0013-018
+,Avudin,Lamivudine + Zidovudine,"Square Pharmaceuticals PLC, Pabna",Drugs for HIV / Anti-retroviral drugs,Tablet,150 mg + 300 mg,10's pack,,,,,active,012-0613-032
+,Axeclav,Cefuroxime + Clavulanic Acid,Alco Pharma Limited,Second generation Cephalosporins,Tablet,500 mg + 125 mg,8's pack,,,,,active,272-0274-023
+,Axet,Cefuroxime,Orion Pharma Ltd.,Second generation Cephalosporins,Tablet,500 mg,12's pack,,,,,active,030-0227-023
+,Axetil,Cefuroxime,Alco Pharma Limited,Second generation Cephalosporins,Tablet,125 mg,12's pack,,,,,active,272-0111-023
+,Axibid,Cefuroxime,Nuvista Pharma Ltd.,Second generation Cephalosporins,Tablet,250 mg,14's pack,,,,,active,006-0143-023
+,Axicef,Cefuroxime,Unimed Unihealth Pharmaceuticals Ltd.,Second generation Cephalosporins,Tablet,250 mg,12's pack,,,,,active,225-0046-023
+,Aximin,Rifaximin,The ACME Laboratories Ltd.,4-Quinolone preparations,Tablet,200 mg,10's pack,,,,,active,036-0814-023
+,Axinix,Axitinib,Beacon Pharmaceuticals PLC,Targeted Cancer Therapy,Tablet,1 mg,180's pack,,,,,active,341-0324-010
+,Axofyl,Doxophylline,Orion Pharma Ltd.,Bronchodilator,Tablet,200 mg,30's pack,,,,,active,030-0418-044
+,Axovit,Cyanocobalamin + Pyridoxine Hydrochloride + Vitamin B1,Doctor TIMS Pharmaceuticals Ltd.,Specific combined vitamin preparations,Tablet,200 mcg + 200 mg + 100 mg,50's pack,,,,,active,289-0041-078
+,Azapin,Mirtazapine,Labaid Pharmaceuticals Ltd.,Atypical anti-depressant drugs,Tablet,15 mg,30's pack,,,,,active,278-0049-014
+,Azepam,Diazepam,The ACME Laboratories Ltd.,Primary anti-epileptic drugs,Tablet,5 mg,50's pack,,,,,active,036-0360-057
+,B One,Thiamine Hydrochloride,Alco Pharma Limited,Vitamin-B preparations,Tablet,100 mg,100's pack,,,,,active,272-0127-078
+,B-Dexa,Dexamethasone,Belsen Pharmaceuticals Ltd.,,Tablet,.5 mg,100's pack,,,,,active,069-0061-072
+,B-prolol,Bisoprolol Hemifumarate,Sharif Pharmaceuticals Ltd.,Anti adrenergic agent (Beta blockers),Tablet,5 mg,30's pack,,,,,active,360-0035-022
+,B126,Cyanocobalamin + Pyridoxine Hydrochloride + Vitamin B1,Popular Pharmaceuticals PLC,Specific combined vitamin preparations,Tablet,200 mcg + 200 mg + 100 mg,60's pack,,,,,active,336-0136-078
+,B3,Cyanocobalamin + Pyridoxine Hydrochloride + Vitamin B1,Al-Madina Pharmaceuticals Ltd.,Specific combined vitamin preparations,Tablet,200 mcg + 200 mg + 100 mg,50's pack,,,,,active,294-0085-078
+,Baby Zinc,Zinc,The ACME Laboratories Ltd.,Specific mineral preparations,Tablet,20 mg,100's pack,,,,,active,036-0445-062
+,Bacaid,Baclofen,Labaid Pharmaceuticals Ltd.,Centrally acting Skeletal Muscle Relaxants,Tablet,10 mg,30's pack,,,,,active,278-0017-070
+,Bacben,Baclofen,Benham Pharmaceuticals Ltd.,Centrally acting Skeletal Muscle Relaxants,Tablet,10 mg,30's pack,,,,,active,125-0089-070
+,Bacifen,Baclofen,Biopharma Ltd.,Centrally acting Skeletal Muscle Relaxants,Tablet,10 mg,30's pack,,,,,active,064-0307-070
+,Backtone,Baclofen,Pharmacil Ltd.,Centrally acting Skeletal Muscle Relaxants,Tablet,5 mg,50's pack,,,,,active,196-0049-070
+,Baclium,Baclofen,Virgo Pharmaceuticals Ltd.,Centrally acting Skeletal Muscle Relaxants,Tablet,10 mg,30's pack,,,,,active,357-0087-070
+,Bacnil,Levofloxacin,Rephco Pharmaceuticals Ltd.,4-Quinolone preparations,Tablet,500 mg,20's pack,,,,,active,047-0124-023
+,Bactamox,Amoxicillin,"Renata Limited, Gazipur",Broad spectrum penicillins,Tablet,250 mg,100's pack,,,,,active,353-0001-023
+,Bactin,Ciprofloxacin,Ibn Sina Pharmaceutical Ind. Ltd.,Anti-diarrhoeal Antimicrobial drugs,Tablet,500 mg,30's pack,,,,,active,239-0065-023
+,Balancia,Citicoline,Aristopharma Limited,CNS stimulant drugs,Tablet,500 mg,10's pack,,,,,active,143-0694-036
+,Baloflu,Baloxavir Marboxil,The ACME Laboratories Ltd.,Respiratory viral infections (Influenza),Tablet,40 mg,,,,,,active,036-1071-032
+,Baloxa,Baloxavir Marboxil,Beximco Pharmaceuticals Ltd.,Respiratory viral infections (Influenza),Tablet,20 mg,2 tablet pack,,,,,active,186-1115-032
+,Bambelor,Bambuterol Hydrochloride,Incepta Pharmaceuticals Ltd.,Short-acting selective & β2-adrenoceptor stimulants,Tablet,10 mg,100's pack,,,,,active,116-0148-044
+,Barbit,Phenobarbitone,Incepta Pharmaceuticals Ltd.,Adjunct anti-epileptic drugs,Tablet,30 mg,100's pack,,,,,active,116-0454-046
+,Barcavir,Entecavir,Incepta Pharmaceuticals Ltd.,Hepatic viral infections (Hepatitis B),Tablet,1 mg,10's pack,,,,,active,116-0865-032
+,Baricit,Baricitinib,Delta Pharma Ltd.,Immunosuppressant,Tablet,2 mg,10's pack,,,,,active,048-0337-058
+,Barif,Febuxostat,"Square Pharmaceuticals PLC, Gazipur",Drugs used in Gout,Tablet,40 mg,30's pack,,,,,active,321-0204-076
+,Barinib,Baricitinib,"Drug International Ltd., Gopalpur",Immunosuppressant,Tablet,2 mg,10's pack,,,,,active,400-0394-058
+,Barinix,Baricitinib,The ACME Laboratories Ltd.,Immunosuppressant,Tablet,2 mg,10's pack,,,,,active,036-1131-058
+,Baritinib,Baricitinib,Healthcare Pharmaceuticals Ltd.,Immunosuppressant,Tablet,2 mg,10's pack,,,,,active,323-0713-058
+,Becovir,Tenofovir Disoproxil Fumarate,Beacon Pharmaceuticals PLC,Drugs for HIV / Anti-retroviral drugs,Tablet,300 mg,8's pack,,,,,active,341-0171-032
+,Beloxin,Levofloxacin,Belsen Pharmaceuticals Ltd.,4-Quinolone preparations,Tablet,500 mg,20's pack,,,,,active,069-0059-023
+,Benazin,Tetrabenazine,Renata Limited,Atypical neuroleptic drugs,Tablet,12.5 mg,30's pack,,,,,active,002-0929-028
+,Bendopa,Benserazide + Levodopa,Renata Limited,Antiparkinson drugs,Tablet,25 mg + 100 mg,30's pack,,,,,active,002-0943-025
+,Benformin,Metformin Hydrochloride,Benham Pharmaceuticals Ltd.,Biguanides,Tablet,850 mg,50's pack,,,,,active,125-0023-015
+,Benprox,Ciprofloxacin,Benham Pharmaceuticals Ltd.,Anti-diarrhoeal Antimicrobial drugs,Tablet,500 mg,30's pack,,,,,active,125-0015-023
+,Benquil,Midazolam,Biopharma Ltd.,Benzodiazepine hypnotics,Tablet,7.5 mg,30's pack,,,,,active,064-0247-057
+,Benzopam,Bromazepam,Benham Pharmaceuticals Ltd.,Benzodiazepine sedatives,Tablet,3 mg,50's pack,,,,,active,125-0037-057
+,Bepra,Pantoprazole,Belsen Pharmaceuticals Ltd.,,Tablet,40 mg,,,,,,active,069-0091-067
+,Bet-A,Betamethasone,The ACME Laboratories Ltd.,Corticosteroid,Tablet,500 mcg,100's pack,,,,,active,036-0647-072
+,Betabis,Bisoprolol Hemifumarate,The ACME Laboratories Ltd.,Anti adrenergic agent (Beta blockers),Tablet,2.5 mg,30's pack,,,,,active,036-0693-022
+,Betacor,Bisoprolol Hemifumarate,Popular Pharmaceuticals PLC,Anti adrenergic agent (Beta blockers),Tablet,2.5 mg,30's pack,,,,,active,336-0423-022
+,Betafix,Bisoprolol Hemifumarate,Healthcare Pharmaceuticals Ltd.,Anti adrenergic agent (Beta blockers),Tablet,2.5 mg,30's pack,,,,,active,323-0434-022
+,Betatin,Betahistine Dihydrochloride,Renata Limited,Drugs used in meniere's diseases,Tablet,8 mg,100's pack,,,,,active,002-0874-021
+,Bexipred,Prednisolone,Beximco Pharmaceuticals Ltd.,Glucocorticoids,Tablet,10 mg,100's pack,,,,,active,186-0842-072
+,Bical,Bicalutamide,Beacon Pharmaceuticals PLC,Hormonal Chemotherapy,Tablet,50 mg,30's pack,,,,,active,341-0247-010
+,Bicalon,Bicalutamide,"Drug International Ltd., Squib Road",Hormonal Chemotherapy,Tablet,50 mg,28's pack,,,,,active,309-0078-010
+,Big-B,Cyanocobalamin + Pyridoxine Hydrochloride + Vitamin B1,Amico Laboratories Ltd.,Specific combined vitamin preparations,Tablet,200 mcg + 200 mg + 100 mg,30's pack,,,,,active,028-0170-078
+,Bigmet,Metformin Hydrochloride,Renata Limited,Biguanides,Tablet,500 mg,100's pack,,,,,active,002-0316-015
+,Bilicir,Ursodeoxycholic Acid,Advanced Chemical Industries Limited,Anti-gallstones drugs: Bile Acids,Tablet,150 mg,50's pack,,,,,active,005-1051-075
+,Binoclar,Clarithromycin,Novartis (Bangladesh) Ltd.,Macrolides,Tablet,250 mg,14's pack,,,,,active,276-0088-023
+,Bioclavid,Amoxicillin + Clavulanic Acid,Novartis (Bangladesh) Ltd.,Broad spectrum penicillins,Tablet,875 mg + 125 mg,18's pack,,,,,active,276-0288-023
+,Biofavi,Favipiravir,Biopharma Ltd.,Anti-viral drugs,Tablet,200 mg,20's pack,,,,,active,064-0487-032
+,Biofol,Folinic Acid,Incepta Pharmaceuticals Ltd.,Supportive Care Therapy,Tablet,15 mg,30's pack,,,,,active,116-0978-045
+,Biolina Plus,Linagliptin + Metformin Hydrochloride,Biogen Pharmaceuticals Ltd.,Combination Oral hypoglycemic preparations,Tablet,2.5 mg + 850 mg,30's pack,,,,,active,139-0073-015
+,Biopen VK,Phenoxymethyl Penicillin,Biopharma Ltd.,Benzylpenicillin & Phenoxymethyl penicillin,Tablet,250 mg,100's pack,,,,,active,064-0134-023
+,Biotrim,Sulphamethoxazole + Trimethoprim,Biopharma Ltd.,Sulphonamides & Trimethoprim,Tablet,800 mg + 160 mg,100's pack,,,,,active,064-0115-023
+,Biovit E,Vitamin E,Biopharma Ltd.,Vitamin-E Preparations,Tablet,200 mg,15's pack,,,,,active,064-0185-078
+,Block-T,Tranexamic Acid,Drug International Ltd.,Anti-fibrinolytic drugs,Tablet,500 mg,20's pack,,,,,active,210-0633-019
+,Bonaid,Ibandronic Acid,Labaid Pharmaceuticals Ltd.,Bisphosphonate preparations,Tablet,150 mg,1 tablet kit,,,,,active,278-0046-048
+,Boncare,Ibandronic Acid,Orion Pharma Ltd.,Bisphosphonate preparations,Tablet,150 mg,1 tablet kit,,,,,active,030-0393-048
+,Bondrix,Ibandronic Acid,Ibn Sina Pharmaceutical Ind. Ltd.,Bisphosphonate preparations,Tablet,150 mg,1 tablet kit,,,,,active,239-0483-048
+,Bondrova,Ibandronic Acid,Healthcare Pharmaceuticals Ltd.,Bisphosphonate preparations,Tablet,150 mg,1 tablet kit,,,,,active,323-0212-048
+,Bone Guard,Ibandronic Acid,Incepta Pharmaceuticals Ltd.,Bisphosphonate preparations,Tablet,150 mg,1 tablet kit,,,,,active,116-0998-048
+,Bonemax-DX,Cholecalciferol (Vit. D3),Quality Pharmaceuticals Ltd.,,Tablet,600 mg + 400 IU,,,,,,active,296-0037-062
+,Boni Gold,Calcium Orotate,Delta Pharma Ltd.,Minerals in bone formation,Tablet,400 mg,30's pack,,,,,active,048-0306-062
+,BP Zinc,Zinc,Bristol Pharmaceuticals Ltd.,Specific mineral preparations,Tablet,20 mg,100's pack,,,,,active,054-0063-062
+,Bredicon,Desogestrel,Renata Limited,Oral Contraceptive preparations,Tablet,75 mcg,28 tablet pack,,,,,active,002-0133-056
+,Bredox,Doxophylline,Globe Pharmaceuticals Ltd.,Bronchodilator,Tablet,200 mg,30's pack,,,,,active,083-0551-044
+,Bricet,Brivaracetam,Renata Limited,Adjunct anti-epileptic drugs,Tablet,25 mg,10's pack,,,,,active,002-0953-046
+,Briva,Brivaracetam,The ACME Laboratories Ltd.,Adjunct anti-epileptic drugs,Tablet,25 mg,10's pack,,,,,active,036-1007-046
+,Brohexin,Bromhexine Hydrochloride,Millat Pharmaceuticals Ltd.,Cough expectorants & mucolytics,Tablet,8 mg,100's pack,,,,,active,253-0097-031
+,Broket,Ketotifen,Orion Pharma Ltd.,Cromoglycate & related drugs,Tablet,1 mg,100's pack,,,,,active,030-0233-021
+,Brolyt,Bromhexine Hydrochloride,Alco Pharma Limited,Cough expectorants & mucolytics,Tablet,8 mg,50's pack,,,,,active,272-0083-031
+,Bromergon,Bromocriptine,Novartis (Bangladesh) Ltd.,Antiparkinson drugs,Tablet,2.5 mg,30's pack,,,,,active,276-0235-049
+,Bromex,Bromhexine Hydrochloride,Somatec Pharmaceuticals Ltd.,Cough expectorants & mucolytics,Tablet,8 mg,100's pack,,,,,active,051-0087-031
+,Bromodel,Bromocriptine,Opsonin Pharma Limited,Antiparkinson drugs,Tablet,2.5 mg,30's pack,,,,,active,025-0459-049
+,Bromolac,Bromocriptine,"Square Pharmaceuticals PLC, Pabna",Antiparkinson drugs,Tablet,2.5 mg,30's pack,,,,,active,012-1115-049
+,Bromotine,Bromocriptine,Nuvista Pharma Ltd.,Antiparkinson drugs,Tablet,2.5 mg,30's pack,,,,,active,006-0124-049
+,Brostin DS,Bromhexine Hydrochloride,Rephco Pharmaceuticals Ltd.,Cough expectorants & mucolytics,Tablet,8 mg,100's pack,,,,,active,047-0195-031
+,Budeson,Budesonide,The ACME Laboratories Ltd.,,Inhalation Capsule,200 mcg/Metered Inhalation,,,,,,active,036-0329-044
+,Budicort ER,Budesonide,Incepta Pharmaceuticals Ltd.,Ulcerative Colitis,Er Tablet,9 mg,30's pack,,,,,active,116-1255-044
+,Bukof,Butamirate Citrate,Beacon Pharmaceuticals PLC,Cough suppressant,Tablet,50 mg,30's pack,,,,,active,341-0069-031
+,Bumecard,Bumetanide,Incepta Pharmaceuticals Ltd.,Loop diuretics,Tablet,1 mg,30's pack,,,,,active,116-0907-042
+,Burat CR,Butamirate Citrate,Renata Limited,Cough suppressant,Tablet,50 mg,30's pack,,,,,active,002-0660-031
+,Butakof,Butamirate Citrate,Benham Pharmaceuticals Ltd.,Cough suppressant,Tablet,50 mg,30's pack,,,,,active,125-0084-031
+,Butalpen,Hyoscine Butylbromide,Desh Pharmaceuticals Ltd.,Anticholinergics (antimuscarinics)/ Anti-spasmodics,Tablet,10 mg,100's pack,,,,,active,268-0063-011
+,Butasiv,Butamirate Citrate,Jenphar Bangladesh Ltd.,Cough suppressant,Tablet,50 mg,30's pack,,,,,active,351-0142-031
+,Buviren,Sofosbuvir,Renata Limited,Hepatic viral infections (Hepatitis C),Tablet,400 mg,6's pack,,,,,active,002-0765-032
+,C Bon,Vitamin C,Ambee Pharmaceuticals Ltd.,Vitamin-C Preparations,Tablet,250 mg,100's pack,,,,,active,192-0084-078
+,C-Vitera,Vitamin C,Millat Pharmaceuticals Ltd.,Vitamin-C Preparations,Tablet,250 mg,100's pack,,,,,active,253-0026-078
+,Cabita,Capecitabine,"Drug International Ltd., Squib Road",Cytotoxic Chemotherapy,Tablet,500 mg,28's pack,,,,,active,309-0063-010
+,Calac,Calcium Lactate,Opsonin Pharma Limited,Minerals in bone formation,Tablet,300 mg,100's pack,,,,,active,025-0038-062
+,Calbo Jr.,Calcium Carbonate,"Square Pharmaceuticals PLC, Pabna",Minerals in bone formation,Tablet,625 mg,60's pack,,,,,active,012-0673-062
+,Calbostar,Calcium Orotate,Square Formulations Ltd.,Minerals in bone formation,Tablet,400 mg,30's pack,,,,,active,372-0058-062
+,Calci D,Calcium Carbonate,Rephco Pharmaceuticals Ltd.,Minerals in bone formation,Tablet,1250 mg,50's pack,,,,,active,047-0104-062
+,Calm,Clobazam,Biopharma Ltd.,Benzodiazepine hypnotics,Tablet,10 mg,100's pack,,,,,active,064-0124-046
+,Calonil,Sucralose,Ad-din Pharmaceuticals Ltd.,Oral nutritional preparations,Tablet,8 mg,100's pack,,,,,active,084-0162-075
+,Caloprid,Prucalopride,"Square Pharmaceuticals PLC, Pabna",Osmotic purgatives,Tablet,1 mg,20's pack,,,,,active,012-1367-060
+,Camiton,Vinpocetine,Drug International Ltd.,Cerebral vasodilator & Neurosensory oxygenator drugs,Tablet,5 mg,98's pack,,,,,active,210-0058-036
+,Canarol,Canagliflozin,Drug International Ltd.,Sodium-glucose Cotransporter-2 (SGLT2) Inhibitors,Tablet,100 mg,10's pack,,,,,active,210-0663-015
+,Canasa,Mesalamine,Drug International Ltd.,Aminosalicylates,Dr Tablet,400 mg,30's pack,,,,,active,210-0651-064
+,Canazole,Fluconazole,Advanced Chemical Industries Limited,Drugs for subcutaneous and mycoses,Tablet,150 mg,10's pack,,,,,active,005-0231-020
+,Candicon,Voriconazole,Popular Pharmaceuticals PLC,Other Antifungal preparations,Tablet,200 mg,8's pack,,,,,active,336-0765-020
+,Candid,Fluconazole,Amico Laboratories Ltd.,Drugs for subcutaneous and mycoses,Tablet,50 mg,30's pack,,,,,active,028-0161-020
+,Canvo,Voriconazole,Everest Pharmaceuticals Ltd.,Other Antifungal preparations,Tablet,200 mg,6's pack,,,,,active,157-0149-020
+,Caparen,Capecitabine,"Renata Limited, Gazipur",Cytotoxic Chemotherapy,Tablet,500 mg,24's pack,,,,,active,353-0208-010
+,Captabine,Capecitabine,"Techno Drugs Ltd., Satipara, Narshingdi",Cytotoxic Chemotherapy,Tablet,150 mg,30's pack,,,,,active,304-0321-010
+,Carbazin,Carbamazepine,Eskayef Pharmaceuticals Ltd. Mirpur.,Primary anti-epileptic drugs,Tablet,200 mg,50's pack,,,,,active,188-0097-046
+,Carbiroid,Carbimazole,The White Horse Pharmaceuticals Ltd.,Anti-thyroid drugs,Tablet,5 mg,100's pack,,,,,active,214-0065-074
+,Carbizol,Carbimazole,"Square Pharmaceuticals PLC, Pabna",Anti-thyroid drugs,Tablet,5 mg,100's pack,,,,,active,012-0849-074
+,Cardiron,Amiodarone Hydrochloride,Drug International Ltd.,Potassium channel blockers,Tablet,200 mg,30's pack,,,,,active,210-0247-009
+,Caridol,Carisoprodol,"Eskayef Pharmaceuticals Ltd., Tongi,Gazipur",Locally acting Skeletal Muscle Relaxants,Tablet,250 mg,30's pack,,,,,active,308-0834-070
+,Carmapine,Carbamazepine,Incepta Pharmaceuticals Ltd.,Primary anti-epileptic drugs,Tablet,200 mg,50's pack,,,,,active,116-0583-046
+,Carmapine CR,Carbamazepine,Incepta Pharmaceuticals Ltd.,Primary anti-epileptic drugs,Tablet,200 mg,50's pack,,,,,active,116-0680-046
+,Carmaz,Carbamazepine,Aristopharma Limited,Primary anti-epileptic drugs,Tablet,200 mg,50's pack,,,,,active,143-0236-046
+,Carnitab,Levocarnitine,Beximco Pharmaceuticals Ltd.,Drugs for muscular energy metabolism,Tablet,330 mg,30's pack,,,,,active,186-0393-075
+,Carniten,Levocarnitine,Drug International Ltd.,Drugs for muscular energy metabolism,Tablet,330 mg,49's pack,,,,,active,210-0371-075
+,Cartine,Levocarnitine,Advanced Chemical Industries Limited,Drugs for muscular energy metabolism,Tablet,330 mg,30's pack,,,,,active,005-0718-075
+,Caspa,Voriconazole,Aristopharma Limited,Other Antifungal preparations,Tablet,50 mg,12's pack,,,,,active,143-0725-020
+,Cavir,Entecavir,"Square Pharmaceuticals PLC, Pabna",Hepatic viral infections (Hepatitis B),Tablet,1 mg,10's pack,,,,,active,012-1047-032
+,Caviral,Entecavir,Beacon Pharmaceuticals PLC,Hepatic viral infections (Hepatitis B),Tablet,.5 mg,10's pack,,,,,active,341-0155-032
+,Caviton,Vinpocetine,Opsonin Pharma Limited,Cerebral vasodilator & Neurosensory oxygenator drugs,Tablet,5 mg,50's pack,,,,,active,025-0082-036
+,Cazep,Carbamazepine,Opsonin Pharma Limited,Primary anti-epileptic drugs,Tablet,200 mg,50's pack,,,,,active,025-0288-046
+,Cecon,Vitamin C,The ACME Laboratories Ltd.,Vitamin-C Preparations,Tablet,250 mg,100's pack,,,,,active,036-0079-078
+,Cefdiren,Cefditoren,Ibn Sina Pharmaceutical Ind. Ltd.,Third generation Cephalosporins,Tablet,200 mg,8's pack,,,,,active,239-0499-023
+,Cefditor,Cefditoren,Orion Pharma Ltd.,Third generation Cephalosporins,Tablet,400 mg,4's pack,,,,,active,030-0366-023
+,Ceforan,Cefpodoxime,Drug International Ltd.,Third generation Cephalosporins,Tablet,100 mg,16's pack,,,,,active,210-0498-023
+,Cefpod,Cefpodoxime,Zenith Pharmaceuticals Ltd.,Third generation Cephalosporins,Tablet,100 mg,6's pack,,,,,active,080-0148-023
+,Celipress,Celiprolol Hydrochloride,Eskayef Pharmaceuticals Ltd. Mirpur.,Beta-blockers,Tablet,200 mg,20's pack,,,,,active,188-0233-022
+,Centomin,Metformin Hydrochloride,Centeon Pharma Ltd.,Biguanides,Tablet,500 mg,100's pack,,,,,active,386-0005-015
+,Centoxin,Digoxin,Opsonin Pharma Limited,Positive Inotropic drugs,Tablet,250 mcg,50's pack,,,,,active,025-0502-035
+,Centradol,Tapentadol,Incepta Pharmaceuticals Ltd.,Opioid analgesics,Tablet,50 mg,20's pack,,,,,active,116-1189-065
+,Ceptiva,Desogestrel + Ethinylestradiol,Advanced Chemical Industries Limited,Oral Contraceptive preparations,Tablet,150 mcg + 30 mcg,21 tablet pack,,,,,active,005-1141-039
+,Cerenin,Vinpocetine,Ambee Pharmaceuticals Ltd.,Cerebral vasodilator & Neurosensory oxygenator drugs,Tablet,5 mg,50's pack,,,,,active,192-0106-036
+,Charm,Sildenafil,"Drug International Ltd., Gopalpur",Drugs for Erectile Dysfunction,Tablet,25 mg,4's pack,,,,,active,400-0285-043
+,Chear,Sertraline Hydrochloride,Advanced Chemical Industries Limited,SSRIs & related anti-depressant drugs,Tablet,25 mg,100's pack,,,,,active,005-0274-014
+,Chelova,Deferasirox,Jenphar Bangladesh Ltd.,Antidote preparations,Tablet,250 mg,30's pack,,,,,active,351-0185-045
+,Cilosta,Cilostazol,"Square Pharmaceuticals PLC, Pabna",Peripheral Vasodilator drugs: Intermittent Claudication,Tablet,100 mg,30's pack,,,,,active,012-0953-036
+,Cinarin,Cinnarizine,Nipa Pharmaceuticals Ltd.,Anti vertigo drugs,Tablet,15 mg,100's pack,,,,,active,174-0143-021
+,Cinaron,Cinnarizine,"Square Pharmaceuticals PLC, Pabna",Anti vertigo drugs,Tablet,15 mg,200's pack,,,,,active,012-0115-021
+,Cinaron Plus,Cinnarizine + Dimenhydrinate,"Square Pharmaceuticals PLC, Gazipur",Anti vertigo drugs,Tablet,20 mg + 40 mg,100's pack,,,,,active,321-0199-021
+,Citalex,Escitalopram,Opsonin Pharma Limited,SSRIs & related anti-depressant drugs,Tablet,5 mg,30's pack,,,,,active,025-0516-014
+,Citazar,Levetiracetam,Advanced Chemical Industries Limited,Adjunct anti-epileptic drugs,Tablet,1000 mg,20's pack,,,,,active,005-0682-046
+,Clacin,Clarithromycin,Medimet Pharmaceuticals Ltd.,Macrolides,Tablet,500 mg,4's pack,,,,,active,201-0083-023
+,Clamox,Amoxicillin + Clavulanic Acid,Opsonin Pharma Limited,Broad spectrum penicillins,Tablet,875 mg + 125 mg,12's pack,,,,,active,025-0750-023
+,Clamycin,Clarithromycin,Biopharma Ltd.,Macrolides,Tablet,500 mg,12's pack,,,,,active,064-0359-023
+,Claz,Gliclazide,Astra Biopharmaceuticals Ltd.,Sulfonylureas,Tablet,80 mg,,,,,,active,326-0107-015
+,Cleo,Cyproterone Acetate + Ethinylestradiol,Nuvista Pharma Ltd.,Oral Hormonal preparations for Acne,Tablet,2 mg + 35 mcg,21 tablet pack,,,,,active,006-0201-056
+,Clepam,Clonazepam,Euro Pharma Ltd.,Adjunct anti-epileptic drugs,Tablet,2 mg,30's pack,,,,,active,337-0090-046
+,Clit,Chloroquine Phosphate,Hudson Pharmaceuticals Ltd.,Anti-malarial drugs,Tablet,250 mg,100's pack,,,,,active,165-0066-024
+,Clob,Clobazam,Opsonin Pharma Limited,Benzodiazepine hypnotics,Tablet,10 mg,100's pack,,,,,active,025-0138-046
+,Clobid,Clobazam,Medimet Pharmaceuticals Ltd.,Benzodiazepine hypnotics,Tablet,10 mg,100's pack,,,,,active,201-0043-046
+,Clovir,Acyclovir,Ibn Sina Pharmaceutical Ind. Ltd.,Herpes simplex & Varicella-zoster virus infections,Tablet,200 mg,30's pack,,,,,active,239-0288-032
+,Clozam,Clobazam,Cosmic Pharma Ltd.,Benzodiazepine hypnotics,Tablet,10 mg,100's pack,,,,,active,100-0047-046
+,Coavlon,Artemether + Lumefantrine,Advanced Chemical Industries Limited,Anti-malarial drugs,Tablet,20 mg + 120 mg,24's pack,,,,,active,005-0734-024
+,Cofof,Butamirate Citrate,Euro Pharma Ltd.,Cough suppressant,Tablet,50 mg,30's pack,,,,,active,337-0088-031
+,Cogniz,Citicoline,Unimed Unihealth Pharmaceuticals Ltd.,CNS stimulant drugs,Tablet,500 mg,12's pack,,,,,active,225-0484-036
+,Colamin,Mecobalamin,Rangs Pharmaceuticals Ltd.,Drugs for Megaloblastic Anemia,Tablet,.5 mg,30's pack,,,,,active,082-0116-078
+,Cold B,Bromhexine Hydrochloride,Medimet Pharmaceuticals Ltd.,Cough expectorants & mucolytics,Tablet,4 mg,100's pack,,,,,active,201-0143-031
+,Coluric,Colchicine,Unimed Unihealth Pharmaceuticals Ltd.,Drugs used in Gout,Tablet,.6 mg,14's pack,,,,,active,225-0374-076
+,Comet,Metformin Hydrochloride,"Square Pharmaceuticals PLC, Pabna",Biguanides,Tablet,500 mg,100's pack,,,,,active,012-0332-015
+,Comet XR,Metformin Hydrochloride,"Square Pharmaceuticals PLC, Pabna",Biguanides,Tablet,500 mg,50's pack,,,,,active,012-0614-015
+,Comipen,Clomiphene Citrate,Pacific Pharmaceuticals Ltd.,Drugs for Infertility,Tablet,50 mg,30's pack,,,,,active,160-0096-053
+,Compimet,Metformin Hydrochloride + Pioglitazone,Incepta Pharmaceuticals Ltd.,Combination Oral hypoglycemic preparations,Tablet,500 mg + 15 mg,30's pack,,,,,active,116-0498-015
+,Con,Fluconazole,Reliance Pharmaceuticals Ltd.,Drugs for subcutaneous and mycoses,Tablet,50 mg,30's pack,,,,,active,117-0085-020
+,Conart,Bumetanide,Advanced Chemical Industries Limited,Loop diuretics,Tablet,1 mg,30's pack,,,,,active,005-0694-042
+,Conrena-R,Ethinylestradiol + Ferrous Fumarate + Norgestrel,"Renata Limited, Gazipur",,Tablet,.03 mg + 75 mg + .3 mg,,,,,,active,353-0034-039
+,Corangi,Nicorandil,Unimed Unihealth Pharmaceuticals Ltd.,Potassium-channel activator,Tablet,10 mg,30's pack,,,,,active,225-0178-040
+,Cordarone,Amiodarone Hydrochloride,Synovia Pharma PLC.,Potassium channel blockers,Tablet,100 mg,30's pack,,,,,active,003-0203-009
+,Cortan,Prednisolone,Incepta Pharmaceuticals Ltd.,Glucocorticoids,Tablet,20 mg,50's pack,,,,,active,116-0299-072
+,Cortiflo,Deflazacort,Nuvista Pharma Ltd.,Glucocorticoids,Tablet,6 mg,30's pack,,,,,active,006-0178-072
+,Cortimax,Deflazacort,The ACME Laboratories Ltd.,Glucocorticoids,Tablet,6 mg,30's pack,,,,,active,036-0891-072
+,Cortisol,Prednisolone,Aristopharma Limited,Glucocorticoids,Tablet,5 mg,200's pack,,,,,active,143-0494-072
+,Cotrazen,Sulphamethoxazole + Trimethoprim,Zenith Pharmaceuticals Ltd.,Sulphonamides & Trimethoprim,Tablet,400 mg + 80 mg,100's pack,,,,,active,080-0038-023
+,Cotson,Hydrocortisone,Opsonin Pharma Limited,Glucocorticoids,Tablet,10 mg,100's pack,,,,,active,025-0699-072
+,Crezyme,Pancreatin,Opsonin Pharma Limited,Digestive Enzyme,Tablet,325 mg,100's pack,,,,,active,025-0204-051
+,Cynta,Tapentadol,Healthcare Pharmaceuticals Ltd.,Opioid analgesics,Tablet,100 mg,10's pack,,,,,active,323-0348-065
+,Cytapen V,Phenoxymethyl Penicillin,Edruc Ltd.,Benzylpenicillin & Phenoxymethyl penicillin,Tablet,250 mg,100's pack,,,,,active,009-0094-023
+,Cytomis,Misoprostol,Incepta Pharmaceuticals Ltd.,Prostaglandin analogues,Tablet,200 mcg,30's pack,,,,,active,116-0181-049
+,D Cort,Dexamethasone,Globe Pharmaceuticals Ltd.,,Tablet,.5 mg,,,,,,active,083-0229-072
+,D-Fen,Pizotifen,Drug International Ltd.,Other drugs for migraine,Tablet,1.5 mg,50's pack,,,,,active,210-0330-047
+,D-Fo,Metformin Hydrochloride,Decent Pharma Laboratories Ltd.,Biguanides,Tablet,850 mg,30's pack,,,,,active,077-0037-015
+,D-Lina,Linagliptin,Desh Pharmaceuticals Ltd.,Dipeptidyl Peptidase-4 (DPP-4) inhibitor,Tablet,5 mg,30's pack,,,,,active,268-0109-015
+,D-Revive,Cholecalciferol (Vit. D3),Labaid Pharmaceuticals Ltd.,Vitamin in bone formation,Tablet,1000 IU,60's pack,,,,,active,278-0137-078
+,D-Rise,Cholecalciferol (Vit. D3),Beximco Pharmaceuticals Ltd.,Vitamin in bone formation,Tablet,2000 IU,30's pack,,,,,active,186-0930-078
+,D-Shine,Cholecalciferol (Vit. D3),One Pharma Ltd.,Vitamin in bone formation,Tablet,2000 IU,100's pack,,,,,active,049-0173-078
+,Daclacee,Daclatasvir,Jenphar Bangladesh Ltd.,Hepatic viral infections (Hepatitis C),Tablet,60 mg,60's pack,,,,,active,351-0139-
+,Daclavir,Daclatasvir,Beacon Pharmaceuticals PLC,Hepatic viral infections (Hepatitis C),Tablet,60 mg,10's pack,,,,,active,341-0279-
+,Daclaxen,Daclatasvir,Everest Pharmaceuticals Ltd.,Hepatic viral infections (Hepatitis C),Tablet,60 mg,7's pack,,,,,active,157-0121-032
+,Dacocent,Dacomitinib,Incepta Pharmaceuticals Ltd.,Cytotoxic Chemotherapy,Tablet,45 mg,10's pack,,,,,active,116-1439-010
+,Daizy,Dienogest,"Square Pharmaceuticals PLC, Pabna",Female Sex hormones,Tablet,2 mg,10's pack,,,,,active,012-1342-056
+,Dakla,Daclatasvir,Healthcare Pharmaceuticals Ltd.,Hepatic viral infections (Hepatitis C),Tablet,60 mg,7's pack,,,,,active,323-0512-032
+,Dakovir-C,Daclatasvir,Beximco Pharmaceuticals Ltd.,Hepatic viral infections (Hepatitis C),Tablet,60 mg,14's pack,,,,,active,186-0927-032
+,Dapaglip,Dapagliflozin,Incepta Pharmaceuticals Ltd.,Sodium-glucose Cotransporter-2 (SGLT2) Inhibitors,Tablet,5 mg,30's pack,,,,,active,116-1062-015
+,Daparol,Dapagliflozin,Drug International Ltd.,Sodium-glucose Cotransporter-2 (SGLT2) Inhibitors,Tablet,5 mg,14's pack,,,,,active,210-0665-015
+,Dapawin,Dapagliflozin,Beacon Pharmaceuticals PLC,Sodium-glucose Cotransporter-2 (SGLT2) Inhibitors,Tablet,5 mg,30's pack,,,,,active,341-0340-015
+,Darifen ER,Darifenacin,The ACME Laboratories Ltd.,BPH/ Urinary retention/ Urinary incontinence,Pr Tablet,7.5 mg,7's pack,,,,,active,036-0619-049
+,Dasacent,Dasatinib,Incepta Pharmaceuticals Ltd.,Targeted Cancer Therapy,Tablet,100 mg,10's pack,,,,,active,116-1397-010
+,Dasanix,Dasatinib,Beacon Pharmaceuticals PLC,Targeted Cancer Therapy,Tablet,100 mg,30's pack,,,,,active,341-0252-010
+,Dasatab,Dasatinib,"Eskayef Pharmaceuticals Ltd., Narayanganj",Targeted Cancer Therapy,Tablet,20 mg,30's pack,,,,,active,387-0108-010
+,Dasatin,Dasatinib,Jenphar Bangladesh Ltd.,Targeted Cancer Therapy,Tablet,100 mg,30's pack,,,,,active,351-0198-010
+,Dasinib,Dasatinib,"Drug International Ltd., Squib Road",Targeted Cancer Therapy,Tablet,100 mg,20's pack,,,,,active,309-0136-010
+,Defera,Deferiprone,Jenphar Bangladesh Ltd.,Antidote preparations,Tablet,500 mg,50's pack,,,,,active,351-0212-045
+,Defrol,Cholecalciferol (Vit. D3),The ACME Laboratories Ltd.,Vitamin in bone formation,Tablet,1000 IU,30's pack,,,,,active,036-0868-078
+,Degram,Nalidixic Acid,Doctors Chemical Works Ltd.,Other Anti-protozoals,Tablet,500 mg,100's pack,,,,,active,029-0064-023
+,Dekalin VT,Dequalinium Chloride,Nuvista Pharma Ltd.,Other antibacterial preparation,Vaginal Tablet,10 mg,6's pack,,,,,active,006-0214-023
+,Delight,Cholecalciferol (Vit. D3),Opsonin Pharma Limited,Vitamin in bone formation,Tablet,2000 IU,50's pack,,,,,active,025-1411-078
+,Depram,Imipramine Hydrochloride,"Square Pharmaceuticals PLC, Pabna",Tricyclic & related anti-depressant drugs,Tablet,25 mg,60's pack,,,,,active,012-1016-014
+,Dermafin,Terbinafine,Delta Pharma Ltd.,Other Antifungal preparations,Tablet,250 mg,10's pack,,,,,active,048-0247-020
+,Dermasim VT,Clotrimazole,Advanced Chemical Industries Limited,Topical Antifungal preparations,Vaginal Tablet,500 mg,,,,,,active,005-0290-020
+,Desolon,Desogestrel + Ethinylestradiol,Renata Limited,Oral Contraceptive preparations,Tablet,150 mcg + 30 mcg,21 tablet pack,,,,,active,002-0477-039
+,Detonix,Pantoprazole,Desh Pharmaceuticals Ltd.,Proton Pump Inhibitor,Tablet,20 mg,50's pack,,,,,active,268-0097-067
+,Detrusin,Tolterodine Tartrate,Unimed Unihealth Pharmaceuticals Ltd.,BPH/ Urinary retention/ Urinary incontinence,Tablet,1 mg,60's pack,,,,,active,225-0201-049
+,Dexotix,Dextromethorphan Hydrobromide + Guaifenesin,Incepta Pharmaceuticals Ltd.,Combined cough expectorants,Xr Tablet,60 mg + 1200 mg,28's pack,,,,,active,116-1292-031
+,Dialina,Linagliptin,Biopharma Ltd.,Dipeptidyl Peptidase-4 (DPP-4) inhibitor,Tablet,5 mg,30's pack,,,,,active,064-0450-015
+,Dialiptin,Vildagliptin,Drug International Ltd.,Dipeptidyl Peptidase-4 (DPP-4) inhibitor,Tablet,50 mg,42's pack,,,,,active,210-0485-015
+,Dialiptin M,Metformin Hydrochloride + Vildagliptin,Drug International Ltd.,Combination Oral hypoglycemic preparations,Tablet,850 mg + 50 mg,14's pack,,,,,active,210-0545-015
+,Dialiptin-M,Metformin Hydrochloride + Vildagliptin,Drug International Ltd.,Combination Oral hypoglycemic preparations,Tablet,500 mg + 50 mg,14's pack,,,,,active,210-0527-015
+,Dianide,Nitazoxanide,General Pharmaceuticals Ltd.,Anti-diarrhoeal Antiprotozoal,Tablet,500 mg,6's pack,,,,,active,240-0314-027
+,Dianorm,Repaglinide,Rephco Pharmaceuticals Ltd.,Meglitinide Analogues,Tablet,1 mg,30's pack,,,,,active,047-0121-015
+,Diapiotab,Pioglitazone Hydrochloride,Medimet Pharmaceuticals Ltd.,Thiazolidinedione Group,Tablet,15 mg,50's pack,,,,,active,201-0135-015
+,Diar,Nitazoxanide,Advanced Chemical Industries Limited,Anti-diarrhoeal Antiprotozoal,Tablet,500 mg,10's pack,,,,,active,005-0578-027
+,Diaset,Miglitol,Advanced Chemical Industries Limited,Alpha-Glucosidase inhibitor,Tablet,25 mg,30's pack,,,,,active,005-0703-015
+,Diasweet,Aspartame,The White Horse Pharmaceuticals Ltd.,Oral nutritional preparations,Tablet,18 mg,100's pack,,,,,active,214-0025-075
+,Diatus,Pioglitazone Hydrochloride,Navana Pharmaceuticals Ltd.,Thiazolidinedione Group,Tablet,15 mg,30's pack,,,,,active,267-0230-015
+,Dieta M,Glimepiride + Metformin Hydrochloride,Pacific Pharmaceuticals Ltd.,Combination Oral hypoglycemic preparations,Tablet,1 mg + 500 mg,30's pack,,,,,active,160-0315-015
+,Dilast,Torasemide,Incepta Pharmaceuticals Ltd.,Loop diuretics,Tablet,10 mg,30's pack,,,,,active,116-0209-042
+,Dinoges-EV,Dienogest + Estradiol Valerate,Nuvista Pharma Ltd.,Female Sex hormones,Tablet,2 mg + 2 mg,28 tablet pack,,,,,active,006-0229-056
+,Diohes,Diosmin + Hesperidin,Opsonin Pharma Limited,Phlebotonic & Vascular protecting preparation,Tablet,450 mg + 50 mg,30's pack,,,,,active,025-0380-075
+,Diorin,Diosmin + Hesperidin,Incepta Pharmaceuticals Ltd.,Phlebotonic & Vascular protecting preparation,Tablet,450 mg + 50 mg,30's pack,,,,,active,116-0662-075
+,Divastin Plus,Amlodipine + Atorvastatin,Drug International Ltd.,Anti-anginal & lipid lowering drugs,Tablet,5 mg + 10 mg,30's pack,,,,,active,210-0484-022
+,Dmigrain,Pizotifen,NIPRO JMI Pharma Ltd.,Other drugs for migraine,Tablet,1.5 mg,50's pack,,,,,active,352-0050-047
+,Docuset,Docusate Sodium,Opsonin Pharma Limited,Stool softener,Tablet,120 mg,30's pack,,,,,active,025-0912-060
+,Dolonil SR,Tramadol Hydrochloride,The ACME Laboratories Ltd.,Opioid analgesics,Tablet,100 mg,16's pack,,,,,active,036-0523-065
+,Dopamet,Methyldopa,Opsonin Pharma Limited,Centrally acting antihypertensive drugs (central sympatholytic),Tablet,250 mg,50's pack,,,,,active,025-0068-022
+,Dopegyt,Methyldopa,Ambee Pharmaceuticals Ltd.,Centrally acting antihypertensive drugs (central sympatholytic),Tablet,250 mg,100's pack,,,,,active,192-0012-022
+,Dostimid,Pyridostigmine,Unimed Unihealth Pharmaceuticals Ltd.,Drugs used in Myasthenia Gravis,Tablet,60 mg,14's pack,,,,,active,225-0342-037
+,Droscon,Drospirenone + Ethinylestradiol,The ACME Laboratories Ltd.,Oral Contraceptive preparations,Tablet,3 mg + .03 mg,(21 light yellow+7 white) tablet: ৳ 399.00,,,,,active,036-0994-039
+,Droslyn,Drospirenone,Incepta Pharmaceuticals Ltd. (Dhamrai Unit),Oral Contraceptive preparations,Tablet,4 mg,,,,,,active,366-0214-039
+,Drospi,Drospirenone,Nuvista Pharma Ltd.,Oral Contraceptive preparations,Tablet,4 mg,,,,,,active,006-0213-039
+,Dulox,Duloxetine,The ACME Laboratories Ltd.,Serotonin-norepinephrine reuptake inhibitor (SNRI),Tablet,30 mg,30's pack,,,,,active,036-0460-014
+,Duloxen,Duloxetine,Incepta Pharmaceuticals Ltd.,Serotonin-norepinephrine reuptake inhibitor (SNRI),Tablet,20 mg,30's pack,,,,,active,116-0384-014
+,Duralax,Bisacodyl,Opsonin Pharma Limited,Stimulant purgatives,Tablet,5 mg,200's pack,,,,,active,025-0002-060
+,Duric,Allopurinol,Opsonin Pharma Limited,Drugs used in Gout,Tablet,100 mg,50's pack,,,,,active,025-0546-076
+,Dydroton,Chlorthalidone,Unimed Unihealth Pharmaceuticals Ltd.,Thiazide diuretics & related drugs,Tablet,25 mg,30's pack,,,,,active,225-0510-042
+,Dytor,Torasemide,Unimed Unihealth Pharmaceuticals Ltd.,Loop diuretics,Tablet,2.5 mg,28's pack,,,,,active,225-0141-042
+,E Hexin,Bromhexine Hydrochloride,Ethical Drug Ltd.,Cough expectorants & mucolytics,Tablet,16 mg,100's pack,,,,,active,078-0046-031
+,E Tab,Vitamin E,The ACME Laboratories Ltd.,Vitamin-E Preparations,Tablet,200 mg,100's pack,,,,,active,036-0174-078
+,E-Reb,Rabeprazole Sodium,Ethical Drug Ltd.,Proton Pump Inhibitor,Tablet,20 mg,50's pack,,,,,active,078-0224-067
+,E-ZEN,Vitamin E,Zenith Pharmaceuticals Ltd.,Vitamin-E Preparations,Tablet,200 mg,50's pack,,,,,active,080-0177-078
+,Eburic,Febuxostat,Beximco Pharmaceuticals Ltd.,Drugs used in Gout,Tablet,40 mg,30's pack,,,,,active,186-0767-076
+,EC-Pill,Levonorgestrel,"Techno Drugs Ltd., Gazipur",Emergency Contraceptive Pill,Tablet,1.5 mg,1 tablet pack,,,,,active,353-0052-039
+,Econate VT,Econazole Nitrate,Incepta Pharmaceuticals Ltd.,Topical Antifungal preparations,Vaginal Tablet,150 mg,3's pack,,,,,active,116-0126-020
+,Ecozol VT,Econazole Nitrate,Opsonin Pharma Limited,Topical Antifungal preparations,Vaginal Tablet,150 mg,3's pack,,,,,active,025-0221-020
+,Edemide,Frusemide + Spironolactone,The ACME Laboratories Ltd.,Potassium-sparing diuretics,Tablet,40 mg + 50 mg,40's pack,,,,,active,036-0580-042
+,Efynal,Vitamin E,Healthcare Pharmaceuticals Ltd.,Vitamin-E Preparations,Tablet,200 mg,25's pack,,,,,active,323-0047-078
+,Egolix,Elagolix,The ACME Laboratories Ltd.,Gonadotropin-releasing hormone (GnRH) antagonist,Tablet,200 mg,10's pack,,,,,active,036-1062-056
+,Elagox,Elagolix,Nuvista Pharma Ltd.,Gonadotropin-releasing hormone (GnRH) antagonist,Tablet,150 mg,10's pack,,,,,active,006-0228-056
+,Elazol,Voriconazole,Renata Limited,Other Antifungal preparations,Tablet,50 mg,8's pack,,,,,active,002-0865-020
+,Electro K,Sodium Chloride,The ACME Laboratories Ltd.,Electrolytes preparations,Tablet,600 mg,100's pack,,,,,active,036-0092-062
+,ELOPAG,Eltrombopag,Everest Pharmaceuticals Ltd.,Haemostatic drugs,Tablet,25 mg,7's pack,,,,,active,157-0119-012
+,Eltrom,Eltrombopag,Jenphar Bangladesh Ltd.,Haemostatic drugs,Tablet,25 mg,14's pack,,,,,active,351-0153-012
+,Eluxan,Eluxadoline,Ziska Pharmaceuticals Ltd.,Prokinetic drugs,Tablet,100 mg,10's pack,,,,,active,242-0308-065
+,EM-PILL,Ulipristal Acetate,The ACME Laboratories Ltd.,Drugs acting on the Uterus,Tablet,30 mg,,,,,,active,036-1000-039
+,Embelin,Ambrisentan,Incepta Pharmaceuticals Ltd.,Anti-hypertensive,Tablet,5 mg,20's pack,,,,,active,116-1476-022
+,Emcil,Pivmecillinam,"Square Pharmaceuticals PLC, Pabna",Mecillinams,Tablet,200 mg,30's pack,,,,,active,012-0629-023
+,Emcon,Levonorgestrel,Renata Limited,Emergency Contraceptive Pill,Tablet,750 mcg,2 tablet pack,,,,,active,002-0473-039
+,Emcon 1,Levonorgestrel,Renata Limited,Emergency Contraceptive Pill,Tablet,1.5 mg,1 tablet pack,,,,,active,002-0685-039
+,Endofree,Letrozole,Incepta Pharmaceuticals Ltd. (Dhamrai Unit),Hormonal Chemotherapy,Tablet,2.5 mg,5's pack,,,,,active,366-0013-010
+,Envitor,Levocarnitine,Opsonin Pharma Limited,Drugs for muscular energy metabolism,Tablet,330 mg,30's pack,,,,,active,025-0497-075
+,Epleron,Eplerenone,Incepta Pharmaceuticals Ltd.,Potassium-sparing diuretics,Tablet,25 mg,20's pack,,,,,active,116-0651-042
+,Erutic,Eplerenone,Drug International Ltd.,Potassium-sparing diuretics,Tablet,25 mg,28's pack,,,,,active,210-0765-042
+,Esloric,Allopurinol,"Square Pharmaceuticals PLC, Pabna",Drugs used in Gout,Tablet,100 mg,100's pack,,,,,active,012-0150-076
+,Ethifen,Ketotifen,Ethical Drug Ltd.,Cromoglycate & related drugs,Tablet,1 mg,100's pack,,,,,active,078-0223-021
+,ETP,Eltrombopag,Beacon Pharmaceuticals PLC,Haemostatic drugs,Tablet,25 mg,7's pack,,,,,active,341-0315-012
+,Euthycin,Levothyroxine Sodium,Incepta Pharmaceuticals Ltd.,Thyroid drugs & hormone,Tablet,50 mcg,100's pack,,,,,active,116-0089-074
+,Evidon,Vitamin E,Doctors Chemical Works Ltd.,Vitamin-E Preparations,Tablet,200 mg,100's pack,,,,,active,029-0091-078
+,Exipro,Pantoprazole,Leon Pharmaceuticals Ltd.,Proton Pump Inhibitor,Tablet,20 mg,50's pack,,,,,active,230-0043-067
+,Exopan,Pantoprazole,Edruc Ltd.,Proton Pump Inhibitor,Tablet,20 mg,50's pack,,,,,active,009-0188-067
+,Ezeta,Ezetimibe,Beximco Pharmaceuticals Ltd.,Ezetimibe,Tablet,10 mg,20's pack,,,,,active,186-0436-061
+,Ezetim,Ezetimibe,Incepta Pharmaceuticals Ltd.,Ezetimibe,Tablet,10 mg,30's pack,,,,,active,116-0357-061
+,Ezetrol,Ezetimibe,Unimed Unihealth Pharmaceuticals Ltd.,Ezetimibe,Tablet,10 mg,30's pack,,,,,active,225-0198-061
+,Ezyfeel,Sodium Picosulfate,Euro Pharma Ltd.,Osmotic purgatives,Tablet,10 mg,30's pack,,,,,active,337-0200-060
+,Ezylife,Sodium Picosulfate,Pharmasia Ltd.,Osmotic purgatives,Tablet,10 mg,30's pack,,,,,active,118-0230-060
+,Fapravir,Favipiravir,"Renata Limited, Gazipur",Anti-viral drugs,Tablet,200 mg,10's pack,,,,,active,353-0089-032
+,Farin,Warfarin Sodium,Concord Pharmaceuticals Ltd.,Oral Anti-coagulants,Tablet,5 mg,100's pack,,,,,active,274-0120-012
+,Farlan,Fluconazole,Delta Pharma Ltd.,Drugs for subcutaneous and mycoses,Tablet,50 mg,30's pack,,,,,active,048-0331-020
+,Favigan,Favipiravir,Ibn Sina Pharmaceutical Ind. Ltd.,Anti-viral drugs,Tablet,200 mg,40's pack,,,,,active,239-0513-032
+,Favinil,Favipiravir,"Square Pharmaceuticals PLC, Pabna",Anti-viral drugs,Tablet,200 mg,10's pack,,,,,active,012-1384-032
+,Favipir,Favipiravir,Delta Pharma Ltd.,Anti-viral drugs,Tablet,200 mg,10's pack,,,,,active,048-0340-032
+,Favipira,Favipiravir,Beacon Pharmaceuticals PLC,Anti-viral drugs,Tablet,200 mg,20's pack,,,,,active,341-0423-032
+,Femitab,Ferrous Sulphate + Folic Acid,Jayson Pharmaceuticals Ltd.,Iron & Vitamin Combined preparations,Tablet,200 mg + 200 mcg,500's pack,,,,,active,013-0165-045
+,Fenatrol,Fenofibrate,Drug International Ltd.,Fibrates,Tablet,145 mg,30's pack,,,,,active,210-0518-061
+,Fentigal VT,Fenticonazole Nitrate,Sharif Pharmaceuticals Ltd.,Topical Antifungal preparations,Vaginal Tablet,600 mg,,,,,,active,360-0201-020
+,Ferasirrox,Deferasirox,Unimed Unihealth Pharmaceuticals Ltd.,Antidote preparations,Tablet,250 mg,10's pack,,,,,active,225-0356-045
+,Feripon,Deferiprone,Drug International Ltd.,Antidote preparations,Tablet,500 mg,10's pack,,,,,active,210-0458-045
+,Fermid,Clomiphene Citrate,G. A. Company Ltd.,Drugs for Infertility,Tablet,50 mg,10's pack,,,,,active,015-0197-053
+,Fertil,Clomiphene Citrate,Beximco Pharmaceuticals Ltd.,Drugs for Infertility,Tablet,50 mg,50's pack,,,,,active,186-0281-053
+,Fevigra,Flibanserin,Navana Pharmaceuticals Ltd.,Serotonin-norepinephrine reuptake inhibitor (SNRI),Tablet,100 mg,10's pack,,,,,active,267-0580-075
+,Fibropress,Ulipristal Acetate,Nuvista Pharma Ltd.,Drugs acting on the Uterus,Tablet,5 mg,10's pack,,,,,active,006-0204-039
+,Filazine,Diethylcarbamazine Citrate,Hudson Pharmaceuticals Ltd.,Other Anti-protozoals,Tablet,100 mg,100's pack,,,,,active,165-0086-008
+,Filfresh,Melatonin,"Square Pharmaceuticals PLC, Pabna",Oral nutritional preparations,Tablet,3 mg,50's pack,,,,,active,012-0952-056
+,Fit Plus,Ferrous Sulphate + Folic Acid,Rephco Pharmaceuticals Ltd.,Iron & Vitamin Combined preparations,Tablet,200 mg + 400 mcg,60's pack,,,,,active,047-0171-045
+,Fizi,Flunarizine Dihydrochloride,Beacon Cephalosporin Ltd.,Miscellaneous prophylactic migraine preparations,Tablet,5 mg,50's pack,,,,,active,402-0459-047
+,Flacol,Simethicone,"Square Pharmaceuticals PLC, Pabna",Anti-dyspeptic/Carminatives,Chewable Tablet,40 mg,50's pack,,,,,active,012-1212-007
+,G-IPRA,Ipratropium Bromide,Gonoshasthaya Pharmaceuticals Ltd.,Anticholinergic bronchodilators,Solution,250 mcg/ml,20 ml bottle,,,,,active,185-0207-044
+,Ipramid,Ipratropium Bromide,Beximco Pharmaceuticals Ltd.,Anticholinergic bronchodilators,Aerosol Inhalation,20 mcg/Metered Inhalation,20 ml bottle,,,,,active,186-0591-044
+,Jaroxin,Levothyroxine Sodium,Jayson Pharmaceuticals Ltd.,,Tablet,50 mcg,,,,,,active,013-0408-074
+,Leroid,Levothyroxine Sodium,"Drug International Ltd., Gopalpur",,Tablet,25 mcg,,,,,,active,400-0403-074
+,Tropium,Ipratropium Bromide,The ACME Laboratories Ltd.,,Inhalation Capsule,40 mcg,,,,,,active,036-0361-044
