@@ -1,0 +1,509 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * The shop's own palette.
+ *
+ * Related to the operator console, not identical to it. Same type, same
+ * spacing, same components — a green accent instead of the console's violet,
+ * which is also the colour money is counted in on every cash book in this
+ * country.
+ *
+ * The token names are the shared system's, so everything in `@dawai/shared`
+ * (buttons, pills, inputs, the Bangla keyboard) lands here correctly without
+ * knowing which app it is in.
+ */
+@layer base {
+  :root {
+    --background: 160 24% 97%;
+    --foreground: 200 18% 14%;
+    --card: 0 0% 100%;
+    --card-foreground: 200 18% 14%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 200 18% 14%;
+    --primary: 173 74% 27%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 168 44% 93%;
+    --secondary-foreground: 175 70% 22%;
+    --muted: 165 20% 95%;
+    --muted-foreground: 195 10% 42%;
+    --accent: 199 85% 40%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 72% 48%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 170 14% 88%;
+    --input: 170 14% 88%;
+    --ring: 173 74% 27%;
+    --radius: 0.625rem;
+  }
+
+  .dark {
+    --background: 195 24% 8%;
+    --foreground: 165 18% 92%;
+    --card: 197 22% 12%;
+    --card-foreground: 165 18% 92%;
+    --popover: 197 22% 12%;
+    --popover-foreground: 165 18% 92%;
+    --primary: 172 60% 42%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 175 30% 20%;
+    --secondary-foreground: 168 60% 78%;
+    --muted: 197 20% 16%;
+    --muted-foreground: 175 10% 62%;
+    --accent: 199 70% 52%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 62% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 197 16% 20%;
+    --input: 197 16% 20%;
+    --ring: 172 60% 42%;
+  }
+
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: Figtree, 'Hind Siliguri', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer components {
+  /*
+   * The handful of shapes every screen here is made of. The rest comes from
+   * `@dawai/shared/styles/theme.css`, which is loaded after this file.
+   */
+  .card {
+    border-radius: var(--radius);
+    border: 1px solid hsl(var(--border));
+    background: hsl(var(--card));
+    padding: 1rem 1.1rem;
+  }
+
+  .card h3 {
+    margin-bottom: 0.75rem;
+    font-size: 0.95rem;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+  }
+
+  .page {
+    margin-inline: auto;
+    width: 100%;
+    max-width: 110rem;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .topbar h1 {
+    font-size: 1.375rem;
+    font-weight: 650;
+    letter-spacing: -0.02em;
+  }
+
+  .input {
+    width: 100%;
+    border-radius: calc(var(--radius) - 2px);
+    border: 1px solid hsl(var(--input));
+    background: hsl(var(--card));
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    color: hsl(var(--foreground));
+  }
+
+  .input:focus {
+    outline: 2px solid hsl(var(--primary) / 0.15);
+    border-color: hsl(var(--primary));
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: calc(var(--radius) - 2px);
+    background: hsl(var(--primary));
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: hsl(var(--primary-foreground));
+  }
+
+  .btn:disabled {
+    pointer-events: none;
+    opacity: 0.5;
+  }
+
+  .empty {
+    display: grid;
+    place-items: center;
+    gap: 0.5rem;
+    padding: 2.5rem 1rem;
+    text-align: center;
+    color: hsl(var(--muted-foreground));
+    font-size: 0.875rem;
+  }
+
+  /* The rail, matched to the console's so the two feel like one product. */
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    border-radius: calc(var(--radius) - 2px);
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    font-weight: 500;
+    color: hsl(var(--muted-foreground));
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+
+  .nav-link:hover {
+    background: hsl(var(--muted));
+    color: hsl(var(--foreground));
+  }
+
+  .nav-link.active {
+    background: hsl(var(--secondary));
+    color: hsl(var(--secondary-foreground));
+  }
+}
+
+/*
+ * The scrollbar, in the shop's own colour.
+ *
+ * Two scrolling regions now — the rail and the page — and the browser's default
+ * grey bar sitting between them reads as a seam in somebody else's application.
+ * Thin, in the shop's green, and only as loud as it needs to be to be grabbed.
+ *
+ * `scrollbar-color` covers Firefox; the `::-webkit-` rules cover everything
+ * else. A browser that honours neither keeps its own bar, which is fine.
+ */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--primary) / 0.35) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary) / 0.3);
+  border: 2px solid transparent;
+  background-clip: content-box;
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.55);
+  background-clip: content-box;
+}
+
+/* The corner where two bars meet, which otherwise stays default grey. */
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* ---------------------------------------------------------------------------
+   Commercial pass: the shared recipes every screen is built from.
+   ---------------------------------------------------------------------------
+   Plain CSS, after Tailwind's layers, so these win over the one-off utilities
+   pages used to reach for. One definition, every screen; a screen that still
+   types out the recipe is a screen that has drifted and can be tightened to
+   one of these.
+   ------------------------------------------------------------------------ */
+
+/*
+ * The micro-caps label.
+ *
+ * Used to be a 17-character class string hand-pasted onto every table head and
+ * tile label. One class, same job, same voice every where.
+ */
+.eyebrow {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+}
+
+/*
+ * A filter / view toggle, as a set of bordered buttons.
+ *
+ * The pattern was duplicated on four pages with utility soup that drifted
+ * between them. Pressed state is signalled by aria-pressed and matched in CSS,
+ * so a button cannot be visually on while semantically off.
+ */
+.btn-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  height: 2.25rem;
+  padding: 0 0.8rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: calc(var(--radius) - 2px);
+  background: hsl(var(--card));
+  color: hsl(var(--muted-foreground));
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.btn-toggle:hover {
+  border-color: hsl(var(--primary) / 0.45);
+  color: hsl(var(--foreground));
+}
+
+.btn-toggle[aria-pressed='true'],
+.btn-toggle.is-on {
+  border-color: hsl(var(--primary));
+  background: hsl(var(--primary) / 0.07);
+  color: hsl(var(--foreground));
+}
+
+.btn-toggle:focus-visible {
+  outline: none;
+  border-color: hsl(var(--primary) / 0.55);
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.16);
+}
+
+/* The tighter form, for a crowded filter bar. */
+.btn-toggle-sm {
+  height: 2rem;
+  padding: 0 0.6rem;
+  font-size: 0.8rem;
+}
+
+/*
+ * A segmented control.
+ *
+ * One fill, a lifted thumb — the commercial reading of a two-or-three-way
+ * choice, where the whole thing is one control rather than two shapes that
+ * happen to sit next to each other.
+ */
+.seg {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: calc(var(--radius) - 2px);
+  background: hsl(var(--muted));
+}
+
+.seg-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  height: 2rem;
+  padding: 0 0.8rem;
+  border: 0;
+  border-radius: calc(var(--radius) - 5px);
+  background: none;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.seg-btn:hover:not([aria-pressed='true']):not(.is-on) {
+  color: hsl(var(--foreground));
+}
+
+.seg-btn[aria-pressed='true'],
+.seg-btn.is-on {
+  background: hsl(var(--card));
+  color: hsl(var(--foreground));
+  box-shadow: 0 1px 2px hsl(258 70% 30% / 0.12);
+}
+
+.seg-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.18);
+}
+
+/*
+ * A search field with a leading icon.
+ *
+ * The icon-and-input wrapper was re-built on six screens. The class belongs on
+ * the input; the icon keeps its own absolutely positioned spot, one pixel back
+ * from where every illustration on the web puts it.
+ */
+.input-search {
+  padding-left: 2.35rem;
+}
+
+/*
+ * A page-loading overlay.
+ *
+ * Sales and Purchases each used to hand-roll `fixed bg-black/20` — different
+ * darkness from the modal dim, so a blocking load read as a leftover. One
+ * class, matching the modal's dim and blur.
+ */
+.blocking {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  background: hsl(0 0% 0% / 0.25);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+
+/*
+ * Two more readings for a status pill, from the app's own tokens so dark mode
+ * follows without an override.
+ */
+.pill.info {
+  background: hsl(var(--primary) / 0.1);
+  color: hsl(var(--primary));
+  border-color: hsl(var(--primary) / 0.22);
+}
+
+.pill.neutral {
+  background: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
+  border-color: transparent;
+}
+
+/*
+ * The shared table, tuned for the desk.
+ */
+.table thead th {
+  text-align: left;
+}
+
+.table tbody td {
+  vertical-align: middle;
+}
+
+/*
+ * A stat figure inherits `.stat .value`'s colour, which beats a one-class
+ * tint on the same element — say the two readings that are wanted explicitly.
+ */
+/*
+ * A tile's figure, sized to its tile.
+ *
+ * A number is never cut short — "৳685,911…" is not an amount — and never
+ * broken across two lines either. So it shrinks with the tile it sits in:
+ * full size on a desk, smaller in half a phone, and always one whole line.
+ */
+:where(*):has(> .stat-fit) {
+  container-type: inline-size;
+}
+.stat-fit {
+  white-space: nowrap;
+  overflow: visible;
+  font-size: clamp(15px, 11.5cqi, var(--fit-max, 24px)) !important;
+  line-height: 1.15;
+}
+
+.stat .value.text-destructive {
+  color: hsl(var(--destructive));
+}
+
+.stat .value.text-primary {
+  color: hsl(var(--primary));
+}
+
+/* ============================ stock alerts ============================
+ *
+ * The ticker's track holds the list twice, end to end, and slides left by
+ * exactly half its own width — one copy — so the loop has no seam. Paused
+ * under the pointer, so a line can actually be read.
+ */
+.alert-ticker-track {
+  display: inline-flex;
+  width: max-content;
+  white-space: nowrap;
+  animation-name: alert-ticker-run;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.alert-ticker:hover .alert-ticker-track {
+  animation-play-state: paused;
+}
+
+.alert-ticker-strip {
+  display: inline-flex;
+  align-items: center;
+}
+
+@keyframes alert-ticker-run {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* A small swing every few seconds while something is expired or run out. */
+.bell-ring svg {
+  transform-origin: 50% 2px;
+  animation: bell-ring 4s ease-in-out infinite;
+}
+
+@keyframes bell-ring {
+  0%,
+  12%,
+  100% {
+    transform: rotate(0);
+  }
+  2% {
+    transform: rotate(16deg);
+  }
+  4% {
+    transform: rotate(-14deg);
+  }
+  6% {
+    transform: rotate(10deg);
+  }
+  8% {
+    transform: rotate(-6deg);
+  }
+  10% {
+    transform: rotate(3deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Still readable without moving: the list wraps into a scrollable line. */
+  .alert-ticker-track {
+    animation: none;
+  }
+  .alert-ticker .overflow-hidden {
+    overflow-x: auto;
+  }
+  .bell-ring svg {
+    animation: none;
+  }
+}

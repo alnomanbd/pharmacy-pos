@@ -1,0 +1,535 @@
+import { useCallback, useEffect, useState } from 'react';
+import {
+  AlertTriangle,
+  Banknote,
+  Building2,
+  CheckCircle2,
+  Clock,
+  CreditCard,
+  Download,
+  Eye,
+  FileJson,
+  Smartphone,
+  Upload,
+  X,
+} from 'lucide-react';
+import { downloadBlob } from '@dawai/shared/api';
+import { useToast } from '@dawai/shared/components/Toast';
+import { LoadingBlock } from '@dawai/shared/components/Spinner';
+import { billingApi, type Subscription as Sub, type SubscriptionPayment } from '../api';
+import { useT, useUiLang, bnNumerals } from '../i18n/ui';
+import { BRAND } from '../brand';
+
+/**
+ * The shop's subscription, and how it pays for it.
+ *
+ * Payment is manual — bKash, Nagad, Upay, Rocket, a bank or cash — and this
+ * page is where the shop tells us it paid. So it answers three questions
+ * without anybody ringing us: how long is left, where do I send it, and did you
+ * get it? It stays usable when the subscription has lapsed: everything else
+ * goes read-only then, and locking this too would leave a shop that wants to
+ * pay unable to.
+ */
+
+const METHODS: { v: string; label: string; icon: typeof Smartphone }[] = [
+  { v: 'bkash', label: 'bKash', icon: Smartphone },
+  { v: 'nagad', label: 'Nagad', icon: Smartphone },
+  { v: 'upay', label: 'Upay', icon: Smartphone },
+  { v: 'rocket', label: 'Rocket', icon: Smartphone },
+  { v: 'bank', label: 'Bank transfer', icon: Building2 },
+  { v: 'cash', label: 'Cash', icon: Banknote },
+];
+
+const MONTH_OPTIONS = [1, 3, 6, 12];
+
+const STATUS_PILL: Record<SubscriptionPayment['status'], string> = {
+  pending: 'pill neutral',
+  verified: 'pill info',
+  rejected: 'pill neutral !text-destructive',
+};
+
+function Field({ label, htmlFor, children }: { label: string; htmlFor: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="mb-1 block text-xs font-semibold text-muted-foreground" htmlFor={htmlFor}>
+        {label}
+      </label>
+      {children}
+    </div>
+  );
+}
+
+export default function Subscription() {
+  const t = useT();
+  const lang = useUiLang();
+  const { toast } = useToast();
+  /* Figures in Bangla numerals when the screen is in Bangla; ids stay Latin. */
+  const n = (v: number | string) => (lang === 'bn' ? bnNumerals(String(v)) : String(v));
+  const taka = (v: number) => `৳ ${n(v.toLocaleString('en-IN'))}`;
+  const date = (iso: string) =>
+    new Date(iso).toLocaleDateString(lang === 'bn' ? 'bn-BD' : 'en-GB', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+
+  const [sub, setSub] = useState<Sub | null>(null);
+  const [history, setHistory] = useState<SubscriptionPayment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    plan: '',
+    months: 1,
+    method: 'bkash',
+    amount: '',
+    senderNumber: '',
+    trxId: '',
+    note: '',
+  });
+  const [receipt, setReceipt] = useState<File | null>(null);
+  const [invoiceBusy, setInvoiceBusy] = useState('');
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [s, h] = await Promise.all([billingApi.subscription(), billingApi.payments()]);
+      setSub(s);
+      setHistory(h);
+      // What they said they came for, else what they are on, else the cheapest.
+      setForm((f) => {
+        const chosen =
+          s.plans.find((p) => p.key === f.plan) ??
+          s.plans.find((p) => p.key === s.intendedPlan) ??
+          s.plans.find((p) => p.key === s.plan) ??
+          s.plans[0];
+        return chosen ? { ...f, plan: chosen.key, amount: String(chosen.price * f.months) } : f;
+      });
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { message?: string } } }).response?.data?.message;
+      toast(msg || t('Could not load your subscription.'), 'error');
+    } finally {
+      setLoading(false);
+    }
+  }, [toast, t]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const getInvoice = async (id: string, download = true) => {
+    setInvoiceBusy(id);
+    try {
+      const blob = await billingApi.invoice(id);
+      if (download) downloadBlob(blob, `dawai-invoice-${id}.pdf`);
+      else setPreviewUrl(URL.createObjectURL(blob));
+    } catch {
+      toast(t('Could not produce that invoice.'), 'error');
+    } finally {
+      setInvoiceBusy('');
+    }
+  };
+
+  const selected = sub?.plans.find((p) => p.key === form.plan) ?? null;
+  const price = selected ? selected.price * form.months : 0;
+
+  const pickPlan = (key: string) => {
+    const p = sub?.plans.find((x) => x.key === key);
+    setForm((f) => ({ ...f, plan: key, amount: String((p?.price ?? 0) * f.months) }));
+  };
+  const pickMonths = (months: number) =>
+    setForm((f) => {
+      const p = sub?.plans.find((x) => x.key === f.plan);
+      return { ...f, months, amount: String((p?.price ?? 0) * months) };
+    });
+
+  const submit = async () => {
+    if (!form.amount || Number(form.amount) <= 0) {
+      toast(t('Enter the amount you sent.'), 'error');
+      return;
+    }
+    if (form.method !== 'cash' && !form.trxId.trim()) {
+      toast(t('Enter the transaction id — it is how we find your payment.'), 'error');
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await billingApi.submit({
+        plan: form.plan,
+        months: form.months,
+        amount: Number(form.amount),
+        method: form.method,
+        senderNumber: form.senderNumber.trim() || undefined,
+        trxId: form.trxId.trim() || undefined,
+        note: form.note.trim() || undefined,
+      });
+      // The screenshot goes second, so a failed upload does not lose the claim.
+      if (receipt) {
+        try {
+          await billingApi.attachReceipt(res.payment._id, receipt);
+        } catch {
+          toast(t('Payment recorded, but the screenshot did not upload.'), 'error');
+        }
+      }
+      toast(
+        res.shortfall > 0
+          ? `${t('Recorded — but it is short by')} ${taka(res.shortfall)}.`
+          : t('Payment submitted — we will confirm it shortly.'),
+      );
+      setReceipt(null);
+      setForm((f) => ({ ...f, trxId: '', note: '' }));
+      await load();
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { message?: string } } }).response?.data?.message;
+      toast(msg || t('Could not submit that payment.'), 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="page">
+        <LoadingBlock />
+      </div>
+    );
+  }
+
+  const payTo = sub?.payTo[form.method as keyof Sub['payTo']];
+  const isTrial = sub?.plan === 'trial';
+
+  return (
+    <div className="page">
+      <div className="topbar flex-wrap gap-2">
+        <div>
+          <h1>{t('Subscription')}</h1>
+          <p className="text-sm text-muted-foreground">{t('Your plan, and how to pay for it.')}</p>
+        </div>
+      </div>
+
+      {/* Where the shop stands — the first thing anyone opens this page to see. */}
+      {sub && (
+        <div className="card">
+          <div className="grid grid-cols-2 gap-4 sm:flex sm:flex-wrap sm:items-end sm:gap-8">
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground">{t('Plan')}</p>
+              <p className="text-xl font-bold">{sub.planName || sub.plan}</p>
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground">
+                {isTrial ? t('Trial ends') : t('Paid until')}
+              </p>
+              <p className="text-base font-semibold">{sub.endsAt ? date(sub.endsAt) : '—'}</p>
+            </div>
+            {sub.daysLeft !== null && (
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground">{t('Days left')}</p>
+                <p
+                  className={`text-base font-semibold tabular-nums ${
+                    sub.daysLeft < 0 ? 'text-destructive' : sub.daysLeft <= 7 ? 'text-orange-600' : ''
+                  }`}
+                >
+                  {sub.daysLeft < 0 ? `${n(-sub.daysLeft)} ${t('days overdue')}` : n(sub.daysLeft)}
+                </p>
+              </div>
+            )}
+            {sub.pendingPayments > 0 && (
+              <span className="pill neutral col-span-2 inline-flex w-fit items-center gap-1 sm:ml-auto">
+                <Clock className="h-3 w-3" /> {n(sub.pendingPayments)} {t('payment(s) being checked')}
+              </span>
+            )}
+          </div>
+
+          {sub.expired && (
+            <div className="mt-4 flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>
+                {t(
+                  'Your subscription has ended. Everything is still here and you can read it all — billing, purchases and stock changes start again as soon as a payment is confirmed.',
+                )}
+              </span>
+            </div>
+          )}
+          {sub.status === 'suspended' && sub.suspendedReason && (
+            <div className="mt-4 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+              {t('Suspended')}: {sub.suspendedReason}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {/* ---------------- pay ---------------- */}
+        <div className="card">
+          <h3 className="flex items-center gap-2">
+            <CreditCard className="h-4 w-4" /> {t('Pay')}
+          </h3>
+
+          {/* Plans as cards, not a dropdown: the difference between them is the point. */}
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            {sub?.plans.map((p) => {
+              const on = p.key === form.plan;
+              return (
+                <button
+                  key={p.key}
+                  type="button"
+                  onClick={() => pickPlan(p.key)}
+                  className={`rounded-lg border p-3 text-left transition-colors ${
+                    on ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-border hover:bg-muted'
+                  }`}
+                >
+                  <span className="flex items-baseline justify-between gap-2">
+                    <span className="font-semibold">{p.name}</span>
+                    <span className="font-mono text-sm font-bold tabular-nums">{taka(p.price)}</span>
+                  </span>
+                  <span className="mt-1 block text-xs text-muted-foreground">{t(p.description)}</span>
+                  <span className="mt-1 block text-[11px] text-muted-foreground">
+                    {p.limits.terminals !== null && `${n(p.limits.terminals)} ${t('counter(s)')}`}
+                    {p.limits.shopUsers !== null && ` · ${n(p.limits.shopUsers)} ${t('staff')}`}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="mt-3">
+            <p className="mb-1 text-xs font-semibold text-muted-foreground">{t('For')}</p>
+            <div className="flex flex-wrap gap-1.5">
+              {MONTH_OPTIONS.map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => pickMonths(m)}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    form.months === m
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : 'border-border bg-card hover:bg-muted'
+                  }`}
+                >
+                  {n(m)} {m > 1 ? t('months') : t('month')}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <p className="mt-3 rounded-lg bg-muted p-3 text-sm">
+            {t('Total to send')}: <strong className="font-mono text-base tabular-nums">{taka(price)}</strong>
+          </p>
+
+          <div className="mt-3">
+            <p className="mb-1 text-xs font-semibold text-muted-foreground">{t('Paid with')}</p>
+            <div className="flex flex-wrap gap-1.5">
+              {METHODS.map((m) => (
+                <button
+                  key={m.v}
+                  type="button"
+                  className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    form.method === m.v
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : 'border-border bg-card hover:bg-muted'
+                  }`}
+                  onClick={() => setForm({ ...form, method: m.v })}
+                >
+                  <m.icon className="h-3.5 w-3.5" /> {t(m.label)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Where the money goes. Without it the page is a form with no instructions. */}
+          {payTo ? (
+            <p className="mt-3 rounded-lg border border-border p-3 text-sm">
+              {t('Send to')} <strong className="font-mono">{payTo}</strong>
+              {form.method !== 'cash' && form.method !== 'bank' && (
+                <span className="text-muted-foreground"> ({t('send money, not payment')})</span>
+              )}
+            </p>
+          ) : (
+            form.method !== 'cash' && (
+              <p className="mt-3 rounded-lg border border-dashed border-border p-3 text-xs text-muted-foreground">
+                {t('This number is not set up yet — please contact us before sending.')}
+              </p>
+            )
+          )}
+
+          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Field label={`${t('Amount sent')} (৳)`} htmlFor="pay-amount">
+              <input
+                id="pay-amount"
+                className="input h-10"
+                type="number"
+                inputMode="numeric"
+                min="0"
+                value={form.amount}
+                onChange={(e) => setForm({ ...form, amount: e.target.value })}
+              />
+            </Field>
+            <Field label={t('Sent from (number)')} htmlFor="pay-from">
+              <input
+                id="pay-from"
+                className="input h-10"
+                inputMode="tel"
+                value={form.senderNumber}
+                onChange={(e) => setForm({ ...form, senderNumber: e.target.value })}
+                placeholder="01XXXXXXXXX"
+              />
+            </Field>
+            <div className="sm:col-span-2">
+              <Field label={t('Transaction ID')} htmlFor="pay-trx">
+                <input
+                  id="pay-trx"
+                  className="input h-10 font-mono"
+                  value={form.trxId}
+                  onChange={(e) => setForm({ ...form, trxId: e.target.value })}
+                  placeholder={form.method === 'cash' ? t('Not needed for cash') : '8N7A6B5C4D'}
+                />
+              </Field>
+            </div>
+            <div className="sm:col-span-2">
+              <Field label={t('Screenshot (optional, helps us find it faster)')} htmlFor="pay-shot">
+                <input
+                  id="pay-shot"
+                  className="input h-10 py-1.5"
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  onChange={(e) => setReceipt(e.target.files?.[0] ?? null)}
+                />
+              </Field>
+            </div>
+            <div className="sm:col-span-2">
+              <Field label={t('Note')} htmlFor="pay-note">
+                <input
+                  id="pay-note"
+                  className="input h-10"
+                  value={form.note}
+                  onChange={(e) => setForm({ ...form, note: e.target.value })}
+                  placeholder={t('Anything we should know')}
+                />
+              </Field>
+            </div>
+          </div>
+
+          <button type="button" className="btn mt-4 h-11 w-full" onClick={() => void submit()} disabled={saving}>
+            <Upload className="h-4 w-4" /> {saving ? t('Submitting…') : t('I have sent the payment')}
+          </button>
+          <p className="mt-2 text-center text-xs text-muted-foreground">
+            {t('We check it against the receiving account and confirm — usually the same day.')}
+          </p>
+        </div>
+
+        {/* ---------------- history ---------------- */}
+        <div className="card">
+          <h3 className="flex items-center gap-2">
+            <Clock className="h-4 w-4" /> {t('Payment history')}
+          </h3>
+          {history.length === 0 ? (
+            <div className="empty">{t('No payments yet.')}</div>
+          ) : (
+            <div className="mt-2 space-y-2">
+              {history.map((p) => (
+                <div className="rounded-lg border border-border p-3" key={p._id}>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <strong className="font-mono tabular-nums">{taka(p.amount)}</strong>
+                    <span className="text-xs uppercase text-muted-foreground">{p.method}</span>
+                    <span className={STATUS_PILL[p.status]}>{t(p.status)}</span>
+                    <span className="ml-auto text-xs text-muted-foreground">{date(p.createdAt)}</span>
+                  </div>
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    {p.plan} · {n(p.months)} {p.months > 1 ? t('months') : t('month')}
+                    {p.trxId && <> · <span className="font-mono">{p.trxId}</span></>}
+                  </div>
+                  {p.status === 'verified' && p.coversUntil && (
+                    <div className="mt-1 flex items-center gap-1.5 text-xs text-primary">
+                      <CheckCircle2 className="h-3 w-3" /> {t('Paid up to')} {date(p.coversUntil)}
+                    </div>
+                  )}
+                  {/* Only confirmed money has a receipt; a pending claim is not one. */}
+                  {p.status === 'verified' && (
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                      <button
+                        type="button"
+                        className="btn btn-ghost h-8 text-xs"
+                        onClick={() => void getInvoice(p._id, false)}
+                        disabled={invoiceBusy === p._id}
+                      >
+                        <Eye className="h-3.5 w-3.5" /> {t('View')}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-ghost h-8 text-xs"
+                        onClick={() => void getInvoice(p._id)}
+                        disabled={invoiceBusy === p._id}
+                      >
+                        <Download className="h-3.5 w-3.5" /> {t('Download')}
+                        {p.invoiceNo && <span className="font-mono font-normal text-muted-foreground">{p.invoiceNo}</span>}
+                      </button>
+                    </div>
+                  )}
+                  {p.status === 'rejected' && p.rejectionReason && (
+                    <div className="mt-1 text-xs text-destructive">{p.rejectionReason}</div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* The shop's data is the shop's. Saying so next to the page that asks for
+          money is the answer to the question every owner asks before signing up. */}
+      <div className="card">
+        <h3 className="flex items-center gap-2">
+          <Download className="h-4 w-4" /> {t('Your data')}
+        </h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {t('Everything here belongs to you. Take a full copy whenever you like — nothing is held back if you stop paying.')}
+        </p>
+        <button
+          type="button"
+          className="btn btn-ghost mt-3 h-10"
+          onClick={() =>
+            void billingApi
+              .exportAll()
+              .then((b) =>
+                downloadBlob(b, `${BRAND.name.toLowerCase()}-export-${new Date().toISOString().slice(0, 10)}.json`),
+              )
+              .catch(() => toast(t('Could not export your data.'), 'error'))
+          }
+        >
+          <FileJson className="h-4 w-4" /> {t('Everything (full backup)')}
+        </button>
+      </div>
+
+      {previewUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          onClick={() => {
+            URL.revokeObjectURL(previewUrl);
+            setPreviewUrl(null);
+          }}
+        >
+          <div
+            className="relative flex h-[90vh] w-full max-w-4xl flex-col rounded-lg border border-border bg-card shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-border px-4 py-2">
+              <span className="text-sm font-semibold">{t('Invoice')}</span>
+              <button
+                type="button"
+                aria-label={t('Close')}
+                className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                onClick={() => {
+                  URL.revokeObjectURL(previewUrl);
+                  setPreviewUrl(null);
+                }}
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <iframe src={previewUrl} className="flex-1 rounded-b-lg" title={t('Invoice')} />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
