@@ -312,6 +312,20 @@ export const platformApi = {
   audit: (params?: { action?: string; actor?: string; page?: number; limit?: number }) =>
     getData<Paged<PlatformAuditEntry> & { actions: string[] }>(api.get('/platform/audit', { params })),
 
+  /** A payment taken by hand (cash, or reported by phone): recorded and accepted at once. */
+  recordPayment: (
+    shopId: string,
+    payload: {
+      plan: string;
+      months: number;
+      amount: number;
+      method: string;
+      trxId?: string;
+      senderNumber?: string;
+      note?: string;
+    },
+  ) => getData<{ payment: Payment; expected: number }>(api.post(`/platform/organizations/${shopId}/payments`, payload)),
+
   /** Trials and paid time ending within `days`, lapsed shops, and shops gone quiet. */
   retention: (days = 7) => getData<RetentionBoard>(api.get('/platform/retention', { params: { days } })),
   /** Email (and optionally SMS) one shop's owner a renewal or come-back reminder. */

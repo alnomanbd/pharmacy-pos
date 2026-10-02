@@ -136,6 +136,8 @@ export interface Payment {
   reviewedAt?: string | null;
   rejectionReason?: string;
   coversUntil?: string | null;
+  /** Set when an operator entered it by hand; such a payment is accepted on entry. */
+  recordedBy?: string | null;
   invoiceNo?: string;
   invoicedAt?: string | null;
   createdAt: string;

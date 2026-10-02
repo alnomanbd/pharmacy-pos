@@ -17,6 +17,7 @@ import { PLATFORM_ROLES, PLATFORM_OWNER_ROLES } from '../types/roles.js';
 import * as team from '../services/platformTeam.service.js';
 import catalogueRoutes from './catalogue.routes.js';
 import { PERMISSIONS } from '../types/permissions.js';
+import { PAYMENT_METHODS } from '../models/Payment.js';
 import { validate } from '../middlewares/validate.js';
 import {
   createOrganizationSchema,
@@ -114,7 +115,12 @@ const planSchema = z.object({
   sortOrder: z.number().int().min(0).max(100).optional(),
 });
 
-router.get('/plans', requirePermission('plans.view', 'plans.manage'), handle(() => plans.listPlans()));
+// Readable by whoever records payments too: taking one by hand means picking its plan.
+router.get(
+  '/plans',
+  requirePermission('plans.view', 'plans.manage', 'payments.verify'),
+  handle(() => plans.listPlans()),
+);
 router.post(
   '/plans',
   requirePermission('plans.manage'),
@@ -647,6 +653,50 @@ router.post(
     );
     return result;
   }, 'Payment verified, subscription extended'),
+);
+
+/**
+ * A payment taken by hand — cash at the office, or bKash reported over the
+ * phone. Recorded and accepted at once, so it is behind `payments.verify`, and
+ * audited as its own action with the amount and the reference.
+ */
+router.post(
+  '/organizations/:id/payments',
+  requirePermission('payments.verify'),
+  validate(
+    z.object({
+      plan: z.string().trim().min(1).max(40),
+      months: z.number().int().min(1).max(36),
+      amount: z.number().positive().max(10_000_000),
+      method: z.enum(PAYMENT_METHODS),
+      trxId: z.string().trim().max(80).optional(),
+      senderNumber: z.string().trim().max(40).optional(),
+      note: z.string().trim().max(500).optional(),
+      paidAt: z.string().datetime().optional(),
+    }),
+  ),
+  handle(async (req) => {
+    const result = await payments.recordPayment(req.params.id, req.user!.id, req.body);
+    await audit(
+      req,
+      'billing.payment.platform_record',
+      {
+        model: 'Payment',
+        id: String(result.payment._id),
+        label: `${result.payment.amount} ${result.payment.currency} — ${result.payment.method}`,
+      },
+      {
+        after: {
+          shop: req.params.id,
+          plan: result.payment.plan,
+          months: result.payment.months,
+          trxId: result.payment.trxId,
+          coversUntil: result.payment.coversUntil,
+        },
+      },
+    );
+    return result;
+  }, 'Payment recorded, subscription extended'),
 );
 
 router.post(

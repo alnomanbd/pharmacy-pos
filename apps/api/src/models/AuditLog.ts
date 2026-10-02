@@ -84,6 +84,8 @@ export const AUDIT_ACTIONS = [
   /** An operator closed or reopened a shop's support conversation. */
   'support.status',
   'billing.payment.submit',
+  /** An operator recorded a payment by hand (cash, or reported by phone) — accepted at once. */
+  'billing.payment.platform_record',
 
   // Operating the deployment: approving, suspending or re-planning a customer
   // is exactly the kind of act that has to be answerable for later.

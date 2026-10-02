@@ -28,6 +28,12 @@ const schema = new Schema(
     organization: { type: Schema.Types.ObjectId, ref: 'Organization', required: true, index: true },
     /** Who at the shop submitted it. */
     submittedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    /**
+     * Set when an operator entered the payment by hand — cash at the office, a
+     * bKash payment reported over the phone — rather than the shop claiming it.
+     * Such a payment is verified the moment it is recorded, by that operator.
+     */
+    recordedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
 
     gateway: { type: String, enum: PAYMENT_GATEWAYS, default: 'manual', index: true },
     method: { type: String, enum: PAYMENT_METHODS, required: true },

@@ -22,6 +22,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { platformApi, downloadBlob, type Shop, type ShopMonth, type SeatUsage, type ShopPlanUsage } from '../api';
 import ShopUserActions from '../components/ShopUserActions';
 import { openSupportView } from '../lib/supportView';
+import RecordPaymentDialog from '../components/RecordPaymentDialog';
 import ShopLimitsCard, { signupSummary } from '../components/ShopLimitsCard';
 import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock, Spinner } from '@dawai/shared/components/Spinner';
@@ -61,6 +62,7 @@ export default function ShopDetail() {
   const { id = '' } = useParams();
   const { toast } = useToast();
   const [org, setOrg] = useState<Shop | null>(null);
+  const [recording, setRecording] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const [counts, setCounts] = useState({ bills: 0, products: 0, counters: 0, users: 0 });
   const [plan, setPlan] = useState<ShopPlanUsage | null>(null);
@@ -176,6 +178,7 @@ export default function ShopDetail() {
   const canDelete = can(access, 'shops.delete');
   const canPlan = can(access, 'shops.plan');
   const canViewAs = can(access, 'shops.impersonate');
+  const canRecordPayment = can(access, 'payments.verify');
   /* The owner if they can sign in, or else the first account that can. */
   const viewTarget =
     users.find((u) => u.role === 'admin' && u.isActive !== false) ?? users.find((u) => u.isActive !== false);
@@ -193,6 +196,14 @@ export default function ShopDetail() {
 
   return (
     <div className="page">
+      {canRecordPayment && (
+        <RecordPaymentDialog
+          open={recording}
+          onClose={() => setRecording(false)}
+          shop={{ _id: id, name: org.name, plan: org.plan, trialEndsAt: org.trialEndsAt }}
+          onRecorded={() => void load()}
+        />
+      )}
       <div className="topbar flex-wrap gap-2">
         <div>
           <Link to="/" className="mb-1 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
@@ -210,6 +221,11 @@ export default function ShopDetail() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          {canRecordPayment && (
+            <button type="button" className={BTN_SECONDARY} onClick={() => setRecording(true)}>
+              <Banknote className="h-4 w-4" /> Record payment
+            </button>
+          )}
           {canViewAs && viewTarget && (
             <button
               type="button"

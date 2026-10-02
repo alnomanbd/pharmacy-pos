@@ -156,14 +156,24 @@ export async function verifyPayment(paymentId: string, reviewerId: string) {
   const payment = await PaymentModel.findById(paymentId);
   if (!payment) throw notFound('Payment');
   if (payment.status !== 'pending') throw badRequest(`That payment is already ${payment.status}`);
+  return acceptPayment(payment, reviewerId);
+}
+
+/** The new expiry for `months` bought on top of whatever is left — see `verifyPayment`. */
+export function extendedUntil(currentEnd: Date | null | undefined, months: number, now = new Date()): Date {
+  const from = currentEnd && currentEnd > now ? currentEnd : now;
+  const until = new Date(from);
+  until.setMonth(until.getMonth() + months);
+  return until;
+}
+
+async function acceptPayment(payment: InstanceType<typeof PaymentModel>, reviewerId: string) {
 
   const org = await OrganizationModel.findById(payment.organization);
   if (!org) throw notFound('Shop');
 
   const now = new Date();
-  const currentEnd = org.trialEndsAt && org.trialEndsAt > now ? org.trialEndsAt : now;
-  const coversUntil = new Date(currentEnd);
-  coversUntil.setMonth(coversUntil.getMonth() + payment.months);
+  const coversUntil = extendedUntil(org.trialEndsAt, payment.months, now);
 
   org.set('plan', payment.plan);
   org.set('trialEndsAt', coversUntil);
@@ -189,11 +199,20 @@ export async function verifyPayment(paymentId: string, reviewerId: string) {
     'Payment verified, subscription extended',
   );
 
-  const submitter = await UserModel.findById(payment.submittedBy).select('name email').lean();
-  if (submitter?.email) {
+  // The shop hears about it — the person who claimed it, or the owner when an
+  // operator recorded it and there is nobody at the shop who did.
+  const submitter = await UserModel.findById(payment.submittedBy).select('name email organization').lean();
+  const recipient =
+    submitter && String(submitter.organization) === String(org._id)
+      ? submitter
+      : await UserModel.findOne({ organization: org._id, role: 'admin', isActive: { $ne: false } })
+          .select('name email')
+          .sort({ createdAt: 1 })
+          .lean();
+  if (recipient?.email) {
     void notify.paymentVerified({
-      email: submitter.email,
-      name: submitter.name,
+      email: recipient.email,
+      name: recipient.name,
       shop: org.name,
       amount: payment.amount,
       plan: payment.plan,
@@ -203,6 +222,48 @@ export async function verifyPayment(paymentId: string, reviewerId: string) {
   }
 
   return { payment: payment.toObject(), organization: org.toObject() };
+}
+
+/**
+ * A payment an operator takes by hand: cash at the office, or a bKash payment
+ * an owner reports over the phone instead of in the app.
+ *
+ * Recorded and accepted in one step, by the operator entering it — they are the
+ * one who has checked the money, which is everything verifying means. It
+ * extends the subscription exactly as a verified claim does, gets a receipt
+ * number, and the owner is emailed the confirmation.
+ */
+export async function recordPayment(orgId: string, operatorId: string, claim: PaymentClaim) {
+  const org = await OrganizationModel.findById(orgId).select('name').lean();
+  if (!org) throw notFound('Shop');
+
+  const plan = await planByKey(claim.plan);
+  if (!plan || plan.isTrial) throw badRequest('Pick a paid plan');
+  if (!(claim.amount > 0)) throw badRequest('Enter the amount received');
+
+  const trxId = claim.trxId?.trim() || '';
+  if (trxId && (await PaymentModel.exists({ gateway: 'manual', trxId }))) {
+    throw conflict('That transaction id has already been recorded');
+  }
+
+  const payment = await PaymentModel.create({
+    organization: orgId,
+    submittedBy: operatorId,
+    recordedBy: operatorId,
+    gateway: 'manual',
+    method: claim.method,
+    amount: claim.amount,
+    plan: claim.plan,
+    months: claim.months,
+    senderNumber: claim.senderNumber?.trim() || '',
+    trxId,
+    note: claim.note?.trim() || '',
+    paidAt: claim.paidAt ? new Date(claim.paidAt) : new Date(),
+  });
+
+  logger.info({ org: orgId, payment: payment.id, amount: claim.amount, by: operatorId }, 'Payment recorded by an operator');
+  const result = await acceptPayment(payment, operatorId);
+  return { ...result, expected: plan.price * claim.months };
 }
 
 export async function rejectPayment(paymentId: string, reviewerId: string, reason: string) {

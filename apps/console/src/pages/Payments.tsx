@@ -180,6 +180,7 @@ export default function Payments() {
                     <span className="pill booked">
                       {p.plan} · {p.months}m
                     </span>
+                    {p.recordedBy && <span className="pill neutral">recorded by hand</span>}
                   </div>
 
                   <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">

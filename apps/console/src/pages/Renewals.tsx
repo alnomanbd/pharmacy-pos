@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarClock, Mail, MessageSquareText, Phone, Eye } from 'lucide-react';
+import { CalendarClock, Mail, MessageSquareText, Phone, Eye, Banknote } from 'lucide-react';
 import { platformApi, type RetentionPile, type RetentionRow, type RetentionBoard } from '../api';
 import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import { BTN_OUTLINE, can, errorMessage, useAccess } from '../lib/ui';
 import { lastSeen } from '../lib/lastSeen';
+import RecordPaymentDialog from '../components/RecordPaymentDialog';
 
 /**
  * Who is about to leave, and who already has.
@@ -39,6 +40,8 @@ export default function Renewals() {
   const { toast } = useToast();
   const access = useAccess();
   const canRemind = can(access, 'shops.edit') || can(access, 'support.reply');
+  const canRecordPayment = can(access, 'payments.verify');
+  const [paying, setPaying] = useState<RetentionRow | null>(null);
   const [days, setDays] = useState(7);
   const [pile, setPile] = useState<RetentionPile>('trialsEnding');
   const [board, setBoard] = useState<RetentionBoard | null>(null);
@@ -86,6 +89,14 @@ export default function Renewals() {
 
   return (
     <div className="page">
+      {paying && (
+        <RecordPaymentDialog
+          open
+          onClose={() => setPaying(null)}
+          shop={{ _id: paying._id, name: paying.name, plan: paying.plan, trialEndsAt: paying.endsAt }}
+          onRecorded={() => void load()}
+        />
+      )}
       <div className="topbar flex-wrap gap-2">
         <div>
           <h1 className="flex items-center gap-2">
@@ -193,6 +204,11 @@ export default function Renewals() {
                           <MessageSquareText className="h-3.5 w-3.5" /> Email + SMS
                         </button>
                       </>
+                    )}
+                    {canRecordPayment && current.kind === 'renewal' && (
+                      <button className={BTN_OUTLINE} onClick={() => setPaying(r)} disabled={!!busy}>
+                        <Banknote className="h-3.5 w-3.5" /> Record payment
+                      </button>
                     )}
                     <Link to={`/shops/${r._id}`} className={BTN_OUTLINE}>
                       <Eye className="h-3.5 w-3.5" /> Open
