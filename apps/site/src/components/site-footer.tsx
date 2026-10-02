@@ -12,9 +12,9 @@ import { Button } from '@/components/ui/button';
  * pulse: light, light, dark, light, dark.
  *
  * Three rows. The brand with the one action worth taking, then the links,
- * then the small print, and under all of it the name, large and faint, like a
- * sign on a shopfront seen from across the road. Kept short: a footer is
- * passed, not read.
+ * then the small print, with the name behind all of it, spread across the full
+ * width and faint, like a sign on a shopfront seen from across the road. Kept
+ * short: a footer is passed, not read.
  */
 export function SiteFooter({ lang }: { lang: Lang }) {
   const t = (p: string) => translate(lang, p);
@@ -53,13 +53,36 @@ export function SiteFooter({ lang }: { lang: Lang }) {
 
   // Sized from the name's length, so a rename still fits the band and never clips.
   const letters = Array.from(siteConfig.wordmark);
-  const wordSize = `min(${(120 / letters.length).toFixed(1)}vw, 13rem)`;
+  const wordSize = `min(${(140 / letters.length).toFixed(1)}vw, 22rem)`;
 
   return (
     <footer className="ink-band grain bg-background relative isolate overflow-hidden">
       <div className="aurora-field">
         <Orb className="-end-40 -top-32" color="rgb(16 185 129 / 0.34)" size="42rem" duration={30} />
         <Orb className="-start-32 top-1/3" color="rgb(34 211 238 / 0.22)" size="36rem" duration={24} delay={4} />
+      </div>
+
+      {/* The name, behind everything: spread letter by letter across the full
+          width, faint, sitting on the band's floor. A watermark rather than a
+          row of its own, so it costs the footer no height. Text, not an image,
+          so a rename in lib/site.ts redraws it. Its own face and line height
+          on every letter: the Bangla pages give each element a taller line,
+          which made the word stand in a much taller box there. */}
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 select-none overflow-hidden px-4 pb-3 sm:px-8 sm:pb-5">
+        <div
+          className="flex justify-between font-extrabold tracking-normal"
+          style={{ fontSize: wordSize, lineHeight: 0.9, fontFamily: 'var(--font-sans), system-ui, sans-serif' }}
+        >
+          {letters.map((ch, i) => (
+            <span
+              key={i}
+              className="bg-gradient-to-b from-white/[0.11] via-white/[0.05] to-white/[0.015] bg-clip-text text-transparent"
+              style={{ lineHeight: 0.9 }}
+            >
+              {ch}
+            </span>
+          ))}
+        </div>
       </div>
 
       <div className="shell relative pt-12 sm:pt-14">
@@ -163,27 +186,6 @@ export function SiteFooter({ lang }: { lang: Lang }) {
         </div>
       </div>
 
-      {/* The name, whole and centred. Text, not an
-          image, so it costs nothing and a rename in lib/site.ts redraws it.
-          Its own face and line height, set on every letter: the Bangla pages
-          give each element a taller line, which made the word stand in a
-          much taller box there than on the English ones. */}
-      <div aria-hidden className="pointer-events-none relative select-none overflow-hidden px-4 pb-4 sm:px-8 sm:pb-6">
-        <div
-          className="flex justify-center font-extrabold tracking-[-0.02em]"
-          style={{ fontSize: wordSize, lineHeight: 0.9, fontFamily: 'var(--font-sans), system-ui, sans-serif' }}
-        >
-          {letters.map((ch, i) => (
-            <span
-              key={i}
-              className="bg-gradient-to-b from-white/[0.2] via-white/[0.09] to-white/[0.03] bg-clip-text text-transparent"
-              style={{ lineHeight: 0.9 }}
-            >
-              {ch}
-            </span>
-          ))}
-        </div>
-      </div>
     </footer>
   );
 }
