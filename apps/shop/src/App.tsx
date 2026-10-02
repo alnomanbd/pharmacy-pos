@@ -11,6 +11,7 @@ import Customers from './pages/Customers';
 import Counters from './pages/Counters';
 import Profile from './pages/Profile';
 import Support from './pages/Support';
+import Help from './pages/Help';
 import Trash from './pages/Trash';
 import Stock from './pages/Stock';
 import CountStock from './pages/CountStock';
@@ -116,6 +117,8 @@ export default function App() {
         <Route path="profile" element={<Profile />} />
         {/* Every role, and while read-only: see shopSupport.routes.ts on the API. */}
         <Route path="support" element={<Support />} />
+        <Route path="help" element={<Help />} />
+        <Route path="help/:slug" element={<Help />} />
         <Route path="trash" element={<BackRoom><Trash /></BackRoom>} />
         <Route path="stock" element={<BackRoom><Stock /></BackRoom>} />
         <Route path="count" element={<BackRoom><CountStock /></BackRoom>} />

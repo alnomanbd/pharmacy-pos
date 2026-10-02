@@ -1254,6 +1254,25 @@ export const medicineRequestsApi = {
   withdraw: (id: string) => getData<unknown>(api.delete(`/shop/medicine-requests/${id}`)),
 };
 
+/* -------------------------------------------------------------------- help -- */
+
+export interface HelpArticleSummary {
+  slug: string;
+  category: string;
+  title: string;
+  titleBn?: string;
+}
+export interface HelpArticle extends HelpArticleSummary {
+  body: string;
+  bodyBn?: string;
+  videoUrl?: string;
+}
+
+export const helpApi = {
+  list: () => getData<HelpArticleSummary[]>(api.get('/shop/help')),
+  get: (slug: string) => getData<HelpArticle>(api.get(`/shop/help/${encodeURIComponent(slug)}`)),
+};
+
 /* ---------------------------------------------------------- getting started -- */
 
 /** The getting-started checklist, read from what the shop has done. */

@@ -1651,6 +1651,21 @@ const bn: Record<string, string> = {
   'Anything else? (optional)': 'আর কিছু? (ঐচ্ছিক)',
   'Thank you for telling us.': 'জানানোর জন্য ধন্যবাদ।',
   'If there is anything we can fix, we will be in touch.': 'ঠিক করার মতো কিছু থাকলে আমরা যোগাযোগ করব।',
+  /* ---- help ---- */
+  'Help': 'সাহায্য',
+  'How to do things in Dawai, step by step.': 'Dawai-তে কোন কাজ কীভাবে করবেন, ধাপে ধাপে।',
+  'What do you want to do?': 'কী করতে চান?',
+  'Search help': 'সাহায্য খুঁজুন',
+  'Nothing matches that. Try another word, or ask us in Support.': 'এর সাথে কিছু মিলছে না। অন্য শব্দ দিয়ে খুঁজুন, অথবা সাপোর্টে আমাদের জিজ্ঞেস করুন।',
+  'No articles yet.': 'এখনো কোনো লেখা নেই।',
+  'All help': 'সব সাহায্য',
+  'That article is not here any more.': 'এই লেখাটি আর নেই।',
+  'Watch the video': 'ভিডিও দেখুন',
+  'Still stuck?': 'এখনো আটকে আছেন?',
+  'Ask us in Support': 'সাপোর্টে জিজ্ঞেস করুন',
+  'Or look it up in Help.': 'অথবা সাহায্যে খুঁজে দেখুন।',
+  'Selling': 'বিক্রি',
+  'Money and baki': 'টাকা আর বাকি',
 };
 
 export const useT = makeUseT(bn);

@@ -110,6 +110,21 @@ export interface ShopMonth {
   purchases: number;
 }
 
+/** A help article, as the console edits it. */
+export interface HelpRow {
+  _id: string;
+  slug: string;
+  category: string;
+  title: string;
+  titleBn?: string;
+  body?: string;
+  bodyBn?: string;
+  videoUrl?: string;
+  order?: number;
+  published: boolean;
+  updatedAt: string;
+}
+
 /** A field agent, with their shops and what they are owed. */
 export interface AgentRow {
   _id: string;
@@ -479,6 +494,11 @@ export const platformApi = {
     getData<Paged<PlatformAuditEntry> & { actions: string[] }>(api.get('/platform/audit', { params })),
 
   overview: () => getData<PlatformOverview>(api.get('/platform/overview')),
+  helpArticles: () => getData<HelpRow[]>(api.get('/platform/help')),
+  createHelpArticle: (payload: Record<string, unknown>) => getData<HelpRow>(api.post('/platform/help', payload)),
+  updateHelpArticle: (id: string, payload: Record<string, unknown>) => getData<HelpRow>(api.patch(`/platform/help/${id}`, payload)),
+  deleteHelpArticle: (id: string) => getData<unknown>(api.delete(`/platform/help/${id}`)),
+  addHelpStarters: () => getData<{ added: number }>(api.post('/platform/help/starters')),
   agents: () => getData<AgentRow[]>(api.get('/platform/agents')),
   agent: (id: string) => getData<AgentDetail>(api.get(`/platform/agents/${id}`)),
   createAgent: (payload: Record<string, unknown>) => getData<AgentRow>(api.post('/platform/agents', payload)),

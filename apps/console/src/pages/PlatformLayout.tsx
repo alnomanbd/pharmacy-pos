@@ -34,6 +34,7 @@ import {
   LayoutDashboard,
   Activity,
   UserRoundSearch,
+  LifeBuoy,
 } from 'lucide-react';
 import { platformApi } from '../api';
 import { useAuthStore } from '@dawai/shared/store/auth.store';
@@ -170,6 +171,8 @@ const NAV_SECTIONS: { heading: string; links: ConsoleLink[] }[] = [
     heading: 'Platform',
     links: [
       { to: '/team', label: 'Team', icon: Users, end: false, needs: ['team.manage'] },
+      /* The how-tos shops read under Help. */
+      { to: '/help', label: 'Help articles', icon: LifeBuoy, end: false, needs: ['help.manage'] },
       /* A message across the top of every shop's app. */
       { to: '/announcements', label: 'Announcements', icon: Megaphone, end: false, needs: ['announcements.manage'] },
       /* Every email and SMS sent, for "I never got the email". */

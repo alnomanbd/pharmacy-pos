@@ -23,6 +23,7 @@ import { overview } from '../services/overview.service.js';
 import { systemStatus } from '../services/system.service.js';
 import { setupOf } from '../services/onboarding.service.js';
 import * as agents from '../services/agent.service.js';
+import * as help from '../services/help.service.js';
 import { requireAuth, requireRole, requirePermission } from '../middlewares/auth.js';
 import { PLATFORM_ROLES, PLATFORM_OWNER_ROLES } from '../types/roles.js';
 import * as team from '../services/platformTeam.service.js';
@@ -793,6 +794,65 @@ router.patch(
     await audit(req, 'coupon.change', { model: 'Coupon', id: req.params.id, label: c.code }, { after: { action: 'update', ...req.body } });
     return c;
   }, 'Code updated'),
+);
+
+/* ---------------------------------- help ----------------------------------- */
+
+const helpSchema = z.object({
+  slug: z.string().trim().max(80).optional(),
+  category: z.enum(help.HELP_CATEGORIES).optional(),
+  title: z.string().trim().min(2).max(140),
+  titleBn: z.string().trim().max(140).optional(),
+  body: z.string().trim().max(8000).optional(),
+  bodyBn: z.string().trim().max(8000).optional(),
+  videoUrl: z.string().trim().max(300).optional(),
+  order: z.number().int().min(0).max(10000).optional(),
+  published: z.boolean().optional(),
+});
+
+router.get('/help', requirePermission('help.manage'), handle(() => help.listAll()));
+
+router.post(
+  '/help',
+  requirePermission('help.manage'),
+  validate(helpSchema),
+  handle(async (req) => {
+    const a = await help.create(req.body, req.user!.id);
+    await audit(req, 'help.change', { model: 'HelpArticle', id: String(a._id), label: a.title }, { after: { action: 'create' } });
+    return a;
+  }, 'Article saved'),
+);
+
+/** The eight starter articles, added only where their address is free. */
+router.post(
+  '/help/starters',
+  requirePermission('help.manage'),
+  handle(async (req) => {
+    const r = await help.addStarters(req.user!.id);
+    await audit(req, 'help.change', { model: 'HelpArticle', id: '', label: `${r.added} starter article(s)` }, { after: { action: 'starters' } });
+    return r;
+  }, 'Starter articles added'),
+);
+
+router.patch(
+  '/help/:id',
+  requirePermission('help.manage'),
+  validate(helpSchema.partial()),
+  handle(async (req) => {
+    const a = await help.update(req.params.id, req.body, req.user!.id);
+    await audit(req, 'help.change', { model: 'HelpArticle', id: req.params.id, label: a.title }, { after: { action: 'update' } });
+    return a;
+  }, 'Article saved'),
+);
+
+router.delete(
+  '/help/:id',
+  requirePermission('help.manage'),
+  handle(async (req) => {
+    const r = await help.remove(req.params.id);
+    await audit(req, 'help.change', { model: 'HelpArticle', id: req.params.id, label: r.title }, { after: { action: 'delete' } });
+    return r;
+  }, 'Article deleted'),
 );
 
 /* --------------------------------- agents ---------------------------------- */

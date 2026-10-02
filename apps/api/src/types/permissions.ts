@@ -117,6 +117,9 @@ export const PERMISSIONS = [
    */
   'agents.manage',
 
+  /** Write and change the help articles shops read in their app. */
+  'help.manage',
+
   /**
    * Publish a message across the top of every shop's app. Reaches every
    * counter at once, so it is its own permission.
@@ -160,6 +163,7 @@ export const PERMISSION_PRESETS: Record<string, { label: string; description: st
     description: 'Answer shops: look at their account and their requests.',
     permissions: [
       'shops.view',
+      'help.manage',
       'shops.impersonate',
       'payments.view',
       'requests.view',
@@ -201,6 +205,7 @@ export const PERMISSION_PRESETS: Record<string, { label: string; description: st
     description: 'Approve and suspend shops, handle payments and requests.',
     permissions: [
       'shops.view',
+      'help.manage',
       'announcements.manage',
       'shops.impersonate',
       'shops.approve',

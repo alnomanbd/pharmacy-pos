@@ -110,6 +110,8 @@ export const AUDIT_ACTIONS = [
   'agent.payout',
   /** An operator put a shop under an agent, or took it out. */
   'organization.platform_agent',
+  /** An operator wrote, changed or deleted a help article. */
+  'help.change',
   /** An operator corrected a shop user's details. */
   'user.platform_update',
   /**

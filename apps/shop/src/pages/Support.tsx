@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Headset, MessageSquare, Send, Plus, ArrowLeft, CheckCircle2, X } from 'lucide-react';
 import { supportApi } from '../api';
 import { useToast } from '@dawai/shared/components/Toast';
@@ -160,7 +161,10 @@ export default function Support() {
             <Headset className="h-5 w-5" /> {t('Support')}
           </h1>
           <p className="text-sm text-muted-foreground">
-            {t('Ask the Dawai team anything about your shop or your account. We reply here.')}
+            {t('Ask the Dawai team anything about your shop or your account. We reply here.')}{' '}
+            <Link to="/help" className="font-semibold text-primary hover:underline">
+              {t('Or look it up in Help.')}
+            </Link>
           </p>
         </div>
         {!composing && (

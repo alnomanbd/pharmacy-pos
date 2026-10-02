@@ -27,6 +27,7 @@ import {
   ChevronRight,
   ChevronDown,
   Headset,
+  LifeBuoy,
   X,
 } from 'lucide-react';
 import { useAuthStore } from '@dawai/shared/store/auth.store';
@@ -149,6 +150,8 @@ const GROUPS: ShopGroup[] = [
       /* Every role: the person who notices something wrong is usually the one
          at the counter. Badged with the replies nobody here has read yet. */
       { to: '/support', label: 'Support', icon: Headset, end: false },
+      /* How-tos, for everyone — the answer before a support message. */
+      { to: '/help', label: 'Help', icon: LifeBuoy, end: false },
     ],
   },
 ];

@@ -38,6 +38,7 @@ import { ok, created } from '../utils/response.js';
 import medicineRequestRoutes from './shopMedicineRequest.routes.js';
 import supportRoutes from './shopSupport.routes.js';
 import announcementRoutes from './shopAnnouncement.routes.js';
+import helpRoutes from './shopHelp.routes.js';
 import * as onboarding from '../services/onboarding.service.js';
 
 /**
@@ -60,6 +61,7 @@ router.use('/medicine-requests', medicineRequestRoutes);
 /* Support too — and without the read-only lock: a lapsed shop has to be able to ask why. */
 router.use('/support', supportRoutes);
 router.use('/announcements', announcementRoutes);
+router.use('/help', helpRoutes);
 
 router.use(requireAuth, requireWritableTenant, requireRole(...SHOP_ADMIN_ROLES));
 
