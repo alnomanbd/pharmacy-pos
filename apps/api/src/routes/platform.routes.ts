@@ -19,6 +19,7 @@ import { ANNOUNCEMENT_TONES } from '../models/Announcement.js';
 import * as coupons from '../services/coupon.service.js';
 import { COUPON_KINDS } from '../models/Coupon.js';
 import * as referrals from '../services/referral.service.js';
+import { overview } from '../services/overview.service.js';
 import { requireAuth, requireRole, requirePermission } from '../middlewares/auth.js';
 import { PLATFORM_ROLES, PLATFORM_OWNER_ROLES } from '../types/roles.js';
 import * as team from '../services/platformTeam.service.js';
@@ -99,6 +100,16 @@ router.use(catalogueRoutes);
 /* ---------------------------------- shops ---------------------------------- */
 
 router.get('/stats', requirePermission('shops.view'), handle(() => platform.platformStats()));
+
+/**
+ * The console's first page. Money is in it only for whoever may see what the
+ * company turns over; everybody else gets shops, sign-ups and the to-do list.
+ */
+router.get(
+  '/overview',
+  requirePermission('shops.view'),
+  handle((req) => overview({ money: (req.user!.permissions ?? []).includes('revenue.view') })),
+);
 /* ---------------------------------- plans ---------------------------------- */
 
 const limitsSchema = z.object({

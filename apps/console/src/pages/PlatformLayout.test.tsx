@@ -211,7 +211,7 @@ describe('the operator console’s top bar', () => {
 
       await waitFor(() => {
         const rail = container.querySelector('.side-nav')!;
-        expect(rail.querySelectorAll('.nav-link')).toHaveLength(9); // eight by permission (Renewals and Messages ride on shops.view), plus Security, which everyone has
+        expect(rail.querySelectorAll('.nav-link')).toHaveLength(10); // nine by permission (Overview, Renewals and Messages ride on shops.view), plus Security, which everyone has
         // Visible on the link itself, not behind a menu that has to be opened.
         expect(rail.querySelector('.nav-count')?.textContent).toBe('5');
       });
@@ -225,7 +225,7 @@ describe('the operator console’s top bar', () => {
       expect(container.querySelector('.sidebar.collapsed')).toBeTruthy();
       // The labels go; the links stay reachable, and each keeps its tooltip.
       expect(screen.queryByText('Plans')).toBeNull();
-      expect(container.querySelectorAll('.side-nav .nav-link')).toHaveLength(9);
+      expect(container.querySelectorAll('.side-nav .nav-link')).toHaveLength(10);
 
       await user.click(screen.getByRole('button', { name: 'Expand sidebar' }));
       expect(container.querySelector('.sidebar.collapsed')).toBeNull();

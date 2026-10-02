@@ -110,6 +110,24 @@ export interface ShopMonth {
   purchases: number;
 }
 
+/** The console's first page. `money` is null without revenue.view. */
+export interface PlatformOverview {
+  shops: { paying: number; onTrial: number; pending: number; suspended: number; total: number };
+  signups: { thisMonth: number; lastMonth: number; byMonth: { month: string; count: number }[] };
+  conversion: { signedUp: number; paid: number; rate: number | null };
+  lost30d: number;
+  todo: {
+    pendingPayments: number;
+    pendingApprovals: number;
+    supportWaiting: number;
+    newDemoRequests: number;
+    pendingMedicineRequests: number;
+    followUpsDue: number;
+    renewalsDue7d: number;
+  };
+  money: { mrr: number; thisMonth: number; lastMonth: number; byMonth: { month: string; total: number }[] } | null;
+}
+
 /** A discount code shops type in when they pay. */
 export interface CouponRow {
   _id: string;
@@ -390,6 +408,8 @@ export const platformApi = {
 
   audit: (params?: { action?: string; actor?: string; page?: number; limit?: number }) =>
     getData<Paged<PlatformAuditEntry> & { actions: string[] }>(api.get('/platform/audit', { params })),
+
+  overview: () => getData<PlatformOverview>(api.get('/platform/overview')),
 
   coupons: () => getData<CouponRow[]>(api.get('/platform/coupons')),
   createCoupon: (payload: Record<string, unknown>) => getData<CouponRow>(api.post('/platform/coupons', payload)),

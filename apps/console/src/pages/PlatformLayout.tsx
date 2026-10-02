@@ -31,6 +31,7 @@ import {
   Send,
   Megaphone,
   TicketPercent,
+  LayoutDashboard,
 } from 'lucide-react';
 import { platformApi } from '../api';
 import { useAuthStore } from '@dawai/shared/store/auth.store';
@@ -102,6 +103,8 @@ const NAV_SECTIONS: { heading: string; links: ConsoleLink[] }[] = [
   {
     heading: 'Shops',
     links: [
+      /* How the business is doing and what needs doing today. First, because it is where a day starts. */
+      { to: '/overview', label: 'Overview', icon: LayoutDashboard, end: false, needs: ['shops.view'] },
       { to: '/', label: 'Shops', icon: Building2, end: true, needs: ['shops.view'] },
       /* Who is about to leave; badged with what ends inside a week. */
       { to: '/renewals', label: 'Renewals', icon: CalendarClock, end: false, needs: ['shops.view'] },
@@ -549,7 +552,7 @@ export default function PlatformLayout() {
                       [
                         ['payment', 'payments', counts.payments, 'to verify', '/payments?status=pending', <Receipt key="i" className="h-4 w-4" />],
                         ['sign-up', 'sign-ups', counts.shops, 'awaiting approval', '/?status=pending', <Building2 key="i" className="h-4 w-4" />],
-                        ['follow-up', 'follow-ups', counts.followUps, 'due today', '/', <NotebookPen key="i" className="h-4 w-4" />],
+                        ['follow-up', 'follow-ups', counts.followUps, 'due today', '/overview#follow-ups', <NotebookPen key="i" className="h-4 w-4" />],
                         ['support conversation', 'support conversations', counts.support, 'waiting on a reply', '/support', <Headset key="i" className="h-4 w-4" />],
                         ['demo request', 'demo requests', counts.leads, 'unanswered', '/leads', <Inbox key="i" className="h-4 w-4" />],
                         ['medicine request', 'medicine requests', counts.requests, 'waiting', '/requests', <ClipboardList key="i" className="h-4 w-4" />],
