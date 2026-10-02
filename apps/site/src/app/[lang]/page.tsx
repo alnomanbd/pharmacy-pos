@@ -8,7 +8,7 @@ import { CounterSection } from '@/components/sections/counter';
 import { StockSection } from '@/components/sections/stock';
 import { OfflineSection } from '@/components/sections/offline';
 import { ScreensSection } from '@/components/sections/screens';
-import { VoicesSection } from '@/components/sections/voices';
+import { CompareSection } from '@/components/sections/compare';
 import { HowSection } from '@/components/sections/how';
 import { PricingPreview } from '@/components/sections/pricing-preview';
 import { FaqPreview } from '@/components/sections/faq-preview';
@@ -73,7 +73,8 @@ export async function generateMetadata({
  *   2. the shelves, emptying first-expiry-first-out;
  *   4. the rest of the counter, one interactive screen at a time;
  *   5. offline, dark, because it is the failure every shop owner has seen;
- *   6. voices, the three steps to start, price, questions, and the two doors.
+ *   6. the notebook against the screen, the three steps to start, price,
+ *      questions, and the two doors.
  */
 export default async function HomePage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params;
@@ -89,7 +90,7 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
       <ScreensSection lang={lang} />
       <ReportsSection lang={lang} />
       <OfflineSection lang={lang} />
-      <VoicesSection lang={lang} />
+      <CompareSection lang={lang} />
       <BranchesSection lang={lang} />
       <HowSection lang={lang} />
       <PricingPreview lang={lang} />

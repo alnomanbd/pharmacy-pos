@@ -1,6 +1,6 @@
 'use client';
 
-import { translate, type Lang } from '@/i18n/dictionary';
+import type { Lang } from '@/i18n/dictionary';
 import { MEDICINE_BRANDS } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Marquee } from '@/components/marquee';
@@ -24,15 +24,13 @@ const ROWS = [
 ];
 
 export function BrandBand({ lang }: { lang: Lang }) {
-  const t = (p: string) => translate(lang, p);
-
   return (
     <section className="relative isolate overflow-hidden border-y border-border/50 bg-muted/25 py-7">
       <div aria-hidden className="dot-grid pointer-events-none absolute inset-0 -z-10 opacity-[0.55]" />
       <div className="shell flex flex-col gap-5 sm:flex-row sm:items-center sm:gap-8">
         <Reveal variant="fade" className="shrink-0">
           <p className="max-w-[18ch] text-2xs font-semibold uppercase leading-relaxed tracking-[0.18em] text-muted-foreground">
-            {t('stock.kicker')}
+            {lang === 'bn' ? 'সব কোম্পানির ঔষধ, তালিকায় আগে থেকেই' : 'Every company’s medicines, already in the list'}
           </p>
         </Reveal>
 
