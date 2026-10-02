@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, KeyRound, LogOut, ChevronDown } from 'lucide-react';
+import { User, KeyRound, LogOut, ChevronDown, ListChecks } from 'lucide-react';
 import { useAuthStore } from '@dawai/shared/store/auth.store';
 import ChangePasswordDialog from '@dawai/shared/components/ChangePasswordDialog';
-import { useT } from '../i18n/ui';
+import { useT, useUiLang, bnNumerals } from '../i18n/ui';
+import { onboardingApi, type ShopSetup } from '../api';
+import { SETUP_OPEN_EVENT } from './SetupChecklist';
 
 /**
  * Who is signed in, and the three things they do about it.
@@ -42,6 +44,28 @@ export default function ProfileMenu() {
   const [open, setOpen] = useState(false);
   const [passwordOpen, setPasswordOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const lang = useUiLang();
+  /* The owner's getting-started checklist, while it is unfinished — the one
+     place it can always be found, hidden or not. */
+  const [setup, setSetup] = useState<ShopSetup | null>(null);
+  const owner = user?.role === 'admin';
+  useEffect(() => {
+    if (!open || !owner) return;
+    onboardingApi
+      .get()
+      .then(setSetup)
+      .catch(() => undefined);
+  }, [open, owner]);
+  const openSetup = async () => {
+    setOpen(false);
+    try {
+      if (setup?.dismissed) await onboardingApi.show();
+    } catch {
+      /* Opened anyway below. */
+    }
+    window.dispatchEvent(new Event(SETUP_OPEN_EVENT));
+  };
+  const n = (v: number) => (lang === 'bn' ? bnNumerals(String(v)) : String(v));
 
   /* A click anywhere else, or Escape, puts it away — the two things every menu
      on every machine has taught people to expect. */
@@ -95,6 +119,20 @@ export default function ProfileMenu() {
               </span>
             )}
           </div>
+
+          {owner && setup && setup.done < setup.total && (
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => void openSetup()}
+              className="flex w-full items-center gap-2.5 border-b border-border px-3 py-2 text-left text-sm hover:bg-muted"
+            >
+              <ListChecks className="h-4 w-4 text-primary" /> {t('Getting started')}
+              <span className="ml-auto rounded-full bg-primary/10 px-1.5 text-[11px] font-semibold text-primary">
+                {n(setup.done)}/{n(setup.total)}
+              </span>
+            </button>
+          )}
 
           <button
             type="button"

@@ -68,15 +68,19 @@ router.use(requireAuth, requireWritableTenant, requireRole(...SHOP_ADMIN_ROLES))
 /* Every change that succeeds goes on the owner's Activity page. */
 router.use(shopActivity('shop'));
 
-/* The getting-started checklist: read from what the shop has done, never ticked by hand. */
-router.get('/onboarding', async (req, res, next) => {
+/*
+ * The getting-started checklist: read from what the shop has done, never
+ * ticked by hand. The owner's alone — setting the shop up is their job, and a
+ * pharmacist hiding it would hide it from the owner too.
+ */
+router.get('/onboarding', requireRole('admin'), async (req, res, next) => {
   try {
     ok(res, await onboarding.setupOf(req.user!.org!));
   } catch (err) {
     next(err);
   }
 });
-router.post('/onboarding/dismiss', async (req, res, next) => {
+router.post('/onboarding/dismiss', requireRole('admin'), async (req, res, next) => {
   try {
     ok(res, await onboarding.setDismissed(req.user!.org!, req.body?.dismissed !== false));
   } catch (err) {

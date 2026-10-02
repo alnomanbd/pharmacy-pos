@@ -1668,6 +1668,7 @@ const bn: Record<string, string> = {
   'Money and baki': 'টাকা আর বাকি',
   'Hidden. It is under Help whenever you want it back.': 'লুকানো হয়েছে। আবার দরকার হলে সাহায্য পেজে পাবেন।',
   'Show it in the top bar again': 'আবার উপরের বারে দেখান',
+  'Hidden. It is in your profile menu, top right, whenever you want it back.': 'লুকানো হয়েছে। আবার দরকার হলে উপরে ডানদিকে আপনার প্রোফাইল মেনুতে পাবেন।',
 };
 
 export const useT = makeUseT(bn);

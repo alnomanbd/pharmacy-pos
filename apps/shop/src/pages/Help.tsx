@@ -60,14 +60,14 @@ function Body({ text, bn }: { text: string; bn: boolean }) {
 /**
  * The getting-started checklist, where it can always be found again — the
  * top bar's copy can be hidden, and a hidden list has to come back from
- * somewhere. Owner and pharmacist only, like the top bar's.
+ * somewhere. The owner's alone, like the top bar's.
  */
 function SetupCard() {
   const t = useT();
   const lang = useUiLang();
   const role = useAuthStore((s) => s.user?.role);
   const [setup, setSetup] = useState<ShopSetup | null>(null);
-  const runsTheShop = role === 'admin' || role === 'pharmacist';
+  const runsTheShop = role === 'admin';
 
   useEffect(() => {
     if (!runsTheShop) return;

@@ -13,6 +13,9 @@ import { useToast } from '@dawai/shared/components/Toast';
  * read from what the shop has actually done. It leaves the bar once all six are
  * done, or when the owner puts it away.
  */
+/** Fired to open the checklist from outside it. */
+export const SETUP_OPEN_EVENT = 'dawai:setup-open';
+
 export default function SetupChecklist() {
   const t = useT();
   const { toast } = useToast();
@@ -21,6 +24,23 @@ export default function SetupChecklist() {
   const [setup, setSetup] = useState<ShopSetup | null>(null);
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
+
+  /*
+   * Opened from elsewhere — the profile menu's "Getting started" — after it has
+   * been brought back: ask again, then open.
+   */
+  useEffect(() => {
+    const reopen = () =>
+      void onboardingApi
+        .get()
+        .then((s) => {
+          setSetup(s);
+          setOpen(true);
+        })
+        .catch(() => undefined);
+    window.addEventListener(SETUP_OPEN_EVENT, reopen);
+    return () => window.removeEventListener(SETUP_OPEN_EVENT, reopen);
+  }, []);
 
   // Asked again on every move: finishing a step is usually what the move was.
   useEffect(() => {
@@ -54,7 +74,7 @@ export default function SetupChecklist() {
     setOpen(false);
     try {
       setSetup(await onboardingApi.dismiss());
-      toast(t('Hidden. It is under Help whenever you want it back.'));
+      toast(t('Hidden. It is in your profile menu, top right, whenever you want it back.'));
     } catch {
       /* Still shown; nothing lost. */
     }
@@ -76,8 +96,9 @@ export default function SetupChecklist() {
         <span className="hidden sm:inline">{t('Setup')}</span> {n(setup.done)}/{n(setup.total)}
       </button>
 
+      {/* Across the screen on a phone, where the button may sit anywhere in the bar; under it on a desktop. */}
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-[min(20rem,calc(100vw-1.5rem))] rounded-xl border border-border bg-card p-3 shadow-lg">
+        <div className="fixed inset-x-3 top-16 z-50 rounded-xl border border-border bg-card p-3 shadow-lg sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:w-80">
           <div className="mb-2 flex items-center justify-between gap-2">
             <strong className="flex items-center gap-2 text-sm">
               <ListChecks className="h-4 w-4 text-primary" /> {t('Getting started')}
