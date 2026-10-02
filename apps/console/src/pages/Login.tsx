@@ -130,7 +130,7 @@ export default function Login() {
   };
 
   return (
-    <main className="relative isolate flex min-h-screen flex-col overflow-hidden bg-[radial-gradient(120%_90%_at_50%_0%,#18225a_0%,#0a1030_45%,#04071a_100%)] text-white">
+    <main className="relative isolate flex min-h-screen flex-col overflow-hidden lg:h-[100dvh] lg:min-h-[600px] bg-[radial-gradient(120%_90%_at_50%_0%,#18225a_0%,#0a1030_45%,#04071a_100%)] text-white">
       {/* The light: two slow pools, indigo and cyan, behind a fading dot grid. */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
         <div className="dw-glow absolute -left-[15%] -top-[25%] h-[75%] w-[75%] rounded-full bg-indigo-500/25 blur-[120px]" />
@@ -153,7 +153,8 @@ export default function Login() {
         <EnvBadge local={isLocal} />
       </header>
 
-      <section className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 py-8 sm:px-8">
+      {/* Short laptop screens (720px and under) get a tighter card rather than a scrollbar. */}
+      <section className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 py-8 sm:px-8 lg:py-4 [@media(max-height:780px)]:lg:py-2">
         {/* On a phone the room is too small to draw; the feed passes above the card instead. */}
         <PhoneFeed />
 
@@ -163,7 +164,7 @@ export default function Login() {
           transition={{ duration: 0.7, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
           className="console-card relative w-full max-w-[420px] rounded-[28px] p-[1.5px] text-foreground"
         >
-        <div className="relative w-full rounded-[26px] bg-card p-6 sm:p-9">
+        <div className="relative w-full rounded-[26px] bg-card p-6 sm:p-9 [@media(max-height:780px)]:sm:p-7">
           <div className="flex items-center gap-2 text-[12px] font-semibold text-primary">
             <ShieldCheck className="h-4 w-4" />
             Operators only
@@ -178,7 +179,7 @@ export default function Login() {
           </p>
 
           {/* Two steps, shown as two steps, so the code screen is expected. */}
-          <div className="mt-6 flex items-center gap-2" aria-hidden="true">
+          <div className="mt-6 flex items-center gap-2 [@media(max-height:780px)]:mt-4" aria-hidden="true">
             <span className="h-1.5 flex-1 rounded-full bg-primary" />
             <span className={`h-1.5 flex-1 rounded-full transition-colors duration-500 ${needsCode ? 'bg-primary' : 'bg-muted'}`} />
           </div>
@@ -193,7 +194,7 @@ export default function Login() {
             </div>
           )}
 
-          <form onSubmit={submit} className="mt-6 flex flex-col gap-4">
+          <form onSubmit={submit} className="mt-6 flex flex-col gap-4 [@media(max-height:780px)]:mt-4 [@media(max-height:780px)]:gap-3">
             {!needsCode && (
               <>
                 <div>
@@ -293,7 +294,7 @@ export default function Login() {
             </button>
           </form>
 
-          <p className="mt-6 text-center text-xs leading-relaxed text-muted-foreground">
+          <p className="mt-6 text-center text-xs leading-relaxed text-muted-foreground [@media(max-height:780px)]:mt-4">
             No account? Another operator creates it. There is no sign-up or reset link here.
           </p>
         </div>
@@ -301,7 +302,7 @@ export default function Login() {
         </motion.div>
 
         {/* The three conditions of entry, as three small marks under the card. */}
-        <div className="mt-6 flex max-w-[420px] flex-wrap justify-center gap-2">
+        <div className="mt-6 flex max-w-[420px] flex-wrap justify-center gap-2 [@media(max-height:780px)]:mt-3">
           {TERMS.map(({ icon: Icon, head }, i) => (
             <motion.span
               key={head}
@@ -316,7 +317,7 @@ export default function Login() {
         </div>
         <a
           href={APP_URL}
-          className="group mt-5 inline-flex items-center gap-1 text-[13px] text-white/50 transition-colors hover:text-white"
+          className="group mt-5 inline-flex items-center gap-1 text-[13px] text-white/50 transition-colors hover:text-white [@media(max-height:780px)]:mt-2"
         >
           Shop owners sign in at <span className="font-semibold text-white/75 group-hover:text-white">{shopHost}</span>
           <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />

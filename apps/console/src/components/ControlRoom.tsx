@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { BadgeCheck, Building2, CreditCard, Headset, KeyRound, Store, UserPlus } from 'lucide-react';
+import { BadgeCheck, Building2, CreditCard, Cross, Headset, KeyRound, UserPlus } from 'lucide-react';
+import MedicineFloat from '@dawai/shared/components/MedicineFloat';
 
 /**
  * The console's sign-in scene: the control room.
@@ -57,6 +58,7 @@ export default function ControlRoom() {
 
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 hidden overflow-hidden lg:block">
+      <MedicineFloat tint="rgb(165 180 252)" opacity={0.16} />
       {/* ---- the orbits, centred on the card ---- */}
       <div className="absolute left-1/2 top-1/2 h-0 w-0">
         {/* the radar sweep */}
@@ -99,7 +101,7 @@ export default function ControlRoom() {
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.5, delay: 0.6 + ri * 0.2 + si * 0.08 }}
                   >
-                    <Store className="h-3.5 w-3.5 text-white/70" />
+                    <Cross className="h-3.5 w-3.5 text-white/70" />
                     <span className={`absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full ${DOT[sh.s]}`} />
                   </motion.span>
                 );
@@ -124,7 +126,7 @@ export default function ControlRoom() {
       </div>
 
       {/* ---- the operators' feed ---- */}
-      <div className="absolute right-8 top-1/2 w-72 -translate-y-1/2">
+      <div className="absolute right-8 top-1/2 hidden w-72 -translate-y-1/2 xl:block">
         <p className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/45">
           <span className="relative flex h-2 w-2">
             {!still && <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-70" />}

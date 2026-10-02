@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { ArrowLeft, BookOpenCheck, Boxes, MapPin, Monitor, PackageCheck, ReceiptText, ScanLine, TrendingUp } from 'lucide-react';
+import { ArrowLeft, BookOpenCheck, BriefcaseMedical, Cross, PackageCheck, Pill, ReceiptText, ScanLine, Tablets, TrendingUp, Syringe, type LucideIcon } from 'lucide-react';
+import MedicineFloat from '@dawai/shared/components/MedicineFloat';
 import { Link } from 'react-router-dom';
 import { BRAND } from '../brand';
 import { useT, useLangStore } from '../i18n/ui';
@@ -20,41 +21,41 @@ import { useT, useLangStore } from '../i18n/ui';
  * motion, everything stands still and the form is unchanged.
  */
 
-type Node = { key: string; icon: typeof Monitor; x: number; y: number; label: string; figure: string };
+type Node = { key: string; icon: LucideIcon; x: number; y: number; label: string; figure: string };
 
 const EVENTS = {
   en: [
-    { icon: ReceiptText, text: '+৳340 · Napa Extra ×1 strip', tone: 'emerald' },
+    { icon: Pill, text: '+৳340 · Napa Extra ×1 strip', tone: 'emerald' },
     { icon: BookOpenCheck, text: 'Shilpi paid ৳500 on the khata', tone: 'sky' },
     { icon: PackageCheck, text: 'Seclo ×200 sent to Banani', tone: 'amber' },
     { icon: ScanLine, text: 'Counter 2 opened · ৳500 float', tone: 'emerald' },
-    { icon: TrendingUp, text: 'Best day this week so far', tone: 'violet' },
+    { icon: Syringe, text: 'Insulin back in stock · 40 pens', tone: 'violet' },
     { icon: ReceiptText, text: '+৳1,180 · 6 items · bKash', tone: 'emerald' },
   ],
   bn: [
-    { icon: ReceiptText, text: '+৳৩৪০ · নাপা এক্সট্রা ×১ পাতা', tone: 'emerald' },
+    { icon: Pill, text: '+৳৩৪০ · নাপা এক্সট্রা ×১ পাতা', tone: 'emerald' },
     { icon: BookOpenCheck, text: 'শিল্পী বাকি খাতায় ৳৫০০ দিলেন', tone: 'sky' },
     { icon: PackageCheck, text: 'সেকলো ×২০০ বনানী শাখায় গেল', tone: 'amber' },
     { icon: ScanLine, text: 'কাউন্টার ২ খুলল · ৳৫০০ ক্যাশ', tone: 'emerald' },
-    { icon: TrendingUp, text: 'এই সপ্তাহের সেরা দিন', tone: 'violet' },
+    { icon: Syringe, text: 'ইনসুলিন আবার স্টকে · ৪০টি পেন', tone: 'violet' },
     { icon: ReceiptText, text: '+৳১,১৮০ · ৬টি আইটেম · বিকাশ', tone: 'emerald' },
   ],
 } as const;
 
 const NODES: Record<'en' | 'bn', Node[]> = {
   en: [
-    { key: 'c1', icon: Monitor, x: 11, y: 22, label: 'Counter 1', figure: '৳84,120' },
-    { key: 'c2', icon: Monitor, x: 9, y: 70, label: 'Counter 2', figure: '৳31,460' },
-    { key: 'stock', icon: Boxes, x: 30, y: 90, label: 'Stock', figure: '2,418 pcs' },
-    { key: 'branch', icon: MapPin, x: 89, y: 20, label: 'Banani branch', figure: '৳48,600' },
+    { key: 'c1', icon: Pill, x: 11, y: 22, label: 'Counter 1', figure: '৳84,120' },
+    { key: 'c2', icon: Tablets, x: 9, y: 70, label: 'Counter 2', figure: '৳31,460' },
+    { key: 'stock', icon: BriefcaseMedical, x: 30, y: 90, label: 'Stock', figure: '2,418 pcs' },
+    { key: 'branch', icon: Cross, x: 89, y: 20, label: 'Banani branch', figure: '৳48,600' },
     { key: 'khata', icon: BookOpenCheck, x: 91, y: 68, label: 'Baki khata', figure: '41 customers' },
     { key: 'reports', icon: TrendingUp, x: 70, y: 91, label: 'This month', figure: '▲ 12%' },
   ],
   bn: [
-    { key: 'c1', icon: Monitor, x: 11, y: 22, label: 'কাউন্টার ১', figure: '৳৮৪,১২০' },
-    { key: 'c2', icon: Monitor, x: 9, y: 70, label: 'কাউন্টার ২', figure: '৳৩১,৪৬০' },
-    { key: 'stock', icon: Boxes, x: 30, y: 90, label: 'স্টক', figure: '২,৪১৮ পিস' },
-    { key: 'branch', icon: MapPin, x: 89, y: 20, label: 'বনানী শাখা', figure: '৳৪৮,৬০০' },
+    { key: 'c1', icon: Pill, x: 11, y: 22, label: 'কাউন্টার ১', figure: '৳৮৪,১২০' },
+    { key: 'c2', icon: Tablets, x: 9, y: 70, label: 'কাউন্টার ২', figure: '৳৩১,৪৬০' },
+    { key: 'stock', icon: BriefcaseMedical, x: 30, y: 90, label: 'স্টক', figure: '২,৪১৮ পিস' },
+    { key: 'branch', icon: Cross, x: 89, y: 20, label: 'বনানী শাখা', figure: '৳৪৮,৬০০' },
     { key: 'khata', icon: BookOpenCheck, x: 91, y: 68, label: 'বাকি খাতা', figure: '৪১ জন কাস্টমার' },
     { key: 'reports', icon: TrendingUp, x: 70, y: 91, label: 'এই মাস', figure: '▲ ১২%' },
   ],
@@ -126,6 +127,7 @@ export default function AuthScene({
           />
         ))}
         <div className="auth-grid absolute inset-0" />
+        <MedicineFloat />
       </div>
 
       {/* ---- the wires, and the traffic on them (wide screens) ---- */}
