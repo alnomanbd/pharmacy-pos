@@ -105,6 +105,12 @@ export const PERMISSIONS = [
   /** Mark an enquiry answered or closed, and note what happened. */
   'leads.manage',
 
+  /**
+   * Publish a message across the top of every shop's app. Reaches every
+   * counter at once, so it is its own permission.
+   */
+  'announcements.manage',
+
   /** Add and remove members of the platform team. */
   'team.manage',
 
@@ -174,6 +180,7 @@ export const PERMISSION_PRESETS: Record<string, { label: string; description: st
     description: 'Approve and suspend shops, handle payments and requests.',
     permissions: [
       'shops.view',
+      'announcements.manage',
       'shops.impersonate',
       'shops.approve',
       'shops.suspend',

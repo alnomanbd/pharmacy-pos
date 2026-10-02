@@ -1254,6 +1254,27 @@ export const medicineRequestsApi = {
   withdraw: (id: string) => getData<unknown>(api.delete(`/shop/medicine-requests/${id}`)),
 };
 
+/* ---------------------------------------------------------- announcements -- */
+
+/** A message from the Dawai team, shown across the top of the app. */
+export interface ShopAnnouncement {
+  _id: string;
+  title: string;
+  body: string;
+  titleBn: string;
+  bodyBn: string;
+  tone: 'info' | 'warning' | 'success';
+  linkLabel: string;
+  linkUrl: string;
+  dismissible: boolean;
+  updatedAt: string;
+}
+
+export const announcementsApi = {
+  /** What this shop should see now: live, and aimed at its plan. */
+  list: () => getData<ShopAnnouncement[]>(api.get('/shop/announcements')),
+};
+
 /* ---------------------------------------------------------------- support -- */
 
 /** The shop's conversations with the Dawai team. Open to every role. */

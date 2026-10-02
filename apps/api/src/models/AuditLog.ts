@@ -98,6 +98,8 @@ export const AUDIT_ACTIONS = [
   'organization.platform_limits',
   /** An operator sent a shop a renewal or come-back reminder by hand. */
   'organization.platform_remind',
+  /** An operator published, changed or deleted an announcement shown to shops. */
+  'announcement.change',
   /** An operator corrected a shop user's details. */
   'user.platform_update',
   /**

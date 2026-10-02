@@ -509,7 +509,7 @@
 }
 
 /*
- * The screen, less the support-view banner.
+ * The screen, less the support-view banner and any announcements above it.
  *
  * The banner sits in the flow above the app, and the shell and the till each
  * fill the screen; without this they would be the banner's height too tall and
@@ -517,17 +517,17 @@
  * see components/SupportViewBanner.tsx — and is 0 outside a support view.
  */
 .shell-h {
-  height: calc(100vh - var(--support-banner-h, 0px));
-  height: calc(100dvh - var(--support-banner-h, 0px));
+  height: calc(100vh - var(--support-banner-h, 0px) - var(--announce-h, 0px));
+  height: calc(100dvh - var(--support-banner-h, 0px) - var(--announce-h, 0px));
 }
 .shell-min-h {
-  min-height: calc(100vh - var(--support-banner-h, 0px));
-  min-height: calc(100dvh - var(--support-banner-h, 0px));
+  min-height: calc(100vh - var(--support-banner-h, 0px) - var(--announce-h, 0px));
+  min-height: calc(100dvh - var(--support-banner-h, 0px) - var(--announce-h, 0px));
 }
 @media (min-width: 1024px) {
   .lg-shell-h {
-    height: calc(100vh - var(--support-banner-h, 0px));
-    height: calc(100dvh - var(--support-banner-h, 0px));
+    height: calc(100vh - var(--support-banner-h, 0px) - var(--announce-h, 0px));
+    height: calc(100dvh - var(--support-banner-h, 0px) - var(--announce-h, 0px));
     min-height: 0;
   }
 }

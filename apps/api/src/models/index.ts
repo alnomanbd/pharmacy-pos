@@ -34,6 +34,7 @@ export {
   type SupportMessageDoc,
 } from './Support.js';
 export { ShopNoteModel, type ShopNote, type ShopNoteDoc } from './ShopNote.js';
+export { AnnouncementModel, type Announcement, type AnnouncementDoc } from './Announcement.js';
 export {
   ImpersonationHandoffModel,
   type ImpersonationHandoff,

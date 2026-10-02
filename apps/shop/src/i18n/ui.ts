@@ -1580,6 +1580,9 @@ const bn: Record<string, string> = {
   'Could not load your messages.': 'মেসেজগুলো আনা যায়নি।',
   'Could not open that conversation.': 'কথোপকথনটি খোলা যায়নি।',
   'Could not send that.': 'পাঠানো যায়নি।',
+  /* ---- announcements ---- */
+  'Read more': 'আরও পড়ুন',
+
   /* ---- support view ---- */
   'Support view': 'সাপোর্ট ভিউ',
   'Leave': 'বের হন',

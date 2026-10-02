@@ -29,6 +29,7 @@ import Activity from './pages/Activity';
 import BackRoom from './components/BackRoom';
 import SupportClaim from './pages/SupportClaim';
 import SupportViewBanner from './components/SupportViewBanner';
+import AnnouncementBar from './components/AnnouncementBar';
 
 /**
  * Who may be here, and on what.
@@ -72,6 +73,8 @@ export default function App() {
     <>
     {/* Above every screen, the till included, for as long as a support view lasts. */}
     <SupportViewBanner />
+    {/* The team's announcements, also above every screen. */}
+    <AnnouncementBar />
     <Routes>
       <Route path="/login" element={<Login />} />
       {/* Where the console hands over a read-only support view. Outside the

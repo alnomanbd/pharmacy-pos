@@ -14,6 +14,8 @@ import { impersonate } from '../services/impersonation.service.js';
 import * as retention from '../services/retention.service.js';
 import * as notes from '../services/shopNote.service.js';
 import { listMessages } from '../services/messageLog.service.js';
+import * as announcements from '../services/announcement.service.js';
+import { ANNOUNCEMENT_TONES } from '../models/Announcement.js';
 import { requireAuth, requireRole, requirePermission } from '../middlewares/auth.js';
 import { PLATFORM_ROLES, PLATFORM_OWNER_ROLES } from '../types/roles.js';
 import * as team from '../services/platformTeam.service.js';
@@ -120,7 +122,7 @@ const planSchema = z.object({
 // Readable by whoever records payments too: taking one by hand means picking its plan.
 router.get(
   '/plans',
-  requirePermission('plans.view', 'plans.manage', 'payments.verify'),
+  requirePermission('plans.view', 'plans.manage', 'payments.verify', 'announcements.manage'),
   handle(() => plans.listPlans()),
 );
 router.post(
@@ -730,6 +732,58 @@ router.get(
       granularity: str(req.query.granularity) as revenue.Granularity | undefined,
     }),
   ),
+);
+
+/* ------------------------------ announcements ------------------------------ */
+
+/** Messages across the top of the shop app — see the service. */
+const announcementSchema = z.object({
+  title: z.string().trim().min(1).max(120),
+  body: z.string().trim().max(600).optional(),
+  titleBn: z.string().trim().max(120).optional(),
+  bodyBn: z.string().trim().max(600).optional(),
+  tone: z.enum(ANNOUNCEMENT_TONES).optional(),
+  plans: z.array(z.string().trim().max(40)).max(20).optional(),
+  linkLabel: z.string().trim().max(40).optional(),
+  linkUrl: z.string().trim().max(300).optional(),
+  startsAt: z.string().datetime().nullable().optional(),
+  endsAt: z.string().datetime().nullable().optional(),
+  active: z.boolean().optional(),
+  dismissible: z.boolean().optional(),
+});
+
+router.get('/announcements', requirePermission('announcements.manage'), handle(() => announcements.listAll()));
+
+router.post(
+  '/announcements',
+  requirePermission('announcements.manage'),
+  validate(announcementSchema),
+  handle(async (req) => {
+    const a = await announcements.create(req.body, req.user!.id);
+    await audit(req, 'announcement.change', { model: 'Announcement', id: String(a._id), label: a.title }, { after: { action: 'create', plans: a.plans, state: a.state } });
+    return a;
+  }, 'Announcement saved'),
+);
+
+router.patch(
+  '/announcements/:id',
+  requirePermission('announcements.manage'),
+  validate(announcementSchema.partial()),
+  handle(async (req) => {
+    const a = await announcements.update(req.params.id, req.body);
+    await audit(req, 'announcement.change', { model: 'Announcement', id: req.params.id, label: a.title }, { after: { action: 'update', ...req.body } });
+    return a;
+  }, 'Announcement saved'),
+);
+
+router.delete(
+  '/announcements/:id',
+  requirePermission('announcements.manage'),
+  handle(async (req) => {
+    const r = await announcements.remove(req.params.id);
+    await audit(req, 'announcement.change', { model: 'Announcement', id: req.params.id, label: r.title }, { after: { action: 'delete' } });
+    return r;
+  }, 'Announcement deleted'),
 );
 
 /* -------------------------------- messages -------------------------------- */

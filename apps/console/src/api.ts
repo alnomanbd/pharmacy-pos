@@ -110,6 +110,25 @@ export interface ShopMonth {
   purchases: number;
 }
 
+/** An announcement shown across the top of the shop app. */
+export interface AnnouncementRow {
+  _id: string;
+  title: string;
+  body: string;
+  titleBn: string;
+  bodyBn: string;
+  tone: 'info' | 'warning' | 'success';
+  plans: string[];
+  linkLabel: string;
+  linkUrl: string;
+  startsAt: string;
+  endsAt: string | null;
+  active: boolean;
+  dismissible: boolean;
+  createdByName: string;
+  state: 'live' | 'scheduled' | 'ended' | 'off';
+}
+
 /** One email or SMS from the message log. */
 export interface MessageLogRow {
   _id: string;
@@ -340,6 +359,13 @@ export const platformApi = {
 
   audit: (params?: { action?: string; actor?: string; page?: number; limit?: number }) =>
     getData<Paged<PlatformAuditEntry> & { actions: string[] }>(api.get('/platform/audit', { params })),
+
+  announcements: () => getData<AnnouncementRow[]>(api.get('/platform/announcements')),
+  createAnnouncement: (payload: Record<string, unknown>) =>
+    getData<AnnouncementRow>(api.post('/platform/announcements', payload)),
+  updateAnnouncement: (id: string, payload: Record<string, unknown>) =>
+    getData<AnnouncementRow>(api.patch(`/platform/announcements/${id}`, payload)),
+  deleteAnnouncement: (id: string) => getData<unknown>(api.delete(`/platform/announcements/${id}`)),
 
   /** The email and SMS log. `failed24h` is what failed in the last day. */
   messages: (params?: { q?: string; channel?: string; status?: string; organization?: string; page?: number; limit?: number }) =>
