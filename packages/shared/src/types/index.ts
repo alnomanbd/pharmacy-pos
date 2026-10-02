@@ -80,6 +80,8 @@ export interface AuthUser {
   permissions?: string[];
   photo?: string;
   twoFactorEnabled?: boolean;
+  /** Set by the API: this account may not work until it has a second factor. */
+  twoFactorRequired?: boolean;
   isEmailVerified?: boolean;
 }
 

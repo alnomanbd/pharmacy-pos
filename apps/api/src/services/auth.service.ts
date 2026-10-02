@@ -33,6 +33,12 @@ export interface LoginResult {
      * put an operator straight into enrolment instead of a screen of refusals.
      */
     twoFactorEnabled: boolean;
+    /**
+     * Whether this account has to have a second factor before it can do
+     * anything. Operators only, and only while `OPERATOR_2FA_REQUIRED` is on —
+     * the console reads this rather than guessing from `twoFactorEnabled`.
+     */
+    twoFactorRequired: boolean;
   };
   accessToken: string;
   refreshToken: string;
@@ -661,6 +667,8 @@ function serializeLogin(
        * call away until this is true.
        */
       twoFactorEnabled: Boolean(user.twoFactorEnabled),
+      twoFactorRequired:
+        env.security.operatorTwoFactorRequired && ['platformAdmin', 'platformStaff'].includes(user.role),
     },
     accessToken,
     refreshToken,

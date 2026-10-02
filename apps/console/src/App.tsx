@@ -46,6 +46,7 @@ function Protected({ children }: { children: JSX.Element }) {
   const role = useAuthStore((s) => s.user?.role);
   const hydrated = useAuthStore((s) => s.hydrated);
   const twoFactorEnabled = useAuthStore((s) => s.user?.twoFactorEnabled);
+  const twoFactorRequired = useAuthStore((s) => s.user?.twoFactorRequired);
   if (!hydrated) return <Hydrating />;
   if (!accessToken) return <Navigate to="/login" replace />;
   // A shop role cannot arrive here through this app's own login, but a
@@ -55,8 +56,12 @@ function Protected({ children }: { children: JSX.Element }) {
    * An operator account without a second factor gets the enrolment screen and
    * nothing else. The API refuses every other call anyway (`requireAuth`), so
    * without this the console would render itself and then fail every request.
+   *
+   * Only while the deployment requires it (`OPERATOR_2FA_REQUIRED`). A session
+   * from before the API sent `twoFactorRequired` reads as required, which is
+   * the safe way to be wrong.
    */
-  if (twoFactorEnabled === false) return <TwoFactorGate />;
+  if (twoFactorEnabled === false && twoFactorRequired !== false) return <TwoFactorGate />;
   return children;
 }
 
