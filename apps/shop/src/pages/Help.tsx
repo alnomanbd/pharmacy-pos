@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { LifeBuoy, Search, ArrowLeft, PlayCircle, Headset } from 'lucide-react';
-import { helpApi, type HelpArticle, type HelpArticleSummary } from '../api';
+import { LifeBuoy, Search, ArrowLeft, PlayCircle, Headset, ListChecks, CheckCircle2, Circle } from 'lucide-react';
+import { helpApi, onboardingApi, type HelpArticle, type HelpArticleSummary, type ShopSetup } from '../api';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import { useT, useUiLang, bnNumerals } from '../i18n/ui';
+import { useAuthStore } from '@dawai/shared/store/auth.store';
 
 /**
  * How-tos, in Bangla and English — the answer at nine at night when nobody is
@@ -52,6 +53,67 @@ function Body({ text, bn }: { text: string; bn: boolean }) {
           </ol>
         ),
       )}
+    </div>
+  );
+}
+
+/**
+ * The getting-started checklist, where it can always be found again — the
+ * top bar's copy can be hidden, and a hidden list has to come back from
+ * somewhere. Owner and pharmacist only, like the top bar's.
+ */
+function SetupCard() {
+  const t = useT();
+  const lang = useUiLang();
+  const role = useAuthStore((s) => s.user?.role);
+  const [setup, setSetup] = useState<ShopSetup | null>(null);
+  const runsTheShop = role === 'admin' || role === 'pharmacist';
+
+  useEffect(() => {
+    if (!runsTheShop) return;
+    onboardingApi
+      .get()
+      .then(setSetup)
+      .catch(() => undefined);
+  }, [runsTheShop]);
+
+  if (!setup || setup.done >= setup.total) return null;
+  const n = (v: number) => (lang === 'bn' ? bnNumerals(String(v)) : String(v));
+
+  return (
+    <div className="card mb-4 border-primary/40">
+      <div className="mb-2 flex flex-wrap items-center gap-2">
+        <h3 className="mb-0 flex flex-1 items-center gap-2">
+          <ListChecks className="h-4 w-4 text-primary" /> {t('Getting started')}
+          <span className="pill waiting">
+            {n(setup.done)}/{n(setup.total)}
+          </span>
+        </h3>
+        {setup.dismissed && (
+          <button
+            type="button"
+            className="btn btn-sm"
+            onClick={() =>
+              void onboardingApi
+                .show()
+                .then(setSetup)
+                .catch(() => undefined)
+            }
+          >
+            {t('Show it in the top bar again')}
+          </button>
+        )}
+      </div>
+      <ol className="grid gap-0.5 sm:grid-cols-2">
+        {setup.steps.map((s) => (
+          <li key={s.key}>
+            <Link to={s.href} className={`flex items-start gap-2 rounded-md px-1.5 py-1 text-sm hover:bg-muted ${s.done ? 'text-muted-foreground' : ''}`}>
+              {s.done ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" /> : <Circle className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />}
+              <span className={s.done ? 'line-through' : ''}>{t(s.label)}</span>
+            </Link>
+          </li>
+        ))}
+      </ol>
     </div>
   );
 }
@@ -131,6 +193,7 @@ export default function Help() {
           <p className="text-sm text-muted-foreground">{t('How to do things in Dawai, step by step.')}</p>
         </div>
       </div>
+      <SetupCard />
       <div className="relative mb-4">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <input className="input h-11 pl-9" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('What do you want to do?')} aria-label={t('Search help')} />

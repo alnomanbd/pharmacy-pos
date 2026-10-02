@@ -1666,6 +1666,8 @@ const bn: Record<string, string> = {
   'Or look it up in Help.': 'অথবা সাহায্যে খুঁজে দেখুন।',
   'Selling': 'বিক্রি',
   'Money and baki': 'টাকা আর বাকি',
+  'Hidden. It is under Help whenever you want it back.': 'লুকানো হয়েছে। আবার দরকার হলে সাহায্য পেজে পাবেন।',
+  'Show it in the top bar again': 'আবার উপরের বারে দেখান',
 };
 
 export const useT = makeUseT(bn);

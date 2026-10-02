@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { CheckCircle2, Circle, ListChecks, X } from 'lucide-react';
 import { onboardingApi, type ShopSetup } from '../api';
 import { useT, useUiLang, bnNumerals } from '../i18n/ui';
+import { useToast } from '@dawai/shared/components/Toast';
 
 /**
  * "Setup 3/6" in the top bar, and the list behind it.
@@ -14,6 +15,7 @@ import { useT, useUiLang, bnNumerals } from '../i18n/ui';
  */
 export default function SetupChecklist() {
   const t = useT();
+  const { toast } = useToast();
   const lang = useUiLang();
   const { pathname } = useLocation();
   const [setup, setSetup] = useState<ShopSetup | null>(null);
@@ -52,6 +54,7 @@ export default function SetupChecklist() {
     setOpen(false);
     try {
       setSetup(await onboardingApi.dismiss());
+      toast(t('Hidden. It is under Help whenever you want it back.'));
     } catch {
       /* Still shown; nothing lost. */
     }

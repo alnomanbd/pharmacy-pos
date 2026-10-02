@@ -1286,6 +1286,8 @@ export interface ShopSetup {
 export const onboardingApi = {
   get: () => getData<ShopSetup>(api.get('/shop/onboarding')),
   dismiss: () => getData<ShopSetup>(api.post('/shop/onboarding/dismiss', { dismissed: true })),
+  /** Brings a hidden checklist back to the top bar. */
+  show: () => getData<ShopSetup>(api.post('/shop/onboarding/dismiss', { dismissed: false })),
 };
 
 /* ---------------------------------------------------------- announcements -- */
