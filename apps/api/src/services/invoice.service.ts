@@ -1,5 +1,5 @@
 import PDFDocument from 'pdfkit';
-import { PaymentModel, OrganizationModel, UserModel } from '../models/index.js';
+import { ShopSettingsModel, PaymentModel, OrganizationModel, UserModel } from '../models/index.js';
 import { nextSequence } from '../models/Counter.js';
 import { planByKey } from './plan.service.js';
 import { env } from '../config/env.js';
@@ -43,7 +43,14 @@ export interface InvoiceData {
     contact: string;
     email: string;
     phone: string;
+    /** The shop's own BIN and drug licence, from its settings, when it has them. */
+    bin: string;
+    licence: string;
   };
+  /** What the plan cost before a discount code, and the code — when one was used. */
+  discount: { code: string; amount: number; base: number } | null;
+  /** The VAT inside `amount`. Null when VAT is off. */
+  vat: { percent: number; net: number; vat: number } | null;
   plan: string;
   months: number;
   coversUntil: Date | null;
@@ -102,6 +109,16 @@ export async function invoiceNumberFor(paymentId: string): Promise<string> {
  * `orgId` scopes it to one shop's own payments — the same function serves the
  * shop's download and the operator's, and the operator simply passes nothing.
  */
+/**
+ * The VAT inside a VAT-inclusive amount, to the paisa: ৳3,000 at 15% is ৳391.30
+ * VAT on ৳2,608.70. Pure, for the tests.
+ */
+export function vatSplit(amount: number, percent: number) {
+  if (!(percent > 0) || !(amount > 0)) return null;
+  const vat = Math.round(((amount * percent) / (100 + percent)) * 100) / 100;
+  return { percent, vat, net: Math.round((amount - vat) * 100) / 100 };
+}
+
 export async function invoiceFor(paymentId: string, orgId?: string): Promise<InvoiceData> {
   const payment = await PaymentModel.findById(paymentId).lean();
   if (!payment) throw notFound('Payment');
@@ -110,11 +127,13 @@ export async function invoiceFor(paymentId: string, orgId?: string): Promise<Inv
   const number = await invoiceNumberFor(paymentId);
   const fresh = await PaymentModel.findById(paymentId).select('invoicedAt').lean();
 
-  const [org, submitter, plan] = await Promise.all([
+  const [org, submitter, plan, settings] = await Promise.all([
     OrganizationModel.findById(payment.organization).select('name address phone email').lean(),
     UserModel.findById(payment.submittedBy).select('name email phone').lean(),
     planByKey(payment.plan),
+    ShopSettingsModel.findOne({ organization: payment.organization }).select('vatBin drugLicenceNo').lean(),
   ]);
+  const coupon = (payment as { coupon?: { code?: string; discount?: number } }).coupon;
 
   const addressOf = (a: unknown) => {
     if (!a) return '';
@@ -138,7 +157,13 @@ export async function invoiceFor(paymentId: string, orgId?: string): Promise<Inv
       contact: submitter?.name ?? '',
       email: (org as { email?: string })?.email || submitter?.email || '',
       phone: (org as { phone?: string })?.phone || submitter?.phone || '',
+      bin: settings?.vatBin ?? '',
+      licence: settings?.drugLicenceNo ?? '',
     },
+    discount: coupon?.code && (coupon.discount ?? 0) > 0
+      ? { code: coupon.code, amount: coupon.discount!, base: payment.amount + coupon.discount! }
+      : null,
+    vat: vatSplit(payment.amount, env.invoice.vatPercent),
     plan: plan?.name ?? payment.plan,
     months: payment.months ?? 1,
     coversUntil: payment.coversUntil ?? null,
@@ -159,7 +184,11 @@ export async function buildInvoicePdf(data: InvoiceData): Promise<Buffer> {
   const fonts = resolveFonts();
   warnIfUnsupported(fonts, 'invoice', data.billedTo.shop, data.issuer.name, data.issuer.address);
   const t = (v: string | undefined | null) => safeText(fonts, v ?? '');
-  const money = (n: number) => `${currencyPrefix(fonts, data.currency)}${n.toLocaleString('en-US')}`;
+  const money = (n: number) =>
+    `${currencyPrefix(fonts, data.currency)}${n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+  /** Always two decimals: a VAT figure is read to the paisa. */
+  const paisa = (n: number) =>
+    `${currencyPrefix(fonts, data.currency)}${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   const doc = new PDFDocument({ size: 'A4', margin: 48 });
   const chunks: Buffer[] = [];
@@ -186,7 +215,9 @@ export async function buildInvoicePdf(data: InvoiceData): Promise<Buffer> {
     doc.font(fonts.regular).fontSize(9).fillColor(MUTED).text(t(`BIN: ${data.issuer.bin}`));
   }
 
-  doc.font(fonts.bold).fontSize(22).fillColor(INK).text('INVOICE', left, 52, {
+  // "Tax invoice" only when it is one: VAT on it, and our BIN to claim it against.
+  const taxInvoice = Boolean(data.vat && data.issuer.bin);
+  doc.font(fonts.bold).fontSize(22).fillColor(INK).text(taxInvoice ? 'TAX INVOICE' : 'INVOICE', left, 52, {
     width,
     align: 'right',
   });
@@ -207,9 +238,13 @@ export async function buildInvoicePdf(data: InvoiceData): Promise<Buffer> {
   y = doc.y + 2;
   doc.font(fonts.bold).fontSize(12).fillColor(INK).text(t(data.billedTo.shop), left, y);
   doc.font(fonts.regular).fontSize(10).fillColor(MUTED);
-  for (const line of [data.billedTo.contact, data.billedTo.phone, data.billedTo.email].filter(
-    Boolean,
-  )) {
+  for (const line of [
+    data.billedTo.contact,
+    data.billedTo.phone,
+    data.billedTo.email,
+    data.billedTo.bin ? `BIN: ${data.billedTo.bin}` : '',
+    data.billedTo.licence ? `Drug licence: ${data.billedTo.licence}` : '',
+  ].filter(Boolean)) {
     doc.text(t(line), left, doc.y + 1);
   }
 
@@ -228,7 +263,8 @@ export async function buildInvoicePdf(data: InvoiceData): Promise<Buffer> {
   doc.font(fonts.regular).fontSize(11).fillColor(INK);
   doc.text(t(`${data.plan} subscription`), col.desc + 8, y + 10, { width: width * 0.55 });
   doc.text(`${data.months} month${data.months === 1 ? '' : 's'}`, col.qty, y + 10);
-  doc.font(fonts.bold).text(money(data.amount), left, y + 10, { width: width - 8, align: 'right' });
+  // The plan's own price on the line; a discount comes off it below.
+  doc.font(fonts.bold).text(money(data.discount?.base ?? data.amount), left, y + 10, { width: width - 8, align: 'right' });
 
   const lineBottom = doc.y + 12;
   doc.moveTo(left, lineBottom).lineTo(right, lineBottom).strokeColor(LINE).stroke();
@@ -244,9 +280,29 @@ export async function buildInvoicePdf(data: InvoiceData): Promise<Buffer> {
   }
 
   y = doc.y + 14;
+  // A discount code: the plan's price, what the code took off, then the total.
+  if (data.discount) {
+    doc.font(fonts.regular).fontSize(10).fillColor(MUTED);
+    doc.text('Plan price', left, y, { width: width * 0.6 });
+    doc.text(money(data.discount.base), left, y, { width, align: 'right' });
+    y = doc.y + 4;
+    doc.text(t(`Discount (${data.discount.code})`), left, y, { width: width * 0.6 });
+    doc.text(`−${money(data.discount.amount)}`, left, y, { width, align: 'right' });
+    y = doc.y + 8;
+  }
   doc.font(fonts.bold).fontSize(13).fillColor(INK);
   doc.text('Total paid', left, y, { width: width * 0.6 });
   doc.text(money(data.amount), left, y, { width, align: 'right' });
+  // The VAT inside the total: the price includes it, so it is shown, not added.
+  if (data.vat) {
+    y = doc.y + 4;
+    doc.font(fonts.regular).fontSize(9.5).fillColor(MUTED);
+    doc.text(`Includes VAT at ${data.vat.percent}%`, left, y, { width: width * 0.6 });
+    doc.text(paisa(data.vat.vat), left, y, { width, align: 'right' });
+    y = doc.y + 2;
+    doc.text('Price before VAT', left, y, { width: width * 0.6 });
+    doc.text(paisa(data.vat.net), left, y, { width, align: 'right' });
+  }
 
   /* -------------------------------------------------------------- payment -- */
 

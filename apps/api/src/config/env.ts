@@ -101,6 +101,11 @@ export const env = {
     bin: process.env.INVOICE_BIN || '',
     /** Prefix of the invoice number, before the year and the sequence. */
     prefix: process.env.INVOICE_PREFIX || 'DW',
+    /**
+     * VAT inside the plan price, in percent: a ৳3,000 plan at 15% is ৳2,608.70
+     * plus ৳391.30 VAT. 0 prints no VAT at all (not registered yet).
+     */
+    vatPercent: Number(process.env.INVOICE_VAT_PERCENT ?? '15'),
     footer: process.env.INVOICE_FOOTER || '',
   },
   redisUrl: process.env.REDIS_URL || '',
