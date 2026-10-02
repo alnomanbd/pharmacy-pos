@@ -15,10 +15,12 @@ import {
   Trash2,
   AlertTriangle,
   Save,
+  ClipboardList,
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { platformApi, downloadBlob, type Shop, type ShopMonth, type SeatUsage } from '../api';
+import { platformApi, downloadBlob, type Shop, type ShopMonth, type SeatUsage, type ShopPlanUsage } from '../api';
 import ShopUserActions from '../components/ShopUserActions';
+import ShopLimitsCard, { signupSummary } from '../components/ShopLimitsCard';
 import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock, Spinner } from '@dawai/shared/components/Spinner';
 import Modal from '../components/Modal';
@@ -58,7 +60,7 @@ export default function ShopDetail() {
   const [org, setOrg] = useState<Shop | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [counts, setCounts] = useState({ bills: 0, products: 0, counters: 0, users: 0 });
-  const [plan, setPlan] = useState<{ planName: string; terminals: SeatUsage; shopUsers: SeatUsage } | null>(null);
+  const [plan, setPlan] = useState<ShopPlanUsage | null>(null);
   const [usage, setUsage] = useState<ShopMonth[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -169,6 +171,8 @@ export default function ShopDetail() {
   const canEdit = can(access, 'shops.edit');
   const canSuspend = can(access, 'shops.suspend');
   const canDelete = can(access, 'shops.delete');
+  const canPlan = can(access, 'shops.plan');
+  const asked = signupSummary(org.signup);
 
   return (
     <div className="page">
@@ -212,8 +216,16 @@ export default function ShopDetail() {
         {[
           { label: 'Bills', value: counts.bills.toLocaleString(), icon: ReceiptText },
           { label: 'Products', value: counts.products.toLocaleString(), icon: Package },
-          { label: 'Counters (plan)', value: seat(plan?.terminals), icon: Monitor },
-          { label: 'Staff logins (plan)', value: seat(plan?.shopUsers), icon: UsersIcon },
+          {
+            label: plan?.terminals.overridden ? 'Counters (custom)' : 'Counters (plan)',
+            value: seat(plan?.terminals),
+            icon: Monitor,
+          },
+          {
+            label: plan?.shopUsers.overridden ? 'Staff logins (custom)' : 'Staff logins (plan)',
+            value: seat(plan?.shopUsers),
+            icon: UsersIcon,
+          },
         ].map((s) => (
           <div className="card" key={s.label}>
             <div className="flex items-center gap-2">
@@ -224,6 +236,18 @@ export default function ShopDetail() {
           </div>
         ))}
       </div>
+
+      {/* What they told us on the form — read before ringing them. */}
+      {asked && (
+        <div className="card">
+          <h3 className="mb-1 flex items-center gap-2">
+            <ClipboardList className="h-4 w-4 text-primary" /> Sign-up details
+          </h3>
+          <p className="break-words text-sm">{asked}</p>
+        </div>
+      )}
+
+      <ShopLimitsCard shopId={id} usage={plan} canEdit={canPlan} onSaved={load} />
 
       <div className="card">
         <div className="mb-3 flex flex-wrap items-center gap-2">

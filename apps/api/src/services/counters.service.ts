@@ -1,6 +1,6 @@
 import { Types } from 'mongoose';
-import { ShopCounterModel, ShiftModel, SaleModel, OrganizationModel } from '../models/index.js';
-import { assertWithinLimit } from './plan.service.js';
+import { ShopCounterModel, ShiftModel, SaleModel } from '../models/index.js';
+import { assertOrgWithinLimit } from './plan.service.js';
 import { badRequest, notFound } from '../utils/AppError.js';
 import { todayKey, formatDayKey } from '../utils/date.js';
 import type { Actor } from './shop.service.js';
@@ -139,12 +139,6 @@ export async function pickableCounters(actor: Actor) {
   return rows.map((r) => ({ ...r, _id: String(r._id), busyWith: busy.get(String(r._id)) ?? null }));
 }
 
-/** The shop's plan key, for a limit check. */
-async function planOf(org: string) {
-  const row = await OrganizationModel.findById(org).select('plan').lean();
-  return row?.plan || 'trial';
-}
-
 export async function createCounter(
   actor: Actor,
   input: { name: string; note?: string; openingFloat?: number; paperWidthMm?: number | null },
@@ -157,7 +151,7 @@ export async function createCounter(
 
   // A second till is what Plus sells, so the count is checked before it exists.
   const live = await ShopCounterModel.countDocuments({ organization: actor.org, isActive: { $ne: false } });
-  await assertWithinLimit(await planOf(actor.org), 'terminals', live);
+  await assertOrgWithinLimit(actor.org, 'terminals', live);
 
   const made = await ShopCounterModel.create({
     organization: actor.org,
@@ -187,7 +181,7 @@ export async function updateCounter(
   // Turning a counter back on is a till again, held to the plan like a new one.
   if (input.isActive === true && counter.isActive === false) {
     const live = await ShopCounterModel.countDocuments({ organization: actor.org, isActive: { $ne: false } });
-    await assertWithinLimit(await planOf(actor.org), 'terminals', live);
+    await assertOrgWithinLimit(actor.org, 'terminals', live);
   }
 
   if (input.name !== undefined) {

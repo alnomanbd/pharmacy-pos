@@ -26,7 +26,8 @@ import {
 import { ok } from '../utils/response.js';
 import { audit, listPlatformAuditLogs } from '../services/audit.service.js';
 import { ORG_STATUS } from '../types/enums.js';
-import { badRequest } from '../utils/AppError.js';
+import { badRequest, forbidden } from '../utils/AppError.js';
+import { permissionsForOrgUpdate } from '../services/orgUpdateAuthz.js';
 
 /**
  * Operating the deployment: which shops exist, whether they may sign in, what
@@ -185,9 +186,17 @@ const updateOrgSchema = z
   })
   .refine((v) => Object.keys(v).length > 0, { message: 'Nothing to update' });
 
+function requireOrgUpdatePermissions(req: Request, _res: Response, next: NextFunction) {
+  const held = req.user?.permissions ?? [];
+  const missing = permissionsForOrgUpdate(req.body).find((group) => !group.some((p) => held.includes(p)));
+  if (missing) return next(forbidden(`You do not have permission to do this (${missing.join(' or ')})`));
+  next();
+}
+
 router.patch(
   '/organizations/:id',
   validate(updateOrgSchema),
+  requireOrgUpdatePermissions,
   handle(async (req) => {
     const org = await platform.updateOrganization(req.params.id, req.user!.id, req.body);
     /*
@@ -205,6 +214,42 @@ router.patch(
     );
     return org;
   }, 'Shop updated'),
+);
+
+/**
+ * A shop's own ceilings on counters and staff logins, where they differ from
+ * its plan's. A number sets the shop's ceiling on that axis; `null` puts it
+ * back on the plan's; an axis left out is left alone.
+ *
+ * Behind `shops.plan`, like a plan change: a sixth counter on a Plus shop is
+ * something we sell, so it is money, not clerical.
+ */
+const limitOverridesSchema = z
+  .object({
+    limitOverrides: z
+      .object({
+        terminals: z.number().int().min(1).max(500).nullable().optional(),
+        shopUsers: z.number().int().min(1).max(1000).nullable().optional(),
+      })
+      .strict()
+      .refine((v) => Object.keys(v).length > 0, { message: 'Nothing to update' }),
+  })
+  .strict();
+
+router.patch(
+  '/organizations/:id/limits',
+  requirePermission('shops.plan'),
+  validate(limitOverridesSchema),
+  handle(async (req) => {
+    const result = await platform.updateLimitOverrides(req.params.id, req.body.limitOverrides);
+    await audit(
+      req,
+      'organization.platform_limits',
+      { model: 'Organization', id: req.params.id, label: result.organization.name },
+      { before: { limitOverrides: result.before }, after: { limitOverrides: result.after } },
+    );
+    return { limitOverrides: result.after, usage: result.usage };
+  }, 'Limits updated'),
 );
 
 /**

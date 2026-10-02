@@ -62,6 +62,32 @@ const schema = new Schema(
     /** What they said they were signing up for. Offered first on the billing page. */
     intendedPlan: { type: String, default: '' },
     /**
+     * What the shop told us about itself on the sign-up form — written once, at
+     * registration, and never rewritten. It is what the operator reads before
+     * ringing them: "asked for 10 counters, 2 branches, licence DL-…".
+     */
+    signup: {
+      /** Billing counters they said they run. `null`: not given. */
+      counters: { type: Number, default: null },
+      /** Branches (outlets) they said they run. `null`: not given. */
+      outlets: { type: Number, default: null },
+      /** Their drug licence number, as typed. Not verified here. */
+      licence: { type: String, default: '' },
+    },
+    /**
+     * This shop's own ceilings, where they differ from its plan's.
+     *
+     * `null` on an axis means "use the plan" — the default, and what nearly
+     * every shop has. A number is this shop's own ceiling and replaces the
+     * plan's on that axis: it is how a ten-counter shop trials all ten counters,
+     * and how an operator sells a Plus shop its sixth till. Read through
+     * `plan.service#effectiveLimits`, never directly.
+     */
+    limitOverrides: {
+      terminals: { type: Number, default: null },
+      shopUsers: { type: Number, default: null },
+    },
+    /**
      * The date the shop is trialled or paid up to — one field for both, because
      * the question is the same: may it still write? Set at approval to the end of
      * the trial; each confirmed payment moves it forward. Past it, on any plan,

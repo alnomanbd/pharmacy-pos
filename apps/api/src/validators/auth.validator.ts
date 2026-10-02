@@ -67,8 +67,16 @@ export const registerSchema = z.object({
   email: z.string().email(),
   phone,
   password: password,
-  /** How many billing counters the shop runs — a hint for the plan we suggest. */
-  counters: z.number().int().min(1).max(20).optional(),
+  /**
+   * How many billing counters the shop runs. Suggests the plan, and a shop with
+   * more than one is given that many counters for its trial (see
+   * `plan.service#signupLimitOverrides`). 200 is a sanity cap, not a price list.
+   */
+  counters: z.number().int().min(1).max(200).optional(),
+  /** How many branches (outlets) they run. Recorded for the operator; not a limit. */
+  outlets: z.number().int().min(1).max(100).optional(),
+  /** Their drug licence number, as typed. Recorded for the operator; not verified. */
+  licence: z.string().trim().max(80).optional(),
   /**
    * The plan they say they are here for (a `Plan.key`). Not enforced during the
    * trial — the trial is full-featured — but it is what billing offers first.

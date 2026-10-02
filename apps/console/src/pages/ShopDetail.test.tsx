@@ -17,6 +17,7 @@ const mocks = vi.hoisted(() => ({
   updateOrganization: vi.fn(),
   deleteOrganization: vi.fn(),
   exportOrganization: vi.fn(),
+  updateLimits: vi.fn(),
   navigate: vi.fn(),
 }));
 
@@ -113,5 +114,92 @@ describe('the shop detail page', () => {
 
     await waitFor(() => expect(mocks.deleteOrganization).toHaveBeenCalledWith('o1', 'Shefa Pharmacy'));
     expect(mocks.navigate).toHaveBeenCalledWith('/', { replace: true });
+  });
+});
+
+/** A ten-counter shop on the trial, given its own ceilings at sign-up. */
+const manyCounters = () => ({
+  ...detail('pending'),
+  organization: {
+    ...detail('pending').organization,
+    plan: 'trial',
+    signup: { counters: 10, outlets: 2, licence: 'DL-12345' },
+    limitOverrides: { terminals: 10, shopUsers: 11 },
+  },
+  usage: {
+    plan: 'trial',
+    planName: 'Trial',
+    terminals: { limit: 10, used: 3, full: false, overridden: true, planLimit: 1 },
+    shopUsers: { limit: 2, used: 1, full: false, overridden: false, planLimit: 2 },
+  },
+});
+
+describe('the Limits card', () => {
+  it('shows what the shop asked for at sign-up', async () => {
+    mocks.organization.mockResolvedValue(manyCounters());
+    await renderPage();
+    expect(await screen.findByText('Asked for 10 counters · 2 branches · Licence DL-12345')).toBeTruthy();
+  });
+
+  it('shows no sign-up card when the shop gave nothing', async () => {
+    await renderPage();
+    expect(screen.queryByText('Sign-up details')).toBeNull();
+  });
+
+  it('shows used against limit, with a custom or plan badge per axis', async () => {
+    mocks.organization.mockResolvedValue(manyCounters());
+    await renderPage();
+    const counters = await screen.findByTestId('limit-terminals');
+    expect(within(counters).getByText('3 / 10')).toBeTruthy();
+    expect(within(counters).getByText('custom')).toBeTruthy();
+    expect(within(counters).getByText(/the plan allows 1/)).toBeTruthy();
+    const logins = screen.getByTestId('limit-shopUsers');
+    expect(within(logins).getByText('1 / 2')).toBeTruthy();
+    expect(within(logins).getByText('plan')).toBeTruthy();
+  });
+
+  it('hides the edit control without shops.plan', async () => {
+    mocks.access.mockResolvedValue({ role: 'platformStaff', isOwner: false, permissions: ['shops.view'] });
+    mocks.organization.mockResolvedValue(manyCounters());
+    await renderPage();
+    await screen.findByTestId('limit-terminals');
+    expect(screen.queryByRole('button', { name: /Edit limits/ })).toBeNull();
+  });
+
+  it('sets a custom staff limit and puts counters back on the plan', async () => {
+    const user = userEvent.setup();
+    mocks.access.mockResolvedValue({ role: 'platformStaff', isOwner: false, permissions: ['shops.view', 'shops.plan'] });
+    mocks.organization.mockResolvedValue(manyCounters());
+    mocks.updateLimits.mockResolvedValue({});
+    await renderPage();
+    await user.click(await screen.findByRole('button', { name: /Edit limits/ }));
+    const dialog = screen.getByRole('dialog', { name: 'Edit limits' });
+
+    const [countersPlan, loginsPlan] = within(dialog).getAllByRole('checkbox');
+    expect(countersPlan).not.toBeChecked();
+    expect(within(dialog).getByLabelText('Counters for this shop')).toHaveValue(10);
+    await user.click(countersPlan);
+    await user.click(loginsPlan);
+    const logins = within(dialog).getByLabelText('Staff logins for this shop');
+    await user.clear(logins);
+    await user.type(logins, '12');
+    await user.click(within(dialog).getByRole('button', { name: /Save/ }));
+
+    await waitFor(() =>
+      expect(mocks.updateLimits).toHaveBeenCalledWith('o1', { terminals: null, shopUsers: 12 }),
+    );
+  });
+
+  it('will not save a number out of range', async () => {
+    const user = userEvent.setup();
+    mocks.organization.mockResolvedValue(manyCounters());
+    await renderPage();
+    await user.click(await screen.findByRole('button', { name: /Edit limits/ }));
+    const dialog = screen.getByRole('dialog', { name: 'Edit limits' });
+    const counters = within(dialog).getByLabelText('Counters for this shop');
+    await user.clear(counters);
+    await user.type(counters, '501');
+    expect(within(dialog).getByRole('button', { name: /Save/ })).toBeDisabled();
+    expect(within(dialog).getByText('A whole number from 1 to 500.')).toBeTruthy();
   });
 });

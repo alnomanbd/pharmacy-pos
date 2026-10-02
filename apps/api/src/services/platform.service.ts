@@ -11,7 +11,15 @@ import {
 import bcrypt from 'bcryptjs';
 import { badRequest, conflict, notFound } from '../utils/AppError.js';
 import * as notify from './notification.service.js';
-import { planByKey, trialPlan, limitsForPlan, assertPlanExists } from './plan.service.js';
+import {
+  planByKey,
+  trialPlan,
+  limitsForPlan,
+  effectiveLimits,
+  assertPlanExists,
+  OVERRIDABLE_AXES,
+  type LimitOverrides,
+} from './plan.service.js';
 import { containsRegex } from '../utils/search.js';
 import type { OrgStatus, Role } from '../types/enums.js';
 import { PLATFORM_ROLES } from '../types/roles.js';
@@ -425,16 +433,28 @@ export async function createOrganizationForCustomer(
 /* Plan usage                                                          */
 /* ------------------------------------------------------------------ */
 
-/** One axis of a plan: what it allows, what is used, and whether that is it. */
+/**
+ * One axis of a shop's limits: what it allows, what is used, whether that is
+ * it — and whether the limit is the shop's own (`overridden`) rather than its
+ * plan's, so the console can mark it "custom".
+ */
 export interface SeatUsage {
   limit: number | null;
   used: number;
   full: boolean;
+  overridden: boolean;
+  /** What the plan alone would allow — the value "use plan default" goes back to. */
+  planLimit: number | null;
 }
 
-export function seatUsage(limit: number | null | undefined, used: number): SeatUsage {
+export function seatUsage(
+  limit: number | null | undefined,
+  used: number,
+  overridden = false,
+  planLimit: number | null | undefined = limit,
+): SeatUsage {
   const l = limit ?? null;
-  return { limit: l, used, full: l !== null && used >= l };
+  return { limit: l, used, full: l !== null && used >= l, overridden, planLimit: planLimit ?? null };
 }
 
 export interface PlanUsage {
@@ -444,12 +464,16 @@ export interface PlanUsage {
   shopUsers: SeatUsage;
 }
 
-/** Where a shop stands against its plan: counters and staff logins. */
+/**
+ * Where a shop stands against its limits — its plan's, with any of its own
+ * ceilings applied: counters and staff logins.
+ */
 export async function planUsage(orgId: string): Promise<PlanUsage> {
-  const org = await OrganizationModel.findById(orgId).select('plan').lean();
+  const org = await OrganizationModel.findById(orgId).select('plan limitOverrides').lean();
   if (!org) throw notFound('Shop');
 
-  const limits = await limitsForPlan(org.plan || 'trial');
+  const planLimits = await limitsForPlan(org.plan || 'trial');
+  const limits = effectiveLimits(planLimits, (org.limitOverrides ?? null) as LimitOverrides | null);
   const [counters, users] = await Promise.all([
     ShopCounterModel.countDocuments({ organization: orgId, isActive: { $ne: false } }),
     UserModel.countDocuments({ organization: orgId, isActive: true, deletedAt: null }),
@@ -458,7 +482,30 @@ export async function planUsage(orgId: string): Promise<PlanUsage> {
   return {
     plan: org.plan || 'trial',
     planName: (await planByKey(org.plan || 'trial'))?.name ?? org.plan ?? 'Trial',
-    terminals: seatUsage(limits.terminals, counters),
-    shopUsers: seatUsage(limits.shopUsers, users),
+    terminals: seatUsage(limits.terminals, counters, limits.overridden.terminals, planLimits.terminals),
+    shopUsers: seatUsage(limits.shopUsers, users, limits.overridden.shopUsers, planLimits.shopUsers),
   };
+}
+
+/**
+ * Sets (a number) or clears (`null`) a shop's own ceilings. An axis left out
+ * is left alone. Returns both sides, for the audit trail.
+ *
+ * Nothing already in use is switched off when a ceiling is lowered below it —
+ * the shop simply cannot add another until it is back under.
+ */
+export async function updateLimitOverrides(orgId: string, overrides: LimitOverrides) {
+  const org = await OrganizationModel.findById(orgId);
+  if (!org) throw notFound('Shop');
+
+  const current = (org.limitOverrides ?? {}) as LimitOverrides;
+  const before = { terminals: current.terminals ?? null, shopUsers: current.shopUsers ?? null };
+  for (const axis of OVERRIDABLE_AXES) {
+    if (overrides[axis] !== undefined) org.set(`limitOverrides.${axis}`, overrides[axis]);
+  }
+  await org.save();
+
+  const saved = (org.limitOverrides ?? {}) as LimitOverrides;
+  const after = { terminals: saved.terminals ?? null, shopUsers: saved.shopUsers ?? null };
+  return { organization: org.toObject(), before, after, usage: await planUsage(orgId) };
 }

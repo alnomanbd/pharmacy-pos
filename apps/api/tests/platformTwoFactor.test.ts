@@ -15,7 +15,7 @@ import { PLATFORM_ROLES, SHOP_ROLES } from '../src/types/roles.js';
 describe('who has to enrol', () => {
   it('stops every operator role that has not enrolled', () => {
     for (const role of PLATFORM_ROLES) {
-      expect(needsTwoFactorSetup(role, false, '/api/platform/organizations')).toBe(true);
+      expect(needsTwoFactorSetup(role, false, '/api/platform/organizations', true)).toBe(true);
     }
   });
 
@@ -76,7 +76,7 @@ describe('the way out', () => {
       '/api/formulary/refs/group',
       '/api/users',
     ]) {
-      expect(needsTwoFactorSetup('platformStaff', false, path)).toBe(true);
+      expect(needsTwoFactorSetup('platformStaff', false, path, true)).toBe(true);
     }
   });
   it('asks nothing of an operator when the deployment makes it optional', () => {

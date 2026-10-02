@@ -90,6 +90,8 @@ export const AUDIT_ACTIONS = [
   'organization.platform_create',
   /** An operator corrected a shop's own details, on the owner's behalf. */
   'organization.platform_profile',
+  /** An operator set or cleared a shop's own counter / staff-login ceilings. */
+  'organization.platform_limits',
   /** An operator corrected a shop user's details. */
   'user.platform_update',
   /**

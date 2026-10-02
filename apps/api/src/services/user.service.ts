@@ -1,6 +1,6 @@
 import { UserModel, OrganizationModel } from '../models/index.js';
 import { notFound, conflict } from '../utils/AppError.js';
-import { assertWithinLimit } from './plan.service.js';
+import { assertOrgWithinLimit } from './plan.service.js';
 import bcrypt from 'bcryptjs';
 import type { Role } from '../types/enums.js';
 
@@ -21,9 +21,8 @@ export async function createUser(orgId: string, payload: {
   if (await UserModel.findOne({ phone: payload.phone })) throw conflict('Phone already exists');
 
   // Staff logins are what a plan sells; checked before the account exists.
-  const org = await OrganizationModel.findById(orgId).select('plan').lean();
   const used = await UserModel.countDocuments({ organization: orgId, isActive: true, deletedAt: null });
-  await assertWithinLimit(org?.plan || 'trial', 'shopUsers', used);
+  await assertOrgWithinLimit(orgId, 'shopUsers', used);
   const passwordHash = await bcrypt.hash(payload.password, 12);
   const user = await UserModel.create({
     organization: orgId,

@@ -55,6 +55,7 @@ const SHAPE: Record<string, { icon: typeof Building2; label: string; tone?: 'war
   'organization.platform_create': { icon: PlusCircle, label: 'Opened an account for a customer' },
   'organization.platform_update': { icon: Building2, label: 'Account changed by an operator' },
   'organization.platform_profile': { icon: Pencil, label: "Corrected a customer's details" },
+  'organization.platform_limits': { icon: Building2, label: "Changed a customer's counter or login limits" },
   'user.platform_update': { icon: UserCog, label: "Corrected a customer's user" },
   'user.platform_password': {
     icon: KeyRound,

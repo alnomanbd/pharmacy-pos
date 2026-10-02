@@ -321,6 +321,12 @@ export default function Shops() {
                       <span className={`pill ${STATUS_META[o.status].cls}`}>
                         {STATUS_META[o.status].label}
                       </span>
+                      {/* A many-counter shop waiting is a bigger sale, and a different phone call. */}
+                      {o.status === 'pending' && (o.signup?.counters ?? 0) > 1 && (
+                        <span className="mt-0.5 block whitespace-nowrap text-[11px] font-semibold text-muted-foreground">
+                          {o.signup!.counters} counters
+                        </span>
+                      )}
                     </td>
                     <td className="text-sm">
                       <select

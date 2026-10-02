@@ -1,4 +1,4 @@
-import { PlanModel } from '../models/index.js';
+import { PlanModel, OrganizationModel } from '../models/index.js';
 import { badRequest, notFound } from '../utils/AppError.js';
 import { logger } from '../utils/logger.js';
 
@@ -117,13 +117,106 @@ export function limitMessage(axis: keyof PlanLimits, limit: number, planName: st
   return `${planName} includes ${what}. Upgrade the plan to add more.`;
 }
 
-/** Whether one more fits, and the refusal if it does not. */
-export async function assertWithinLimit(orgPlanKey: string, axis: keyof PlanLimits, used: number) {
-  const plan = (await planByKey(orgPlanKey)) ?? (await trialPlan());
-  const limit = plan?.limits[axis] ?? null;
-  if (limit !== null && used >= limit) {
-    throw badRequest(limitMessage(axis, limit, plan?.name ?? 'Your plan'));
+/**
+ * The axes a single shop may be given its own ceiling on. Outlets are not
+ * here: a branch is a separate shop today, not a seat.
+ */
+export const OVERRIDABLE_AXES = ['terminals', 'shopUsers'] as const;
+export type OverridableAxis = (typeof OVERRIDABLE_AXES)[number];
+
+/** A shop's own ceilings. `null` (or absent) on an axis means "use the plan". */
+export type LimitOverrides = Partial<Record<OverridableAxis, number | null>>;
+
+/** What is in force for one shop, and which axes are its own rather than the plan's. */
+export interface EffectiveLimits extends PlanLimits {
+  overridden: Record<OverridableAxis, boolean>;
+}
+
+/**
+ * The limits in force for one shop: its plan's, with a per-shop override
+ * replacing the plan's value on that axis. Pure, so the precedence is tested.
+ * Anything but a finite number (null, undefined, NaN) is "no override".
+ */
+export function effectiveLimits(planLimits: PlanLimits, overrides?: LimitOverrides | null): EffectiveLimits {
+  const out: EffectiveLimits = {
+    outlets: planLimits.outlets,
+    terminals: planLimits.terminals,
+    shopUsers: planLimits.shopUsers,
+    overridden: { terminals: false, shopUsers: false },
+  };
+  for (const axis of OVERRIDABLE_AXES) {
+    const v = overrides?.[axis];
+    if (typeof v === 'number' && Number.isFinite(v)) {
+      out[axis] = v;
+      out.overridden[axis] = true;
+    }
   }
+  return out;
+}
+
+/**
+ * The refusal when a shop is at its own, operator-set ceiling. There is no
+ * plan to upgrade from — the number was agreed with us — so it says who to ask.
+ */
+export function customLimitMessage(axis: OverridableAxis, limit: number): string {
+  const what =
+    axis === 'terminals'
+      ? limit === 1
+        ? 'one billing counter'
+        : `${limit} billing counters`
+      : limit === 1
+        ? 'one staff login'
+        : `${limit} staff logins`;
+  return `Your shop is set up for ${what}. Contact Dawai support to add more.`;
+}
+
+/**
+ * Whether one more fits, and the refusal if it does not. `overrides` are the
+ * shop's own ceilings (`Organization.limitOverrides`); callers with an org id
+ * use `assertOrgWithinLimit`, which loads them.
+ */
+export async function assertWithinLimit(
+  orgPlanKey: string,
+  axis: keyof PlanLimits,
+  used: number,
+  overrides?: LimitOverrides | null,
+) {
+  const plan = (await planByKey(orgPlanKey)) ?? (await trialPlan());
+  const limits = effectiveLimits(plan?.limits ?? { outlets: 1, terminals: 1, shopUsers: 2 }, overrides);
+  const limit = limits[axis] ?? null;
+  if (limit !== null && used >= limit) {
+    throw badRequest(
+      axis !== 'outlets' && limits.overridden[axis]
+        ? customLimitMessage(axis, limit)
+        : limitMessage(axis, limit, plan?.name ?? 'Your plan'),
+    );
+  }
+}
+
+/** The same check for a shop by id: its plan and its own ceilings, loaded here. */
+export async function assertOrgWithinLimit(orgId: unknown, axis: keyof PlanLimits, used: number) {
+  const org = await OrganizationModel.findById(orgId).select('plan limitOverrides').lean();
+  await assertWithinLimit(org?.plan || 'trial', axis, used, (org?.limitOverrides ?? null) as LimitOverrides | null);
+}
+
+/**
+ * The overrides a self-serve sign-up starts with. A one-counter shop gets
+ * none — the trial fits it. A shop that says it runs N counters gets N, and a
+ * login per counter plus the owner (never fewer than the trial already gives),
+ * so it can try the product the way it would actually run it.
+ *
+ * Pure, so the arithmetic is tested; `trialShopUsers` is the trial plan's own
+ * staff-login limit (`null` is unlimited, and then nothing is raised).
+ */
+export function signupLimitOverrides(
+  counters: number | null | undefined,
+  trialShopUsers: number | null,
+): { terminals: number | null; shopUsers: number | null } {
+  if (!counters || counters <= 1) return { terminals: null, shopUsers: null };
+  return {
+    terminals: counters,
+    shopUsers: trialShopUsers === null ? null : Math.max(trialShopUsers, counters + 1),
+  };
 }
 
 /**

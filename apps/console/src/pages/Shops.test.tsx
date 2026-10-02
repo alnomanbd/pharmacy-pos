@@ -147,3 +147,27 @@ describe('the Shops page plan picker', () => {
     await waitFor(() => expect(screen.getByText('Demo Pharmacy')).toBeTruthy());
   });
 });
+
+describe('a pending shop with many counters', () => {
+  it('says how many counters it asked for', async () => {
+    mocks.organizations.mockResolvedValue({
+      data: [shop({ status: 'pending', plan: 'trial', signup: { counters: 10, outlets: 2, licence: '' } })],
+      total: 1,
+      page: 1,
+      limit: 25,
+    });
+    await renderWithRows();
+    expect(await screen.findByText('10 counters')).toBeTruthy();
+  });
+
+  it('says nothing for a one-counter shop', async () => {
+    mocks.organizations.mockResolvedValue({
+      data: [shop({ status: 'pending', plan: 'trial', signup: { counters: 1 } })],
+      total: 1,
+      page: 1,
+      limit: 25,
+    });
+    await renderWithRows();
+    expect(screen.queryByText(/\d+ counters$/)).toBeNull();
+  });
+});

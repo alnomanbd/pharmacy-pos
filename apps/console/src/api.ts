@@ -60,16 +60,44 @@ export interface Shop {
   contactEmail?: string;
   address?: Record<string, string>;
   acquisition?: { channel?: string; campaign?: string; agentCode?: string };
+  /** What the shop said about itself on the sign-up form. `null`: not given. */
+  signup?: ShopSignup | null;
+  /** The shop's own ceilings. `null` on an axis: the plan's limit applies. */
+  limitOverrides?: ShopLimitOverrides | null;
   createdAt: string;
   owner?: { name: string; email: string; phone: string; role: Role } | null;
   counts?: { users: number; bills: number; products: number };
   lastActivityAt?: string | null;
 }
 
+export interface ShopSignup {
+  counters?: number | null;
+  outlets?: number | null;
+  licence?: string;
+}
+
+/** A number is the shop's own ceiling; `null` puts that axis back on the plan. */
+export interface ShopLimitOverrides {
+  terminals?: number | null;
+  shopUsers?: number | null;
+}
+
 export interface SeatUsage {
   limit: number | null;
   used: number;
   full: boolean;
+  /** The limit is the shop's own, not its plan's ("custom"). */
+  overridden?: boolean;
+  /** What the plan alone allows; "use plan default" goes back to this. */
+  planLimit?: number | null;
+}
+
+/** Where a shop stands against its limits. */
+export interface ShopPlanUsage {
+  plan: string;
+  planName: string;
+  terminals: SeatUsage;
+  shopUsers: SeatUsage;
 }
 
 /** A month of a shop's activity, counted from its sales. */
@@ -174,8 +202,13 @@ export const platformApi = {
       organization: Shop;
       users: User[];
       counts: { bills: number; products: number; counters: number; users: number };
-      usage: { plan: string; planName: string; terminals: SeatUsage; shopUsers: SeatUsage };
+      usage: ShopPlanUsage;
     }>(api.get(`/platform/organizations/${id}`)),
+  /** Sets (a number) or clears (`null`) a shop's own counter / staff-login ceilings. Needs `shops.plan`. */
+  updateLimits: (id: string, limitOverrides: ShopLimitOverrides) =>
+    getData<{ limitOverrides: { terminals: number | null; shopUsers: number | null }; usage: ShopPlanUsage }>(
+      api.patch(`/platform/organizations/${id}/limits`, { limitOverrides }),
+    ),
   updateOrganization: (
     id: string,
     payload: { status?: OrgStatus; plan?: string; suspendedReason?: string; trialDays?: number },

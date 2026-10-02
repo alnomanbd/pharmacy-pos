@@ -8,6 +8,7 @@ import * as notify from './notification.service.js';
 import { verifyCode } from './twoFactor.service.js';
 import { TERMS_VERSION } from '../validators/auth.validator.js';
 import { convertLeadForEmail } from './lead.service.js';
+import { trialPlan, signupLimitOverrides } from './plan.service.js';
 import { logger } from '../utils/logger.js';
 import {
   signAccessToken,
@@ -59,6 +60,10 @@ export async function registerShop(payload: {
   phone: string;
   password: string;
   counters?: number;
+  /** Branches they run. Recorded, not enforced. */
+  outlets?: number;
+  /** Their drug licence number, as typed. */
+  licence?: string;
   /** Where they came from, if the page could tell. Never trusted beyond a label. */
   attribution?: {
     channel?: string;
@@ -75,12 +80,31 @@ export async function registerShop(payload: {
     throw conflict('Phone already registered');
   }
 
+  /*
+   * A shop that runs ten counters has to be able to try ten counters. The trial
+   * plan allows one, so the shop is given its own ceilings for as many as it
+   * said, and a login per counter plus the owner. The operator can change
+   * them on the shop's page; nothing here is a price.
+   */
+  const trial = await trialPlan();
+  const overrides = signupLimitOverrides(payload.counters, trial?.limits.shopUsers ?? 2);
+
   const org = await OrganizationModel.create({
     name: payload.organizationName,
     status: 'pending',
     plan: 'trial',
-    /* A shop with more than one counter is a Plus shop; offered first on billing. */
+    /*
+     * One counter is a Basic shop; more than one is a Plus shop — including
+     * past Plus's own five, where the operator prices the extra counters.
+     * Offered first on billing.
+     */
     intendedPlan: payload.intendedPlan || ((payload.counters ?? 1) > 1 ? 'plus' : 'basic'),
+    signup: {
+      counters: payload.counters ?? null,
+      outlets: payload.outlets ?? null,
+      licence: payload.licence?.trim() ?? '',
+    },
+    limitOverrides: overrides,
   });
 
   const owner = await UserModel.create({
@@ -121,7 +145,16 @@ export async function registerShop(payload: {
   org.set('owner', owner._id);
   await org.save();
 
-  logger.info({ org: org.id, name: org.name }, 'New shop registered, awaiting approval');
+  logger.info(
+    {
+      org: org.id,
+      name: org.name,
+      counters: payload.counters ?? null,
+      outlets: payload.outlets ?? null,
+      limitOverrides: overrides,
+    },
+    'New shop registered, awaiting approval',
+  );
 
   // The owner is told it is being reviewed, the operator that there is something
   // to review. Neither send can fail the registration.

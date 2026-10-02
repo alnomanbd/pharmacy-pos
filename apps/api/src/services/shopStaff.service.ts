@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { Types } from 'mongoose';
-import { UserModel, SaleModel, ShiftModel, OrganizationModel } from '../models/index.js';
-import { assertWithinLimit } from './plan.service.js';
+import { UserModel, SaleModel, ShiftModel } from '../models/index.js';
+import { assertOrgWithinLimit } from './plan.service.js';
 import { badRequest, conflict, notFound } from '../utils/AppError.js';
 import { todayKey, formatDayKey } from '../utils/date.js';
 import type { Actor } from './shop.service.js';
@@ -129,9 +129,8 @@ export async function createStaff(
   }
 
   // Staff logins are what a plan sells; the owner counts as one.
-  const org = await OrganizationModel.findById(actor.org).select('plan').lean();
   const active = await UserModel.countDocuments({ organization: actor.org, isActive: true, deletedAt: null });
-  await assertWithinLimit(org?.plan || 'trial', 'shopUsers', active);
+  await assertOrgWithinLimit(actor.org, 'shopUsers', active);
 
   const user = await UserModel.create({
     organization: actor.org,
@@ -180,9 +179,8 @@ export async function updateStaff(
 
   // Switching somebody back on takes a login again, so it is held to the plan.
   if (input.isActive === true && !user.isActive) {
-    const org = await OrganizationModel.findById(actor.org).select('plan').lean();
     const active = await UserModel.countDocuments({ organization: actor.org, isActive: true, deletedAt: null });
-    await assertWithinLimit(org?.plan || 'trial', 'shopUsers', active);
+    await assertOrgWithinLimit(actor.org, 'shopUsers', active);
   }
 
   if (input.name !== undefined) user.name = input.name.trim();
