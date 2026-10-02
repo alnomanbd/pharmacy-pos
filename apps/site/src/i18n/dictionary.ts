@@ -430,52 +430,75 @@ const en = {
   faq: {
     kicker: 'Questions',
     title: 'The ones a shop actually asks',
+    lede: 'Straight answers to what owners ask us before they switch — pick a topic, or read them all.',
+    topicsLabel: 'Questions by topic',
+    topics: {
+      all: 'All',
+      start: 'Getting started',
+      counter: 'At the counter',
+      stock: 'Stock',
+      trust: 'Data & trust',
+    },
+    helpTitle: 'Still have a question?',
+    helpText: 'Ask us on a call. Twenty minutes with a shop set up like yours, and you ring up the first bill yourself.',
     items: [
       {
+        c: 'start',
         q: 'Is there really a free trial?',
         a: 'Yes — fourteen days, every feature, no card. We switch the shop on for you rather than sending you a setup guide, because a counter cannot stop trading to learn a new system.',
       },
       {
+        c: 'start',
         q: 'Do I have to buy the computer and the printer?',
         a: 'No. It runs in the browser on whatever machine the shop already has, and it prints through that machine to whatever thermal printer is on the counter — 80mm, 58mm, or a width you type in. Most shops start with what is already in the room.',
       },
       {
+        c: 'counter',
         q: 'What happens when the internet goes down?',
         a: 'The billing screen keeps selling. Bills are written to the machine first and sent when the connection returns; sending the same bill twice cannot happen. The slip prints without a bill number and says so, because only your shop can issue one and it has not been asked yet.',
       },
       {
+        c: 'counter',
         q: 'Will my salesman be able to see what I buy at?',
         a: 'No. A salesman can sell, take returns and close their own counter. They cannot see trade price, margin, purchase cost or anyone else’s day. That is decided on the server, so it is not something the screen can be talked out of.',
       },
       {
+        c: 'start',
         q: 'Can it keep the notebook I already have?',
         a: 'Yes. Every regular goes on with what they already owe, entered as brought forward, and the khata runs from that day. Bring the notebook or a rough list — it is an hour’s work with us on a call.',
       },
       {
+        c: 'counter',
         q: 'Can I sell by the piece, not the whole strip?',
         a: 'Yes, and that is the first thing it gets right. A customer buys four tablets out of a strip of ten all day. Stock moves in pieces; purchase is entered in boxes or strips; the price comes off the MRP and divides down.',
       },
       {
+        c: 'stock',
         q: 'Do you handle the expiry?',
         a: 'Sales take from the batch that expires soonest. The expiry report tells you what goes in the next month and in the next three, what it is worth, and sends the return back to the company as a document rather than a negative purchase.',
       },
       {
+        c: 'stock',
         q: 'What about a shop with more than one branch?',
-        a: 'More than one outlet is on the roadmap rather than in the trial, and we will tell you so before you buy rather than after. Everything today is single-outlet, and for a neighbourhood pharmacy that is usually the right shape anyway.',
+        a: 'Yes. Open a branch from the Branches page and each one keeps its own stock, counters, cash and takings, while customers’ baki and your suppliers stay shared. A switcher at the top moves between branches, staff can be kept to theirs, and stock goes across with a transfer. What an extra branch adds to the month is shown before you open it.',
       },
       {
+        c: 'counter',
         q: 'Is it in Bangla?',
         a: 'The whole counter is, and so is this website. It is two letters in the top bar, not a flag, because one counter may be staffed by somebody who wants Bangla and the owner’s laptop by somebody who does not. Identifiers — bill numbers, batch numbers, phone numbers — deliberately stay in Latin digits.',
       },
       {
+        c: 'trust',
         q: 'What happens to my data if I leave?',
         a: 'Every register exports to CSV from the screen that shows it: sales, stock, suppliers, the khata, the ledgers. There is nothing held hostage and nothing to argue about afterwards.',
       },
       {
+        c: 'trust',
         q: 'Do I need a drug licence to use it?',
         a: 'The bill prints the licence number your shop already holds, because a pharmacy has one. The software is not licensed and does not become licensed, and nothing in the interface pretends otherwise.',
       },
       {
+        c: 'start',
         q: 'How long does it take to get running?',
         a: 'Usually the same day. We need the shop’s name, address, drug licence number, your first suppliers and an opening stock count. Then count the cash, pick the counter, and open the day.',
       },
@@ -1245,6 +1268,17 @@ const bn: DeepPartial<Dictionary> = {
   faq: {
     kicker: 'প্রশ্ন',
     title: 'দোকান আসলে যা জিজ্ঞেস করে',
+    lede: 'বদলানোর আগে দোকানমালিকেরা যা জিজ্ঞেস করেন, তার সোজা উত্তর — একটি বিষয় বেছে নিন, বা সবগুলো পড়ুন।',
+    topicsLabel: 'বিষয় অনুযায়ী প্রশ্ন',
+    topics: {
+      all: 'সব',
+      start: 'শুরু করা',
+      counter: 'কাউন্টারে',
+      stock: 'স্টক',
+      trust: 'তথ্য ও নিরাপত্তা',
+    },
+    helpTitle: 'আরও কিছু জানার আছে?',
+    helpText: 'একটি কলে জিজ্ঞেস করুন। আপনার মতো সাজানো একটি দোকানে বিশ মিনিট — প্রথম বিলটা আপনি নিজেই করবেন।',
     items: [
       {
         q: 'সত্যিই ফ্রি ট্রায়াল আছে?',
@@ -1276,7 +1310,7 @@ const bn: DeepPartial<Dictionary> = {
       },
       {
         q: 'একাধিক শাখার দোকান হলে?',
-        a: 'একাধিক আউটলেট এখন রোডম্যাপে আছে, ট্রায়ালে নয় — কেনার আগেই আমরা তা বলে দেব, কেনার পরে নয়। আজ সবকিছু একক আউটলেটে, আর পাড়ার দোকানের জন্য সাধারণত সেটিই ঠিক আকার।',
+        a: 'হ্যাঁ। শাখা পাতা থেকে নতুন শাখা খুলুন — প্রতিটির নিজের স্টক, কাউন্টার, ক্যাশ আর বিক্রি থাকে, আর কাস্টমারের বাকি ও সাপ্লায়ার সব শাখার জন্য একই। ওপরের সুইচার দিয়ে শাখা বদলান, স্টাফকে নিজের শাখায় সীমিত রাখা যায়, আর ট্রান্সফার দিয়ে এক শাখা থেকে আরেক শাখায় মাল যায়। অতিরিক্ত শাখায় মাসে কত বাড়বে, খোলার আগেই দেখানো হয়।',
       },
       {
         q: 'বাংলায় আছে?',
