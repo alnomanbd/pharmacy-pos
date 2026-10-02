@@ -26,6 +26,7 @@ import {
   Pill,
   ClipboardList,
   Headset,
+  CalendarClock,
 } from 'lucide-react';
 import { platformApi } from '../api';
 import { useAuthStore } from '@dawai/shared/store/auth.store';
@@ -98,6 +99,8 @@ const NAV_SECTIONS: { heading: string; links: ConsoleLink[] }[] = [
     heading: 'Shops',
     links: [
       { to: '/', label: 'Shops', icon: Building2, end: true, needs: ['shops.view'] },
+      /* Who is about to leave; badged with what ends inside a week. */
+      { to: '/renewals', label: 'Renewals', icon: CalendarClock, end: false, needs: ['shops.view'] },
       /* Customers asking for help; badged with the conversations waiting on a reply. */
       {
         to: '/support',
@@ -194,7 +197,7 @@ export default function PlatformLayout() {
    * Four sources, one bell. Counts are the *true* totals (what the badge is
    * for); `alerts` are the few worth naming in the panel.
    */
-  const [counts, setCounts] = useState({ payments: 0, shops: 0, support: 0, requests: 0, leads: 0 });
+  const [counts, setCounts] = useState({ payments: 0, shops: 0, support: 0, requests: 0, leads: 0, renewals: 0 });
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [notifOpen, setNotifOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
@@ -242,7 +245,7 @@ export default function PlatformLayout() {
     const may = (...needed: string[]) => needed.some((p) => access.permissions.includes(p));
 
     const poll = async () => {
-      const [payments, stats, leads, catalogue, support] = await Promise.all([
+      const [payments, stats, leads, catalogue, support, retention] = await Promise.all([
         may('payments.view', 'payments.verify')
           ? platformApi.payments({ status: 'pending', limit: 4 }).catch(() => null)
           : null,
@@ -258,12 +261,16 @@ export default function PlatformLayout() {
         may('support.view', 'support.reply')
           ? platformApi.support({ status: 'open', limit: 10 }).catch(() => null)
           : null,
+        may('shops.view') ? platformApi.retention(7).catch(() => null) : null,
       ]);
 
       setCounts({
         payments: payments?.total ?? 0,
         shops: stats?.pending ?? 0,
         support: support?.waiting ?? 0,
+        // On the badge, not in the bell's total: a renewal is a call to make
+        // this week, not something waiting on the operator right now.
+        renewals: (retention?.counts.trialsEnding ?? 0) + (retention?.counts.renewalsDue ?? 0),
         requests: may('catalogue.view')
           ? stats?.pendingMedicineRequests ?? catalogue?.pendingRequests ?? 0
           : 0,
@@ -351,6 +358,7 @@ export default function PlatformLayout() {
     '/': counts.shops,
     '/payments': counts.payments,
     '/support': counts.support,
+    '/renewals': counts.renewals,
     '/leads': counts.leads,
     '/requests': counts.requests,
   };

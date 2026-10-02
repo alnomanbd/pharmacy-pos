@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => ({
   payments: vi.fn(),
   stats: vi.fn(),
   leads: vi.fn(),
+  retention: vi.fn(),
   navigate: vi.fn(),
 }));
 
@@ -25,6 +26,7 @@ vi.mock('../api', () => ({
     payments: mocks.payments,
     stats: mocks.stats,
     leads: mocks.leads,
+    retention: mocks.retention,
   },
 }));
 
@@ -74,6 +76,10 @@ beforeEach(() => {
   mocks.payments.mockResolvedValue({ data: [], total: 0, page: 1, limit: 4 });
   mocks.stats.mockResolvedValue({ total: 12, signupsThisWeek: 2, pending: 0, byStatus: {}, byPlan: {} });
   mocks.leads.mockResolvedValue({ data: [], waiting: 0, total: 0, page: 1, limit: 3 });
+  mocks.retention.mockResolvedValue({
+    windowDays: 7, trialsEnding: [], renewalsDue: [], lapsed: [], inactive: [],
+    counts: { trialsEnding: 0, renewalsDue: 0, lapsed: 0, inactive: 0 },
+  });
 });
 
 describe('the operator console’s top bar', () => {
@@ -202,7 +208,7 @@ describe('the operator console’s top bar', () => {
 
       await waitFor(() => {
         const rail = container.querySelector('.side-nav')!;
-        expect(rail.querySelectorAll('.nav-link')).toHaveLength(7); // six by permission, plus Security, which everyone has
+        expect(rail.querySelectorAll('.nav-link')).toHaveLength(8); // seven by permission (Renewals rides on shops.view), plus Security, which everyone has
         // Visible on the link itself, not behind a menu that has to be opened.
         expect(rail.querySelector('.nav-count')?.textContent).toBe('5');
       });
@@ -216,7 +222,7 @@ describe('the operator console’s top bar', () => {
       expect(container.querySelector('.sidebar.collapsed')).toBeTruthy();
       // The labels go; the links stay reachable, and each keeps its tooltip.
       expect(screen.queryByText('Plans')).toBeNull();
-      expect(container.querySelectorAll('.side-nav .nav-link')).toHaveLength(7);
+      expect(container.querySelectorAll('.side-nav .nav-link')).toHaveLength(8);
 
       await user.click(screen.getByRole('button', { name: 'Expand sidebar' }));
       expect(container.querySelector('.sidebar.collapsed')).toBeNull();

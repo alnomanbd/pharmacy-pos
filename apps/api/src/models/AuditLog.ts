@@ -94,6 +94,8 @@ export const AUDIT_ACTIONS = [
   'organization.platform_profile',
   /** An operator set or cleared a shop's own counter / staff-login ceilings. */
   'organization.platform_limits',
+  /** An operator sent a shop a renewal or come-back reminder by hand. */
+  'organization.platform_remind',
   /** An operator corrected a shop user's details. */
   'user.platform_update',
   /**

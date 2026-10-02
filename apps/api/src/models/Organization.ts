@@ -104,6 +104,16 @@ const schema = new Schema(
     approvedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
     /** Which "ends in N days" warning was last sent, so a restart never repeats one. */
     lastReminderDays: { type: Number, default: null },
+    /**
+     * The last reminder an operator sent by hand from the Renewals page, so the
+     * next operator can see the shop was already chased — and a double click
+     * cannot send it twice.
+     */
+    lastManualReminder: {
+      at: { type: Date, default: null },
+      by: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+      kind: { type: String, default: '' },
+    },
     /** Mirrors `status` for older reads; `status` is the authority. */
     isActive: { type: Boolean, default: true },
   },

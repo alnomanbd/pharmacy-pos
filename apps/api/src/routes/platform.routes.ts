@@ -11,6 +11,7 @@ import * as plans from '../services/plan.service.js';
 import * as leads from '../services/lead.service.js';
 import * as support from '../services/support.service.js';
 import { impersonate } from '../services/impersonation.service.js';
+import * as retention from '../services/retention.service.js';
 import { requireAuth, requireRole, requirePermission } from '../middlewares/auth.js';
 import { PLATFORM_ROLES, PLATFORM_OWNER_ROLES } from '../types/roles.js';
 import * as team from '../services/platformTeam.service.js';
@@ -677,6 +678,39 @@ router.get(
       granularity: str(req.query.granularity) as revenue.Granularity | undefined,
     }),
   ),
+);
+
+/* -------------------------------- renewals -------------------------------- */
+
+/**
+ * Who is about to leave: trials and paid time ending within `days`, shops that
+ * lapsed in the last month, and shops gone quiet for a week. See the service.
+ */
+router.get(
+  '/retention',
+  requirePermission('shops.view'),
+  handle((req) => retention.retentionBoard({ days: num(req.query.days) })),
+);
+
+/**
+ * Chasing one shop by hand. Behind the permissions of the people who do it —
+ * whoever may edit a shop or answer it — and in the trail, because it is an
+ * email to a customer in our name.
+ */
+router.post(
+  '/organizations/:id/remind',
+  requirePermission('shops.edit', 'support.reply'),
+  validate(z.object({ kind: z.enum(['renewal', 'inactive']), sms: z.boolean().optional() })),
+  handle(async (req) => {
+    const result = await retention.remindShop(req.params.id, req.user!.id, req.body);
+    await audit(
+      req,
+      'organization.platform_remind',
+      { model: 'Organization', id: req.params.id, label: result.shop },
+      { after: { kind: req.body.kind, sent: result.sent } },
+    );
+    return result;
+  }, 'Reminder sent'),
 );
 
 /* ------------------------------ support view ------------------------------ */

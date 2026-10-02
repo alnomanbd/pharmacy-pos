@@ -68,6 +68,11 @@ async function allPlans(): Promise<PlanShape[]> {
 }
 
 /** What a shop can buy. Retired plans and the trial are not offered. */
+/** Every plan, trial and retired ones included — for reading what a shop is on. */
+export async function everyPlan(): Promise<PlanShape[]> {
+  return allPlans();
+}
+
 export async function purchasablePlans() {
   return (await allPlans()).filter((p) => p.isActive && !p.isTrial);
 }

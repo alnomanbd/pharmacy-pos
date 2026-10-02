@@ -101,3 +101,24 @@ function createProvider(): SmsProvider {
 }
 
 export const smsProvider: SmsProvider = createProvider();
+
+/** What a message was for, so the message log can say more than a number. */
+export interface SmsMeta {
+  kind?: string;
+  organization?: string;
+}
+
+/**
+ * Sending an SMS from anywhere in the app.
+ *
+ * Never throws at the caller — a reminder that fails must not fail the thing
+ * that sent it — and reports what happened instead.
+ */
+export async function sendSms(to: string, body: string, _meta: SmsMeta = {}): Promise<SmsResult> {
+  try {
+    return await smsProvider.send(to, body);
+  } catch (err) {
+    logger.error({ err, to: maskPhone(to) }, 'SMS provider threw');
+    return { success: false, provider: smsProvider.provider };
+  }
+}

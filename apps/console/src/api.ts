@@ -110,6 +110,31 @@ export interface ShopMonth {
   purchases: number;
 }
 
+/** One of the Renewals page's four piles. */
+export type RetentionPile = 'trialsEnding' | 'renewalsDue' | 'lapsed' | 'inactive';
+
+/** A shop on the Renewals page. */
+export interface RetentionRow {
+  _id: string;
+  name: string;
+  plan: string;
+  planName: string;
+  price: number;
+  trial: boolean;
+  status: OrgStatus;
+  endsAt: string | null;
+  /** 0 is today; negative is in the past. */
+  daysLeft: number | null;
+  lastActivityAt: string | null;
+  owner: { name: string; email: string; phone: string };
+  lastManualReminder: { at: string; kind: string } | null;
+}
+
+export type RetentionBoard = Record<RetentionPile, RetentionRow[]> & {
+  windowDays: number;
+  counts: Record<RetentionPile, number>;
+};
+
 /** The platform's own counts, plus the medicine requests the nav badge shows. */
 export type ConsoleStats = PlatformStats & { pendingMedicineRequests?: number };
 
@@ -286,6 +311,12 @@ export const platformApi = {
 
   audit: (params?: { action?: string; actor?: string; page?: number; limit?: number }) =>
     getData<Paged<PlatformAuditEntry> & { actions: string[] }>(api.get('/platform/audit', { params })),
+
+  /** Trials and paid time ending within `days`, lapsed shops, and shops gone quiet. */
+  retention: (days = 7) => getData<RetentionBoard>(api.get('/platform/retention', { params: { days } })),
+  /** Email (and optionally SMS) one shop's owner a renewal or come-back reminder. */
+  remindShop: (id: string, kind: 'renewal' | 'inactive', sms = false) =>
+    getData<{ sent: string[]; shop: string }>(api.post(`/platform/organizations/${id}/remind`, { kind, sms })),
 
   /** Shops' support conversations. `waiting` is the open ones with an unread line. */
   support: (params?: { status?: string; page?: number; limit?: number }) =>

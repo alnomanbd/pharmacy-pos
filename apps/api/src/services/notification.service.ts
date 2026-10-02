@@ -371,7 +371,7 @@ export async function subscriptionEnding(to: {
   endsAt: Date;
 }) {
   const b = BRAND;
-  const when = to.daysLeft === 1 ? 'tomorrow' : `in ${to.daysLeft} days`;
+  const when = to.daysLeft <= 0 ? 'today' : to.daysLeft === 1 ? 'tomorrow' : `in ${to.daysLeft} days`;
   await sendEmail({
     fromName: b.name,
     to: to.email,
@@ -383,6 +383,60 @@ export async function subscriptionEnding(to: {
        <p>Your subscription for <strong>${to.shop}</strong> ends on <strong>${on(to.endsAt)}</strong>.</p>
        <p>After that your records stay exactly where they are and you can still read everything — but new bills, purchases and stock changes pause until a payment is confirmed.</p>`,
       { label: 'Renew', url: `${b.url}${b.billingPath}` }, b,
+    ),
+  });
+}
+
+/** Escapes text typed by a customer before it goes into an email's HTML. */
+const esc = (v: string) =>
+  v.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+/** Sent by hand from the console's Renewals page, once the paid time has run out. */
+export async function subscriptionLapsed(to: { email: string; name: string; shop: string; endedAt: Date }) {
+  const b = BRAND;
+  await sendEmail({
+    fromName: b.name,
+    to: to.email,
+    subject: `${to.shop} — your subscription has ended`,
+    text: `Dear ${to.name},
+
+Your subscription for ${to.shop} ended on ${on(to.endedAt)}. Your records are all still there and you can read them, but new bills, purchases and stock changes are paused.
+
+Renew and carry on where you left off: ${b.url}${b.billingPath}
+
+If something stopped you from renewing, just reply — we will help.
+
+— ${b.name}`,
+    html: wrap(
+      'Your subscription has ended',
+      `<p>Dear ${esc(to.name)},</p>
+       <p>Your subscription for <strong>${esc(to.shop)}</strong> ended on <strong>${on(to.endedAt)}</strong>. Your records are all still there and you can read them, but new bills, purchases and stock changes are paused.</p>
+       <p>If something stopped you from renewing, just reply — we will help.</p>`,
+      { label: 'Renew', url: `${b.url}${b.billingPath}` }, b,
+    ),
+  });
+}
+
+/** Sent by hand from the Renewals page to a shop that has gone quiet. */
+export async function shopInactive(to: { email: string; name: string; shop: string }) {
+  const b = BRAND;
+  await sendEmail({
+    fromName: b.name,
+    to: to.email,
+    subject: `${to.shop} — is everything all right with ${b.name}?`,
+    text: `Dear ${to.name},
+
+We noticed nobody at ${to.shop} has rung up a bill or signed in to ${b.name} this week. If something is getting in the way — a printer, a missing medicine, staff who need a hand — reply to this email or message us from Support in the app, and we will sort it out with you.
+
+Open ${b.name}: ${b.url}
+
+— ${b.name}`,
+    html: wrap(
+      'Is everything all right?',
+      `<p>Dear ${esc(to.name)},</p>
+       <p>We noticed nobody at <strong>${esc(to.shop)}</strong> has rung up a bill or signed in to ${b.name} this week.</p>
+       <p>If something is getting in the way — a printer, a missing medicine, staff who need a hand — reply to this email or message us from <strong>Support</strong> in the app, and we will sort it out with you.</p>`,
+      { label: `Open ${b.name}`, url: b.url }, b,
     ),
   });
 }
