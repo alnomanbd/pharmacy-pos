@@ -29,7 +29,7 @@ export function BrandBand({ lang }: { lang: Lang }) {
       <div aria-hidden className="dot-grid pointer-events-none absolute inset-0 -z-10 opacity-[0.55]" />
       <div className="shell flex flex-col gap-5 sm:flex-row sm:items-center sm:gap-8">
         <Reveal variant="fade" className="shrink-0">
-          <p className="max-w-[18ch] text-2xs font-semibold uppercase leading-relaxed tracking-[0.18em] text-muted-foreground">
+          <p className="text-2xs font-semibold uppercase leading-relaxed tracking-[0.18em] text-muted-foreground sm:max-w-[18ch]">
             {lang === 'bn' ? 'সব কোম্পানির ঔষধ, তালিকায় আগে থেকেই' : 'Every company’s medicines, already in the list'}
           </p>
         </Reveal>
