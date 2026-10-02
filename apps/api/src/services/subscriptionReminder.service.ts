@@ -1,6 +1,22 @@
 import { OrganizationModel, UserModel } from '../models/index.js';
 import * as notify from './notification.service.js';
 import { logger } from '../utils/logger.js';
+import { sendSms } from '../integrations/sms.js';
+import { env } from '../config/env.js';
+
+/**
+ * The SMS beside each email. An email is easy to miss at a counter; a text on
+ * the owner's phone is read. Off with REMINDER_SMS=off.
+ */
+const smsOn = () => (process.env.REMINDER_SMS ?? 'on').toLowerCase() !== 'off';
+
+/** Short and in plain ASCII, so it is one SMS segment and costs one SMS. Pure, for the tests. */
+export function reminderSms(shop: string, days: number, endsAt: Date, url: string) {
+  const when = days <= 0 ? 'today' : days === 1 ? 'tomorrow' : `in ${days} days`;
+  const date = endsAt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+  const name = shop.replace(/[^\x20-\x7E]/g, '').trim().slice(0, 30) || 'Your shop';
+  return `Dawai: ${name} subscription ends ${when} (${date}). Renew: ${url}`;
+}
 
 /**
  * Warning shops before their subscription runs out.
@@ -41,14 +57,14 @@ export async function sendSubscriptionReminders() {
       // restart of the process does not send the same warning twice.
       lastReminderDays: { $ne: days },
     })
-      .select('name owner trialEndsAt modules')
+      .select('name owner trialEndsAt modules contactPhone')
       .lean();
 
     for (const org of due) {
       const owner = org.owner
-        ? await UserModel.findById(org.owner).select('name email').lean()
+        ? await UserModel.findById(org.owner).select('name email phone').lean()
         : await UserModel.findOne({ organization: org._id })
-            .select('name email')
+            .select('name email phone')
             .sort({ createdAt: 1 })
             .lean();
 
@@ -61,6 +77,15 @@ export async function sendSubscriptionReminders() {
           endsAt: org.trialEndsAt,
         });
         sent++;
+      }
+
+      const phone = owner?.phone || org.contactPhone || '';
+      if (smsOn() && phone && org.trialEndsAt) {
+        await sendSms(
+          phone,
+          reminderSms(org.name, days, new Date(org.trialEndsAt), `${env.clientUrl.replace(/\/$/, '')}/subscription`),
+          { kind: 'subscriptionEnding', organization: String(org._id) },
+        );
       }
 
       await OrganizationModel.updateOne({ _id: org._id }, { $set: { lastReminderDays: days } });
