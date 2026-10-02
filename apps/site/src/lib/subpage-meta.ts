@@ -16,6 +16,7 @@ export type SubpageKey =
   | 'login'
   | 'register'
   | 'contact'
+  | 'status'
   | 'legal';
 
 export function subpageMetadata(lang: Lang, key: SubpageKey, path: string): Metadata {

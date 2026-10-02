@@ -110,6 +110,20 @@ export interface ShopMonth {
   purchases: number;
 }
 
+/** An incident on the public status page. */
+export interface IncidentRow {
+  _id: string;
+  title: string;
+  titleBn?: string;
+  body?: string;
+  bodyBn?: string;
+  components: string[];
+  impact: 'degraded' | 'outage' | 'maintenance';
+  state: 'investigating' | 'identified' | 'monitoring' | 'resolved';
+  startedAt: string;
+  resolvedAt: string | null;
+}
+
 /** A help article, as the console edits it. */
 export interface HelpRow {
   _id: string;
@@ -494,6 +508,9 @@ export const platformApi = {
     getData<Paged<PlatformAuditEntry> & { actions: string[] }>(api.get('/platform/audit', { params })),
 
   overview: () => getData<PlatformOverview>(api.get('/platform/overview')),
+  incidents: () => getData<IncidentRow[]>(api.get('/platform/incidents')),
+  createIncident: (payload: Record<string, unknown>) => getData<IncidentRow>(api.post('/platform/incidents', payload)),
+  updateIncident: (id: string, payload: Record<string, unknown>) => getData<IncidentRow>(api.patch(`/platform/incidents/${id}`, payload)),
   helpArticles: () => getData<HelpRow[]>(api.get('/platform/help')),
   createHelpArticle: (payload: Record<string, unknown>) => getData<HelpRow>(api.post('/platform/help', payload)),
   updateHelpArticle: (id: string, payload: Record<string, unknown>) => getData<HelpRow>(api.patch(`/platform/help/${id}`, payload)),

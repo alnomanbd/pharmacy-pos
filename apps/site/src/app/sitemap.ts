@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next';
 import { siteConfig, LANGS } from '@/lib/site';
 
 /** Every page that is actually published, in both languages. */
-const ROUTES = ['', '/demo', '/contact', '/register', '/login'];
+const ROUTES = ['', '/demo', '/contact', '/status', '/register', '/login'];
 
 export const dynamic = 'force-static';
 
@@ -17,6 +17,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '': 1,
     '/demo': 0.8,
     '/contact': 0.6,
+    '/status': 0.3,
   };
 
   const entries: MetadataRoute.Sitemap = [];

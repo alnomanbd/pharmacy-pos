@@ -35,6 +35,7 @@ export function SiteFooter({ lang }: { lang: Lang }) {
       links: [
         { label: t('nav.demo'), href: `/${lang}/demo` },
         { label: t('nav.contact'), href: `/${lang}/contact` },
+        { label: t('nav.status'), href: `/${lang}/status` },
         { label: t('nav.signIn'), href: `/${lang}/login` },
         { label: t('nav.getStarted'), href: `/${lang}/register` },
         { label: t('nav.openApp'), href: siteConfig.appUrl },

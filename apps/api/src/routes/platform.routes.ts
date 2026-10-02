@@ -24,6 +24,7 @@ import { systemStatus } from '../services/system.service.js';
 import { setupOf } from '../services/onboarding.service.js';
 import * as agents from '../services/agent.service.js';
 import * as help from '../services/help.service.js';
+import * as incidents from '../services/status.service.js';
 import { requireAuth, requireRole, requirePermission } from '../middlewares/auth.js';
 import { PLATFORM_ROLES, PLATFORM_OWNER_ROLES } from '../types/roles.js';
 import * as team from '../services/platformTeam.service.js';
@@ -794,6 +795,43 @@ router.patch(
     await audit(req, 'coupon.change', { model: 'Coupon', id: req.params.id, label: c.code }, { after: { action: 'update', ...req.body } });
     return c;
   }, 'Code updated'),
+);
+
+/* -------------------------------- incidents --------------------------------- */
+
+/** Incidents on the public status page. With the System page, so behind system.view. */
+const incidentSchema = z.object({
+  title: z.string().trim().min(3).max(140),
+  titleBn: z.string().trim().max(140).optional(),
+  body: z.string().trim().max(1500).optional(),
+  bodyBn: z.string().trim().max(1500).optional(),
+  components: z.array(z.string()).min(1).max(10).optional(),
+  impact: z.enum(incidents.IMPACTS).optional(),
+  state: z.enum(incidents.INCIDENT_STATES).optional(),
+});
+
+router.get('/incidents', requirePermission('system.view'), handle(() => incidents.listIncidents()));
+
+router.post(
+  '/incidents',
+  requirePermission('system.view'),
+  validate(incidentSchema),
+  handle(async (req) => {
+    const i = await incidents.createIncident(req.body, req.user!.id);
+    await audit(req, 'incident.change', { model: 'Incident', id: String(i._id), label: i.title }, { after: { action: 'create', impact: i.impact, state: i.state } });
+    return i;
+  }, 'Posted on the status page'),
+);
+
+router.patch(
+  '/incidents/:id',
+  requirePermission('system.view'),
+  validate(incidentSchema.partial()),
+  handle(async (req) => {
+    const i = await incidents.updateIncident(req.params.id, req.body);
+    await audit(req, 'incident.change', { model: 'Incident', id: req.params.id, label: i.title }, { after: { action: 'update', ...req.body } });
+    return i;
+  }, 'Status page updated'),
 );
 
 /* ---------------------------------- help ----------------------------------- */

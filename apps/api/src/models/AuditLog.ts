@@ -112,6 +112,8 @@ export const AUDIT_ACTIONS = [
   'organization.platform_agent',
   /** An operator wrote, changed or deleted a help article. */
   'help.change',
+  /** An operator reported or updated an incident on the public status page. */
+  'incident.change',
   /** An operator corrected a shop user's details. */
   'user.platform_update',
   /**

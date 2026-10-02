@@ -7,6 +7,7 @@ import { validate } from '../middlewares/validate.js';
 import { ok, created } from '../utils/response.js';
 import { isProduction } from '../config/env.js';
 import * as online from '../services/onlinePayment.service.js';
+import { publicStatus } from '../services/status.service.js';
 
 /**
  * The marketing site's endpoints.
@@ -142,6 +143,18 @@ router.post('/contact', contactLimiter, validate(contactSchema), async (req, res
       source: 'landing',
     });
     created(res, result, 'Thanks — we have it, and we will reply.');
+  } catch (err) {
+    next(err);
+  }
+});
+
+/* --------------------------------- status ---------------------------------- */
+
+/** The public status page's data: each part's state, open incidents, the last two weeks. */
+router.get('/status', async (_req, res, next) => {
+  try {
+    res.setHeader('Cache-Control', 'public, max-age=30');
+    ok(res, await publicStatus());
   } catch (err) {
     next(err);
   }

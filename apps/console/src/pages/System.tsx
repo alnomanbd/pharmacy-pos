@@ -5,6 +5,7 @@ import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import { BTN_OUTLINE, errorMessage } from '../lib/ui';
 import { lastSeen } from '../lib/lastSeen';
+import IncidentsCard from '../components/IncidentsCard';
 
 /**
  * Is the platform healthy.
@@ -119,6 +120,8 @@ export default function System() {
           })}
         </div>
       </div>
+
+      <IncidentsCard />
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="card !mb-0">

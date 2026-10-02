@@ -39,6 +39,7 @@ const en = {
     faq: 'FAQ',
     demo: 'See a demo',
     contact: 'Contact',
+    status: 'Status',
     signIn: 'Sign in',
     getStarted: 'Start free',
     openApp: 'Open the app',
@@ -658,6 +659,10 @@ const en = {
         title: 'Contact us',
         description: 'Write to the people building it. A real answer within one working day.',
       },
+      status: {
+        title: 'System status',
+        description: 'Is Dawai working right now? Each part of the platform, and anything we are fixing.',
+      },
       legal: {
         title: 'Legal',
         description: 'The terms of service, the privacy policy and the refund policy for {brand}.',
@@ -682,6 +687,27 @@ const en = {
       },
     },
 
+    status: {
+      kicker: 'Status',
+      title: 'Is Dawai working?',
+      lede: 'Each part of the platform, right now, and anything we are fixing. This page checks itself every minute.',
+      overall: {
+        operational: 'Everything is working',
+        degraded: 'Some things are slow',
+        maintenance: 'Planned maintenance',
+        outage: 'Something is down',
+        unreachable: 'We cannot reach Dawai right now',
+      },
+      state: { operational: 'Working', degraded: 'Slow', maintenance: 'Maintenance', outage: 'Down' },
+      incident: { investigating: 'Looking into it', identified: 'Found the cause', monitoring: 'Fixed, watching', resolved: 'Resolved' },
+      open: 'Happening now',
+      recent: 'Last two weeks',
+      none: 'Nothing has gone wrong in the last two weeks.',
+      started: 'Started',
+      resolvedAt: 'Resolved',
+      checked: 'Checked',
+      offlineNote: 'Bills you ring up while the connection is down are kept on the counter and sent once it is back.',
+    },
     contact: {
       kicker: 'Contact',
       title: 'Talk to the person building it',
@@ -867,6 +893,7 @@ const bn: DeepPartial<Dictionary> = {
     faq: 'প্রশ্ন',
     demo: 'ডেমো দেখুন',
     contact: 'যোগাযোগ',
+    status: 'স্ট্যাটাস',
     signIn: 'লগ ইন',
     getStarted: 'ফ্রি শুরু করুন',
     openApp: 'অ্যাপ খুলুন',
@@ -1443,6 +1470,10 @@ const bn: DeepPartial<Dictionary> = {
         title: 'যোগাযোগ করুন',
         description: 'যারা এটি বানাচ্ছেন তাদের লিখুন। এক কার্যদিবসের মধ্যে সত্যিকারের উত্তর।',
       },
+      status: {
+        title: 'সিস্টেম স্ট্যাটাস',
+        description: 'Dawai এখন ঠিকমতো চলছে কি? প্ল্যাটফর্মের প্রতিটি অংশ, আর আমরা যা ঠিক করছি।',
+      },
       legal: {
         title: 'আইনি',
         description: '{brand}-এর পরিষেবার শর্তাবলি, গোপনীয়তা নীতি ও ফেরত নীতি।',
@@ -1466,6 +1497,27 @@ const bn: DeepPartial<Dictionary> = {
       },
     },
 
+    status: {
+      kicker: 'স্ট্যাটাস',
+      title: 'Dawai কি চলছে?',
+      lede: 'প্ল্যাটফর্মের প্রতিটি অংশ, এই মুহূর্তে, আর আমরা যা ঠিক করছি। পেজটি প্রতি মিনিটে নিজে থেকে দেখে নেয়।',
+      overall: {
+        operational: 'সবকিছু ঠিকমতো চলছে',
+        degraded: 'কিছু জিনিস ধীরে চলছে',
+        maintenance: 'পরিকল্পিত রক্ষণাবেক্ষণ',
+        outage: 'কিছু একটা বন্ধ আছে',
+        unreachable: 'এই মুহূর্তে Dawai-তে পৌঁছানো যাচ্ছে না',
+      },
+      state: { operational: 'চলছে', degraded: 'ধীর', maintenance: 'রক্ষণাবেক্ষণ', outage: 'বন্ধ' },
+      incident: { investigating: 'খতিয়ে দেখছি', identified: 'কারণ পাওয়া গেছে', monitoring: 'ঠিক হয়েছে, নজর রাখছি', resolved: 'সমাধান হয়েছে' },
+      open: 'এখন চলছে',
+      recent: 'গত দুই সপ্তাহ',
+      none: 'গত দুই সপ্তাহে কোনো সমস্যা হয়নি।',
+      started: 'শুরু',
+      resolvedAt: 'সমাধান',
+      checked: 'দেখা হয়েছে',
+      offlineNote: 'সংযোগ না থাকলেও যে বিল করেন তা কাউন্টারে জমা থাকে, সংযোগ ফিরলেই পাঠানো হয়।',
+    },
     contact: {
       kicker: 'যোগাযোগ',
       title: 'যিনি এটি বানাচ্ছেন তার সঙ্গে কথা বলুন',
