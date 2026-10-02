@@ -21,6 +21,7 @@ import { COUPON_KINDS } from '../models/Coupon.js';
 import * as referrals from '../services/referral.service.js';
 import { overview } from '../services/overview.service.js';
 import { systemStatus } from '../services/system.service.js';
+import { setupOf } from '../services/onboarding.service.js';
 import { requireAuth, requireRole, requirePermission } from '../middlewares/auth.js';
 import { PLATFORM_ROLES, PLATFORM_OWNER_ROLES } from '../types/roles.js';
 import * as team from '../services/platformTeam.service.js';
@@ -896,6 +897,9 @@ const noteSchema = z.object({
 });
 const actorOf = (req: Request) => ({ id: req.user!.id, isOwner: req.user!.role === 'platformAdmin' });
 
+/** One shop's getting-started checklist, as the shop sees it. */
+router.get('/organizations/:id/setup', requirePermission('shops.view'), handle((req) => setupOf(req.params.id)));
+
 router.get('/organizations/:id/notes', requirePermission('shops.view'), handle((req) => notes.listNotes(req.params.id)));
 
 router.post(
@@ -945,7 +949,7 @@ router.get(
 router.post(
   '/organizations/:id/remind',
   requirePermission('shops.edit', 'support.reply'),
-  validate(z.object({ kind: z.enum(['renewal', 'inactive']), sms: z.boolean().optional() })),
+  validate(z.object({ kind: z.enum(['renewal', 'inactive', 'setup']), sms: z.boolean().optional() })),
   handle(async (req) => {
     const result = await retention.remindShop(req.params.id, req.user!.id, req.body);
     await audit(

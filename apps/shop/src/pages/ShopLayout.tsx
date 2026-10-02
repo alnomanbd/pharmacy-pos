@@ -39,6 +39,7 @@ import AlertTicker from '../alerts/AlertTicker';
 import { useStockAlertsPoll } from '../alerts/useStockAlerts';
 import { BRAND } from '../brand';
 import { supportApi } from '../api';
+import SetupChecklist from '../components/SetupChecklist';
 
 /**
  * The shop's shell.
@@ -337,6 +338,8 @@ export default function ShopLayout() {
               letters rather than a flag: a flag is a country, and both of these
               are read by people in the same one.
             */}
+            {/* Owner and pharmacist: the salesman does not set the shop up. */}
+            {runsTheShop && <SetupChecklist />}
             <AlertBell runsTheShop={runsTheShop} />
             <button
               type="button"

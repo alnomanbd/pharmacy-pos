@@ -430,6 +430,25 @@ If something stopped you from renewing, just reply — we will help.
   });
 }
 
+/** Sent by hand from the Renewals page to a new shop that has not got going. */
+export async function setupHelp(to: { email: string; name: string; shop: string }) {
+  const b = BRAND;
+  await sendEmail({
+    kind: 'setupHelp',
+    fromName: b.name,
+    to: to.email,
+    subject: `${to.shop} — can we help you get set up?`,
+    text: `Dear ${to.name},\n\nThanks for starting ${to.shop} on ${b.name}. Getting your medicines, staff and suppliers in is the slow part — and we are happy to do it with you, free, over the phone or by visiting.\n\nReply to this email or message us from Support in the app, and tell us a good time.\n\nOpen ${b.name}: ${b.url}\n\n— ${b.name}`,
+    html: wrap(
+      'Can we help you get set up?',
+      `<p>Dear ${esc(to.name)},</p>
+       <p>Thanks for starting <strong>${esc(to.shop)}</strong> on ${b.name}. Getting your medicines, staff and suppliers in is the slow part — and we are happy to do it with you, free, over the phone or by visiting.</p>
+       <p>Reply to this email or message us from <strong>Support</strong> in the app, and tell us a good time.</p>`,
+      { label: `Open ${b.name}`, url: b.url }, b,
+    ),
+  });
+}
+
 /** Sent by hand from the Renewals page to a shop that has gone quiet. */
 export async function shopInactive(to: { email: string; name: string; shop: string }) {
   const b = BRAND;

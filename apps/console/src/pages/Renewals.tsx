@@ -18,11 +18,12 @@ import RecordPaymentDialog from '../components/RecordPaymentDialog';
  * already sent.
  */
 
-const PILES: { key: RetentionPile; label: string; hint: string; kind: 'renewal' | 'inactive' }[] = [
+const PILES: { key: RetentionPile; label: string; hint: string; kind: 'renewal' | 'inactive' | 'setup' }[] = [
   { key: 'trialsEnding', label: 'Trials ending', hint: 'On the free trial, and it runs out soon.', kind: 'renewal' },
   { key: 'renewalsDue', label: 'Renewals due', hint: 'Paying, and the paid time runs out soon.', kind: 'renewal' },
   { key: 'lapsed', label: 'Lapsed', hint: 'Ended in the last 30 days and not renewed — read-only, still worth a call.', kind: 'renewal' },
   { key: 'inactive', label: 'Inactive', hint: 'In good standing, but no bill or sign-in for a week.', kind: 'inactive' },
+  { key: 'stuck', label: 'Stuck in setup', hint: 'New in the last two months, and fewer than half the getting-started steps done. Offer to set it up with them.', kind: 'setup' },
 ];
 
 const taka = (n: number) => `৳ ${n.toLocaleString('en-BD')}`;
@@ -71,7 +72,7 @@ export default function Renewals() {
     void load();
   }, [load]);
 
-  const remind = async (r: RetentionRow, kind: 'renewal' | 'inactive', sms: boolean) => {
+  const remind = async (r: RetentionRow, kind: 'renewal' | 'inactive' | 'setup', sms: boolean) => {
     setBusy(`${r._id}:${sms ? 'sms' : 'email'}`);
     try {
       const res = await platformApi.remindShop(r._id, kind, sms);
@@ -168,6 +169,7 @@ export default function Renewals() {
                       {r.endsAt && <span>Ends {new Date(r.endsAt).toLocaleDateString('en-GB', { dateStyle: 'medium' })}</span>}
                       {!r.trial && r.price > 0 && <span>{taka(r.price)} / month</span>}
                       <span>Last active {lastSeen(r.lastActivityAt) ?? 'never'}</span>
+                      {r.setup && r.setup.done < r.setup.total && <span>Setup {r.setup.done}/{r.setup.total}</span>}
                       {r.lastManualReminder?.at && (
                         <span className="font-medium text-foreground/80">
                           Reminded {lastSeen(r.lastManualReminder.at)}

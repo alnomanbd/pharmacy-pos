@@ -18,6 +18,8 @@ const mocks = vi.hoisted(() => ({
   deleteOrganization: vi.fn(),
   exportOrganization: vi.fn(),
   updateLimits: vi.fn(),
+  shopSetup: vi.fn(),
+  shopNotes: vi.fn(),
   navigate: vi.fn(),
 }));
 
@@ -70,6 +72,8 @@ beforeEach(() => {
   mocks.access.mockResolvedValue({ role: 'platformAdmin', isOwner: true, permissions: [] });
   mocks.organization.mockResolvedValue(detail('active'));
   mocks.usage.mockResolvedValue([]);
+  mocks.shopSetup.mockResolvedValue({ steps: [], done: 0, total: 6, dismissed: false });
+  mocks.shopNotes.mockResolvedValue([]);
   mocks.updateShopProfile.mockResolvedValue({});
   mocks.deleteOrganization.mockResolvedValue({ name: 'Shefa Pharmacy', deleted: {} });
 });

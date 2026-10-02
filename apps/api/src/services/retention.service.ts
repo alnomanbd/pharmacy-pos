@@ -4,6 +4,7 @@ import { everyPlan } from './plan.service.js';
 import * as notify from './notification.service.js';
 import { sendSms } from '../integrations/sms.js';
 import { badRequest, notFound } from '../utils/AppError.js';
+import { setupForMany } from './onboarding.service.js';
 
 /**
  * Who is about to leave, and who already has.
@@ -22,6 +23,9 @@ import { badRequest, notFound } from '../utils/AppError.js';
  *   rather than gone, so still worth a call.
  * - **Inactive** — in good standing but nobody has rung up a bill or signed in
  *   for a week. The first sign of a shop that has gone back to the notebook.
+ * - **Stuck in setup** — signed up at least three days ago, in its first two
+ *   months, and fewer than half of the getting-started steps done. The trial
+ *   that will not convert unless somebody helps.
  */
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -30,8 +34,18 @@ export const INACTIVE_AFTER_DAYS = 7;
 /** Long enough to stop a double click and a second operator; short enough to chase again tomorrow. */
 export const REMIND_COOLDOWN_MS = 12 * 60 * 60 * 1000;
 
-export type RetentionPile = 'trialsEnding' | 'renewalsDue' | 'lapsed' | 'inactive';
-export type ReminderKind = 'renewal' | 'inactive';
+export type RetentionPile = 'trialsEnding' | 'renewalsDue' | 'lapsed' | 'inactive' | 'stuck';
+export type ReminderKind = 'renewal' | 'inactive' | 'setup';
+
+/** A shop this new, or this old, is not "stuck": too soon to tell, or past the point of onboarding. */
+export const STUCK_AFTER_DAYS = 3;
+export const STUCK_UNTIL_DAYS = 60;
+
+/** Fewer than half the steps done, in the window where onboarding still matters. Pure. */
+export function isStuck(createdAt: Date, setupDone: number, setupTotal: number, now = new Date()) {
+  const age = (now.getTime() - createdAt.getTime()) / DAY_MS;
+  return age >= STUCK_AFTER_DAYS && age <= STUCK_UNTIL_DAYS && setupDone < setupTotal / 2;
+}
 
 /** Whole days from now to `end`: 0 is today, negative is past. */
 export function daysUntil(end: Date, now = new Date()): number {
@@ -95,7 +109,9 @@ export async function retentionBoard(opts: { days?: number } = {}) {
     renewalsDue: [],
     lapsed: [],
     inactive: [],
+    stuck: [],
   };
+  const setup = await setupForMany(ids);
 
   function row(o: (typeof orgs)[number], lastActivityAt: Date | null) {
     const plan = planOf.get(o.plan);
@@ -116,6 +132,7 @@ export async function retentionBoard(opts: { days?: number } = {}) {
         ? { name: owner.name, email: owner.email, phone: owner.phone || o.contactPhone || '' }
         : { name: '', email: o.contactEmail || '', phone: o.contactPhone || '' },
       lastManualReminder: o.lastManualReminder?.at ? o.lastManualReminder : null,
+      setup: setup.get(String(o._id)) ? { done: setup.get(String(o._id))!.done, total: setup.get(String(o._id))!.total } : null,
     };
   }
 
@@ -128,6 +145,8 @@ export async function retentionBoard(opts: { days?: number } = {}) {
     const r = row(o, lastActivityAt);
     const pile = pileOf({ trial: r.trial, endsAt: r.endsAt, lastActivityAt }, windowDays, now);
     if (pile) piles[pile].push(r);
+    // Alongside its other pile, if any: a stuck shop may also be ending its trial.
+    if (r.setup && o.createdAt && isStuck(new Date(o.createdAt), r.setup.done, r.setup.total, now)) piles.stuck.push(r);
   }
 
   // Soonest first where a date decides it; the longest silence first for the idle.
@@ -146,6 +165,7 @@ export async function retentionBoard(opts: { days?: number } = {}) {
       renewalsDue: piles.renewalsDue.length,
       lapsed: piles.lapsed.length,
       inactive: piles.inactive.length,
+      stuck: piles.stuck.length,
     },
   };
 }
@@ -197,6 +217,8 @@ export async function remindShop(
       const days = daysUntil(endsAt);
       if (days < 0) await notify.subscriptionLapsed({ email, name, shop: org.name, endedAt: endsAt });
       else await notify.subscriptionEnding({ email, name, shop: org.name, daysLeft: days, endsAt });
+    } else if (input.kind === 'setup') {
+      await notify.setupHelp({ email, name, shop: org.name });
     } else {
       await notify.shopInactive({ email, name, shop: org.name });
     }
@@ -205,7 +227,9 @@ export async function remindShop(
 
   if (input.sms && phone) {
     const text =
-      input.kind === 'renewal'
+      input.kind === 'setup'
+        ? `Dawai: need a hand setting up ${org.name}? Call or message us and we will add your medicines and staff with you, free.`
+        : input.kind === 'renewal'
         ? `Dawai: ${org.name} subscription ${endsAt && daysUntil(endsAt) < 0 ? 'has ended' : `ends ${endsAt ? endsAt.toLocaleDateString('en-GB') : 'soon'}`}. Renew from Subscription in the app, or reply/call us for help.`
         : `Dawai: we noticed ${org.name} has not used Dawai this week. Anything wrong? Call or message us and we will help.`;
     await sendSms(phone, text, { kind: `remind.${input.kind}`, organization: orgId });

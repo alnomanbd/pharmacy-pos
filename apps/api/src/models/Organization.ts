@@ -127,6 +127,8 @@ const schema = new Schema(
       by: { type: Schema.Types.ObjectId, ref: 'User', default: null },
       note: { type: String, default: '' },
     },
+    /** The owner put the getting-started checklist away. */
+    onboardingDismissedAt: { type: Date, default: null },
     lastManualReminder: {
       at: { type: Date, default: null },
       by: { type: Schema.Types.ObjectId, ref: 'User', default: null },

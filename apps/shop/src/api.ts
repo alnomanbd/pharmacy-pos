@@ -1254,6 +1254,21 @@ export const medicineRequestsApi = {
   withdraw: (id: string) => getData<unknown>(api.delete(`/shop/medicine-requests/${id}`)),
 };
 
+/* ---------------------------------------------------------- getting started -- */
+
+/** The getting-started checklist, read from what the shop has done. */
+export interface ShopSetup {
+  steps: { key: string; label: string; href: string; done: boolean }[];
+  done: number;
+  total: number;
+  dismissed: boolean;
+}
+
+export const onboardingApi = {
+  get: () => getData<ShopSetup>(api.get('/shop/onboarding')),
+  dismiss: () => getData<ShopSetup>(api.post('/shop/onboarding/dismiss', { dismissed: true })),
+};
+
 /* ---------------------------------------------------------- announcements -- */
 
 /** A message from the Dawai team, shown across the top of the app. */

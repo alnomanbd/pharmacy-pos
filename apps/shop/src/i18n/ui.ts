@@ -1616,6 +1616,16 @@ const bn: Record<string, string> = {
   'signed up': 'জন সাইন আপ করেছে',
   'paying': 'জন পেমেন্ট করছে',
   'We run our pharmacy on Dawai — billing, stock and baki in one place. Try it free:': 'আমরা আমাদের ফার্মেসি Dawai দিয়ে চালাই — বিল, স্টক আর বাকি এক জায়গায়। ফ্রিতে চালিয়ে দেখুন:',
+  /* ---- getting started ---- */
+  'Getting started': 'শুরু করা',
+  'Six steps, and Dawai runs your whole shop.': 'ছয়টি ধাপ, তারপর Dawai আপনার পুরো দোকান চালাবে।',
+  'Put your shop’s name and phone on the receipt': 'রসিদে দোকানের নাম আর ফোন নম্বর দিন',
+  'Add the medicines you sell (at least 5)': 'যেসব ওষুধ বিক্রি করেন সেগুলো যোগ করুন (অন্তত ৫টি)',
+  'Record a delivery from a supplier': 'সাপ্লায়ারের কাছ থেকে একটি মাল কেনা লিখুন',
+  'Ring up your first bill': 'প্রথম বিলটি করুন',
+  'Add a pharmacist or salesman': 'একজন ফার্মাসিস্ট বা সেলসম্যান যোগ করুন',
+  'Add a customer, for baki': 'বাকির জন্য একজন কাস্টমার যোগ করুন',
+  'Want us to set it up with you?': 'আমরা কি আপনার সাথে সেটআপ করে দেব?',
 };
 
 export const useT = makeUseT(bn);

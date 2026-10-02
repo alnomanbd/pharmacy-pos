@@ -38,6 +38,7 @@ import { ok, created } from '../utils/response.js';
 import medicineRequestRoutes from './shopMedicineRequest.routes.js';
 import supportRoutes from './shopSupport.routes.js';
 import announcementRoutes from './shopAnnouncement.routes.js';
+import * as onboarding from '../services/onboarding.service.js';
 
 /**
  * The shop's own API.
@@ -64,6 +65,22 @@ router.use(requireAuth, requireWritableTenant, requireRole(...SHOP_ADMIN_ROLES))
 
 /* Every change that succeeds goes on the owner's Activity page. */
 router.use(shopActivity('shop'));
+
+/* The getting-started checklist: read from what the shop has done, never ticked by hand. */
+router.get('/onboarding', async (req, res, next) => {
+  try {
+    ok(res, await onboarding.setupOf(req.user!.org!));
+  } catch (err) {
+    next(err);
+  }
+});
+router.post('/onboarding/dismiss', async (req, res, next) => {
+  try {
+    ok(res, await onboarding.setDismissed(req.user!.org!, req.body?.dismissed !== false));
+  } catch (err) {
+    next(err);
+  }
+});
 
 const handle =
   <T>(run: (req: Request) => Promise<T>, message?: string) =>

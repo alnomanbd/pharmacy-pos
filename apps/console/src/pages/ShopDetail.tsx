@@ -24,6 +24,7 @@ import ShopUserActions from '../components/ShopUserActions';
 import { openSupportView } from '../lib/supportView';
 import RecordPaymentDialog from '../components/RecordPaymentDialog';
 import ShopNotesCard from '../components/ShopNotesCard';
+import ShopSetupCard from '../components/ShopSetupCard';
 import ShopLimitsCard, { signupSummary } from '../components/ShopLimitsCard';
 import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock, Spinner } from '@dawai/shared/components/Spinner';
@@ -292,6 +293,7 @@ export default function ShopDetail() {
       )}
 
       <ShopLimitsCard shopId={id} usage={plan} canEdit={canPlan} onSaved={load} />
+      <ShopSetupCard shopId={id} />
       <ShopNotesCard shopId={id} isOwner={Boolean(access?.isOwner)} />
 
       <div className="card">
