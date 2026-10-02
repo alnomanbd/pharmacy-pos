@@ -34,6 +34,7 @@ export function subpageMetadata(lang: Lang, key: SubpageKey, path: string): Meta
         bn: `${siteConfig.url}/bn/${path}`,
       },
     },
-    openGraph: { title, description, url, type: 'website' },
+    /* A page's own openGraph replaces the layout's whole, so the picture is named again here. */
+    openGraph: { title, description, url, type: 'website', images: [{ url: '/og.png', width: 1200, height: 630 }] },
   };
 }

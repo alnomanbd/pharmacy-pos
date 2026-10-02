@@ -53,6 +53,7 @@ export async function generateMetadata({
       locale: l === 'bn' ? 'bn_BD' : 'en_US',
       type: 'website',
       url: `/${l}`,
+      images: [{ url: '/og.png', width: 1200, height: 630 }],
     },
     twitter: {
       card: 'summary_large_image',

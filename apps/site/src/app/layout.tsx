@@ -76,12 +76,22 @@ export const metadata: Metadata = {
     canonical: '/',
     languages: Object.fromEntries(LANGS.map((l) => [l, `/${l}`])),
   },
+  /* The capsule in the ramp, for the tab; a PNG for home screens and for the
+     crawlers that do not read SVG; and one picture for every shared link. */
+  icons: {
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/icon-512.png', type: 'image/png', sizes: '512x512' },
+    ],
+    apple: { url: '/apple-icon.png', sizes: '180x180' },
+  },
   openGraph: {
     type: 'website',
     siteName: siteConfig.shortName,
     title,
     description,
     url: siteConfig.url,
+    images: [{ url: '/og.png', width: 1200, height: 630, alt: `${siteConfig.name} — pharmacy billing and stock` }],
     locale: 'en_BD',
     alternateLocale: ['bn_BD'],
   },
@@ -89,6 +99,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title,
     description,
+    images: ['/og.png'],
   },
   robots: {
     index: true,
