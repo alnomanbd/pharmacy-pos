@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, CalendarClock, FileText, ReceiptText, ShieldCheck } from 'lucide-react';
 import { translate, tItems, type Lang } from '@/i18n/dictionary';
 import { siteConfig } from '@/lib/site';
 import { PageHeader } from '@/components/page-header';
@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
  */
 
 const UPDATED = '2026-09-26';
+const ICON = { terms: FileText, privacy: ShieldCheck, refund: ReceiptText } as const;
 
 export function LegalDoc({
   lang,
@@ -35,17 +36,17 @@ export function LegalDoc({
         kicker={t('pages.legal.kicker')}
         title={t(`pages.legal.${doc}.title`)}
         lede={t(`pages.legal.${doc}.lede`)}
-      />
+        icon={ICON[doc]}
+      >
+        <p className="inline-flex items-center gap-2 rounded-full border border-border bg-card/70 px-3.5 py-1.5 text-2xs font-medium text-muted-foreground backdrop-blur">
+          <CalendarClock className="size-3.5 text-primary" />
+          {t('pages.legal.updated')} — {UPDATED}
+        </p>
+      </PageHeader>
 
-      <Section id="body" tone="light" orbs={1} className="py-16 sm:py-24">
+      <Section id="body" tone="light" orbs={1} className="py-10 sm:py-14">
         <div className="shell mx-auto max-w-3xl">
-          <Reveal variant="fade">
-            <p className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3.5 py-1.5 text-2xs font-medium text-muted-foreground">
-              {t('pages.legal.updated')} — {UPDATED}
-            </p>
-          </Reveal>
-
-          <div className="mt-10 flex flex-col gap-8">
+          <div className="flex flex-col gap-5">
             {items.map((item, i) => (
               <Reveal key={item.h} variant="up" delay={(i % 3) * 0.05}>
                 <article className="panel p-6 sm:p-7">

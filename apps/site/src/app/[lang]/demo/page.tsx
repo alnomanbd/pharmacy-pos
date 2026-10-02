@@ -5,6 +5,7 @@ import { translate, tList, tItems, type Lang } from '@/i18n/dictionary';
 import { isLang, DEFAULT_LANG } from '@/lib/site';
 import { subpageMetadata } from '@/lib/subpage-meta';
 import { PageHeader } from '@/components/page-header';
+import { MonitorPlay } from 'lucide-react';
 import { Section, SectionHead } from '@/components/section';
 import { Reveal, Stagger, StaggerItem } from '@/components/motion/primitives';
 import { DemoForm } from '@/components/demo-form';
@@ -41,6 +42,7 @@ export default async function DemoPage({ params }: { params: Promise<{ lang: str
         kicker={t('nav.demo')}
         title={t('demo.title')}
         lede={t('demo.lede')}
+        icon={MonitorPlay}
       />
 
       {/* The proof: the actual billing screen, running — not a picture of it. */}

@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { Mail, MapPin, TimerReset } from 'lucide-react';
+import { Mail, MapPin, MessagesSquare, TimerReset } from 'lucide-react';
 import { translate, type Lang } from '@/i18n/dictionary';
 import { isLang, DEFAULT_LANG, siteConfig } from '@/lib/site';
 import { subpageMetadata } from '@/lib/subpage-meta';
 import { PageHeader } from '@/components/page-header';
-import { Section, SectionHead } from '@/components/section';
+import { Section } from '@/components/section';
 import { Reveal } from '@/components/motion/primitives';
 import { ContactForm } from '@/components/contact-form';
 
@@ -36,15 +36,22 @@ export default async function ContactPage({ params }: { params: Promise<{ lang: 
         kicker={t('pages.contact.kicker')}
         title={t('pages.contact.title')}
         lede={t('pages.contact.lede')}
+        icon={MessagesSquare}
       />
 
-      <Section id="contact" tone="light" orbs={1} className="py-16 sm:py-24">
+      <Section id="contact" tone="light" orbs={1} className="py-10 sm:py-14">
         <div className="shell grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-12">
           <div className="flex flex-col gap-4">
-            <SectionHead
-              eyebrow={t('pages.contact.direct.title')}
-              title={t('pages.contact.direct.lede')}
-            />
+            {/* A heading for this column, smaller than the page's own title above it. */}
+            <Reveal variant="up">
+              <span className="eyebrow">
+                <span className="size-1.5 rounded-full bg-current" />
+                {t('pages.contact.direct.title')}
+              </span>
+              <h2 className="mt-3 text-balance text-xl font-bold leading-snug tracking-[-0.02em] sm:text-2xl">
+                {t('pages.contact.direct.lede')}
+              </h2>
+            </Reveal>
 
             <Reveal variant="up" delay={0.1} className="flex flex-col gap-3.5">
               <a
