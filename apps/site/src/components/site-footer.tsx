@@ -25,7 +25,8 @@ export function SiteFooter({ lang }: { lang: Lang }) {
       title: t('footer.product'),
       links: [
         { label: t('nav.how'), href: `/${lang}/#how` },
-        { label: t('screens.kicker'), href: `/${lang}/#screens` },
+        { label: lang === 'bn' ? 'রিপোর্ট' : 'Reports', href: `/${lang}/#reports` },
+        { label: lang === 'bn' ? 'আগে আর পরে' : 'Before and after', href: `/${lang}/#compare` },
         { label: t('nav.pricing'), href: `/${lang}/#pricing` },
         { label: t('nav.faq'), href: `/${lang}/#faq` },
       ],

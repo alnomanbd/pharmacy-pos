@@ -69,8 +69,8 @@ export function CounterSection({ lang }: { lang: Lang }) {
           title={t('counter.title')}
           action={
             <Button asChild variant="outline" size="md" className="group">
-              <Link href={`/${lang}/#screens`}>
-                {t('nav.features')}
+              <Link href={`/${lang}/demo`}>
+                {t('nav.demo')}
                 <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5" />
               </Link>
             </Button>

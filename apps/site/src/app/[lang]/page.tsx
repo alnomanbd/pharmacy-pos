@@ -7,7 +7,6 @@ import { BrandBand } from '@/components/sections/brand-band';
 import { CounterSection } from '@/components/sections/counter';
 import { StockSection } from '@/components/sections/stock';
 import { OfflineSection } from '@/components/sections/offline';
-import { ScreensSection } from '@/components/sections/screens';
 import { CompareSection } from '@/components/sections/compare';
 import { HowSection } from '@/components/sections/how';
 import { PricingPreview } from '@/components/sections/pricing-preview';
@@ -87,7 +86,6 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
       <CounterSection lang={lang} />
       <StockSection lang={lang} />
       <KhataSection lang={lang} />
-      <ScreensSection lang={lang} />
       <ReportsSection lang={lang} />
       <OfflineSection lang={lang} />
       <CompareSection lang={lang} />
