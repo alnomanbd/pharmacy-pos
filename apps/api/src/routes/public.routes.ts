@@ -6,6 +6,7 @@ import * as leads from '../services/lead.service.js';
 import { validate } from '../middlewares/validate.js';
 import { ok, created } from '../utils/response.js';
 import { isProduction } from '../config/env.js';
+import * as online from '../services/onlinePayment.service.js';
 
 /**
  * The marketing site's endpoints.
@@ -144,6 +145,47 @@ router.post('/contact', contactLimiter, validate(contactSchema), async (req, res
   } catch (err) {
     next(err);
   }
+});
+
+/* ------------------------------ SSLCommerz -------------------------------- */
+
+/*
+ * Where SSLCommerz sends the owner's browser back, and where it calls us
+ * itself. Public, because neither carries a session; nothing here is believed
+ * until SSLCommerz's own validation API confirms it — see onlinePayment.service.
+ */
+const field = (body: unknown, k: string) => {
+  const v = (body as Record<string, unknown> | undefined)?.[k];
+  return typeof v === 'string' ? v.slice(0, 120) : '';
+};
+
+/** Server to server: still settles a payment when the owner closed the tab. */
+router.post('/sslcommerz/ipn', async (req, res) => {
+  try {
+    const r = await online.settle(field(req.body, 'val_id'), field(req.body, 'tran_id'));
+    res.status(200).json({ received: true, accepted: r.ok });
+  } catch {
+    res.status(200).json({ received: true, accepted: false });
+  }
+});
+
+router.post('/sslcommerz/success', async (req, res) => {
+  try {
+    const r = await online.settle(field(req.body, 'val_id'), field(req.body, 'tran_id'));
+    res.redirect(303, online.returnUrl(r.ok ? 'paid' : 'pending'));
+  } catch {
+    res.redirect(303, online.returnUrl('pending'));
+  }
+});
+
+router.post('/sslcommerz/fail', async (req, res) => {
+  await online.close(field(req.body, 'tran_id'), 'failed').catch(() => undefined);
+  res.redirect(303, online.returnUrl('failed'));
+});
+
+router.post('/sslcommerz/cancel', async (req, res) => {
+  await online.close(field(req.body, 'tran_id'), 'cancelled').catch(() => undefined);
+  res.redirect(303, online.returnUrl('cancelled'));
 });
 
 export default router;

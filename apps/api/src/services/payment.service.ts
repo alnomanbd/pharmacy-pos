@@ -181,7 +181,8 @@ export function extendedUntil(currentEnd: Date | null | undefined, months: numbe
   return until;
 }
 
-async function acceptPayment(payment: InstanceType<typeof PaymentModel>, reviewerId: string) {
+/** Accepts a payment and extends the subscription. `reviewerId` is null when the gateway accepted it. */
+export async function acceptPayment(payment: InstanceType<typeof PaymentModel>, reviewerId: string | null) {
 
   const org = await OrganizationModel.findById(payment.organization);
   if (!org) throw notFound('Shop');
@@ -339,6 +340,8 @@ export async function subscriptionOf(orgId: string) {
     endsAt,
     daysLeft,
     expired: daysLeft !== null && daysLeft < 0,
+    /** Whether "Pay online" can be offered (SSLCommerz configured). */
+    onlinePayment: Boolean(process.env.SSLCZ_STORE_ID?.trim() && process.env.SSLCZ_STORE_PASSWORD?.trim()),
     suspendedReason: org.suspendedReason || '',
     pendingPayments: pending,
     /** What the shop said it was signing up for — offered first. */

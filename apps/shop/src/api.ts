@@ -1406,6 +1406,8 @@ export interface SubscriptionPlan {
 
 /** Where the shop stands: what it is on, until when, and what it would cost. */
 export interface Subscription {
+  /** Whether "Pay online" (SSLCommerz) is set up on this deployment. */
+  onlinePayment?: boolean;
   plan: string;
   planName: string;
   status: 'pending' | 'active' | 'suspended';
@@ -1461,6 +1463,9 @@ export const billingApi = {
       | { ok: true; code: string; discount: number; total: number; base: number; description: string }
       | { ok: false; reason: string }
     >(api.get('/billing/coupon', { params: { code, plan, months } })),
+  /** Starts an online payment; the answer is the gateway page to send the browser to. */
+  checkout: (payload: { plan: string; months: number; couponCode?: string }) =>
+    getData<{ url: string; paymentId: string; amount: number }>(api.post('/billing/checkout', payload)),
   /** This shop's referral code, and how many have signed up and paid through it. */
   referral: () => getData<{ code: string; signedUp: number; paying: number }>(api.get('/billing/referral')),
   /** A blob rather than a link, because the route needs the Authorization header. */

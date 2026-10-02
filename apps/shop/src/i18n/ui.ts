@@ -1626,6 +1626,17 @@ const bn: Record<string, string> = {
   'Add a pharmacist or salesman': 'একজন ফার্মাসিস্ট বা সেলসম্যান যোগ করুন',
   'Add a customer, for baki': 'বাকির জন্য একজন কাস্টমার যোগ করুন',
   'Want us to set it up with you?': 'আমরা কি আপনার সাথে সেটআপ করে দেব?',
+  /* ---- online payment ---- */
+  'Pay online': 'অনলাইনে পেমেন্ট করুন',
+  'Opening the payment page…': 'পেমেন্ট পেজ খোলা হচ্ছে…',
+  'bKash, Nagad, Rocket, card or internet banking — renewed the moment it goes through.': 'বিকাশ, নগদ, রকেট, কার্ড বা ইন্টারনেট ব্যাংকিং — পেমেন্ট হওয়ামাত্র নবায়ন হয়ে যাবে।',
+  'or send it yourself and tell us': 'অথবা নিজে পাঠিয়ে আমাদের জানান',
+  'Could not start the online payment.': 'অনলাইন পেমেন্ট শুরু করা যায়নি।',
+  'Paid — your subscription is renewed.': 'পেমেন্ট হয়েছে — আপনার সাবস্ক্রিপশন নবায়ন হয়েছে।',
+  'We are confirming your payment with the bank. It shows here in a minute or two.': 'ব্যাংকের সাথে আপনার পেমেন্ট যাচাই করা হচ্ছে। এক-দুই মিনিটের মধ্যে এখানে দেখাবে।',
+  'The online payment did not go through. Nothing was taken — try again, or pay by hand below.': 'অনলাইন পেমেন্ট সম্পন্ন হয়নি। কোনো টাকা কাটা হয়নি — আবার চেষ্টা করুন, অথবা নিচে হাতে পেমেন্ট করুন।',
+  'You cancelled the online payment. Nothing was taken.': 'আপনি অনলাইন পেমেন্ট বাতিল করেছেন। কোনো টাকা কাটা হয়নি।',
+  'Online payment is not set up yet — please pay by bKash or Nagad and submit it below.': 'অনলাইন পেমেন্ট এখনো চালু হয়নি — বিকাশ বা নগদে পাঠিয়ে নিচে জমা দিন।',
 };
 
 export const useT = makeUseT(bn);

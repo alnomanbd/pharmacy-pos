@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   AlertTriangle,
   Banknote,
@@ -9,6 +10,7 @@ import {
   Download,
   Eye,
   FileJson,
+  Globe,
   Gift,
   Copy,
   Share2,
@@ -97,6 +99,24 @@ export default function Subscription() {
   const [codeError, setCodeError] = useState('');
   const [applying, setApplying] = useState(false);
   const [referral, setReferral] = useState<{ code: string; signedUp: number; paying: number } | null>(null);
+  const [goingOnline, setGoingOnline] = useState(false);
+  const [params, setParams] = useSearchParams();
+
+  /* Back from SSLCommerz: say how it went, once, and take it out of the address. */
+  useEffect(() => {
+    const result = params.get('online');
+    if (!result) return;
+    const said: Record<string, [string, 'success' | 'error' | undefined]> = {
+      paid: ['Paid — your subscription is renewed.', undefined],
+      pending: ['We are confirming your payment with the bank. It shows here in a minute or two.', undefined],
+      failed: ['The online payment did not go through. Nothing was taken — try again, or pay by hand below.', 'error'],
+      cancelled: ['You cancelled the online payment. Nothing was taken.', 'error'],
+    };
+    const [text, kind] = said[result] ?? said.pending;
+    toast(t(text), kind);
+    params.delete('online');
+    setParams(params, { replace: true });
+  }, [params, setParams, toast, t]);
   const [invoiceBusy, setInvoiceBusy] = useState('');
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
@@ -176,6 +196,19 @@ export default function Subscription() {
       setApplying(false);
     }
   };
+  /** To SSLCommerz with the price worked out by the server; back here when done. */
+  const payOnline = async () => {
+    setGoingOnline(true);
+    try {
+      const r = await billingApi.checkout({ plan: form.plan, months: form.months, couponCode: applied?.code });
+      window.location.assign(r.url);
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { message?: string } } }).response?.data?.message;
+      toast(msg || t('Could not start the online payment.'), 'error');
+      setGoingOnline(false);
+    }
+  };
+
   const removeCode = () => {
     setApplied(null);
     setCodeInput('');
@@ -418,6 +451,19 @@ export default function Subscription() {
             )}
             <strong className="font-mono text-base tabular-nums">{taka(price)}</strong>
           </p>
+
+          {/* Online first, when it is set up: it renews at once, with nothing to type. */}
+          {sub?.onlinePayment && (
+            <div className="mt-3">
+              <button type="button" className="btn h-11 w-full" onClick={() => void payOnline()} disabled={goingOnline || !selected}>
+                <Globe className="h-4 w-4" /> {goingOnline ? t('Opening the payment page…') : `${t('Pay online')} ${taka(price)}`}
+              </button>
+              <p className="mt-1 text-center text-xs text-muted-foreground">{t('bKash, Nagad, Rocket, card or internet banking — renewed the moment it goes through.')}</p>
+              <div className="my-3 flex items-center gap-2 text-[11px] uppercase tracking-wide text-muted-foreground">
+                <span className="h-px flex-1 bg-border" /> {t('or send it yourself and tell us')} <span className="h-px flex-1 bg-border" />
+              </div>
+            </div>
+          )}
 
           <div className="mt-3">
             <p className="mb-1 text-xs font-semibold text-muted-foreground">{t('Paid with')}</p>

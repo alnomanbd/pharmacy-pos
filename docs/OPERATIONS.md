@@ -51,6 +51,23 @@ These are useful:
 - `SENTRY_DSN` for error reporting.
 - `SMS_PROVIDER`: `log`, `twilio` or `bulksms`, for baki reminders.
 
+## Online payments (SSLCommerz)
+
+Shops can pay by bKash, Nagad, Rocket, Upay, card or internet banking through
+SSLCommerz, and their subscription renews the moment the payment clears.
+
+1. Get a store from SSLCommerz (a sandbox store first, for testing) and set
+   `SSLCZ_STORE_ID` and `SSLCZ_STORE_PASSWORD`. Keep `SSLCZ_SANDBOX=true` until
+   the live store is approved, then set it to `false`.
+2. SSLCommerz posts back to `/api/public/sslcommerz/{success,fail,cancel,ipn}`
+   under `SSLCZ_CALLBACK_BASE` (default `CLIENT_URL/api`). The IPN is called
+   server to server, so that address must be reachable from the internet.
+3. Nothing is believed until SSLCommerz's validation API confirms it, for the
+   same order, amount and currency. A forged "success" renews nothing.
+
+With no store id set, the shop app hides "Pay online" and shops pay by hand as
+before.
+
 ## Backups
 
 There are two things to back up. Neither can be regenerated.

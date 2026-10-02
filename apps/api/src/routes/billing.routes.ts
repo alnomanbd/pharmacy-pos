@@ -14,6 +14,7 @@ import { exportOrganization } from '../services/tenantData.service.js';
 import { audit } from '../services/audit.service.js';
 import { quoteForShop } from '../services/coupon.service.js';
 import { referralSummary } from '../services/referral.service.js';
+import { startCheckout } from '../services/onlinePayment.service.js';
 
 /**
  * The shop's own billing: where it stands, and telling us it has paid.
@@ -57,6 +58,25 @@ router.get('/coupon', async (req, res, next) => {
     next(err);
   }
 });
+
+/**
+ * Starts an online payment through SSLCommerz. The price is worked out here,
+ * never taken from the browser; the answer is the gateway page to go to.
+ */
+router.post(
+  '/checkout',
+  validate(z.object({ plan: z.string().trim().min(2).max(40), months: z.number().int().min(1).max(36), couponCode: z.string().trim().max(24).optional() })),
+  async (req, res, next) => {
+    try {
+      await requireOrgAdmin(actorOf(req));
+      const checkout = await startCheckout(req.user!.org!, req.user!.id, req.body);
+      await audit(req, 'billing.payment.submit', { model: 'Payment', id: checkout.paymentId, label: `${checkout.amount} online` }, { after: { gateway: 'sslcommerz', amount: checkout.amount } });
+      ok(res, checkout);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 
 /** This shop's referral code and how many shops have signed up through it. */
 router.get('/referral', async (req, res, next) => {
