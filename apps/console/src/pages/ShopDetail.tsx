@@ -23,6 +23,7 @@ import { platformApi, downloadBlob, type Shop, type ShopMonth, type SeatUsage, t
 import ShopUserActions from '../components/ShopUserActions';
 import { openSupportView } from '../lib/supportView';
 import RecordPaymentDialog from '../components/RecordPaymentDialog';
+import ShopNotesCard from '../components/ShopNotesCard';
 import ShopLimitsCard, { signupSummary } from '../components/ShopLimitsCard';
 import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock, Spinner } from '@dawai/shared/components/Spinner';
@@ -291,6 +292,7 @@ export default function ShopDetail() {
       )}
 
       <ShopLimitsCard shopId={id} usage={plan} canEdit={canPlan} onSaved={load} />
+      <ShopNotesCard shopId={id} isOwner={Boolean(access?.isOwner)} />
 
       <div className="card">
         <div className="mb-3 flex flex-wrap items-center gap-2">

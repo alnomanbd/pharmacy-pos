@@ -33,6 +33,7 @@ export {
   type SupportMessage,
   type SupportMessageDoc,
 } from './Support.js';
+export { ShopNoteModel, type ShopNote, type ShopNoteDoc } from './ShopNote.js';
 export {
   ImpersonationHandoffModel,
   type ImpersonationHandoff,

@@ -12,6 +12,7 @@ import * as leads from '../services/lead.service.js';
 import * as support from '../services/support.service.js';
 import { impersonate } from '../services/impersonation.service.js';
 import * as retention from '../services/retention.service.js';
+import * as notes from '../services/shopNote.service.js';
 import { requireAuth, requireRole, requirePermission } from '../middlewares/auth.js';
 import { PLATFORM_ROLES, PLATFORM_OWNER_ROLES } from '../types/roles.js';
 import * as team from '../services/platformTeam.service.js';
@@ -728,6 +729,48 @@ router.get(
       granularity: str(req.query.granularity) as revenue.Granularity | undefined,
     }),
   ),
+);
+
+/* ---------------------------------- notes ---------------------------------- */
+
+/**
+ * The team's own notes on a shop, and the follow-ups they carry. Anyone who
+ * can see the shop may write one; see the service for who may rewrite one.
+ */
+const noteSchema = z.object({
+  body: z.string().trim().min(1).max(2000),
+  followUpAt: z.string().datetime().nullable().optional(),
+  pinned: z.boolean().optional(),
+});
+const actorOf = (req: Request) => ({ id: req.user!.id, isOwner: req.user!.role === 'platformAdmin' });
+
+router.get('/organizations/:id/notes', requirePermission('shops.view'), handle((req) => notes.listNotes(req.params.id)));
+
+router.post(
+  '/organizations/:id/notes',
+  requirePermission('shops.view'),
+  validate(noteSchema),
+  handle((req) => notes.addNote(req.params.id, req.user!.id, req.body), 'Note added'),
+);
+
+router.patch(
+  '/organizations/:id/notes/:noteId',
+  requirePermission('shops.view'),
+  validate(noteSchema.partial().extend({ done: z.boolean().optional() })),
+  handle((req) => notes.updateNote(req.params.id, req.params.noteId, actorOf(req), req.body)),
+);
+
+router.delete(
+  '/organizations/:id/notes/:noteId',
+  requirePermission('shops.view'),
+  handle((req) => notes.deleteNote(req.params.id, req.params.noteId, actorOf(req)), 'Note deleted'),
+);
+
+/** Follow-ups due by the end of today, across every shop — for the bell. */
+router.get(
+  '/follow-ups',
+  requirePermission('shops.view'),
+  handle((req) => notes.dueFollowUps(num(req.query.limit))),
 );
 
 /* -------------------------------- renewals -------------------------------- */

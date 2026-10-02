@@ -27,6 +27,7 @@ import {
   ClipboardList,
   Headset,
   CalendarClock,
+  NotebookPen,
 } from 'lucide-react';
 import { platformApi } from '../api';
 import { useAuthStore } from '@dawai/shared/store/auth.store';
@@ -55,7 +56,7 @@ import type { PlatformAccess } from '@dawai/shared/types';
 /** One thing waiting on the operator, from whichever source. */
 interface Alert {
   key: string;
-  kind: 'payment' | 'support' | 'request' | 'lead';
+  kind: 'payment' | 'support' | 'request' | 'lead' | 'followup';
   /** Who it is about — a shop, or the medicine that was asked for. */
   title: string;
   detail: string;
@@ -197,7 +198,7 @@ export default function PlatformLayout() {
    * Four sources, one bell. Counts are the *true* totals (what the badge is
    * for); `alerts` are the few worth naming in the panel.
    */
-  const [counts, setCounts] = useState({ payments: 0, shops: 0, support: 0, requests: 0, leads: 0, renewals: 0 });
+  const [counts, setCounts] = useState({ payments: 0, shops: 0, support: 0, requests: 0, leads: 0, renewals: 0, followUps: 0 });
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [notifOpen, setNotifOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
@@ -245,7 +246,7 @@ export default function PlatformLayout() {
     const may = (...needed: string[]) => needed.some((p) => access.permissions.includes(p));
 
     const poll = async () => {
-      const [payments, stats, leads, catalogue, support, retention] = await Promise.all([
+      const [payments, stats, leads, catalogue, support, retention, followUps] = await Promise.all([
         may('payments.view', 'payments.verify')
           ? platformApi.payments({ status: 'pending', limit: 4 }).catch(() => null)
           : null,
@@ -262,6 +263,7 @@ export default function PlatformLayout() {
           ? platformApi.support({ status: 'open', limit: 10 }).catch(() => null)
           : null,
         may('shops.view') ? platformApi.retention(7).catch(() => null) : null,
+        may('shops.view') ? platformApi.followUps(3).catch(() => null) : null,
       ]);
 
       setCounts({
@@ -271,6 +273,7 @@ export default function PlatformLayout() {
         // On the badge, not in the bell's total: a renewal is a call to make
         // this week, not something waiting on the operator right now.
         renewals: (retention?.counts.trialsEnding ?? 0) + (retention?.counts.renewalsDue ?? 0),
+        followUps: followUps?.total ?? 0,
         requests: may('catalogue.view')
           ? stats?.pendingMedicineRequests ?? catalogue?.pendingRequests ?? 0
           : 0,
@@ -295,6 +298,19 @@ export default function PlatformLayout() {
             .join(' · '),
           tag: 'unverified',
           href: '/payments?status=pending',
+        });
+      }
+
+      /* A call somebody promised to make today, or already should have. */
+      for (const n of followUps?.data ?? []) {
+        const shop = typeof n.organization === 'object' && n.organization ? n.organization : null;
+        next.push({
+          key: `followup-${n._id}`,
+          kind: 'followup',
+          title: shop?.name ?? 'A shop',
+          detail: n.body.replace(/\s+/g, ' ').slice(0, 90),
+          tag: n.followUpAt && new Date(n.followUpAt) < new Date(new Date().setHours(0, 0, 0, 0)) ? 'overdue' : 'follow up today',
+          href: shop ? `/shops/${shop._id}` : '/',
         });
       }
 
@@ -365,7 +381,7 @@ export default function PlatformLayout() {
 
   /** What the bell counts: everything waiting, from every source. */
   const waitingTotal =
-    counts.payments + counts.shops + counts.support + counts.requests + counts.leads;
+    counts.payments + counts.shops + counts.support + counts.requests + counts.leads + counts.followUps;
 
   // Until the answer arrives, show nothing rather than everything: a flash of
   // links somebody cannot use is worse than a moment of none.
@@ -524,6 +540,7 @@ export default function PlatformLayout() {
                       [
                         ['payment', 'payments', counts.payments, 'to verify', '/payments?status=pending', <Receipt key="i" className="h-4 w-4" />],
                         ['sign-up', 'sign-ups', counts.shops, 'awaiting approval', '/?status=pending', <Building2 key="i" className="h-4 w-4" />],
+                        ['follow-up', 'follow-ups', counts.followUps, 'due today', '/', <NotebookPen key="i" className="h-4 w-4" />],
                         ['support conversation', 'support conversations', counts.support, 'waiting on a reply', '/support', <Headset key="i" className="h-4 w-4" />],
                         ['demo request', 'demo requests', counts.leads, 'unanswered', '/leads', <Inbox key="i" className="h-4 w-4" />],
                         ['medicine request', 'medicine requests', counts.requests, 'waiting', '/requests', <ClipboardList key="i" className="h-4 w-4" />],

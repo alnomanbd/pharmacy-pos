@@ -110,6 +110,19 @@ export interface ShopMonth {
   purchases: number;
 }
 
+/** The team's own note on a shop. */
+export interface ShopNote {
+  _id: string;
+  organization: string | { _id: string; name: string };
+  author: string;
+  authorName: string;
+  body: string;
+  pinned: boolean;
+  followUpAt: string | null;
+  doneAt: string | null;
+  createdAt: string;
+}
+
 /** One of the Renewals page's four piles. */
 export type RetentionPile = 'trialsEnding' | 'renewalsDue' | 'lapsed' | 'inactive';
 
@@ -311,6 +324,16 @@ export const platformApi = {
 
   audit: (params?: { action?: string; actor?: string; page?: number; limit?: number }) =>
     getData<Paged<PlatformAuditEntry> & { actions: string[] }>(api.get('/platform/audit', { params })),
+
+  shopNotes: (shopId: string) => getData<ShopNote[]>(api.get(`/platform/organizations/${shopId}/notes`)),
+  addShopNote: (shopId: string, payload: { body: string; followUpAt?: string | null; pinned?: boolean }) =>
+    getData<ShopNote>(api.post(`/platform/organizations/${shopId}/notes`, payload)),
+  updateShopNote: (shopId: string, noteId: string, payload: { body?: string; followUpAt?: string | null; pinned?: boolean; done?: boolean }) =>
+    getData<ShopNote>(api.patch(`/platform/organizations/${shopId}/notes/${noteId}`, payload)),
+  deleteShopNote: (shopId: string, noteId: string) =>
+    getData<unknown>(api.delete(`/platform/organizations/${shopId}/notes/${noteId}`)),
+  /** Follow-ups due by the end of today, across every shop. */
+  followUps: (limit = 20) => getData<{ data: ShopNote[]; total: number }>(api.get('/platform/follow-ups', { params: { limit } })),
 
   /** A payment taken by hand (cash, or reported by phone): recorded and accepted at once. */
   recordPayment: (

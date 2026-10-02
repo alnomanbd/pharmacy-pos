@@ -17,6 +17,7 @@ const mocks = vi.hoisted(() => ({
   stats: vi.fn(),
   leads: vi.fn(),
   retention: vi.fn(),
+  followUps: vi.fn(),
   navigate: vi.fn(),
 }));
 
@@ -27,6 +28,7 @@ vi.mock('../api', () => ({
     stats: mocks.stats,
     leads: mocks.leads,
     retention: mocks.retention,
+    followUps: mocks.followUps,
   },
 }));
 
@@ -76,6 +78,7 @@ beforeEach(() => {
   mocks.payments.mockResolvedValue({ data: [], total: 0, page: 1, limit: 4 });
   mocks.stats.mockResolvedValue({ total: 12, signupsThisWeek: 2, pending: 0, byStatus: {}, byPlan: {} });
   mocks.leads.mockResolvedValue({ data: [], waiting: 0, total: 0, page: 1, limit: 3 });
+  mocks.followUps.mockResolvedValue({ data: [], total: 0 });
   mocks.retention.mockResolvedValue({
     windowDays: 7, trialsEnding: [], renewalsDue: [], lapsed: [], inactive: [],
     counts: { trialsEnding: 0, renewalsDue: 0, lapsed: 0, inactive: 0 },
