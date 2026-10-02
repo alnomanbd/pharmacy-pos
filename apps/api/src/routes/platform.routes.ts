@@ -10,6 +10,7 @@ import { usageForOrganization, platformUsage } from '../services/usage.service.j
 import * as plans from '../services/plan.service.js';
 import * as leads from '../services/lead.service.js';
 import * as support from '../services/support.service.js';
+import { impersonate } from '../services/impersonation.service.js';
 import { requireAuth, requireRole, requirePermission } from '../middlewares/auth.js';
 import { PLATFORM_ROLES, PLATFORM_OWNER_ROLES } from '../types/roles.js';
 import * as team from '../services/platformTeam.service.js';
@@ -676,6 +677,30 @@ router.get(
       granularity: str(req.query.granularity) as revenue.Granularity | undefined,
     }),
   ),
+);
+
+/* ------------------------------ support view ------------------------------ */
+
+/**
+ * A read-only look through a shop's own app, as one of its users.
+ *
+ * Audited before the code is handed back, so the record exists even if the
+ * response never reaches the operator's browser. The user must belong to the
+ * shop named in the path — see the service.
+ */
+router.post(
+  '/organizations/:id/users/:userId/impersonate',
+  requirePermission('shops.impersonate'),
+  handle(async (req) => {
+    const session = await impersonate(req.user!.id, req.params.userId, req.params.id);
+    await audit(
+      req,
+      'impersonate.start',
+      { model: 'User', id: req.params.userId, label: `support view of ${session.viewing.shop.name}` },
+      { after: { viewedAs: session.viewing.user.email, shop: session.viewing.shop.id } },
+    );
+    return session;
+  }, 'Support view ready'),
 );
 
 /* --------------------------------- support --------------------------------- */

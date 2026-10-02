@@ -1580,6 +1580,17 @@ const bn: Record<string, string> = {
   'Could not load your messages.': 'মেসেজগুলো আনা যায়নি।',
   'Could not open that conversation.': 'কথোপকথনটি খোলা যায়নি।',
   'Could not send that.': 'পাঠানো যায়নি।',
+  /* ---- support view ---- */
+  'Support view': 'সাপোর্ট ভিউ',
+  'Leave': 'বের হন',
+  'Read-only': 'শুধু দেখা',
+  'Read-only: nothing can be changed.': 'শুধু দেখা যাবে, কিছু বদলানো যাবে না।',
+  'min left': 'মিনিট বাকি',
+  'Leave support view': 'সাপোর্ট ভিউ বন্ধ করুন',
+  'That support link is incomplete.': 'সাপোর্ট লিংকটি অসম্পূর্ণ।',
+  'That support link is no longer valid.': 'সাপোর্ট লিংকটির মেয়াদ শেষ।',
+  'Open the shop again from the console — a support link lasts a minute and works once.': 'কনসোল থেকে দোকানটি আবার খুলুন — সাপোর্ট লিংক এক মিনিট থাকে আর একবারই কাজ করে।',
+  'Opening the support view…': 'সাপোর্ট ভিউ খোলা হচ্ছে…',
 };
 
 export const useT = makeUseT(bn);

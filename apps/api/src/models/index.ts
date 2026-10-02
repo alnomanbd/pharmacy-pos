@@ -34,6 +34,11 @@ export {
   type SupportMessageDoc,
 } from './Support.js';
 export {
+  ImpersonationHandoffModel,
+  type ImpersonationHandoff,
+  type ImpersonationHandoffDoc,
+} from './ImpersonationHandoff.js';
+export {
   NotificationLogModel,
   type NotificationLog,
   type NotificationLogDoc,

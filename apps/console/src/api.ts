@@ -265,6 +265,17 @@ export const platformApi = {
    * Sets a shop user's password. The reason is kept in the audit trail, the
    * user is emailed, and their sessions all end.
    */
+  /** A one-time code for a read-only look through the shop's app, as this user. */
+  impersonateShopUser: (orgId: string, userId: string) =>
+    getData<{
+      code: string;
+      expiresInMs: number;
+      viewing: {
+        user: { id: string; name: string; email: string; role: Role };
+        shop: { id: string; name: string; status: OrgStatus };
+      };
+    }>(api.post(`/platform/organizations/${orgId}/users/${userId}/impersonate`)),
+
   setShopUserPassword: (orgId: string, userId: string, newPassword: string, reason: string) =>
     getData<{ id: string; email: string; name: string }>(
       api.post(`/platform/organizations/${orgId}/users/${userId}/password`, { newPassword, reason }),

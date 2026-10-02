@@ -46,6 +46,12 @@ export const PERMISSIONS = [
    * every session that account had is ended.
    */
   'shops.credentials',
+  /**
+   * Open a shop's own app read-only, as one of its users — to see what they
+   * see when they ring. Every write is refused for the whole session, which
+   * lasts thirty minutes and goes in the audit trail with the operator's name.
+   */
+  'shops.impersonate',
 
   'payments.view',
   /** Accept or reject money, which extends a subscription. */
@@ -129,6 +135,7 @@ export const PERMISSION_PRESETS: Record<string, { label: string; description: st
     description: 'Answer shops: look at their account and their requests.',
     permissions: [
       'shops.view',
+      'shops.impersonate',
       'payments.view',
       'requests.view',
       'catalogue.view',
@@ -167,6 +174,7 @@ export const PERMISSION_PRESETS: Record<string, { label: string; description: st
     description: 'Approve and suspend shops, handle payments and requests.',
     permissions: [
       'shops.view',
+      'shops.impersonate',
       'shops.approve',
       'shops.suspend',
       'shops.plan',

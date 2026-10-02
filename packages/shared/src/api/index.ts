@@ -103,6 +103,15 @@ export const sessionsApi = {
  * asked to leave — but the local session goes either way.
  */
 export async function signOut(): Promise<void> {
+  /*
+   * Leaving a support view is local. The server would refuse the call anyway
+   * (the view is read-only), and the refresh cookie it would carry is not this
+   * view's to revoke.
+   */
+  if (useAuthStore.getState().impersonating) {
+    useAuthStore.getState().endImpersonation();
+    return;
+  }
   try {
     await api.post('/auth/logout', {});
   } catch {

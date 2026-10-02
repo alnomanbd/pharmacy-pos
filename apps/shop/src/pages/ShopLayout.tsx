@@ -276,7 +276,7 @@ export default function ShopLayout() {
       occupies the rail's column of it, which is where the eye already expects a
       product's name to be and where it cannot move.
     */
-    <div className="flex h-screen flex-col overflow-hidden">
+    <div className="shell-h flex flex-col overflow-hidden">
       <header className="flex h-14 shrink-0 items-center border-b border-border bg-card">
         {/* ---- the brand, in the rail's column of the band ---- */}
         <div

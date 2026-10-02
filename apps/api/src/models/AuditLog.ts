@@ -103,6 +103,8 @@ export const AUDIT_ACTIONS = [
    * shop, the user and the reason they had to type. Never the password.
    */
   'user.platform_password',
+  /** An operator opened a shop's app read-only, as one of its users. */
+  'impersonate.start',
 
   /*
    * The shared catalogue. One edit here reaches every shop on the deployment,

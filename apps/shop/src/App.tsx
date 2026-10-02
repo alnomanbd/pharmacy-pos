@@ -27,6 +27,8 @@ import Expiry from './pages/Expiry';
 import Accounts from './pages/Accounts';
 import Activity from './pages/Activity';
 import BackRoom from './components/BackRoom';
+import SupportClaim from './pages/SupportClaim';
+import SupportViewBanner from './components/SupportViewBanner';
 
 /**
  * Who may be here, and on what.
@@ -67,8 +69,14 @@ function Protected({ children }: { children: JSX.Element }) {
 
 export default function App() {
   return (
+    <>
+    {/* Above every screen, the till included, for as long as a support view lasts. */}
+    <SupportViewBanner />
     <Routes>
       <Route path="/login" element={<Login />} />
+      {/* Where the console hands over a read-only support view. Outside the
+          gate: the code in the URL is the credential. */}
+      <Route path="/support/claim" element={<SupportClaim />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/verify-email" element={<VerifyEmail />} />
@@ -127,5 +135,6 @@ export default function App() {
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </>
   );
 }

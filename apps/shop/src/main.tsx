@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import ToastProvider from '@dawai/shared/components/Toast';
 import { restoreSession } from '@dawai/shared/api/client';
+import { useAuthStore } from '@dawai/shared/store/auth.store';
 import ErrorBoundary from '@dawai/shared/components/ErrorBoundary';
 import App from './App';
 import './styles/index.css';
@@ -16,7 +17,16 @@ import './styles/auth.css';
  * routing decision. It resolves either way — not being signed in is the
  * ordinary case, not an error — and flips `hydrated` when it is done.
  */
-void restoreSession();
+if (window.location.pathname.startsWith('/support/claim')) {
+  /*
+   * Not on the support-view handover. The claim brings its own session, and
+   * the cookie on this host may be somebody else's — on localhost, the
+   * operator's console — so a refresh racing the claim could win it.
+   */
+  useAuthStore.getState().markHydrated();
+} else {
+  void restoreSession();
+}
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

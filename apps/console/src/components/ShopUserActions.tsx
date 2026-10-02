@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { KeyRound, Loader2, Pencil, ShieldAlert, ShieldOff, X } from 'lucide-react';
+import { Eye, KeyRound, Loader2, Pencil, ShieldAlert, ShieldOff, X } from 'lucide-react';
 import { platformApi } from '../api';
 import { useToast } from '@dawai/shared/components/Toast';
 import type { User } from '@dawai/shared/types';
+import { openSupportView } from '../lib/supportView';
 
 /**
  * Correcting a shop user, and setting their password.
@@ -23,10 +24,13 @@ export default function ShopUserActions({
   shopId,
   user,
   onChanged,
+  canViewAs = false,
 }: {
   shopId: string;
   user: User;
   onChanged: () => void;
+  /** `shops.impersonate`: a read-only look through the shop app as this user. */
+  canViewAs?: boolean;
 }) {
   const { toast } = useToast();
   const [mode, setMode] = useState<'' | 'edit' | 'password' | 'twoFactor'>('');
@@ -209,8 +213,31 @@ export default function ShopUserActions({
     );
   }
 
+  const viewAs = async () => {
+    setBusy(true);
+    try {
+      const shop = await openSupportView(shopId, user._id);
+      toast(`Opened ${shop} as ${user.name} in a new tab — read-only, for 30 minutes.`);
+    } catch (e: unknown) {
+      const res = (e as { response?: { data?: { message?: string } } }).response;
+      toast(res?.data?.message || 'Could not open the support view.', 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center justify-end gap-1">
+      {canViewAs && user.isActive !== false && (
+        <button
+          className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs font-semibold hover:bg-secondary disabled:opacity-60"
+          onClick={() => void viewAs()}
+          disabled={busy}
+          title="See the shop app as this user sees it. Read-only, for 30 minutes."
+        >
+          {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Eye className="h-3.5 w-3.5" />} View as
+        </button>
+      )}
       <button
         className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs font-semibold hover:bg-secondary"
         onClick={() => setMode('edit')}

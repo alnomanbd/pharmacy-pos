@@ -743,7 +743,7 @@ export default function Till() {
   return (
     /* A counter screen holds still on a desk and scrolls as one page on a
        phone, where the bill and the payment cannot both fit in one height. */
-    <div className="flex min-h-[100dvh] flex-col bg-muted/30 lg:h-screen lg:min-h-0 lg:overflow-hidden">
+    <div className="shell-min-h lg-shell-h flex flex-col bg-muted/30 lg:overflow-hidden">
       {/* ------------------------------------------------- the status strip -- */}
       <header className="flex h-12 shrink-0 items-center gap-3 border-b border-border bg-card px-3">
         <button
@@ -1951,7 +1951,7 @@ function OpenTill({ onOpened }: { onOpened: () => Promise<void> }) {
   };
 
   return (
-    <div className="relative grid min-h-screen place-items-center bg-muted/30 p-4">
+    <div className="shell-min-h relative grid place-items-center bg-muted/30 p-4">
       {/* The rest of the shop is still there before the till is open — the
           owner who came to look at a report should not be stuck here. */}
       <Link

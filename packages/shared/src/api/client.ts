@@ -68,6 +68,16 @@ async function refreshAccessToken(): Promise<string> {
  * signed in, not an error worth showing anybody.
  */
 export async function restoreSession(): Promise<boolean> {
+  /*
+   * A support view has no cookie of its own, and on a shared host the cookie
+   * that is there belongs to somebody else — on localhost, the operator's
+   * console. Refreshing would swap the view for that account, so it is left as
+   * it is and simply expires.
+   */
+  if (useAuthStore.getState().impersonating && useAuthStore.getState().accessToken) {
+    useAuthStore.getState().markHydrated();
+    return true;
+  }
   try {
     await runRefresh();
     return true;
@@ -152,6 +162,12 @@ api.interceptors.response.use(
      * for any more, so the condition is simply: this is a 401, we have not
      * already retried, and it is not the refresh or login call itself.
      */
+    // A support view is never refreshed (see `restoreSession`); a 401 means it is over.
+    if (status === 401 && useAuthStore.getState().impersonating) {
+      useAuthStore.getState().endImpersonation();
+      return Promise.reject(error);
+    }
+
     const shouldRefresh =
       status === 401 &&
       config &&

@@ -17,6 +17,10 @@ export interface AuthUser {
   email: string;
   /** Platform staff only. The owner's set is filled in, not stored. */
   permissions?: Permission[];
+  /** An operator looking through the shop's own app, read-only. */
+  impersonated?: boolean;
+  /** Which operator, when `impersonated`. */
+  impersonatedBy?: string;
 }
 
 /**
@@ -104,7 +108,21 @@ export async function requireAuth(req: Request, _res: Response, next: NextFuncti
       name: user.name,
       email: user.email,
       permissions: permissionsOf(user as { role?: string; permissions?: string[] }),
+      impersonated: Boolean(payload.imp),
+      impersonatedBy: payload.by,
     };
+
+    /*
+     * A support view is for looking.
+     *
+     * Ringing up a sale, changing a price or writing off stock on a shop's
+     * behalf is not support — it is somebody else's books with our name nowhere
+     * on them. Refused here rather than per route, so the next endpoint cannot
+     * forget it; `SAFE_METHODS` is the same set the read-only trial uses.
+     */
+    if (payload.imp && !SAFE_METHODS.has(req.method)) {
+      throw forbidden('Support view is read-only. Nothing can be changed from here.');
+    }
 
     /*
      * An operator account must carry a second factor.

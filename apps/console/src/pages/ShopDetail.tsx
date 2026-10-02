@@ -9,6 +9,7 @@ import {
   Banknote,
   TrendingDown,
   Download,
+  Eye,
   Pencil,
   Ban,
   CheckCircle2,
@@ -20,6 +21,7 @@ import {
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { platformApi, downloadBlob, type Shop, type ShopMonth, type SeatUsage, type ShopPlanUsage } from '../api';
 import ShopUserActions from '../components/ShopUserActions';
+import { openSupportView } from '../lib/supportView';
 import ShopLimitsCard, { signupSummary } from '../components/ShopLimitsCard';
 import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock, Spinner } from '@dawai/shared/components/Spinner';
@@ -173,6 +175,20 @@ export default function ShopDetail() {
   const canSuspend = can(access, 'shops.suspend');
   const canDelete = can(access, 'shops.delete');
   const canPlan = can(access, 'shops.plan');
+  const canViewAs = can(access, 'shops.impersonate');
+  /* The owner if they can sign in, or else the first account that can. */
+  const viewTarget =
+    users.find((u) => u.role === 'admin' && u.isActive !== false) ?? users.find((u) => u.isActive !== false);
+  const viewShop = async () => {
+    if (!viewTarget) return;
+    try {
+      const shop = await openSupportView(id, viewTarget._id);
+      toast(`Opened ${shop} as ${viewTarget.name} in a new tab — read-only, for 30 minutes.`);
+    } catch (e: unknown) {
+      const res = (e as { response?: { data?: { message?: string } } }).response;
+      toast(res?.data?.message || 'Could not open the support view.', 'error');
+    }
+  };
   const asked = signupSummary(org.signup);
 
   return (
@@ -194,6 +210,16 @@ export default function ShopDetail() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          {canViewAs && viewTarget && (
+            <button
+              type="button"
+              className={BTN_SECONDARY}
+              onClick={() => void viewShop()}
+              title={`See the shop app as ${viewTarget.name} sees it. Read-only, for 30 minutes.`}
+            >
+              <Eye className="h-4 w-4" /> View shop
+            </button>
+          )}
           {canEdit && (
             <button type="button" className={BTN_SECONDARY} onClick={openProfile}>
               <Pencil className="h-4 w-4" /> Edit
@@ -336,7 +362,7 @@ export default function ShopDetail() {
                     {lastSeen(u.lastLoginAt) ?? 'never'}
                   </td>
                   <td className="text-right">
-                    <ShopUserActions shopId={id} user={u} onChanged={() => void load()} />
+                    <ShopUserActions shopId={id} user={u} onChanged={() => void load()} canViewAs={canViewAs} />
                   </td>
                 </tr>
               ))}
