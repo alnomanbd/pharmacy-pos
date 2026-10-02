@@ -17,6 +17,7 @@ import Messages from './pages/Messages';
 import Announcements from './pages/Announcements';
 import Discounts from './pages/Discounts';
 import Overview from './pages/Overview';
+import System from './pages/System';
 import Audit from './pages/Audit';
 import Medicines from './pages/Medicines';
 import MedicineRequests from './pages/MedicineRequests';
@@ -102,6 +103,7 @@ export default function App() {
         <Route path="announcements" element={<Announcements />} />
         <Route path="discounts" element={<Discounts />} />
         <Route path="overview" element={<Overview />} />
+        <Route path="system" element={<System />} />
         {/* What this team did to customer accounts. Read-only. */}
         <Route path="audit" element={<Audit />} />
         {/* The operator's own account: second factor, signed-in devices. */}

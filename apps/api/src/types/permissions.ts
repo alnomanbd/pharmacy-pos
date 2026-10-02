@@ -130,6 +130,13 @@ export const PERMISSIONS = [
    * check whether anybody noticed, so it sits with the owner by default.
    */
   'audit.view',
+
+  /**
+   * See the platform's own health: the database, the scheduled jobs, whether
+   * email and SMS are configured, crash reporting and backups. In no preset —
+   * it names the providers and the server's environment.
+   */
+  'system.view',
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];

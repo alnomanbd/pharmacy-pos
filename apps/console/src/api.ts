@@ -110,6 +110,26 @@ export interface ShopMonth {
   purchases: number;
 }
 
+/** The System page: an overall verdict, each check, and the numbers behind them. */
+export interface SystemStatus {
+  verdict: 'ok' | 'warning' | 'critical';
+  checks: { key: string; label: string; verdict: 'ok' | 'warning' | 'critical'; detail: string }[];
+  api: { version: string; node: string; environment: string; startedAt: string; uptimeMs: number; memoryMb: { rss: number; heap: number } };
+  database: { up: boolean; pingMs: number | null; version: string; dataSizeMb: number | null; collections: number | null };
+  scheduler: {
+    enabled: boolean;
+    intervalMinutes: number;
+    lastRun: { startedAt: string; finishedAt: string | null; ok: boolean; error: string; result: unknown } | null;
+    lastFailure: { startedAt: string; error: string } | null;
+  };
+  messages: {
+    email: { provider: string; sent24h?: number; failed24h?: number; lastFailureAt?: string | null };
+    sms: { provider: string; sent24h?: number; failed24h?: number; lastFailureAt?: string | null };
+  };
+  backup: { configured: boolean; lastAt: string | null };
+  checkedAt: string;
+}
+
 /** The console's first page. `money` is null without revenue.view. */
 export interface PlatformOverview {
   shops: { paying: number; onTrial: number; pending: number; suspended: number; total: number };
@@ -410,6 +430,7 @@ export const platformApi = {
     getData<Paged<PlatformAuditEntry> & { actions: string[] }>(api.get('/platform/audit', { params })),
 
   overview: () => getData<PlatformOverview>(api.get('/platform/overview')),
+  system: () => getData<SystemStatus>(api.get('/platform/system')),
 
   coupons: () => getData<CouponRow[]>(api.get('/platform/coupons')),
   createCoupon: (payload: Record<string, unknown>) => getData<CouponRow>(api.post('/platform/coupons', payload)),

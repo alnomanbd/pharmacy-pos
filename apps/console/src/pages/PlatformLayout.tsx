@@ -32,6 +32,7 @@ import {
   Megaphone,
   TicketPercent,
   LayoutDashboard,
+  Activity,
 } from 'lucide-react';
 import { platformApi } from '../api';
 import { useAuthStore } from '@dawai/shared/store/auth.store';
@@ -178,6 +179,8 @@ const NAV_SECTIONS: { heading: string; links: ConsoleLink[] }[] = [
         end: false,
         needs: ['audit.view'],
       },
+      /* The platform's own health: database, jobs, email, SMS, backups. */
+      { to: '/system', label: 'System', icon: Activity, end: false, needs: ['system.view'] },
       /* Your own second factor and signed-in devices. Everyone has one, so it
          needs no permission. */
       { to: '/security', label: 'Security', icon: ShieldCheck, end: false, needs: [] },

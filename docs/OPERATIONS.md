@@ -66,6 +66,19 @@ There are two things to back up. Neither can be regenerated.
 
    Keep copies off the server, for at least 30 days, and test a restore every
    quarter.
+
+   **Tell the console it ran.** The console's System page shows when the last
+   backup finished, but it cannot see a job that runs on the host. Point
+   `BACKUP_MARKER_FILE` at a file the API can read, and touch it as the last
+   step of the nightly backup, only once the dump has succeeded:
+
+   ```bash
+   docker compose exec -T mongo mongodump --db=dawai --archive --gzip > backups/dawai-$(date +%F).archive.gz \
+     && touch /srv/dawai/backups/.last-backup
+   ```
+
+   With `BACKUP_MARKER_FILE=/srv/dawai/backups/.last-backup` (mounted into the
+   API container), System shows the time, and turns red if a night is missed.
 2. **The `uploads` volume**, which holds shop logos and payment screenshots:
 
    ```bash

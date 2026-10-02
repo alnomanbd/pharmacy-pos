@@ -20,6 +20,7 @@ import * as coupons from '../services/coupon.service.js';
 import { COUPON_KINDS } from '../models/Coupon.js';
 import * as referrals from '../services/referral.service.js';
 import { overview } from '../services/overview.service.js';
+import { systemStatus } from '../services/system.service.js';
 import { requireAuth, requireRole, requirePermission } from '../middlewares/auth.js';
 import { PLATFORM_ROLES, PLATFORM_OWNER_ROLES } from '../types/roles.js';
 import * as team from '../services/platformTeam.service.js';
@@ -105,6 +106,9 @@ router.get('/stats', requirePermission('shops.view'), handle(() => platform.plat
  * The console's first page. Money is in it only for whoever may see what the
  * company turns over; everybody else gets shops, sign-ups and the to-do list.
  */
+/** The platform's own health — see the service. Owner-only by default. */
+router.get('/system', requirePermission('system.view'), handle(() => systemStatus()));
+
 router.get(
   '/overview',
   requirePermission('shops.view'),

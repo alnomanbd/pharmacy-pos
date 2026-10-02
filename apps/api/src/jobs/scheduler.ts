@@ -1,6 +1,7 @@
 import { sendSubscriptionReminders } from '../services/subscriptionReminder.service.js';
 import { logger } from '../utils/logger.js';
 import { env } from '../config/env.js';
+import { JobRunModel } from '../models/index.js';
 
 /**
  * Background scheduler.
@@ -22,12 +23,22 @@ async function tick() {
     return;
   }
   running = true;
+  // Recorded, so the console's System page can say when it last ran and how.
+  const startedAt = new Date();
+  let ok = false;
+  let error = '';
+  let result: unknown = null;
   try {
-    await sendSubscriptionReminders();
+    result = { sent: await sendSubscriptionReminders() };
+    ok = true;
   } catch (err) {
+    error = err instanceof Error ? err.message : String(err);
     logger.error({ err }, 'Subscription reminder tick failed');
   } finally {
     running = false;
+    await JobRunModel.create({ job: 'subscriptionReminders', startedAt, finishedAt: new Date(), ok, error, result }).catch(
+      (err) => logger.warn({ err }, 'Could not record the scheduler run'),
+    );
   }
 }
 
