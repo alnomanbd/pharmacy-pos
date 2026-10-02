@@ -10,6 +10,7 @@ import { useAuthStore } from '@dawai/shared/store/auth.store';
 import type { PlatformMember, PermissionPreset } from '@dawai/shared/types';
 import Modal from '../components/Modal';
 import { BTN_OUTLINE, BTN_OUTLINE_DANGER, BTN_SECONDARY, errorMessage } from '../lib/ui';
+import { lastSeen } from '../lib/lastSeen';
 
 /**
  * The people who run this deployment.
@@ -369,7 +370,7 @@ export default function Team() {
                   )}
                   <span className="ml-auto text-xs text-muted-foreground">
                     {m.lastLoginAt
-                      ? `last seen ${new Date(m.lastLoginAt).toLocaleDateString()}`
+                      ? `last seen ${lastSeen(m.lastLoginAt)}`
                       : 'never signed in'}
                   </span>
                 </div>

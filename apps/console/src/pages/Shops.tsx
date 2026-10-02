@@ -23,6 +23,7 @@ import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import NewAccountDialog from '../components/NewAccountDialog';
 import type { OrgStatus, PlatformStats } from '@dawai/shared/types';
 import type { Shop, ShopPlan } from '../api';
+import { lastSeen } from '../lib/lastSeen';
 
 /**
  * Every shop on the deployment, and what may be done about each one.
@@ -382,7 +383,7 @@ export default function Shops() {
                       {dateOf(o.createdAt)}
                       {o.lastActivityAt && (
                         <span className="block text-[11px]">
-                          last seen {relativeDays(o.lastActivityAt)}
+                          last seen {lastSeen(o.lastActivityAt)}
                         </span>
                       )}
                     </td>

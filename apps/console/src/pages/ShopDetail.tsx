@@ -26,6 +26,7 @@ import { LoadingBlock, Spinner } from '@dawai/shared/components/Spinner';
 import Modal from '../components/Modal';
 import { BTN_DANGER, BTN_OUTLINE, BTN_OUTLINE_DANGER, BTN_SECONDARY, can, errorMessage, useAccess } from '../lib/ui';
 import type { User } from '@dawai/shared/types';
+import { lastSeen } from '../lib/lastSeen';
 
 /**
  * One shop, for the operator: what it is on, how it is doing month by month,
@@ -332,7 +333,7 @@ export default function ShopDetail() {
                   <td className="text-sm text-muted-foreground">{u.email}</td>
                   <td className="text-sm text-muted-foreground">{u.phone}</td>
                   <td className="text-sm text-muted-foreground">
-                    {u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleDateString() : 'never'}
+                    {lastSeen(u.lastLoginAt) ?? 'never'}
                   </td>
                   <td className="text-right">
                     <ShopUserActions shopId={id} user={u} onChanged={() => void load()} />
