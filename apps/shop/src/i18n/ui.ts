@@ -1788,6 +1788,12 @@ const bn: Record<string, string> = {
   'This week against the last': 'এই সপ্তাহ আর আগের সপ্তাহ',
   'The week before': 'আগের সপ্তাহ',
   'No bills yet today.': 'আজ এখনো কোনো বিল হয়নি।',
+  /* ---- sign-in ---- */
+  'Welcome back': 'আবার স্বাগতম',
+  'Sign in to open today’s counter.': 'আজকের কাউন্টার খুলতে লগইন করুন।',
+  'Signing in…': 'লগইন হচ্ছে…',
+  'Sign in': 'লগইন',
+  'Every bill carries your name, and the counter keeps selling when the internet drops.': 'প্রতিটি বিলে আপনার নাম থাকে, আর ইন্টারনেট না থাকলেও কাউন্টারে বিক্রি চলে।',
 };
 
 export const useT = makeUseT(bn);
