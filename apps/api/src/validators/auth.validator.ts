@@ -50,6 +50,7 @@ export const registerSchema = z.object({
     .object({
       channel: z.string().max(40).optional(),
       agentCode: z.string().max(40).optional(),
+      referralCode: z.string().trim().max(12).optional(),
       fbclid: z.string().max(300).optional(),
       utm: z
         .object({

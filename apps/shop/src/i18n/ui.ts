@@ -1594,6 +1594,28 @@ const bn: Record<string, string> = {
   'That support link is no longer valid.': 'সাপোর্ট লিংকটির মেয়াদ শেষ।',
   'Open the shop again from the console — a support link lasts a minute and works once.': 'কনসোল থেকে দোকানটি আবার খুলুন — সাপোর্ট লিংক এক মিনিট থাকে আর একবারই কাজ করে।',
   'Opening the support view…': 'সাপোর্ট ভিউ খোলা হচ্ছে…',
+  /* ---- discount codes and referrals ---- */
+  'Discount code (if you have one)': 'ডিসকাউন্ট কোড (থাকলে)',
+  'Discount code': 'ডিসকাউন্ট কোড',
+  'Apply': 'প্রয়োগ করুন',
+  'Could not check that code.': 'কোডটি যাচাই করা যায়নি।',
+  'That code does not look right.': 'কোডটি ঠিক মনে হচ্ছে না।',
+  'That code does not exist.': 'এই কোডটি নেই।',
+  'Pick a paid plan first.': 'আগে একটি পেইড প্ল্যান বেছে নিন।',
+  'That code is no longer active.': 'এই কোডটি আর চালু নেই।',
+  'That code has expired.': 'এই কোডের মেয়াদ শেষ।',
+  'That code has been used up.': 'এই কোডের সব ব্যবহার শেষ হয়ে গেছে।',
+  'That code is not for this plan.': 'এই কোডটি এই প্ল্যানের জন্য নয়।',
+  'That code is only for a first payment.': 'এই কোডটি শুধু প্রথম পেমেন্টের জন্য।',
+  'You have already used that code.': 'আপনি এই কোডটি আগেই ব্যবহার করেছেন।',
+  'Refer another pharmacy': 'আরেকটি ফার্মেসিকে রেফার করুন',
+  'Know a shop that still keeps its books on paper? Send them your link. When they sign up through it, we will know it was you — and we will thank you.': 'পরিচিত কোনো দোকান কি এখনো খাতায় হিসাব রাখে? তাদের আপনার লিংকটি পাঠান। তারা এই লিংক দিয়ে সাইন আপ করলে আমরা জানব আপনি পাঠিয়েছেন — আর আপনাকে ধন্যবাদ জানাব।',
+  'Copy': 'কপি',
+  'Link copied.': 'লিংক কপি হয়েছে।',
+  'Your code': 'আপনার কোড',
+  'signed up': 'জন সাইন আপ করেছে',
+  'paying': 'জন পেমেন্ট করছে',
+  'We run our pharmacy on Dawai — billing, stock and baki in one place. Try it free:': 'আমরা আমাদের ফার্মেসি Dawai দিয়ে চালাই — বিল, স্টক আর বাকি এক জায়গায়। ফ্রিতে চালিয়ে দেখুন:',
 };
 
 export const useT = makeUseT(bn);

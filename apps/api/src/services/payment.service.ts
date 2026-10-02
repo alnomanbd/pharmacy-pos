@@ -5,6 +5,7 @@ import { invoiceNumberFor } from './invoice.service.js';
 import { logger } from '../utils/logger.js';
 import * as notify from './notification.service.js';
 import { purchasablePlans, planByKey } from './plan.service.js';
+import { quoteForShop, redeem } from './coupon.service.js';
 
 /**
  * Subscriptions, and the money that pays for them.
@@ -31,6 +32,16 @@ export interface PaymentClaim {
   trxId?: string;
   note?: string;
   paidAt?: string;
+  /** A discount code; priced by the same rules the shop's Apply button used. */
+  couponCode?: string;
+}
+
+/** The discount a code gives this claim, or a refusal the shop can read. */
+async function couponFor(orgId: string, claim: PaymentClaim) {
+  if (!claim.couponCode?.trim()) return { code: '', discount: 0 };
+  const q = await quoteForShop(orgId, { code: claim.couponCode, plan: claim.plan, months: claim.months });
+  if (!q.ok) throw badRequest(q.reason);
+  return { code: q.code, discount: q.discount };
 }
 
 /**
@@ -47,7 +58,8 @@ export async function submitPayment(orgId: string, userId: string, claim: Paymen
   const plan = await planByKey(claim.plan);
   if (!plan || plan.isTrial) throw badRequest('That plan is not available');
 
-  const expected = plan.price * claim.months;
+  const coupon = await couponFor(orgId, claim);
+  const expected = plan.price * claim.months - coupon.discount;
   if (claim.amount <= 0) throw badRequest('Enter the amount you sent');
 
   // Not a hard equality: a shop may round up, or pay a part now. A shortfall
@@ -77,10 +89,11 @@ export async function submitPayment(orgId: string, userId: string, claim: Paymen
     trxId: claim.trxId?.trim() || '',
     note: claim.note?.trim() || '',
     paidAt: claim.paidAt ? new Date(claim.paidAt) : new Date(),
+    coupon,
   });
 
   logger.info(
-    { org: orgId, payment: payment.id, amount: claim.amount, expected, shortfall },
+    { org: orgId, payment: payment.id, amount: claim.amount, expected, shortfall, coupon: coupon.code },
     'Payment submitted for review',
   );
 
@@ -189,6 +202,8 @@ async function acceptPayment(payment: InstanceType<typeof PaymentModel>, reviewe
   payment.set('reviewedAt', now);
   payment.set('coversUntil', coversUntil);
   await payment.save();
+  // Counted now, not when it was typed: a rejected payment uses up nothing.
+  if (payment.coupon?.code) await redeem(payment.coupon.code);
 
   // The receipt number is part of accepting the money, not an afterthought:
   // the shop's confirmation email quotes it.
@@ -245,6 +260,7 @@ export async function recordPayment(orgId: string, operatorId: string, claim: Pa
   if (trxId && (await PaymentModel.exists({ gateway: 'manual', trxId }))) {
     throw conflict('That transaction id has already been recorded');
   }
+  const coupon = await couponFor(orgId, claim);
 
   const payment = await PaymentModel.create({
     organization: orgId,
@@ -259,11 +275,12 @@ export async function recordPayment(orgId: string, operatorId: string, claim: Pa
     trxId,
     note: claim.note?.trim() || '',
     paidAt: claim.paidAt ? new Date(claim.paidAt) : new Date(),
+    coupon,
   });
 
   logger.info({ org: orgId, payment: payment.id, amount: claim.amount, by: operatorId }, 'Payment recorded by an operator');
   const result = await acceptPayment(payment, operatorId);
-  return { ...result, expected: plan.price * claim.months };
+  return { ...result, expected: plan.price * claim.months - coupon.discount };
 }
 
 export async function rejectPayment(paymentId: string, reviewerId: string, reason: string) {

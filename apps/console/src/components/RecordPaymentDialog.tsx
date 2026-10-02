@@ -59,6 +59,7 @@ export default function RecordPaymentDialog({
     trxId: '',
     senderNumber: '',
     note: '',
+    couponCode: '',
   });
 
   useEffect(() => {
@@ -100,6 +101,7 @@ export default function RecordPaymentDialog({
         trxId: form.trxId.trim() || undefined,
         senderNumber: form.senderNumber.trim() || undefined,
         note: form.note.trim() || undefined,
+        couponCode: form.couponCode.trim() || undefined,
       });
       const end = res.payment.coversUntil ? new Date(res.payment.coversUntil).toLocaleDateString('en-GB', { dateStyle: 'medium' }) : '';
       toast(`${taka(amount)} recorded — ${shop.name} is paid until ${end}.`);
@@ -189,7 +191,17 @@ export default function RecordPaymentDialog({
             </label>
           </>
         )}
-        <label className="text-sm font-medium sm:col-span-2">
+        <label className="text-sm font-medium">
+          Discount code <span className="font-normal text-muted-foreground">(optional)</span>
+          <input
+            className="input mt-1 font-mono uppercase"
+            maxLength={24}
+            value={form.couponCode}
+            onChange={(e) => setForm({ ...form, couponCode: e.target.value.toUpperCase() })}
+            placeholder="Checked when you record — type the amount after the discount"
+          />
+        </label>
+        <label className="text-sm font-medium">
           Note
           <input
             className="input mt-1"

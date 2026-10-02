@@ -4,6 +4,7 @@ import { UserModel, OrganizationModel, type UserDoc } from '../models/index.js';
 import { tenantContextOf, assertTenantUsable } from '../middlewares/auth.js';
 import { AppError, unauthorized, conflict, badRequest } from '../utils/AppError.js';
 import { env } from '../config/env.js';
+import { referrerFor } from './referral.service.js';
 import * as notify from './notification.service.js';
 import { verifyCode } from './twoFactor.service.js';
 import { TERMS_VERSION } from '../validators/auth.validator.js';
@@ -74,6 +75,8 @@ export async function registerShop(payload: {
   attribution?: {
     channel?: string;
     agentCode?: string;
+    /** Another shop's referral code, from `?ref=` on its sign-up link. */
+    referralCode?: string;
     fbclid?: string;
     utm?: { source?: string; medium?: string; campaign?: string; content?: string; term?: string };
   };
@@ -146,6 +149,10 @@ export async function registerShop(payload: {
     },
     firstTouchAt: converted?.createdAt ?? new Date(),
   });
+
+  // Through another shop's link: remembered, so the console can thank them.
+  const referrer = await referrerFor(payload.attribution?.referralCode);
+  if (referrer && String(referrer) !== String(org._id)) org.set('referredBy', referrer);
 
   // Whoever signs up owns the shop; every later authority question resolves to this.
   org.set('owner', owner._id);

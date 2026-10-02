@@ -110,6 +110,37 @@ export interface ShopMonth {
   purchases: number;
 }
 
+/** A discount code shops type in when they pay. */
+export interface CouponRow {
+  _id: string;
+  code: string;
+  description: string;
+  kind: 'percent' | 'amount';
+  value: number;
+  plans: string[];
+  minMonths: number;
+  firstPaymentOnly: boolean;
+  oncePerShop: boolean;
+  maxRedemptions: number | null;
+  redemptions: number;
+  expiresAt: string | null;
+  active: boolean;
+  createdAt: string;
+}
+
+/** A shop that signed up through another shop's link. */
+export interface ReferralRow {
+  _id: string;
+  name: string;
+  status: OrgStatus;
+  plan: string;
+  createdAt: string;
+  referredBy: string | { _id: string; name: string; referralCode?: string } | null;
+  referralReward?: { at: string | null; note: string } | null;
+  firstPaidAt: string | null;
+  rewarded: boolean;
+}
+
 /** An announcement shown across the top of the shop app. */
 export interface AnnouncementRow {
   _id: string;
@@ -360,6 +391,14 @@ export const platformApi = {
   audit: (params?: { action?: string; actor?: string; page?: number; limit?: number }) =>
     getData<Paged<PlatformAuditEntry> & { actions: string[] }>(api.get('/platform/audit', { params })),
 
+  coupons: () => getData<CouponRow[]>(api.get('/platform/coupons')),
+  createCoupon: (payload: Record<string, unknown>) => getData<CouponRow>(api.post('/platform/coupons', payload)),
+  updateCoupon: (id: string, payload: Record<string, unknown>) =>
+    getData<CouponRow>(api.patch(`/platform/coupons/${id}`, payload)),
+  referrals: () => getData<ReferralRow[]>(api.get('/platform/referrals')),
+  markReferralRewarded: (shopId: string, note: string) =>
+    getData<unknown>(api.post(`/platform/organizations/${shopId}/referral-reward`, { note })),
+
   announcements: () => getData<AnnouncementRow[]>(api.get('/platform/announcements')),
   createAnnouncement: (payload: Record<string, unknown>) =>
     getData<AnnouncementRow>(api.post('/platform/announcements', payload)),
@@ -392,6 +431,7 @@ export const platformApi = {
       trxId?: string;
       senderNumber?: string;
       note?: string;
+      couponCode?: string;
     },
   ) => getData<{ payment: Payment; expected: number }>(api.post(`/platform/organizations/${shopId}/payments`, payload)),
 

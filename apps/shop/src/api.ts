@@ -1435,10 +1435,19 @@ export const billingApi = {
     senderNumber?: string;
     trxId?: string;
     note?: string;
+    couponCode?: string;
   }) =>
     getData<{ payment: SubscriptionPayment; expected: number; shortfall: number }>(
       api.post('/billing/payments', payload),
     ),
+  /** What a discount code takes off this plan and these months, or why it will not. */
+  coupon: (code: string, plan: string, months: number) =>
+    getData<
+      | { ok: true; code: string; discount: number; total: number; base: number; description: string }
+      | { ok: false; reason: string }
+    >(api.get('/billing/coupon', { params: { code, plan, months } })),
+  /** This shop's referral code, and how many have signed up and paid through it. */
+  referral: () => getData<{ code: string; signedUp: number; paying: number }>(api.get('/billing/referral')),
   /** A blob rather than a link, because the route needs the Authorization header. */
   invoice: (id: string) =>
     api.get(`/billing/payments/${id}/invoice`, { responseType: 'blob' }).then((r) => r.data as Blob),

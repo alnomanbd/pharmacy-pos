@@ -16,6 +16,9 @@ import * as notes from '../services/shopNote.service.js';
 import { listMessages } from '../services/messageLog.service.js';
 import * as announcements from '../services/announcement.service.js';
 import { ANNOUNCEMENT_TONES } from '../models/Announcement.js';
+import * as coupons from '../services/coupon.service.js';
+import { COUPON_KINDS } from '../models/Coupon.js';
+import * as referrals from '../services/referral.service.js';
 import { requireAuth, requireRole, requirePermission } from '../middlewares/auth.js';
 import { PLATFORM_ROLES, PLATFORM_OWNER_ROLES } from '../types/roles.js';
 import * as team from '../services/platformTeam.service.js';
@@ -677,6 +680,7 @@ router.post(
       senderNumber: z.string().trim().max(40).optional(),
       note: z.string().trim().max(500).optional(),
       paidAt: z.string().datetime().optional(),
+      couponCode: z.string().trim().max(24).optional(),
     }),
   ),
   handle(async (req) => {
@@ -732,6 +736,62 @@ router.get(
       granularity: str(req.query.granularity) as revenue.Granularity | undefined,
     }),
   ),
+);
+
+/* ------------------------------ discount codes ----------------------------- */
+
+const couponSchema = z.object({
+  code: z.string().trim().min(3).max(24),
+  description: z.string().trim().max(200).optional(),
+  kind: z.enum(COUPON_KINDS),
+  value: z.number().positive().max(1_000_000),
+  plans: z.array(z.string().trim().max(40)).max(20).optional(),
+  minMonths: z.number().int().min(1).max(36).optional(),
+  firstPaymentOnly: z.boolean().optional(),
+  oncePerShop: z.boolean().optional(),
+  maxRedemptions: z.number().int().min(1).max(1_000_000).nullable().optional(),
+  expiresAt: z.string().datetime().nullable().optional(),
+  active: z.boolean().optional(),
+});
+
+router.get('/coupons', requirePermission('coupons.manage'), handle(() => coupons.listCoupons()));
+
+router.post(
+  '/coupons',
+  requirePermission('coupons.manage'),
+  validate(couponSchema),
+  handle(async (req) => {
+    const c = await coupons.createCoupon(req.body, req.user!.id);
+    await audit(req, 'coupon.change', { model: 'Coupon', id: String(c._id), label: c.code }, { after: { action: 'create', kind: c.kind, value: c.value } });
+    return c;
+  }, 'Code created'),
+);
+
+router.patch(
+  '/coupons/:id',
+  requirePermission('coupons.manage'),
+  validate(couponSchema.omit({ code: true }).partial()),
+  handle(async (req) => {
+    const c = await coupons.updateCoupon(req.params.id, req.body);
+    await audit(req, 'coupon.change', { model: 'Coupon', id: req.params.id, label: c.code }, { after: { action: 'update', ...req.body } });
+    return c;
+  }, 'Code updated'),
+);
+
+/* -------------------------------- referrals -------------------------------- */
+
+/** Who brought in whom, whether the new shop pays, and whether the reward was given. */
+router.get('/referrals', requirePermission('shops.view'), handle(() => referrals.listReferrals()));
+
+router.post(
+  '/organizations/:id/referral-reward',
+  requirePermission('coupons.manage', 'payments.verify'),
+  validate(z.object({ note: z.string().trim().min(3).max(300) })),
+  handle(async (req) => {
+    const org = await referrals.markRewarded(req.params.id, req.user!.id, req.body.note);
+    await audit(req, 'referral.reward', { model: 'Organization', id: req.params.id, label: org.name }, { after: { note: req.body.note, referredBy: String(org.referredBy) } });
+    return org;
+  }, 'Reward marked as given'),
 );
 
 /* ------------------------------ announcements ------------------------------ */

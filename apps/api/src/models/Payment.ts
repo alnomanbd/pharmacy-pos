@@ -34,6 +34,11 @@ const schema = new Schema(
      * Such a payment is verified the moment it is recorded, by that operator.
      */
     recordedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+    /** A discount code used on this payment, and what it took off. */
+    coupon: {
+      code: { type: String, default: '' },
+      discount: { type: Number, default: 0 },
+    },
 
     gateway: { type: String, enum: PAYMENT_GATEWAYS, default: 'manual', index: true },
     method: { type: String, enum: PAYMENT_METHODS, required: true },

@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { rememberReferral } from '@/lib/api';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -65,6 +66,8 @@ export function SiteHeader({ lang }: { lang: Lang }) {
   }, []);
 
   React.useEffect(() => setOpen(false), [pathname]);
+  // A shop's referral link may land on any page; keep its code for the sign-up.
+  React.useEffect(() => rememberReferral(), [pathname]);
 
   return (
     <>

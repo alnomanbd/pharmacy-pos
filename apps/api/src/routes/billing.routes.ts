@@ -12,6 +12,8 @@ import { badRequest } from '../utils/AppError.js';
 import { PAYMENT_METHODS } from '../models/Payment.js';
 import { exportOrganization } from '../services/tenantData.service.js';
 import { audit } from '../services/audit.service.js';
+import { quoteForShop } from '../services/coupon.service.js';
+import { referralSummary } from '../services/referral.service.js';
 
 /**
  * The shop's own billing: where it stands, and telling us it has paid.
@@ -40,6 +42,27 @@ const actorOf = (req: { user?: { id: string; role: string; org: string | null } 
 router.get('/', async (req, res, next) => {
   try {
     ok(res, await payments.subscriptionOf(req.user!.org!));
+  } catch (err) {
+    next(err);
+  }
+});
+
+/** What a discount code takes off this plan and these months — the Apply button. Owner only, like paying. */
+router.get('/coupon', async (req, res, next) => {
+  try {
+    await requireOrgAdmin(actorOf(req));
+    const months = Math.min(36, Math.max(1, Number(req.query.months) || 1));
+    ok(res, await quoteForShop(req.user!.org!, { code: String(req.query.code ?? ''), plan: String(req.query.plan ?? ''), months }));
+  } catch (err) {
+    next(err);
+  }
+});
+
+/** This shop's referral code and how many shops have signed up through it. */
+router.get('/referral', async (req, res, next) => {
+  try {
+    await requireOrgAdmin(actorOf(req));
+    ok(res, await referralSummary(req.user!.org!));
   } catch (err) {
     next(err);
   }
@@ -83,6 +106,7 @@ const submitSchema = z.object({
   trxId: z.string().trim().max(60).optional(),
   note: z.string().trim().max(500).optional(),
   paidAt: z.string().optional(),
+  couponCode: z.string().trim().max(24).optional(),
 });
 
 /** Only the owner pays — it is their money and their subscription. */

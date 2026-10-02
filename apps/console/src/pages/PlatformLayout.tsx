@@ -30,6 +30,7 @@ import {
   NotebookPen,
   Send,
   Megaphone,
+  TicketPercent,
 } from 'lucide-react';
 import { platformApi } from '../api';
 import { useAuthStore } from '@dawai/shared/store/auth.store';
@@ -133,6 +134,8 @@ const NAV_SECTIONS: { heading: string; links: ConsoleLink[] }[] = [
         needs: ['payments.view', 'payments.verify'],
       },
       { to: '/revenue', label: 'Sales', icon: TrendingUp, end: false, needs: ['revenue.view'] },
+      /* Discount codes, and shops that brought in other shops. */
+      { to: '/discounts', label: 'Discounts', icon: TicketPercent, end: false, needs: ['coupons.manage'] },
       {
         to: '/plans',
         label: 'Plans',

@@ -106,6 +106,12 @@ export const PERMISSIONS = [
   'leads.manage',
 
   /**
+   * Create and change discount codes, and mark referral rewards as given.
+   * Every code is money off, so it sits with billing.
+   */
+  'coupons.manage',
+
+  /**
    * Publish a message across the top of every shop's app. Reaches every
    * counter at once, so it is its own permission.
    */
@@ -156,6 +162,7 @@ export const PERMISSION_PRESETS: Record<string, { label: string; description: st
     description: 'Check payments, extend subscriptions, move shops between plans.',
     permissions: [
       'shops.view',
+      'coupons.manage',
       'shops.plan',
       'payments.view',
       'payments.verify',

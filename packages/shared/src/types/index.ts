@@ -138,6 +138,8 @@ export interface Payment {
   coversUntil?: string | null;
   /** Set when an operator entered it by hand; such a payment is accepted on entry. */
   recordedBy?: string | null;
+  /** A discount code used on it, and what it took off. */
+  coupon?: { code: string; discount: number } | null;
   invoiceNo?: string;
   invoicedAt?: string | null;
   createdAt: string;

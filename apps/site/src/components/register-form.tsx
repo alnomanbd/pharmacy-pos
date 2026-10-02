@@ -27,7 +27,7 @@ import { Button } from '@/components/ui/button';
 import { Field, Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
 import { cn } from '@/lib/utils';
-import { postJson, attribution } from '@/lib/api';
+import { postJson, attribution, referralCode } from '@/lib/api';
 import type { Plan } from '@/components/plan-cards';
 
 /**
@@ -235,7 +235,7 @@ export function RegisterForm({ lang }: { lang: Lang }) {
       counters: clamp(values.counters, 1, MAX_COUNTERS),
       outlets: clamp(values.outlets, 1, MAX_OUTLETS),
       ...(licence ? { licence } : {}),
-      attribution: { channel: 'website', ...attribution() },
+      attribution: { channel: 'website', ...attribution(), referralCode: referralCode() },
     });
     if (res.ok) {
       setState('sent');

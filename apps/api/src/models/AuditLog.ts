@@ -100,6 +100,10 @@ export const AUDIT_ACTIONS = [
   'organization.platform_remind',
   /** An operator published, changed or deleted an announcement shown to shops. */
   'announcement.change',
+  /** An operator created or changed a discount code. */
+  'coupon.change',
+  /** An operator marked a referring shop's reward as given. */
+  'referral.reward',
   /** An operator corrected a shop user's details. */
   'user.platform_update',
   /**

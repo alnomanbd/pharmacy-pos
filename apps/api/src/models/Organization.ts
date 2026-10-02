@@ -109,6 +109,24 @@ const schema = new Schema(
      * next operator can see the shop was already chased — and a double click
      * cannot send it twice.
      */
+    /**
+     * This shop's own sign-up link code, for referring another pharmacy:
+     * `dawai.com.bd/en/register?ref=K7M2QX`. Made the first time the owner
+     * opens the referral card, so shops that never refer anybody have none.
+     */
+    referralCode: { type: String, default: undefined, uppercase: true, trim: true },
+    /** The shop whose link this one signed up through. */
+    referredBy: { type: Schema.Types.ObjectId, ref: 'Organization', default: null, index: true },
+    /**
+     * The referring shop's reward for this sign-up, given by hand from the
+     * console. Recorded on the *referred* shop, so each sign-up is rewarded at
+     * most once and the console can show which are still owed.
+     */
+    referralReward: {
+      at: { type: Date, default: null },
+      by: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+      note: { type: String, default: '' },
+    },
     lastManualReminder: {
       at: { type: Date, default: null },
       by: { type: Schema.Types.ObjectId, ref: 'User', default: null },
@@ -121,6 +139,7 @@ const schema = new Schema(
 );
 
 schema.index({ status: 1, createdAt: -1 });
+schema.index({ referralCode: 1 }, { unique: true, partialFilterExpression: { referralCode: { $type: 'string' } } });
 
 schema.virtual('paidUntil').get(function paidUntil(this: { trialEndsAt?: Date | null }) {
   return this.trialEndsAt ?? null;

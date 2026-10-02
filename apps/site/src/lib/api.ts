@@ -53,3 +53,37 @@ export function attribution() {
     landingPage: window.location.pathname.slice(0, 160),
   };
 }
+
+/** Where a shop's referral code waits, this tab only, between the landing page and the sign-up. */
+const REF_KEY = 'dawai.ref';
+const REF_RX = /^[A-HJ-NP-Z2-9]{6}$/;
+
+/**
+ * Remembers `?ref=` from a shop's sign-up link.
+ *
+ * The link is often opened on the home page and the visitor only reaches the
+ * sign-up form three pages later, by which time the address has lost it.
+ */
+export function rememberReferral() {
+  if (typeof window === 'undefined') return;
+  const ref = new URLSearchParams(window.location.search).get('ref')?.trim().toUpperCase();
+  if (!ref || !REF_RX.test(ref)) return;
+  try {
+    sessionStorage.setItem(REF_KEY, ref);
+  } catch {
+    /* Without storage it still works when the link goes straight to the form. */
+  }
+}
+
+/** The referral code to send with a sign-up, from the address or from earlier in the visit. */
+export function referralCode(): string | undefined {
+  if (typeof window === 'undefined') return undefined;
+  const fromUrl = new URLSearchParams(window.location.search).get('ref')?.trim().toUpperCase();
+  if (fromUrl && REF_RX.test(fromUrl)) return fromUrl;
+  try {
+    const kept = sessionStorage.getItem(REF_KEY);
+    return kept && REF_RX.test(kept) ? kept : undefined;
+  } catch {
+    return undefined;
+  }
+}

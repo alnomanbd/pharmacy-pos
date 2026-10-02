@@ -181,6 +181,11 @@ export default function Payments() {
                       {p.plan} · {p.months}m
                     </span>
                     {p.recordedBy && <span className="pill neutral">recorded by hand</span>}
+                    {p.coupon?.code && (
+                      <span className="pill completed">
+                        {p.coupon.code} −{taka(p.coupon.discount)}
+                      </span>
+                    )}
                   </div>
 
                   <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">

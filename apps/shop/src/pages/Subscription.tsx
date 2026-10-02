@@ -9,6 +9,10 @@ import {
   Download,
   Eye,
   FileJson,
+  Gift,
+  Copy,
+  Share2,
+  Tag,
   Smartphone,
   Upload,
   X,
@@ -87,6 +91,12 @@ export default function Subscription() {
     note: '',
   });
   const [receipt, setReceipt] = useState<File | null>(null);
+  /* A discount code: what was typed, and what it took off once applied. */
+  const [codeInput, setCodeInput] = useState('');
+  const [applied, setApplied] = useState<{ code: string; discount: number; total: number; description: string } | null>(null);
+  const [codeError, setCodeError] = useState('');
+  const [applying, setApplying] = useState(false);
+  const [referral, setReferral] = useState<{ code: string; signedUp: number; paying: number } | null>(null);
   const [invoiceBusy, setInvoiceBusy] = useState('');
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
@@ -115,6 +125,10 @@ export default function Subscription() {
 
   useEffect(() => {
     void load();
+    billingApi
+      .referral()
+      .then(setReferral)
+      .catch(() => undefined);
   }, [load]);
 
   const getInvoice = async (id: string, download = true) => {
@@ -131,17 +145,56 @@ export default function Subscription() {
   };
 
   const selected = sub?.plans.find((p) => p.key === form.plan) ?? null;
-  const price = selected ? selected.price * form.months : 0;
+  const base = selected ? selected.price * form.months : 0;
+  const price = applied ? applied.total : base;
+
+  /** Prices a code for this plan and these months; asked again whenever either changes. */
+  const applyCode = async (code: string, plan: string, months: number) => {
+    if (!code.trim()) return;
+    setApplying(true);
+    setCodeError('');
+    try {
+      const q = await billingApi.coupon(code.trim(), plan, months);
+      if (q.ok) {
+        setApplied({ code: q.code, discount: q.discount, total: q.total, description: q.description });
+        setForm((f) => ({ ...f, amount: String(q.total) }));
+      } else {
+        setApplied(null);
+        // One reason carries a number, so it cannot be a fixed key.
+        const needed = /at least (\d+) months/.exec(q.reason)?.[1];
+        setCodeError(
+          needed && lang === 'bn'
+            ? `এই কোডের জন্য একসাথে অন্তত ${bnNumerals(needed)} মাসের পেমেন্ট লাগবে।`
+            : t(q.reason),
+        );
+        const p = sub?.plans.find((x) => x.key === plan);
+        setForm((f) => ({ ...f, amount: String((p?.price ?? 0) * months) }));
+      }
+    } catch {
+      setCodeError(t('Could not check that code.'));
+    } finally {
+      setApplying(false);
+    }
+  };
+  const removeCode = () => {
+    setApplied(null);
+    setCodeInput('');
+    setCodeError('');
+    setForm((f) => ({ ...f, amount: String(base) }));
+  };
 
   const pickPlan = (key: string) => {
     const p = sub?.plans.find((x) => x.key === key);
     setForm((f) => ({ ...f, plan: key, amount: String((p?.price ?? 0) * f.months) }));
+    if (applied) void applyCode(applied.code, key, form.months);
   };
-  const pickMonths = (months: number) =>
+  const pickMonths = (months: number) => {
     setForm((f) => {
       const p = sub?.plans.find((x) => x.key === f.plan);
       return { ...f, months, amount: String((p?.price ?? 0) * months) };
     });
+    if (applied) void applyCode(applied.code, form.plan, months);
+  };
 
   const submit = async () => {
     if (!form.amount || Number(form.amount) <= 0) {
@@ -162,6 +215,7 @@ export default function Subscription() {
         senderNumber: form.senderNumber.trim() || undefined,
         trxId: form.trxId.trim() || undefined,
         note: form.note.trim() || undefined,
+        couponCode: applied?.code,
       });
       // The screenshot goes second, so a failed upload does not lose the claim.
       if (receipt) {
@@ -178,6 +232,8 @@ export default function Subscription() {
       );
       setReceipt(null);
       setForm((f) => ({ ...f, trxId: '', note: '' }));
+      setApplied(null);
+      setCodeInput('');
       await load();
     } catch (e: unknown) {
       const msg = (e as { response?: { data?: { message?: string } } }).response?.data?.message;
@@ -312,8 +368,55 @@ export default function Subscription() {
             </div>
           </div>
 
+          {/* A discount code, applied to whatever plan and months are chosen. */}
+          <div className="mt-3">
+            {applied ? (
+              <div className="flex flex-wrap items-center gap-2 rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-2.5 text-sm">
+                <Tag className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                <span className="font-mono font-semibold">{applied.code}</span>
+                <span>
+                  −{taka(applied.discount)}
+                  {applied.description && <span className="text-muted-foreground"> · {applied.description}</span>}
+                </span>
+                <button type="button" className="ml-auto text-xs font-semibold text-muted-foreground hover:text-foreground" onClick={removeCode}>
+                  {t('Remove')}
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  className="input h-10 font-mono uppercase"
+                  value={codeInput}
+                  maxLength={24}
+                  onChange={(e) => {
+                    setCodeInput(e.target.value);
+                    setCodeError('');
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') void applyCode(codeInput, form.plan, form.months);
+                  }}
+                  placeholder={t('Discount code (if you have one)')}
+                  aria-label={t('Discount code')}
+                />
+                <button
+                  type="button"
+                  className="btn btn-ghost h-10 shrink-0 border border-border"
+                  disabled={!codeInput.trim() || applying}
+                  onClick={() => void applyCode(codeInput, form.plan, form.months)}
+                >
+                  {t('Apply')}
+                </button>
+              </div>
+            )}
+            {codeError && <p className="mt-1 text-xs text-destructive">{codeError}</p>}
+          </div>
+
           <p className="mt-3 rounded-lg bg-muted p-3 text-sm">
-            {t('Total to send')}: <strong className="font-mono text-base tabular-nums">{taka(price)}</strong>
+            {t('Total to send')}:{' '}
+            {applied && applied.discount > 0 && (
+              <span className="mr-1.5 font-mono text-muted-foreground line-through tabular-nums">{taka(base)}</span>
+            )}
+            <strong className="font-mono text-base tabular-nums">{taka(price)}</strong>
           </p>
 
           <div className="mt-3">
@@ -500,6 +603,9 @@ export default function Subscription() {
         </button>
       </div>
 
+      {/* ---------------- refer ---------------- */}
+      {referral && <ReferCard referral={referral} lang={lang} />}
+
       {previewUrl && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
@@ -530,6 +636,53 @@ export default function Subscription() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * Bringing in another pharmacy.
+ *
+ * Owners in one bazaar know each other, and the shop next door saying "we use
+ * this" is worth more than any advert. The link carries this shop's code, so
+ * the team can see who brought whom and thank them.
+ */
+function ReferCard({ referral, lang }: { referral: { code: string; signedUp: number; paying: number }; lang: string }) {
+  const t = useT();
+  const { toast } = useToast();
+  const n = (v: number) => (lang === 'bn' ? bnNumerals(String(v)) : String(v));
+  const link = `${BRAND.siteUrl.replace(/\/$/, '')}/${lang === 'bn' ? 'bn' : 'en'}/register?ref=${referral.code}`;
+  const message = `${t('We run our pharmacy on Dawai — billing, stock and baki in one place. Try it free:')} ${link}`;
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(link);
+      toast(t('Link copied.'));
+    } catch {
+      toast(link);
+    }
+  };
+
+  return (
+    <div className="card">
+      <h3 className="flex items-center gap-2">
+        <Gift className="h-4 w-4" /> {t('Refer another pharmacy')}
+      </h3>
+      <p className="mt-1 text-sm text-muted-foreground">
+        {t('Know a shop that still keeps its books on paper? Send them your link. When they sign up through it, we will know it was you — and we will thank you.')}
+      </p>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <code className="min-w-0 basis-full truncate rounded-md sm:basis-0 sm:flex-1 border border-border bg-muted px-3 py-2 text-xs">{link}</code>
+        <button type="button" className="btn btn-ghost h-9 border border-border" onClick={() => void copy()}>
+          <Copy className="h-4 w-4" /> {t('Copy')}
+        </button>
+        <a className="btn h-9" href={`https://wa.me/?text=${encodeURIComponent(message)}`} target="_blank" rel="noopener noreferrer">
+          <Share2 className="h-4 w-4" /> WhatsApp
+        </a>
+      </div>
+      <p className="mt-2 text-xs text-muted-foreground">
+        {t('Your code')}: <strong className="font-mono">{referral.code}</strong> · {n(referral.signedUp)} {t('signed up')} · {n(referral.paying)} {t('paying')}
+      </p>
     </div>
   );
 }

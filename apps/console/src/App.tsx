@@ -15,6 +15,7 @@ import Support from './pages/Support';
 import Renewals from './pages/Renewals';
 import Messages from './pages/Messages';
 import Announcements from './pages/Announcements';
+import Discounts from './pages/Discounts';
 import Audit from './pages/Audit';
 import Medicines from './pages/Medicines';
 import MedicineRequests from './pages/MedicineRequests';
@@ -98,6 +99,7 @@ export default function App() {
         <Route path="renewals" element={<Renewals />} />
         <Route path="messages" element={<Messages />} />
         <Route path="announcements" element={<Announcements />} />
+        <Route path="discounts" element={<Discounts />} />
         {/* What this team did to customer accounts. Read-only. */}
         <Route path="audit" element={<Audit />} />
         {/* The operator's own account: second factor, signed-in devices. */}
