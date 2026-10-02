@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
   Store,
@@ -26,17 +26,19 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronDown,
+  Headset,
   X,
 } from 'lucide-react';
 import { useAuthStore } from '@dawai/shared/store/auth.store';
 import { useTheme } from '@dawai/shared/hooks/useTheme';
 import FindAnything from '../components/FindAnything';
 import ProfileMenu from '../components/ProfileMenu';
-import { useT, useLangStore } from '../i18n/ui';
+import { useT, useLangStore, bnNumerals } from '../i18n/ui';
 import AlertBell from '../alerts/AlertBell';
 import AlertTicker from '../alerts/AlertTicker';
 import { useStockAlertsPoll } from '../alerts/useStockAlerts';
 import { BRAND } from '../brand';
+import { supportApi } from '../api';
 
 /**
  * The shop's shell.
@@ -143,6 +145,9 @@ const GROUPS: ShopGroup[] = [
       /* Nothing deleted is destroyed, and this is where it went. With the
          shop's own things rather than the shelves: it holds all of them. */
       { to: '/trash', label: 'Recycle Bin', icon: Trash2, end: false, adminOnly: true },
+      /* Every role: the person who notices something wrong is usually the one
+         at the counter. Badged with the replies nobody here has read yet. */
+      { to: '/support', label: 'Support', icon: Headset, end: false },
     ],
   },
 ];
@@ -218,6 +223,31 @@ export default function ShopLayout() {
   const [moreOpen, setMoreOpen] = useState(false);
   /* Expired lots and empty shelves, polled for the bell and the ticker. */
   useStockAlertsPoll();
+
+  /*
+   * Replies from support nobody here has read yet.
+   *
+   * Counted in the shell rather than on the page, so a reply is noticed from
+   * the till. Re-asked on every move, because opening the conversation is what
+   * clears it, and once a minute otherwise.
+   */
+  const [supportUnread, setSupportUnread] = useState(0);
+  useEffect(() => {
+    let live = true;
+    const ask = () =>
+      supportApi
+        .unread()
+        .then((d) => live && setSupportUnread(d.unread))
+        .catch(() => undefined);
+    void ask();
+    const tick = window.setInterval(() => document.visibilityState === 'visible' && void ask(), 60_000);
+    return () => {
+      live = false;
+      window.clearInterval(tick);
+    };
+  }, [pathname]);
+  const badgeOf = (to: string) => (to === '/support' ? supportUnread : 0);
+  const count = (v: number) => (lang === 'bn' ? bnNumerals(String(v)) : String(v));
 
   /* A salesman sees the counter and nothing that carries a purchase price. */
   const runsTheShop = user?.role !== 'salesman';
@@ -360,8 +390,18 @@ export default function ShopLayout() {
                       `nav-link${isActive ? ' active' : ''}${railOpen ? '' : ' justify-center px-0'}`
                     }
                   >
-                    <l.icon className="nav-icon" strokeWidth={2} />
-                    {railOpen && <span>{t(l.label)}</span>}
+                    <span className="relative shrink-0">
+                      <l.icon className="nav-icon" strokeWidth={2} />
+                      {!railOpen && badgeOf(l.to) > 0 && (
+                        <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-destructive ring-2 ring-card" />
+                      )}
+                    </span>
+                    {railOpen && <span className="min-w-0 flex-1 truncate">{t(l.label)}</span>}
+                    {railOpen && badgeOf(l.to) > 0 && (
+                      <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-destructive px-1.5 text-[11px] font-bold text-destructive-foreground">
+                        {count(badgeOf(l.to))}
+                      </span>
+                    )}
                   </NavLink>
                 );
                 return (
@@ -490,7 +530,12 @@ export default function ShopLayout() {
               onClick={() => setMoreOpen(true)}
               className="flex flex-1 flex-col items-center gap-1 py-2 text-[11px] font-medium text-muted-foreground"
             >
-              <MoreHorizontal className="h-5 w-5" />
+              <span className="relative">
+                <MoreHorizontal className="h-5 w-5" />
+                {rest.some((l) => badgeOf(l.to) > 0) && (
+                  <span className="absolute -right-1 -top-0.5 h-2.5 w-2.5 rounded-full bg-destructive ring-2 ring-card" />
+                )}
+              </span>
               {t('More')}
             </button>
           )}
@@ -523,10 +568,15 @@ export default function ShopLayout() {
                     to={l.to}
                     end={l.end}
                     onClick={() => setMoreOpen(false)}
-                    className="flex flex-col items-center gap-1.5 rounded-lg border border-border px-2 py-3 text-xs font-medium"
+                    className="relative flex flex-col items-center gap-1.5 rounded-lg border border-border px-2 py-3 text-xs font-medium"
                   >
                     <l.icon className="h-5 w-5" strokeWidth={2} />
                     {t(l.label)}
+                    {badgeOf(l.to) > 0 && (
+                      <span className="absolute right-1.5 top-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-destructive px-1 text-[11px] font-bold text-destructive-foreground">
+                        {count(badgeOf(l.to))}
+                      </span>
+                    )}
                   </NavLink>
                 ))}
               </div>

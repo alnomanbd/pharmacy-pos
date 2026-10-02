@@ -81,6 +81,8 @@ export const AUDIT_ACTIONS = [
   'file.upload',
   'medicine.request',
   'support.create',
+  /** An operator closed or reopened a shop's support conversation. */
+  'support.status',
   'billing.payment.submit',
 
   // Operating the deployment: approving, suspending or re-planning a customer

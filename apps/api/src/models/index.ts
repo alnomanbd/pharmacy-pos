@@ -24,6 +24,16 @@ export {
   type MedicineRequestStatus,
 } from './MedicineRequest.js';
 export {
+  SupportThreadModel,
+  SupportMessageModel,
+  SUPPORT_SIDES,
+  type SupportSide,
+  type SupportThread,
+  type SupportThreadDoc,
+  type SupportMessage,
+  type SupportMessageDoc,
+} from './Support.js';
+export {
   NotificationLogModel,
   type NotificationLog,
   type NotificationLogDoc,

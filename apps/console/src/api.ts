@@ -17,6 +17,8 @@ import type {
   PlatformStats,
   RevenueGranularity,
   Role,
+  SupportMessage,
+  SupportThread,
   User,
 } from '@dawai/shared/types';
 
@@ -273,6 +275,16 @@ export const platformApi = {
 
   audit: (params?: { action?: string; actor?: string; page?: number; limit?: number }) =>
     getData<Paged<PlatformAuditEntry> & { actions: string[] }>(api.get('/platform/audit', { params })),
+
+  /** Shops' support conversations. `waiting` is the open ones with an unread line. */
+  support: (params?: { status?: string; page?: number; limit?: number }) =>
+    getData<Paged<SupportThread> & { waiting: number }>(api.get('/platform/support', { params })),
+  supportThread: (id: string) =>
+    getData<{ thread: SupportThread; messages: SupportMessage[] }>(api.get(`/platform/support/${id}`)),
+  supportReply: (id: string, body: string) =>
+    getData<SupportMessage>(api.post(`/platform/support/${id}/messages`, { body })),
+  supportStatus: (id: string, status: 'open' | 'closed') =>
+    getData<SupportThread>(api.patch(`/platform/support/${id}/status`, { status })),
 
   /** Enquiries from the marketing site. `waiting` is the unanswered count. */
   leads: (params?: { status?: string; q?: string; page?: number; limit?: number }) =>

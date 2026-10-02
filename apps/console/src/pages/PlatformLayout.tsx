@@ -25,6 +25,7 @@ import {
   KeyRound,
   Pill,
   ClipboardList,
+  Headset,
 } from 'lucide-react';
 import { platformApi } from '../api';
 import { useAuthStore } from '@dawai/shared/store/auth.store';
@@ -97,6 +98,14 @@ const NAV_SECTIONS: { heading: string; links: ConsoleLink[] }[] = [
     heading: 'Shops',
     links: [
       { to: '/', label: 'Shops', icon: Building2, end: true, needs: ['shops.view'] },
+      /* Customers asking for help; badged with the conversations waiting on a reply. */
+      {
+        to: '/support',
+        label: 'Support',
+        icon: Headset,
+        end: false,
+        needs: ['support.view', 'support.reply'],
+      },
       {
         /* People who are not customers yet: the marketing site's enquiries. */
         to: '/leads',
@@ -233,7 +242,7 @@ export default function PlatformLayout() {
     const may = (...needed: string[]) => needed.some((p) => access.permissions.includes(p));
 
     const poll = async () => {
-      const [payments, stats, leads, catalogue] = await Promise.all([
+      const [payments, stats, leads, catalogue, support] = await Promise.all([
         may('payments.view', 'payments.verify')
           ? platformApi.payments({ status: 'pending', limit: 4 }).catch(() => null)
           : null,
@@ -246,12 +255,15 @@ export default function PlatformLayout() {
         may('catalogue.view') && !may('shops.view')
           ? platformApi.catalogueStats().catch(() => null)
           : null,
+        may('support.view', 'support.reply')
+          ? platformApi.support({ status: 'open', limit: 10 }).catch(() => null)
+          : null,
       ]);
 
       setCounts({
         payments: payments?.total ?? 0,
         shops: stats?.pending ?? 0,
-        support: 0,
+        support: support?.waiting ?? 0,
         requests: may('catalogue.view')
           ? stats?.pendingMedicineRequests ?? catalogue?.pendingRequests ?? 0
           : 0,
@@ -276,6 +288,19 @@ export default function PlatformLayout() {
             .join(' · '),
           tag: 'unverified',
           href: '/payments?status=pending',
+        });
+      }
+
+      /* Only the ones still waiting on us, newest first, and at most three. */
+      for (const s of (support?.data ?? []).filter((t) => t.unreadForPlatform > 0).slice(0, 3)) {
+        const shop = typeof s.organization === 'object' && s.organization ? s.organization.name : 'A shop';
+        next.push({
+          key: `support-${s._id}`,
+          kind: 'support',
+          title: shop,
+          detail: [s.subject, s.lastMessagePreview].filter(Boolean).join(' · '),
+          tag: 'unanswered',
+          href: '/support',
         });
       }
 
@@ -491,6 +516,7 @@ export default function PlatformLayout() {
                       [
                         ['payment', 'payments', counts.payments, 'to verify', '/payments?status=pending', <Receipt key="i" className="h-4 w-4" />],
                         ['sign-up', 'sign-ups', counts.shops, 'awaiting approval', '/?status=pending', <Building2 key="i" className="h-4 w-4" />],
+                        ['support conversation', 'support conversations', counts.support, 'waiting on a reply', '/support', <Headset key="i" className="h-4 w-4" />],
                         ['enquiry', 'enquiries', counts.leads, 'unanswered', '/leads', <Inbox key="i" className="h-4 w-4" />],
                         ['medicine request', 'medicine requests', counts.requests, 'waiting', '/requests', <ClipboardList key="i" className="h-4 w-4" />],
                       ] as [string, string, number, string, string, JSX.Element][]

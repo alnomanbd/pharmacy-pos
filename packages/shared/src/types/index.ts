@@ -141,6 +141,35 @@ export interface Payment {
   createdAt: string;
 }
 
+/** Which end of a support conversation a line came from. */
+export type SupportSide = 'shop' | 'platform';
+
+/** One support conversation between a shop and the Dawai team. */
+export interface SupportThread {
+  _id: string;
+  /** Populated in the console's inbox; a bare id in the shop's own list. */
+  organization: string | { _id: string; name: string; plan?: string; status?: OrgStatus };
+  openedBy?: string | { _id: string; name: string; email?: string; phone?: string };
+  subject: string;
+  status: 'open' | 'closed';
+  lastMessageAt: string;
+  lastMessagePreview: string;
+  lastMessageFrom: SupportSide;
+  unreadForPlatform: number;
+  unreadForShop: number;
+  closedAt?: string | null;
+  createdAt: string;
+}
+
+export interface SupportMessage {
+  _id: string;
+  thread: string;
+  side: SupportSide;
+  authorName: string;
+  body: string;
+  createdAt: string;
+}
+
 /** An enquiry from the marketing site, before they are a customer. */
 export interface Lead {
   /** The console reads leads through a serializer, which hands back `id`. */

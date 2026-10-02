@@ -11,6 +11,7 @@ import Revenue from './pages/Revenue';
 import Plans from './pages/Plans';
 import Team from './pages/Team';
 import Leads from './pages/Leads';
+import Support from './pages/Support';
 import Audit from './pages/Audit';
 import Medicines from './pages/Medicines';
 import MedicineRequests from './pages/MedicineRequests';
@@ -90,6 +91,7 @@ export default function App() {
         <Route path="requests" element={<MedicineRequests />} />
         {/* People who are not customers yet: the marketing site's contact form. */}
         <Route path="leads" element={<Leads />} />
+        <Route path="support" element={<Support />} />
         {/* What this team did to customer accounts. Read-only. */}
         <Route path="audit" element={<Audit />} />
         {/* The operator's own account: second factor, signed-in devices. */}

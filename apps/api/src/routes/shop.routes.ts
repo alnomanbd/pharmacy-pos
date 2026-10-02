@@ -36,6 +36,7 @@ import { csvFilename } from '../utils/csv.js';
 import { bdMobile, BD_MOBILE_MESSAGE } from '../utils/phone.js';
 import { ok, created } from '../utils/response.js';
 import medicineRequestRoutes from './shopMedicineRequest.routes.js';
+import supportRoutes from './shopSupport.routes.js';
 
 /**
  * The shop's own API.
@@ -54,6 +55,8 @@ const router = Router();
  */
 /* Any shop role may ask for a missing medicine, so these sit ahead of the gate. */
 router.use('/medicine-requests', medicineRequestRoutes);
+/* Support too — and without the read-only lock: a lapsed shop has to be able to ask why. */
+router.use('/support', supportRoutes);
 
 router.use(requireAuth, requireWritableTenant, requireRole(...SHOP_ADMIN_ROLES));
 

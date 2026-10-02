@@ -9,6 +9,7 @@ import { exportOrganization, deleteOrganization } from '../services/tenantData.s
 import { usageForOrganization, platformUsage } from '../services/usage.service.js';
 import * as plans from '../services/plan.service.js';
 import * as leads from '../services/lead.service.js';
+import * as support from '../services/support.service.js';
 import { requireAuth, requireRole, requirePermission } from '../middlewares/auth.js';
 import { PLATFORM_ROLES, PLATFORM_OWNER_ROLES } from '../types/roles.js';
 import * as team from '../services/platformTeam.service.js';
@@ -675,6 +676,55 @@ router.get(
       granularity: str(req.query.granularity) as revenue.Granularity | undefined,
     }),
   ),
+);
+
+/* --------------------------------- support --------------------------------- */
+
+/**
+ * The support inbox: shops' conversations with the team.
+ *
+ * Reading needs `support.view` (or `.reply`); answering, closing and reopening
+ * need `support.reply`. Open threads by default — see the service.
+ */
+router.get(
+  '/support',
+  requirePermission('support.view', 'support.reply'),
+  handle((req) =>
+    support.listPlatformThreads({
+      status: str(req.query.status),
+      page: num(req.query.page),
+      limit: num(req.query.limit),
+    }),
+  ),
+);
+
+router.get(
+  '/support/:id',
+  requirePermission('support.view', 'support.reply'),
+  handle((req) => support.readThread(req.params.id, 'platform')),
+);
+
+router.post(
+  '/support/:id/messages',
+  requirePermission('support.reply'),
+  validate(z.object({ body: z.string().trim().min(1).max(4000) })),
+  handle((req) => support.postMessage(req.params.id, 'platform', req.user!.id, req.body.body), 'Sent'),
+);
+
+router.patch(
+  '/support/:id/status',
+  requirePermission('support.reply'),
+  validate(z.object({ status: z.enum(['open', 'closed']) })),
+  handle(async (req) => {
+    const thread = await support.setThreadStatus(req.params.id, req.body.status, req.user!.id);
+    await audit(
+      req,
+      'support.status',
+      { model: 'SupportThread', id: req.params.id, label: thread.subject },
+      { after: { status: req.body.status } },
+    );
+    return thread;
+  }),
 );
 
 export default router;

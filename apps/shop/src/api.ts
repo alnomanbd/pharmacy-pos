@@ -1,6 +1,7 @@
 import api, { getData } from '@dawai/shared/api/client';
 import { downloadBlob } from '@dawai/shared/api';
 import { useLangStore } from '@dawai/shared/i18n/lang';
+import type { SupportMessage, SupportThread } from '@dawai/shared/types';
 
 /**
  * What the shop calls.
@@ -1251,6 +1252,21 @@ export const medicineRequestsApi = {
   list: () => getData<MedicineRequest[]>(api.get('/shop/medicine-requests')),
   /** Only while it is still pending. */
   withdraw: (id: string) => getData<unknown>(api.delete(`/shop/medicine-requests/${id}`)),
+};
+
+/* ---------------------------------------------------------------- support -- */
+
+/** The shop's conversations with the Dawai team. Open to every role. */
+export const supportApi = {
+  threads: () => getData<SupportThread[]>(api.get('/shop/support')),
+  /** Threads with a reply this shop has not read — for the badge in the nav. */
+  unread: () => getData<{ unread: number }>(api.get('/shop/support/unread')),
+  open: (payload: { subject: string; body: string }) =>
+    getData<{ thread: SupportThread; message: SupportMessage }>(api.post('/shop/support', payload)),
+  thread: (id: string) =>
+    getData<{ thread: SupportThread; messages: SupportMessage[] }>(api.get(`/shop/support/${id}`)),
+  reply: (id: string, body: string) =>
+    getData<SupportMessage>(api.post(`/shop/support/${id}/messages`, { body })),
 };
 
 /* ------------------------------------------------------- the shop's paper -- */
