@@ -20,6 +20,7 @@ import {
   OVERRIDABLE_AXES,
   type LimitOverrides,
 } from './plan.service.js';
+import { branchCount } from './branch.service.js';
 import { containsRegex } from '../utils/search.js';
 import type { OrgStatus, Role } from '../types/enums.js';
 import { PLATFORM_ROLES } from '../types/roles.js';
@@ -460,6 +461,7 @@ export function seatUsage(
 export interface PlanUsage {
   plan: string;
   planName: string;
+  outlets: SeatUsage;
   terminals: SeatUsage;
   shopUsers: SeatUsage;
 }
@@ -474,14 +476,16 @@ export async function planUsage(orgId: string): Promise<PlanUsage> {
 
   const planLimits = await limitsForPlan(org.plan || 'trial');
   const limits = effectiveLimits(planLimits, (org.limitOverrides ?? null) as LimitOverrides | null);
-  const [counters, users] = await Promise.all([
+  const [counters, users, branches] = await Promise.all([
     ShopCounterModel.countDocuments({ organization: orgId, isActive: { $ne: false } }),
     UserModel.countDocuments({ organization: orgId, isActive: true, deletedAt: null }),
+    branchCount(orgId),
   ]);
 
   return {
     plan: org.plan || 'trial',
     planName: (await planByKey(org.plan || 'trial'))?.name ?? org.plan ?? 'Trial',
+    outlets: seatUsage(limits.outlets, branches, limits.overridden.outlets, planLimits.outlets),
     terminals: seatUsage(limits.terminals, counters, limits.overridden.terminals, planLimits.terminals),
     shopUsers: seatUsage(limits.shopUsers, users, limits.overridden.shopUsers, planLimits.shopUsers),
   };
@@ -499,13 +503,13 @@ export async function updateLimitOverrides(orgId: string, overrides: LimitOverri
   if (!org) throw notFound('Shop');
 
   const current = (org.limitOverrides ?? {}) as LimitOverrides;
-  const before = { terminals: current.terminals ?? null, shopUsers: current.shopUsers ?? null };
+  const before = { outlets: current.outlets ?? null, terminals: current.terminals ?? null, shopUsers: current.shopUsers ?? null };
   for (const axis of OVERRIDABLE_AXES) {
     if (overrides[axis] !== undefined) org.set(`limitOverrides.${axis}`, overrides[axis]);
   }
   await org.save();
 
   const saved = (org.limitOverrides ?? {}) as LimitOverrides;
-  const after = { terminals: saved.terminals ?? null, shopUsers: saved.shopUsers ?? null };
+  const after = { outlets: saved.outlets ?? null, terminals: saved.terminals ?? null, shopUsers: saved.shopUsers ?? null };
   return { organization: org.toObject(), before, after, usage: await planUsage(orgId) };
 }

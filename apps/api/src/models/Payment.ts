@@ -34,6 +34,16 @@ const schema = new Schema(
      * Such a payment is verified the moment it is recorded, by that operator.
      */
     recordedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+    /**
+     * What one month cost when this was paid: the plan, and the branches beyond
+     * those it includes. Kept so the invoice can show "2 extra branches × ৳1,000"
+     * even after the shop opens or closes one.
+     */
+    pricing: {
+      base: { type: Number, default: null },
+      extraBranches: { type: Number, default: 0 },
+      extraBranchPrice: { type: Number, default: 0 },
+    },
     /** A discount code used on this payment, and what it took off. */
     coupon: {
       code: { type: String, default: '' },

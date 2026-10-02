@@ -1,7 +1,8 @@
 import { Types } from 'mongoose';
 import { CouponModel, PaymentModel } from '../models/index.js';
 import type { CouponKind } from '../models/Coupon.js';
-import { planByKey } from './plan.service.js';
+import { planByKey, monthlyPrice } from './plan.service.js';
+import { branchCount } from './branch.service.js';
 import { badRequest, conflict, notFound } from '../utils/AppError.js';
 
 /**
@@ -78,7 +79,7 @@ export async function quoteForShop(orgId: string, input: { code: string; plan: s
   ]);
   const q = quote(coupon, {
     plan: plan.key,
-    price: plan.price,
+    price: monthlyPrice(plan, await branchCount(orgId)).total,
     months: input.months,
     paidBefore: Boolean(paidBefore),
     usedBefore: Boolean(usedBefore),

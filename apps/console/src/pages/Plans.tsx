@@ -19,7 +19,7 @@ import { LoadingBlock } from '@dawai/shared/components/Spinner';
 const LIMITS = [
   { key: 'terminals', label: 'Billing counters', icon: Monitor },
   { key: 'shopUsers', label: 'Staff logins', icon: Users },
-  { key: 'outlets', label: 'Outlets', icon: Store },
+  { key: 'outlets', label: 'Branches (max)', icon: Store },
 ] as const;
 
 const EMPTY = {
@@ -27,6 +27,8 @@ const EMPTY = {
   name: '',
   description: '',
   price: 0,
+  includedBranches: 1,
+  extraBranchPrice: 0,
   sortOrder: 1,
   limits: {
     terminals: null as number | null,
@@ -174,6 +176,26 @@ export default function Plans() {
                 onChange={(e) => setDraft({ ...draft, price: Number(e.target.value) })}
               />
             </label>
+            <label className="label">
+              Branches included
+              <input
+                className="input mt-1"
+                type="number"
+                min="1"
+                value={draft.includedBranches}
+                onChange={(e) => setDraft({ ...draft, includedBranches: Math.max(1, Number(e.target.value) || 1) })}
+              />
+            </label>
+            <label className="label">
+              Per extra branch / month
+              <input
+                className="input mt-1"
+                type="number"
+                min="0"
+                value={draft.extraBranchPrice}
+                onChange={(e) => setDraft({ ...draft, extraBranchPrice: Number(e.target.value) })}
+              />
+            </label>
             {LIMITS.map((l) => (
               <label className="label" key={l.key}>
                 {l.label}
@@ -219,6 +241,7 @@ export default function Plans() {
                     <tr>
                       <th>Plan</th>
                       <th>Price / month</th>
+                      <th title="Branches the price covers, and each one beyond at the extra price">Branches incl. · per extra</th>
                       {LIMITS.map((l) => (
                         <th key={l.key}>{l.label}</th>
                       ))}
@@ -258,6 +281,42 @@ export default function Plans() {
                                 save(p.id, { price: Number(e.target.value) })
                               }
                             />
+                          )}
+                        </td>
+                        {/* What a shop with more branches pays: the price covers this many, each extra is this much. */}
+                        <td>
+                          {p.isTrial ? (
+                            <span className="text-sm text-muted-foreground">—</span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1">
+                              <input
+                                className="input"
+                                style={{ width: 56 }}
+                                type="number"
+                                min="1"
+                                title="Branches included in the price"
+                                defaultValue={p.includedBranches ?? 1}
+                                disabled={busy === p.id}
+                                onBlur={(e) => {
+                                  const v = Math.max(1, Number(e.target.value) || 1);
+                                  if (v !== (p.includedBranches ?? 1)) save(p.id, { includedBranches: v });
+                                }}
+                              />
+                              <span className="text-xs text-muted-foreground">·</span>
+                              <input
+                                className="input"
+                                style={{ width: 84 }}
+                                type="number"
+                                min="0"
+                                title="Price of each extra branch, per month"
+                                defaultValue={p.extraBranchPrice ?? 0}
+                                disabled={busy === p.id}
+                                onBlur={(e) => {
+                                  const v = Math.max(0, Number(e.target.value) || 0);
+                                  if (v !== (p.extraBranchPrice ?? 0)) save(p.id, { extraBranchPrice: v });
+                                }}
+                              />
+                            </span>
                           )}
                         </td>
                         {LIMITS.map((l) => (

@@ -6,7 +6,8 @@ import {
   MedicineRequestModel,
   ShopNoteModel,
 } from '../models/index.js';
-import { everyPlan } from './plan.service.js';
+import { everyPlan, monthlyPrice } from './plan.service.js';
+import { branchCounts } from './branch.service.js';
 import { endOfDay } from './shopNote.service.js';
 import { breakdown } from './leaving.service.js';
 
@@ -33,8 +34,8 @@ const monthKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).pad
  * month, at their plan's price. Pure, for the tests.
  */
 export function mrrOf(
-  shops: { plan: string; paidUntil: Date | null }[],
-  priceOf: (plan: string) => { price: number; isTrial: boolean } | undefined,
+  shops: { plan: string; paidUntil: Date | null; branches?: number }[],
+  priceOf: (plan: string) => { price: number; isTrial: boolean; includedBranches?: number; extraBranchPrice?: number } | undefined,
   now = new Date(),
 ) {
   let mrr = 0;
@@ -42,7 +43,8 @@ export function mrrOf(
   for (const s of shops) {
     const p = priceOf(s.plan);
     if (!p || p.isTrial || !s.paidUntil || s.paidUntil <= now) continue;
-    mrr += p.price;
+    // What this shop pays a month, its extra branches included.
+    mrr += monthlyPrice(p, s.branches ?? 1).total;
     paying++;
   }
   return { mrr, paying };
@@ -76,8 +78,9 @@ export async function overview(opts: { money: boolean }) {
 
   const planOf = new Map(plans.map((p) => [p.key, p]));
   const isTrial = (key: string) => planOf.get(key)?.isTrial ?? key === 'trial';
+  const branchesOf = await branchCounts(live.map((o) => o._id));
   const { mrr, paying } = mrrOf(
-    live.map((o) => ({ plan: o.plan, paidUntil: o.trialEndsAt ? new Date(o.trialEndsAt) : null })),
+    live.map((o) => ({ plan: o.plan, paidUntil: o.trialEndsAt ? new Date(o.trialEndsAt) : null, branches: branchesOf(o._id) })),
     (k) => planOf.get(k),
     now,
   );

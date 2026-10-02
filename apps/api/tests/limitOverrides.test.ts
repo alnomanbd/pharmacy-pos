@@ -18,10 +18,11 @@ describe('effectiveLimits', () => {
   it('is the plan’s limits when the shop has no overrides', () => {
     expect(effectiveLimits(trial)).toEqual({
       ...trial,
-      overridden: { terminals: false, shopUsers: false },
+      overridden: { outlets: false, terminals: false, shopUsers: false },
     });
     expect(effectiveLimits(trial, null).terminals).toBe(1);
     expect(effectiveLimits(trial, { terminals: null, shopUsers: null }).overridden).toEqual({
+      outlets: false,
       terminals: false,
       shopUsers: false,
     });
@@ -32,7 +33,7 @@ describe('effectiveLimits', () => {
     expect(l.terminals).toBe(10);
     expect(l.shopUsers).toBe(2);
     expect(l.outlets).toBe(1);
-    expect(l.overridden).toEqual({ terminals: true, shopUsers: false });
+    expect(l.overridden).toEqual({ outlets: false, terminals: true, shopUsers: false });
   });
 
   it('beats the plan even when the override is lower, and even an unlimited plan', () => {

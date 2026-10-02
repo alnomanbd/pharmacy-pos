@@ -4,7 +4,8 @@ import { storage, keys } from './storage.service.js';
 import { invoiceNumberFor } from './invoice.service.js';
 import { logger } from '../utils/logger.js';
 import * as notify from './notification.service.js';
-import { purchasablePlans, planByKey } from './plan.service.js';
+import { purchasablePlans, planByKey, monthlyPrice } from './plan.service.js';
+import { branchCount } from './branch.service.js';
 import { quoteForShop, redeem } from './coupon.service.js';
 import { accrueCommission } from './agent.service.js';
 
@@ -60,7 +61,8 @@ export async function submitPayment(orgId: string, userId: string, claim: Paymen
   if (!plan || plan.isTrial) throw badRequest('That plan is not available');
 
   const coupon = await couponFor(orgId, claim);
-  const expected = plan.price * claim.months - coupon.discount;
+  const month = monthlyPrice(plan, await branchCount(orgId));
+  const expected = month.total * claim.months - coupon.discount;
   if (claim.amount <= 0) throw badRequest('Enter the amount you sent');
 
   // Not a hard equality: a shop may round up, or pay a part now. A shortfall
@@ -91,6 +93,7 @@ export async function submitPayment(orgId: string, userId: string, claim: Paymen
     note: claim.note?.trim() || '',
     paidAt: claim.paidAt ? new Date(claim.paidAt) : new Date(),
     coupon,
+    pricing: { base: month.base, extraBranches: month.extraBranches, extraBranchPrice: month.extraBranchPrice },
   });
 
   logger.info(
@@ -265,6 +268,7 @@ export async function recordPayment(orgId: string, operatorId: string, claim: Pa
     throw conflict('That transaction id has already been recorded');
   }
   const coupon = await couponFor(orgId, claim);
+  const month = monthlyPrice(plan, await branchCount(orgId));
 
   const payment = await PaymentModel.create({
     organization: orgId,
@@ -280,11 +284,12 @@ export async function recordPayment(orgId: string, operatorId: string, claim: Pa
     note: claim.note?.trim() || '',
     paidAt: claim.paidAt ? new Date(claim.paidAt) : new Date(),
     coupon,
+    pricing: { base: month.base, extraBranches: month.extraBranches, extraBranchPrice: month.extraBranchPrice },
   });
 
   logger.info({ org: orgId, payment: payment.id, amount: claim.amount, by: operatorId }, 'Payment recorded by an operator');
   const result = await acceptPayment(payment, operatorId);
-  return { ...result, expected: plan.price * claim.months - coupon.discount };
+  return { ...result, expected: month.total * claim.months - coupon.discount };
 }
 
 export async function rejectPayment(paymentId: string, reviewerId: string, reason: string) {
@@ -329,6 +334,7 @@ export async function subscriptionOf(orgId: string) {
     ? Math.ceil((new Date(endsAt).getTime() - Date.now()) / 86400000)
     : null;
 
+  const branches = await branchCount(orgId);
   const [pending, owner] = await Promise.all([
     PaymentModel.countDocuments({ organization: orgId, status: 'pending' }),
     UserModel.findOne({ organization: orgId }).select('name').sort({ createdAt: 1 }).lean(),
@@ -346,8 +352,12 @@ export async function subscriptionOf(orgId: string) {
     pendingPayments: pending,
     /** What the shop said it was signing up for — offered first. */
     intendedPlan: org.intendedPlan || '',
-    /** The plans a shop can buy, read from the catalogue the operator maintains. */
-    plans: await purchasablePlans(),
+    /**
+     * The plans a shop can buy, each with what one month costs *this* shop —
+     * the plan's price, plus its branches beyond those the plan includes.
+     */
+    branches,
+    plans: (await purchasablePlans()).map((p) => ({ ...p, monthly: monthlyPrice(p, branches) })),
     /** What they are on now, so the page can say so by name. */
     planName: (await planByKey(org.plan || 'trial'))?.name ?? org.plan,
     /** Where to send the money. Configured per deployment, not per shop. */

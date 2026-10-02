@@ -71,7 +71,10 @@ export default function Subscription() {
   const { toast } = useToast();
   /* Figures in Bangla numerals when the screen is in Bangla; ids stay Latin. */
   const n = (v: number | string) => (lang === 'bn' ? bnNumerals(String(v)) : String(v));
-  const taka = (v: number) => `৳ ${n(v.toLocaleString('en-IN'))}`;
+  /** What one month of this plan costs *this* shop — its extra branches included. */
+const monthOf = (p: { price: number; monthly?: { total: number } }) => p.monthly?.total ?? p.price;
+
+const taka = (v: number) => `৳ ${n(v.toLocaleString('en-IN'))}`;
   const date = (iso: string) =>
     new Date(iso).toLocaleDateString(lang === 'bn' ? 'bn-BD' : 'en-GB', {
       day: 'numeric',
@@ -133,7 +136,7 @@ export default function Subscription() {
           s.plans.find((p) => p.key === s.intendedPlan) ??
           s.plans.find((p) => p.key === s.plan) ??
           s.plans[0];
-        return chosen ? { ...f, plan: chosen.key, amount: String(chosen.price * f.months) } : f;
+        return chosen ? { ...f, plan: chosen.key, amount: String(monthOf(chosen) * f.months) } : f;
       });
     } catch (e: unknown) {
       const msg = (e as { response?: { data?: { message?: string } } }).response?.data?.message;
@@ -165,7 +168,7 @@ export default function Subscription() {
   };
 
   const selected = sub?.plans.find((p) => p.key === form.plan) ?? null;
-  const base = selected ? selected.price * form.months : 0;
+  const base = selected ? monthOf(selected) * form.months : 0;
   const price = applied ? applied.total : base;
 
   /** Prices a code for this plan and these months; asked again whenever either changes. */
@@ -188,7 +191,7 @@ export default function Subscription() {
             : t(q.reason),
         );
         const p = sub?.plans.find((x) => x.key === plan);
-        setForm((f) => ({ ...f, amount: String((p?.price ?? 0) * months) }));
+        setForm((f) => ({ ...f, amount: String((p ? monthOf(p) : 0) * months) }));
       }
     } catch {
       setCodeError(t('Could not check that code.'));
@@ -218,13 +221,13 @@ export default function Subscription() {
 
   const pickPlan = (key: string) => {
     const p = sub?.plans.find((x) => x.key === key);
-    setForm((f) => ({ ...f, plan: key, amount: String((p?.price ?? 0) * f.months) }));
+    setForm((f) => ({ ...f, plan: key, amount: String((p ? monthOf(p) : 0) * f.months) }));
     if (applied) void applyCode(applied.code, key, form.months);
   };
   const pickMonths = (months: number) => {
     setForm((f) => {
       const p = sub?.plans.find((x) => x.key === f.plan);
-      return { ...f, months, amount: String((p?.price ?? 0) * months) };
+      return { ...f, months, amount: String((p ? monthOf(p) : 0) * months) };
     });
     if (applied) void applyCode(applied.code, form.plan, months);
   };
@@ -369,7 +372,7 @@ export default function Subscription() {
                 >
                   <span className="flex items-baseline justify-between gap-2">
                     <span className="font-semibold">{p.name}</span>
-                    <span className="font-mono text-sm font-bold tabular-nums">{taka(p.price)}</span>
+                    <span className="font-mono text-sm font-bold tabular-nums">{taka(monthOf(p))}</span>
                   </span>
                   <span className="mt-1 block text-xs text-muted-foreground">{t(p.description)}</span>
                   <span className="mt-1 block text-[11px] text-muted-foreground">
@@ -450,6 +453,13 @@ export default function Subscription() {
               <span className="mr-1.5 font-mono text-muted-foreground line-through tabular-nums">{taka(base)}</span>
             )}
             <strong className="font-mono text-base tabular-nums">{taka(price)}</strong>
+            {/* With branches, say what the month is made of — the plan, and the branches beyond it. */}
+            {selected?.monthly && selected.monthly.extraBranches > 0 && (
+              <span className="mt-1 block text-xs text-muted-foreground">
+                {taka(selected.monthly.base)} {t('plan')} + {n(selected.monthly.extraBranches)} {t(selected.monthly.extraBranches === 1 ? 'extra branch' : 'extra branches')} ×{' '}
+                {taka(selected.monthly.extraBranchPrice)} {t('a month')}
+              </span>
+            )}
           </p>
 
           {/* Online first, when it is set up: it renews at once, with nothing to type. */}

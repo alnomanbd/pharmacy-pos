@@ -1254,6 +1254,33 @@ export const medicineRequestsApi = {
   withdraw: (id: string) => getData<unknown>(api.delete(`/shop/medicine-requests/${id}`)),
 };
 
+/* ---------------------------------------------------------------- branches -- */
+
+export interface ShopBranch {
+  _id: string;
+  name: string;
+  address: string;
+  phone: string;
+  isMain: boolean;
+  active: boolean;
+}
+
+/** The Branches page: the branches, and what the plan allows and charges. */
+export interface BranchesPage {
+  branches: ShopBranch[];
+  plan: { name: string; isTrial: boolean; limit: number | null; included: number; extraBranchPrice: number };
+  monthlyNow: number;
+  monthlyWithOneMore: number;
+  canAdd: boolean;
+}
+
+export const branchesApi = {
+  page: () => getData<BranchesPage>(api.get('/shop/branches')),
+  create: (payload: { name: string; address?: string; phone?: string }) => getData<ShopBranch>(api.post('/shop/branches', payload)),
+  update: (id: string, payload: Partial<{ name: string; address: string; phone: string; active: boolean }>) =>
+    getData<ShopBranch>(api.patch(`/shop/branches/${id}`, payload)),
+};
+
 /* -------------------------------------------------------------------- help -- */
 
 export interface HelpArticleSummary {
@@ -1423,10 +1450,14 @@ export interface SubscriptionPlan {
   price: number;
   currency: string;
   limits: { outlets: number | null; terminals: number | null; shopUsers: number | null };
+  /** What one month costs this shop on this plan, its extra branches included. */
+  monthly?: { base: number; extraBranches: number; extraBranchPrice: number; extras: number; total: number };
 }
 
 /** Where the shop stands: what it is on, until when, and what it would cost. */
 export interface Subscription {
+  /** Active branches — what the price counts. */
+  branches?: number;
   /** Whether "Pay online" (SSLCommerz) is set up on this deployment. */
   onlinePayment?: boolean;
   plan: string;

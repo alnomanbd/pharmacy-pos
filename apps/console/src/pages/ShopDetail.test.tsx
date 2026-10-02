@@ -21,6 +21,7 @@ const mocks = vi.hoisted(() => ({
   shopSetup: vi.fn(),
   shopNotes: vi.fn(),
   agents: vi.fn(),
+  shopBranches: vi.fn(),
   navigate: vi.fn(),
 }));
 
@@ -76,6 +77,7 @@ beforeEach(() => {
   mocks.shopSetup.mockResolvedValue({ steps: [], done: 0, total: 6, dismissed: false });
   mocks.shopNotes.mockResolvedValue([]);
   mocks.agents.mockResolvedValue([]);
+  mocks.shopBranches.mockResolvedValue({ branches: [], plan: { name: 'Basic', isTrial: false, limit: 1, included: 1, extraBranchPrice: 0 }, monthlyNow: 1500, monthlyWithOneMore: 1500, canAdd: false });
   mocks.updateShopProfile.mockResolvedValue({});
   mocks.deleteOrganization.mockResolvedValue({ name: 'Shefa Pharmacy', deleted: {} });
 });
@@ -181,7 +183,8 @@ describe('the Limits card', () => {
     await user.click(await screen.findByRole('button', { name: /Edit limits/ }));
     const dialog = screen.getByRole('dialog', { name: 'Edit limits' });
 
-    const [countersPlan, loginsPlan] = within(dialog).getAllByRole('checkbox');
+    // Branches come first, then counters and staff logins.
+    const [, countersPlan, loginsPlan] = within(dialog).getAllByRole('checkbox');
     expect(countersPlan).not.toBeChecked();
     expect(within(dialog).getByLabelText('Counters for this shop')).toHaveValue(10);
     await user.click(countersPlan);
@@ -192,7 +195,7 @@ describe('the Limits card', () => {
     await user.click(within(dialog).getByRole('button', { name: /Save/ }));
 
     await waitFor(() =>
-      expect(mocks.updateLimits).toHaveBeenCalledWith('o1', { terminals: null, shopUsers: 12 }),
+      expect(mocks.updateLimits).toHaveBeenCalledWith('o1', { outlets: null, terminals: null, shopUsers: 12 }),
     );
   });
 

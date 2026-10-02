@@ -1,6 +1,7 @@
 import { Types } from 'mongoose';
 import { OrganizationModel, SaleModel, UserModel } from '../models/index.js';
-import { everyPlan } from './plan.service.js';
+import { everyPlan, monthlyPrice } from './plan.service.js';
+import { branchCounts } from './branch.service.js';
 import * as notify from './notification.service.js';
 import { sendSms } from '../integrations/sms.js';
 import { badRequest, notFound } from '../utils/AppError.js';
@@ -112,7 +113,7 @@ export async function retentionBoard(opts: { days?: number } = {}) {
     inactive: [],
     stuck: [],
   };
-  const [setup, answers] = await Promise.all([setupForMany(ids), latestFor(ids)]);
+  const [setup, answers, branchesOf] = await Promise.all([setupForMany(ids), latestFor(ids), branchCounts(ids)]);
 
   function row(o: (typeof orgs)[number], lastActivityAt: Date | null) {
     const plan = planOf.get(o.plan);
@@ -123,7 +124,8 @@ export async function retentionBoard(opts: { days?: number } = {}) {
       name: o.name,
       plan: o.plan,
       planName: plan?.name ?? o.plan,
-      price: plan?.price ?? 0,
+      price: plan ? monthlyPrice(plan, branchesOf(o._id)).total : 0,
+      branches: branchesOf(o._id),
       trial: plan ? plan.isTrial : o.plan === 'trial',
       status: o.status,
       endsAt,

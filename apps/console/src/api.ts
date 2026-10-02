@@ -39,6 +39,9 @@ export interface ShopPlan {
   name: string;
   description: string;
   price: number;
+  /** Branches the price covers, and what each extra one costs a month. */
+  includedBranches?: number;
+  extraBranchPrice?: number;
   currency: string;
   limits: ShopPlanLimits;
   isTrial: boolean;
@@ -80,6 +83,7 @@ export interface ShopSignup {
 
 /** A number is the shop's own ceiling; `null` puts that axis back on the plan. */
 export interface ShopLimitOverrides {
+  outlets?: number | null;
   terminals?: number | null;
   shopUsers?: number | null;
 }
@@ -98,6 +102,8 @@ export interface SeatUsage {
 export interface ShopPlanUsage {
   plan: string;
   planName: string;
+  /** Branches against the plan's (or this shop's own) limit. Absent from older answers. */
+  outlets?: SeatUsage;
   terminals: SeatUsage;
   shopUsers: SeatUsage;
 }
@@ -108,6 +114,15 @@ export interface ShopMonth {
   bills: number;
   takings: number;
   purchases: number;
+}
+
+/** A shop's branches and its plan's terms for them. */
+export interface ShopBranchesInfo {
+  branches: { _id: string; name: string; address: string; phone: string; isMain: boolean; active: boolean }[];
+  plan: { name: string; isTrial: boolean; limit: number | null; included: number; extraBranchPrice: number };
+  monthlyNow: number;
+  monthlyWithOneMore: number;
+  canAdd: boolean;
 }
 
 /** An incident on the public status page. */
@@ -573,6 +588,7 @@ export const platformApi = {
   /** Trials and paid time ending within `days`, lapsed shops, and shops gone quiet. */
   retention: (days = 7) => getData<RetentionBoard>(api.get('/platform/retention', { params: { days } })),
   /** Email (and optionally SMS) one shop's owner a renewal or come-back reminder. */
+  shopBranches: (id: string) => getData<ShopBranchesInfo>(api.get(`/platform/organizations/${id}/branches`)),
   shopSetup: (id: string) => getData<ShopSetup>(api.get(`/platform/organizations/${id}/setup`)),
   remindShop: (id: string, kind: 'renewal' | 'inactive' | 'setup', sms = false) =>
     getData<{ sent: string[]; shop: string }>(api.post(`/platform/organizations/${id}/remind`, { kind, sms })),

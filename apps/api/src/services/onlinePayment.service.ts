@@ -1,7 +1,8 @@
 import { Types } from 'mongoose';
 import { PaymentModel, OrganizationModel, UserModel } from '../models/index.js';
 import { sslczConfig, createSession, validatePayment, type Validation } from '../integrations/sslcommerz.js';
-import { planByKey } from './plan.service.js';
+import { planByKey, monthlyPrice } from './plan.service.js';
+import { branchCount } from './branch.service.js';
 import { quoteForShop } from './coupon.service.js';
 import { acceptPayment } from './payment.service.js';
 import { env } from '../config/env.js';
@@ -75,7 +76,8 @@ export async function startCheckout(
     discount = q.discount;
     code = q.code;
   }
-  const amount = plan.price * input.months - discount;
+  const month = monthlyPrice(plan, await branchCount(orgId));
+  const amount = month.total * input.months - discount;
   if (amount <= 0) throw badRequest('Nothing to pay — talk to us and we will apply it for you.');
 
   const [org, user] = await Promise.all([
@@ -95,6 +97,7 @@ export async function startCheckout(
     note: 'Paid online',
     paidAt: new Date(),
     coupon: { code, discount },
+    pricing: { base: month.base, extraBranches: month.extraBranches, extraBranchPrice: month.extraBranchPrice },
   });
 
   const base = callbackBase();

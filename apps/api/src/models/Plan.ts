@@ -31,6 +31,13 @@ const schema = new Schema(
     description: { type: String, default: '' },
     /** Per month, in `currency`. */
     price: { type: Number, required: true, min: 0 },
+    /**
+     * Branches the price covers, and what each one beyond costs a month. A
+     * ৳3,000 plan with 1 included and ৳1,000 per extra branch is ৳5,000 for a
+     * shop with three. `limits.outlets` is still the most a shop may have.
+     */
+    includedBranches: { type: Number, default: 1, min: 1 },
+    extraBranchPrice: { type: Number, default: 0, min: 0 },
     currency: { type: String, default: 'BDT' },
     limits: { type: limitSchema, default: () => ({}) },
     /** The plan a new shop starts on; there is exactly one. */

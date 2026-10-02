@@ -22,6 +22,7 @@ import * as referrals from '../services/referral.service.js';
 import { overview } from '../services/overview.service.js';
 import { systemStatus } from '../services/system.service.js';
 import { setupOf } from '../services/onboarding.service.js';
+import { branchesPage as branchesPageFor } from '../services/branch.service.js';
 import * as agents from '../services/agent.service.js';
 import * as help from '../services/help.service.js';
 import * as incidents from '../services/status.service.js';
@@ -133,6 +134,8 @@ const planSchema = z.object({
   name: z.string().trim().min(1).max(60).optional(),
   description: z.string().trim().max(300).optional(),
   price: z.number().min(0).max(10_000_000).optional(),
+  includedBranches: z.number().int().min(1).max(1000).optional(),
+  extraBranchPrice: z.number().min(0).max(10_000_000).optional(),
   currency: z.string().trim().max(8).optional(),
   limits: limitsSchema.optional(),
   isTrial: z.boolean().optional(),
@@ -263,6 +266,7 @@ const limitOverridesSchema = z
   .object({
     limitOverrides: z
       .object({
+        outlets: z.number().int().min(1).max(200).nullable().optional(),
         terminals: z.number().int().min(1).max(500).nullable().optional(),
         shopUsers: z.number().int().min(1).max(1000).nullable().optional(),
       })
@@ -1056,6 +1060,9 @@ const noteSchema = z.object({
   pinned: z.boolean().optional(),
 });
 const actorOf = (req: Request) => ({ id: req.user!.id, isOwner: req.user!.role === 'platformAdmin' });
+
+/** A shop's branches and its plan's terms for them. */
+router.get('/organizations/:id/branches', requirePermission('shops.view'), handle((req) => branchesPageFor(req.params.id)));
 
 /** One shop's getting-started checklist, as the shop sees it. */
 router.get('/organizations/:id/setup', requirePermission('shops.view'), handle((req) => setupOf(req.params.id)));

@@ -27,6 +27,10 @@ export interface PlanShape {
   name: string;
   description: string;
   price: number;
+  /** Branches the price covers. */
+  includedBranches: number;
+  /** Each branch beyond those, per month. 0: extra branches cost nothing more. */
+  extraBranchPrice: number;
   currency: string;
   limits: PlanLimits;
   isTrial: boolean;
@@ -43,6 +47,8 @@ const shape = (p: Record<string, unknown>): PlanShape => {
     name: String(p.name),
     description: String(p.description ?? ''),
     price: Number(p.price ?? 0),
+    includedBranches: Math.max(1, Number(p.includedBranches ?? 1)),
+    extraBranchPrice: Math.max(0, Number(p.extraBranchPrice ?? 0)),
     currency: String(p.currency ?? 'BDT'),
     limits: {
       outlets: limits.outlets ?? null,
@@ -55,6 +61,29 @@ const shape = (p: Record<string, unknown>): PlanShape => {
     sortOrder: Number(p.sortOrder ?? 0),
   };
 };
+
+/**
+ * What a plan costs a month for a shop with `branches` branches: the plan's
+ * price, and each branch beyond those it includes at the extra-branch price.
+ * Pure — every place that charges a shop (the Subscription page, a claim, the
+ * online checkout, a recorded payment, an invoice, monthly revenue) goes
+ * through this, so they cannot disagree.
+ */
+export function monthlyPrice(
+  plan: { price: number; includedBranches?: number | null; extraBranchPrice?: number | null },
+  branches: number,
+) {
+  const included = Math.max(1, plan.includedBranches ?? 1);
+  const extra = Math.max(0, Math.floor(branches) - included);
+  const extraPrice = Math.max(0, plan.extraBranchPrice ?? 0);
+  return {
+    base: plan.price,
+    extraBranches: extra,
+    extraBranchPrice: extraPrice,
+    extras: extra * extraPrice,
+    total: plan.price + extra * extraPrice,
+  };
+}
 
 export function clearPlanCache() {
   cache = null;
@@ -117,16 +146,13 @@ export function limitMessage(axis: keyof PlanLimits, limit: number, planName: st
           ? 'one staff login'
           : `${limit} staff logins`
         : limit === 1
-          ? 'one outlet'
-          : `${limit} outlets`;
+          ? 'one branch'
+          : `${limit} branches`;
   return `${planName} includes ${what}. Upgrade the plan to add more.`;
 }
 
-/**
- * The axes a single shop may be given its own ceiling on. Outlets are not
- * here: a branch is a separate shop today, not a seat.
- */
-export const OVERRIDABLE_AXES = ['terminals', 'shopUsers'] as const;
+/** The axes a single shop may be given its own ceiling on — branches included, for a negotiated chain. */
+export const OVERRIDABLE_AXES = ['outlets', 'terminals', 'shopUsers'] as const;
 export type OverridableAxis = (typeof OVERRIDABLE_AXES)[number];
 
 /** A shop's own ceilings. `null` (or absent) on an axis means "use the plan". */
@@ -147,7 +173,7 @@ export function effectiveLimits(planLimits: PlanLimits, overrides?: LimitOverrid
     outlets: planLimits.outlets,
     terminals: planLimits.terminals,
     shopUsers: planLimits.shopUsers,
-    overridden: { terminals: false, shopUsers: false },
+    overridden: { outlets: false, terminals: false, shopUsers: false },
   };
   for (const axis of OVERRIDABLE_AXES) {
     const v = overrides?.[axis];
@@ -169,9 +195,13 @@ export function customLimitMessage(axis: OverridableAxis, limit: number): string
       ? limit === 1
         ? 'one billing counter'
         : `${limit} billing counters`
-      : limit === 1
-        ? 'one staff login'
-        : `${limit} staff logins`;
+      : axis === 'outlets'
+        ? limit === 1
+          ? 'one branch'
+          : `${limit} branches`
+        : limit === 1
+          ? 'one staff login'
+          : `${limit} staff logins`;
   return `Your shop is set up for ${what}. Contact Dawai support to add more.`;
 }
 
@@ -191,7 +221,7 @@ export async function assertWithinLimit(
   const limit = limits[axis] ?? null;
   if (limit !== null && used >= limit) {
     throw badRequest(
-      axis !== 'outlets' && limits.overridden[axis]
+      limits.overridden[axis]
         ? customLimitMessage(axis, limit)
         : limitMessage(axis, limit, plan?.name ?? 'Your plan'),
     );
@@ -261,6 +291,8 @@ export interface PlanInput {
   name?: string;
   description?: string;
   price?: number;
+  includedBranches?: number;
+  extraBranchPrice?: number;
   currency?: string;
   limits?: Partial<PlanLimits>;
   isTrial?: boolean;
@@ -295,6 +327,8 @@ export async function updatePlan(id: string, input: PlanInput) {
     if (input[field] !== undefined) plan.set(field, input[field]);
   }
   if (input.price !== undefined) plan.set('price', input.price);
+  if (input.includedBranches !== undefined) plan.set('includedBranches', input.includedBranches);
+  if (input.extraBranchPrice !== undefined) plan.set('extraBranchPrice', input.extraBranchPrice);
   if (input.trialDays !== undefined) plan.set('trialDays', input.trialDays);
   if (input.isActive !== undefined) plan.set('isActive', input.isActive);
   if (input.sortOrder !== undefined) plan.set('sortOrder', input.sortOrder);

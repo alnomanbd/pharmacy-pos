@@ -25,6 +25,7 @@ import { openSupportView } from '../lib/supportView';
 import RecordPaymentDialog from '../components/RecordPaymentDialog';
 import ShopNotesCard from '../components/ShopNotesCard';
 import ShopSetupCard from '../components/ShopSetupCard';
+import ShopBranchesCard from '../components/ShopBranchesCard';
 import ShopAgentCard from '../components/ShopAgentCard';
 import ShopLimitsCard, { signupSummary } from '../components/ShopLimitsCard';
 import { useToast } from '@dawai/shared/components/Toast';
@@ -295,6 +296,7 @@ export default function ShopDetail() {
       )}
 
       <ShopLimitsCard shopId={id} usage={plan} canEdit={canPlan} onSaved={load} />
+      <ShopBranchesCard shopId={id} />
       <ShopSetupCard shopId={id} />
       {canAgents && (
         <ShopAgentCard

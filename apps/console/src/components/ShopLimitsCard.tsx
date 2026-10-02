@@ -28,6 +28,7 @@ export function signupSummary(s?: ShopSignup | null): string {
 
 /** The two axes a shop can be given its own ceiling on, and how far (the API's bounds). */
 const LIMIT_AXES = [
+  { key: 'outlets', label: 'Branches', max: 200 },
   { key: 'terminals', label: 'Counters', max: 500 },
   { key: 'shopUsers', label: 'Staff logins', max: 1000 },
 ] as const;
@@ -58,6 +59,7 @@ export default function ShopLimitsCard({
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [draft, setDraft] = useState<LimitDraft>({
+    outlets: { usePlan: true, value: '' },
     terminals: { usePlan: true, value: '' },
     shopUsers: { usePlan: true, value: '' },
   });
@@ -70,7 +72,11 @@ export default function ShopLimitsCard({
       usePlan: !s.overridden,
       value: s.overridden && s.limit !== null ? String(s.limit) : '',
     });
-    setDraft({ terminals: from(usage.terminals), shopUsers: from(usage.shopUsers) });
+    setDraft({
+      outlets: usage.outlets ? from(usage.outlets) : { usePlan: true, value: '' },
+      terminals: from(usage.terminals),
+      shopUsers: from(usage.shopUsers),
+    });
     setOpen(true);
   };
 
@@ -79,6 +85,7 @@ export default function ShopLimitsCard({
     setBusy(true);
     try {
       await platformApi.updateLimits(shopId, {
+        outlets: draft.outlets.usePlan ? null : Number(draft.outlets.value),
         terminals: draft.terminals.usePlan ? null : Number(draft.terminals.value),
         shopUsers: draft.shopUsers.usePlan ? null : Number(draft.shopUsers.value),
       });

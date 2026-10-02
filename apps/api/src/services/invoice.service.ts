@@ -47,6 +47,8 @@ export interface InvoiceData {
     bin: string;
     licence: string;
   };
+  /** Branches beyond those the plan includes, per month — when there were any. */
+  extraBranches: { count: number; pricePerBranch: number } | null;
   /** What the plan cost before a discount code, and the code — when one was used. */
   discount: { code: string; amount: number; base: number } | null;
   /** The VAT inside `amount`. Null when VAT is off. */
@@ -160,6 +162,12 @@ export async function invoiceFor(paymentId: string, orgId?: string): Promise<Inv
       bin: settings?.vatBin ?? '',
       licence: settings?.drugLicenceNo ?? '',
     },
+    extraBranches: (payment as { pricing?: { extraBranches?: number; extraBranchPrice?: number } }).pricing?.extraBranches
+      ? {
+          count: (payment as { pricing: { extraBranches: number } }).pricing.extraBranches,
+          pricePerBranch: (payment as { pricing: { extraBranchPrice?: number } }).pricing.extraBranchPrice ?? 0,
+        }
+      : null,
     discount: coupon?.code && (coupon.discount ?? 0) > 0
       ? { code: coupon.code, amount: coupon.discount!, base: payment.amount + coupon.discount! }
       : null,
@@ -264,7 +272,19 @@ export async function buildInvoicePdf(data: InvoiceData): Promise<Buffer> {
   doc.text(t(`${data.plan} subscription`), col.desc + 8, y + 10, { width: width * 0.55 });
   doc.text(`${data.months} month${data.months === 1 ? '' : 's'}`, col.qty, y + 10);
   // The plan's own price on the line; a discount comes off it below.
-  doc.font(fonts.bold).text(money(data.discount?.base ?? data.amount), left, y + 10, { width: width - 8, align: 'right' });
+  const extrasTotal = data.extraBranches ? data.extraBranches.count * data.extraBranches.pricePerBranch * data.months : 0;
+  doc.font(fonts.bold).text(money((data.discount?.base ?? data.amount) - extrasTotal), left, y + 10, { width: width - 8, align: 'right' });
+
+  // Extra branches, as a line of their own: what they are, for how long, and what they come to.
+  if (data.extraBranches && data.extraBranches.pricePerBranch > 0) {
+    const eb = data.extraBranches;
+    const ebTotal = eb.count * eb.pricePerBranch * data.months;
+    y = doc.y + 8;
+    doc.font(fonts.regular).fontSize(10).fillColor(INK);
+    doc.text(t(`${eb.count} extra branch${eb.count === 1 ? '' : 'es'} × ${money(eb.pricePerBranch)} a month`), col.desc + 8, y, { width: width * 0.55 });
+    doc.text(`${data.months} month${data.months === 1 ? '' : 's'}`, col.qty, y);
+    doc.text(money(ebTotal), left, y, { width: width - 8, align: 'right' });
+  }
 
   const lineBottom = doc.y + 12;
   doc.moveTo(left, lineBottom).lineTo(right, lineBottom).strokeColor(LINE).stroke();

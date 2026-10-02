@@ -84,6 +84,7 @@ const schema = new Schema(
      * `plan.service#effectiveLimits`, never directly.
      */
     limitOverrides: {
+      outlets: { type: Number, default: null },
       terminals: { type: Number, default: null },
       shopUsers: { type: Number, default: null },
     },

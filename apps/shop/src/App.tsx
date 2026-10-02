@@ -12,6 +12,7 @@ import Counters from './pages/Counters';
 import Profile from './pages/Profile';
 import Support from './pages/Support';
 import Help from './pages/Help';
+import Branches from './pages/Branches';
 import Trash from './pages/Trash';
 import Stock from './pages/Stock';
 import CountStock from './pages/CountStock';
@@ -138,6 +139,7 @@ export default function App() {
         <Route path="staff" element={<BackRoom><Staff /></BackRoom>} />
         <Route path="settings" element={<BackRoom><Settings /></BackRoom>} />
         <Route path="subscription" element={<BackRoom><Subscription /></BackRoom>} />
+        <Route path="branches" element={<BackRoom><Branches /></BackRoom>} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

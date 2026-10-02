@@ -28,6 +28,7 @@ import {
   ChevronDown,
   Headset,
   LifeBuoy,
+  MapPin,
   X,
 } from 'lucide-react';
 import { useAuthStore } from '@dawai/shared/store/auth.store';
@@ -142,6 +143,8 @@ const GROUPS: ShopGroup[] = [
       { to: '/settings', label: 'Settings', icon: SettingsIcon, end: false, adminOnly: true },
       /* The plan and paying for it — the owner's alone, like the trail below. */
       { to: '/subscription', label: 'Subscription', icon: CreditCard, end: false, adminOnly: true, ownerOnly: true },
+      /* The shop's locations — part of what it pays for, so the owner's. */
+      { to: '/branches', label: 'Branches', icon: MapPin, end: false, adminOnly: true, ownerOnly: true },
       /* Who did what and when — the owner's own trail of the shop. */
       { to: '/activity', label: 'Activity', icon: History, end: false, adminOnly: true, ownerOnly: true },
       /* Nothing deleted is destroyed, and this is where it went. With the

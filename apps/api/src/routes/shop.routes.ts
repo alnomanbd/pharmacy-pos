@@ -39,6 +39,7 @@ import medicineRequestRoutes from './shopMedicineRequest.routes.js';
 import supportRoutes from './shopSupport.routes.js';
 import announcementRoutes from './shopAnnouncement.routes.js';
 import helpRoutes from './shopHelp.routes.js';
+import branchRoutes from './shopBranch.routes.js';
 import * as onboarding from '../services/onboarding.service.js';
 
 /**
@@ -62,6 +63,7 @@ router.use('/medicine-requests', medicineRequestRoutes);
 router.use('/support', supportRoutes);
 router.use('/announcements', announcementRoutes);
 router.use('/help', helpRoutes);
+router.use('/branches', branchRoutes);
 
 router.use(requireAuth, requireWritableTenant, requireRole(...SHOP_ADMIN_ROLES));
 
