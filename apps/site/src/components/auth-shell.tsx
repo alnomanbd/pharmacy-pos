@@ -41,8 +41,11 @@ export function AuthShell({
     ? { value: `14${trial.suffix}`, label: trial.label }
     : { value: lang === 'bn' ? '৳১,১২,৪০০' : '৳1,12,400', label: orbit[0].label };
 
+  /* `overflow-clip`, not `-hidden`, on both wrappers: hidden makes a scroll
+     container, and the sign-up's sticky Next bar would stick to that instead
+     of to the phone's screen. */
   return (
-    <div className="relative isolate overflow-hidden pb-20 pt-32 sm:pb-28 sm:pt-40">
+    <div className="relative isolate overflow-clip pb-20 pt-32 sm:pb-28 sm:pt-40">
       {/* the room behind the card */}
       <div className="aurora-field">
         <Orb className="-end-40 -top-32" color="rgb(16 185 129 / 0.28)" size="44rem" duration={32} />
@@ -54,7 +57,7 @@ export function AuthShell({
       />
 
       <div className="shell">
-        <div className="mx-auto grid max-w-5xl overflow-hidden rounded-[2rem] border border-border/70 bg-card/85 shadow-lift backdrop-blur-xl md:grid-cols-[0.85fr_1.15fr]">
+        <div className="mx-auto grid max-w-5xl overflow-clip rounded-[2rem] border border-border/70 bg-card/85 shadow-lift backdrop-blur-xl md:grid-cols-[0.85fr_1.15fr]">
           {/* ------------------------------------------------ the dark half */}
           <aside className="ink-band grain relative hidden overflow-hidden bg-background text-foreground md:block">
             <div className="aurora-field">
