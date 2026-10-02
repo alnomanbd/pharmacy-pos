@@ -75,6 +75,7 @@ const segment = (value: string) => {
 
 export const keys = {
   orgLogo: (orgId: string) => `org/${segment(orgId)}/logo`,
+  letterhead: (orgId: string) => `org/${segment(orgId)}/letterhead`,
   userPhoto: (orgId: string, userId: string) => `org/${segment(orgId)}/users/${segment(userId)}/photo`,
   payment: (orgId: string, paymentId: string) =>
     `org/${segment(orgId)}/payments/${segment(paymentId)}`,

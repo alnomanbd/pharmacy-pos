@@ -1427,8 +1427,36 @@ export interface ShopSettings {
     showBatch: boolean;
     signatureLabel: string;
     terms: string;
+    /** Whose letterhead: ours, the shop's own pictures, or its pre-printed pad. */
+    style?: 'dawai' | 'image' | 'pad';
+    /** A pad's printed header and footer, measured, in millimetres. */
+    padTopMm?: number;
+    padBottomMm?: number;
   };
+  /** Stored pictures — a key when there is one, empty when not. */
+  logo?: string;
+  letterheadHeader?: string;
+  letterheadFooter?: string;
 }
+
+export type LetterheadSlot = 'logo' | 'header' | 'footer';
+
+/** The pictures on the A4 sheet, each uploaded the moment it is chosen. */
+export const letterheadApi = {
+  upload: (slot: LetterheadSlot, file: File) => {
+    const body = new FormData();
+    body.append('file', file);
+    return getData<{ slot: string; key: string }>(
+      api.post(`/shop/settings/letterhead/${slot}`, body, { headers: { 'Content-Type': 'multipart/form-data' } }),
+    );
+  },
+  remove: (slot: LetterheadSlot) => getData<{ slot: string }>(api.delete(`/shop/settings/letterhead/${slot}`)),
+  /** The picture itself, or null when there is none. */
+  picture: async (slot: LetterheadSlot) => {
+    const res = await api.get(`/shop/settings/letterhead/${slot}`, { responseType: 'blob' });
+    return res.status === 204 ? null : (res.data as Blob);
+  },
+};
 
 export const settingsApi = {
   /** Readable at the counter, because the counter is what prints. */

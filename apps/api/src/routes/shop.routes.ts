@@ -2,6 +2,10 @@ import { attachBranch, scopeOf } from '../services/branchScope.service.js';
 import { Router } from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
+import multer from 'multer';
+import { storage, keys, assertAllowed } from '../services/storage.service.js';
+import { ShopSettingsModel } from '../models/index.js';
+import { badRequest } from '../utils/AppError.js';
 import * as shop from '../services/shop.service.js';
 import * as staff from '../services/shopStaff.service.js';
 import * as reports from '../services/shopReport.service.js';
@@ -230,6 +234,9 @@ const settingsSchema = z.object({
       showBatch: z.boolean().optional(),
       signatureLabel: z.string().trim().max(60).optional(),
       terms: z.string().trim().max(600).optional(),
+      style: z.enum(['dawai', 'image', 'pad']).optional(),
+      padTopMm: z.number().min(0).max(120).optional(),
+      padBottomMm: z.number().min(0).max(80).optional(),
     })
     .optional(),
 });
@@ -478,10 +485,16 @@ router.post(
         printBangla?: boolean;
         invoice?: invoices.LetterheadDraft['look'];
       };
-      const data = await invoices.sampleDelivery(actorOf(req), {
-        shop: { name: b.shopName, address: b.address, phone: b.phone, drugLicenceNo: b.drugLicenceNo, vatBin: b.vatBin },
-        look: b.invoice,
-      });
+      const data = await invoices.sampleDelivery(
+        actorOf(req),
+        {
+          shop: { name: b.shopName, address: b.address, phone: b.phone, drugLicenceNo: b.drugLicenceNo, vatBin: b.vatBin },
+          look: b.invoice,
+        },
+        /* `align`: the page that is printed and held against a pad — the
+           outline, and nothing of the pad drawn over it. */
+        req.query.align === '1' ? { align: true } : { preview: true },
+      );
       const lang = b.printBangla ? 'bn' : pdfLang(req.query.lang);
       const pdf = await invoices.buildDeliveryPdf({ ...data, lang });
       res.setHeader('Content-Type', 'application/pdf');
@@ -1103,6 +1116,74 @@ router.post(
   '/counts/:id/abandon',
   handle((req) => counts.abandonCount(actorOf(req), req.params.id), 'Count dropped'),
 );
+
+/* ------------------------------------------------------------ letterhead -- */
+
+/*
+ * The pictures on the A4 sheet: the logo in the band, and the shop's own
+ * letterhead — its header and its footer, scanned or photographed.
+ *
+ * Replaced rather than added to: the old file is removed once the new one is
+ * stored, so a shop that tries four scans keeps one.
+ */
+const LETTERHEAD_SLOTS = { logo: 'logo', header: 'letterheadHeader', footer: 'letterheadFooter' } as const;
+const letterheadUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024, files: 1 } });
+
+router.post(
+  '/settings/letterhead/:slot',
+  letterheadUpload.single('file'),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const field = LETTERHEAD_SLOTS[req.params.slot as keyof typeof LETTERHEAD_SLOTS];
+      if (!field) throw badRequest('Not a letterhead picture');
+      if (!req.file) throw badRequest('Choose a picture to upload');
+      assertAllowed('image', req.file);
+      const actor = actorOf(req);
+      await shop.getSettings(actor);
+      const stored = await storage.save(keys.letterhead(actor.org), req.file);
+      const before = await ShopSettingsModel.findOneAndUpdate({ organization: actor.org }, { $set: { [field]: stored.key } }).select(field).lean();
+      const previous = (before as Record<string, unknown> | null)?.[field];
+      if (typeof previous === 'string' && previous && previous !== stored.key) await storage.remove(previous).catch(() => undefined);
+      ok(res, { slot: req.params.slot, key: stored.key }, 'Picture saved');
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+router.delete('/settings/letterhead/:slot', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const field = LETTERHEAD_SLOTS[req.params.slot as keyof typeof LETTERHEAD_SLOTS];
+    if (!field) throw badRequest('Not a letterhead picture');
+    const actor = actorOf(req);
+    const before = await ShopSettingsModel.findOneAndUpdate({ organization: actor.org }, { $set: { [field]: '' } }).select(field).lean();
+    const previous = (before as Record<string, unknown> | null)?.[field];
+    if (typeof previous === 'string' && previous) await storage.remove(previous).catch(() => undefined);
+    ok(res, { slot: req.params.slot }, 'Picture removed');
+  } catch (err) {
+    next(err);
+  }
+});
+
+/* The picture itself, for the settings screen's thumbnail. */
+router.get('/settings/letterhead/:slot', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const field = LETTERHEAD_SLOTS[req.params.slot as keyof typeof LETTERHEAD_SLOTS];
+    if (!field) throw badRequest('Not a letterhead picture');
+    const s = await ShopSettingsModel.findOne({ organization: actorOf(req).org }).select(field).lean();
+    const key = (s as Record<string, unknown> | null)?.[field];
+    if (typeof key !== 'string' || !key) {
+      res.status(204).end();
+      return;
+    }
+    const buf = await storage.read(key);
+    res.setHeader('Content-Type', key.endsWith('.png') ? 'image/png' : key.endsWith('.webp') ? 'image/webp' : 'image/jpeg');
+    res.setHeader('Cache-Control', 'private, no-store');
+    res.end(buf);
+  } catch (err) {
+    next(err);
+  }
+});
 
 /* ------------------------------------------------------------- transfers -- */
 

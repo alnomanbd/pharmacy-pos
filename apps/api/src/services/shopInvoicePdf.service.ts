@@ -151,7 +151,13 @@ export interface LetterheadShop {
   drugLicenceNo: string;
   vatBin: string;
   logo: Buffer | null;
+  /** The shop's own letterhead, as pictures, for the `image` and `pad` styles. */
+  header?: Buffer | null;
+  footer?: Buffer | null;
   look: {
+    style?: 'dawai' | 'image' | 'pad';
+    padTopMm?: number;
+    padBottomMm?: number;
     paper: 'A4' | 'A5';
     accent: string;
     showLogo: boolean;
@@ -183,6 +189,10 @@ export interface DeliveryLine {
 export interface DeliverySheetData {
   /** The paper's language: the shop's "Bangla on the receipt" choice. */
   lang?: PdfLang;
+  /** Drawn for the settings screen: a pad's own header and footer are shown, not left blank. */
+  preview?: boolean;
+  /** The alignment page: the printable area outlined, to hold against a pad. */
+  align?: boolean;
   shop: LetterheadShop;
   number: string;
   issuedAt: Date;
@@ -203,6 +213,9 @@ const oid = (id: string) => {
 };
 
 const DEFAULT_LOOK: LetterheadShop['look'] = {
+  style: 'dawai',
+  padTopMm: 45,
+  padBottomMm: 20,
   paper: 'A4',
   accent: '#065f46',
   showLogo: true,
@@ -228,6 +241,12 @@ export async function letterheadOf(org: string): Promise<LetterheadShop> {
   if (look.showLogo && settings?.logo) {
     logo = await storage.read(settings.logo).catch(() => null);
   }
+  /* The letterhead pictures are read whatever the style: the pad style shows
+     them in the preview, to line the page up against. */
+  const [header, footer] = await Promise.all([
+    settings?.letterheadHeader ? storage.read(settings.letterheadHeader).catch(() => null) : null,
+    settings?.letterheadFooter ? storage.read(settings.letterheadFooter).catch(() => null) : null,
+  ]);
 
   return {
     name: settings?.shopName?.trim() || 'Pharmacy',
@@ -236,6 +255,8 @@ export async function letterheadOf(org: string): Promise<LetterheadShop> {
     drugLicenceNo: settings?.drugLicenceNo ?? '',
     vatBin: settings?.vatBin ?? '',
     logo,
+    header,
+    footer,
     look: {
       ...look,
       /* A colour that is not a colour reaches pdfkit as a throw halfway through
@@ -316,7 +337,11 @@ export interface LetterheadDraft {
 }
 
 /** A sample sheet, for a shop deciding what its paper should look like. */
-export async function sampleDelivery(actor: Actor, draft: LetterheadDraft = {}): Promise<DeliverySheetData> {
+export async function sampleDelivery(
+  actor: Actor,
+  draft: LetterheadDraft = {},
+  flags: { preview?: boolean; align?: boolean } = {},
+): Promise<DeliverySheetData> {
   const stored = await letterheadOf(actor.org);
   const typed = Object.fromEntries(Object.entries(draft.shop ?? {}).filter(([, v]) => v !== undefined));
   const shop: LetterheadShop = {
@@ -333,6 +358,7 @@ export async function sampleDelivery(actor: Actor, draft: LetterheadDraft = {}):
   }
   if (draft.look?.showLogo === false) shop.logo = null;
   return {
+    ...flags,
     shop,
     number: 'SQ-88120',
     issuedAt: new Date(),
@@ -409,7 +435,9 @@ export async function buildDeliveryPdf(data: DeliverySheetData): Promise<Buffer>
   const wash2 = mix(accent, '#ffffff', 0.95);
   const panelEdge = mix(accent, '#ffffff', 0.74);
 
-  const doc = new PDFDocument({ size: look.paper, margin: 40, bufferPages: true });
+  /* A small bottom margin for pdfkit itself: where the content stops is worked
+     out below for each style, and a pad's foot can sit lower than 40pt. */
+  const doc = new PDFDocument({ size: look.paper, margins: { top: 40, left: 40, right: 40, bottom: 6 }, bufferPages: true });
   const chunks: Buffer[] = [];
   doc.on('data', (c: Buffer) => chunks.push(c));
   const done = new Promise<Buffer>((resolve) => doc.on('end', () => resolve(Buffer.concat(chunks))));
@@ -419,9 +447,51 @@ export async function buildDeliveryPdf(data: DeliverySheetData): Promise<Buffer>
   const width = right - left;
   const bandH = look.paper === 'A5' ? 76 : 92;
   const footH = 34;
-  const bottom = doc.page.height - doc.page.margins.bottom - footH;
-  /** Where content starts on any page: under the band, not under the margin. */
-  const top = bandH + 26;
+  const pageW = doc.page.width;
+  const pageH = doc.page.height;
+  const style = look.style ?? 'dawai';
+  const mm = (v: number) => (v * 72) / 25.4;
+
+  /*
+   * How much of the page the letterhead takes, top and foot, in each style.
+   *
+   * - dawai: the band, and the rule with the small print under the content.
+   * - image: the shop's header and footer pictures, across the full width, at
+   *   their own proportions — capped, so a tall scan cannot eat the page.
+   * - pad: what the owner measured on their pad with a ruler.
+   */
+  const pictureH = (img: Buffer | null | undefined, cap: number) => {
+    if (!img) return 0;
+    try {
+      const o = (doc as unknown as { openImage: (b: Buffer) => { width: number; height: number } }).openImage(img);
+      return Math.min(cap, (pageW * o.height) / o.width);
+    } catch {
+      return 0;
+    }
+  };
+  let headH: number;
+  let footReserve: number;
+  if (style === 'image') {
+    headH = pictureH(data.shop.header, pageH * 0.3);
+    footReserve = pictureH(data.shop.footer, pageH * 0.18);
+  } else if (style === 'pad') {
+    headH = mm(Math.max(0, Math.min(120, look.padTopMm ?? 45)));
+    footReserve = mm(Math.max(0, Math.min(80, look.padBottomMm ?? 20)));
+  } else {
+    headH = bandH;
+    footReserve = 40;
+  }
+  /** The line under the content: the small print and the page count. */
+  const footTextY = style === 'dawai' ? pageH - 40 - footH + 8 : pageH - footReserve - 16;
+  const bottom = style === 'dawai' ? pageH - 40 - footH : footTextY - 14;
+  /*
+   * Where content starts on any page.
+   *
+   * On someone else's letterhead the sheet still has to say what it is, so the
+   * title and number take a line of their own under it.
+   */
+  const titleY = headH + (style === 'pad' ? 8 : 14);
+  const top = style === 'dawai' ? bandH + 26 : titleY + 34;
 
   const fitLine = (
     value: string,
@@ -792,6 +862,11 @@ export async function buildDeliveryPdf(data: DeliverySheetData): Promise<Buffer>
   for (let i = 0; i < pages.count; i++) {
     doc.switchToPage(pages.start + i);
 
+    if (style !== 'dawai') {
+      stampOwnLetterhead(i, pages.count);
+      continue;
+    }
+
     /* ---- the band ---- */
     doc.rect(0, 0, doc.page.width, bandH).fillColor(accent).fill();
     /* A hint of lift where the letterhead ends, so the colour block reads as a
@@ -841,7 +916,7 @@ export async function buildDeliveryPdf(data: DeliverySheetData): Promise<Buffer>
       .text(t(data.number), left, look.paper === 'A5' ? 46 : 52, { width, align: 'right' });
 
     /* ---- the foot ---- */
-    const footY = doc.page.height - doc.page.margins.bottom - footH + 8;
+    const footY = footTextY;
     doc
       .moveTo(left, footY - 6)
       .lineTo(right, footY - 6)
@@ -870,4 +945,106 @@ export async function buildDeliveryPdf(data: DeliverySheetData): Promise<Buffer>
   doc.flushPages();
   doc.end();
   return done;
+
+  /**
+   * The shop's own letterhead: its pictures, or its pad's blank space, with the
+   * sheet's title under the header and the small print over the foot.
+   */
+  function stampOwnLetterhead(i: number, count: number) {
+    const drawPicture = (img: Buffer, y: number, h: number) => {
+      try {
+        doc.image(img, 0, y, { width: pageW, height: h });
+      } catch {
+        /* An unreadable picture is not a reason to fail the document. */
+      }
+    };
+
+    if (style === 'image') {
+      if (data.shop.header && headH) drawPicture(data.shop.header, 0, headH);
+      if (data.shop.footer && footReserve) drawPicture(data.shop.footer, pageH - footReserve, footReserve);
+    } else if (data.preview && !data.align) {
+      /* A pad's printed parts are never printed again; on screen they are shown
+         where they will be, so the page can be judged against them. */
+      const shade = (y: number, h: number, label: string, img?: Buffer | null) => {
+        if (!h) return;
+        if (img) {
+          /* At the photo's own proportions, not stretched to the measurement:
+             the point is to see whether the blank line falls where the
+             printed part really ends. */
+          const natural = pictureH(img, pageH * 0.4);
+          doc.save();
+          doc.opacity(0.55);
+          drawPicture(img, y === 0 ? 0 : pageH - natural, natural);
+          doc.restore();
+        } else {
+          doc.rect(0, y, pageW, h).fillColor('#eef0f2').fill();
+          doc
+            .font(fonts.regular)
+            .fontSize(8)
+            .fillColor(MUTED)
+            .text(label, 0, y + h / 2 - 4, { width: pageW, align: 'center', lineBreak: false });
+        }
+      };
+      shade(0, headH, w('Your pad’s printed header — left blank'), data.shop.header);
+      shade(pageH - footReserve, footReserve, w('Your pad’s printed footer — left blank'), data.shop.footer);
+    }
+
+    if (data.align) {
+      /* The printable area, outlined, with its measurements: printed on plain
+         paper and held against a pad to the light. */
+      doc
+        .rect(left, headH, width, pageH - footReserve - headH)
+        .dash(4, { space: 3 })
+        .strokeColor(accent)
+        .lineWidth(0.8)
+        .stroke()
+        .undash();
+      doc
+        .font(fonts.regular)
+        .fontSize(8)
+        .fillColor(accent)
+        /* Outside the box, on the part the pad has printed, so they never sit on the sheet's own lines. */
+        .text(`${w('Top')} ${look.padTopMm ?? 45} mm`, left, Math.max(4, headH - 12), { width, align: 'right', lineBreak: false })
+        .text(`${w('Bottom')} ${look.padBottomMm ?? 20} mm`, left, Math.min(pageH - 12, pageH - footReserve + 4), {
+          width,
+          align: 'right',
+          lineBreak: false,
+        });
+    }
+
+    /* ---- what the sheet is ---- */
+    doc
+      .font(fonts.bold)
+      .fontSize(look.paper === 'A5' ? 13 : 15)
+      .fillColor(accent)
+      .text(w('DELIVERY'), left, titleY, { characterSpacing: bn ? 0 : 2, lineBreak: false });
+    doc
+      .font(fonts.regular)
+      .fontSize(9)
+      .fillColor(MUTED)
+      .text(t(data.number), left, titleY + 4, { width, align: 'right', lineBreak: false });
+    doc
+      .moveTo(left, titleY + 22)
+      .lineTo(right, titleY + 22)
+      .strokeColor(accent)
+      .lineWidth(1)
+      .stroke();
+
+    /* ---- the foot: the shop's small print, and the page count ---- */
+    doc
+      .moveTo(left, footTextY - 5)
+      .lineTo(right, footTextY - 5)
+      .strokeColor(HAIR)
+      .lineWidth(0.6)
+      .stroke();
+    const terms = t(look.terms).trim();
+    if (terms) {
+      doc.font(fonts.regular).fontSize(7.5).fillColor(MUTED).text(terms, left, footTextY, { width: width - 90, lineBreak: false, ellipsis: true });
+    }
+    doc
+      .font(fonts.regular)
+      .fontSize(7.5)
+      .fillColor(MUTED)
+      .text(`${w('Page')} ${i + 1} ${w('of')} ${count}`, left, footTextY, { width, align: 'right', lineBreak: false });
+  }
 }

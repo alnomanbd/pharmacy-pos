@@ -37,6 +37,9 @@ const schema = new Schema(
     drugLicenceNo: { type: String, default: '', trim: true, maxlength: 60 },
     /** A stored key, like the organization's logo. Printed small, at the top. */
     logo: { type: String, default: '' },
+    /** The shop's own letterhead, scanned: drawn across the top and the foot of the A4 sheet. */
+    letterheadHeader: { type: String, default: '' },
+    letterheadFooter: { type: String, default: '' },
 
     /* ---- what is printed at the bottom ---- */
     footer: {
@@ -137,6 +140,19 @@ const schema = new Schema(
        * short line and an A4 sheet has room for the actual terms.
        */
       terms: { type: String, default: '', trim: true, maxlength: 600 },
+      /**
+       * Whose letterhead the sheet is printed on.
+       *
+       * - `dawai`: the band and rule drawn here, in the shop's colour.
+       * - `image`: the shop's own letterhead, uploaded as a header and a footer
+       *   picture, printed on plain paper.
+       * - `pad`: paper the shop already had printed. Nothing is drawn where the
+       *   pad's own header and footer are — only the space they take is kept.
+       */
+      style: { type: String, enum: ['dawai', 'image', 'pad'], default: 'dawai' },
+      /** How much of a pre-printed pad its header and footer take, in millimetres. */
+      padTopMm: { type: Number, default: 45, min: 0, max: 120 },
+      padBottomMm: { type: Number, default: 20, min: 0, max: 80 },
     },
   },
   { timestamps: true },

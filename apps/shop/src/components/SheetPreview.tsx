@@ -27,7 +27,39 @@ const loadPdfjs = () =>
     return lib;
   }));
 
-export default function SheetPreview({ draft }: { draft: Draft }) {
+/** What the server draws the sheet from: the typed shop details and the letterhead's look. */
+export const draftBody = (draft: Draft) => ({
+  shopName: draft.shopName ?? '',
+  address: draft.address ?? '',
+  phone: draft.phone ?? '',
+  drugLicenceNo: draft.drugLicenceNo ?? '',
+  vatBin: draft.vatBin ?? '',
+  printBangla: !!draft.printBangla,
+  ...(draft.invoice ? { invoice: draft.invoice } : {}),
+});
+
+/**
+ * The alignment page for a pre-printed pad: the printable area outlined, with
+ * its measurements, opened to print on plain paper and hold against a pad.
+ */
+export async function openAlignmentPage(draft: Draft, lang: string) {
+  const tab = window.open('', '_blank');
+  try {
+    const res = await api.post('/shop/invoice/preview.pdf', draftBody(draft), {
+      responseType: 'blob',
+      params: { lang, align: '1' },
+    });
+    const url = URL.createObjectURL(res.data as Blob);
+    if (tab) tab.location.href = url;
+    else window.open(url, '_blank');
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  } catch (err) {
+    tab?.close();
+    throw err;
+  }
+}
+
+export default function SheetPreview({ draft, version = 0 }: { draft: Draft; version?: number }) {
   const t = useT();
   const lang = useLangStore((s) => s.lang);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -46,15 +78,7 @@ export default function SheetPreview({ draft }: { draft: Draft }) {
     const tick = window.setTimeout(async () => {
       setBusy(true);
       try {
-        const body = {
-          shopName: draft.shopName ?? '',
-          address: draft.address ?? '',
-          phone: draft.phone ?? '',
-          drugLicenceNo: draft.drugLicenceNo ?? '',
-          vatBin: draft.vatBin ?? '',
-          printBangla: !!draft.printBangla,
-          ...(draft.invoice ? { invoice: draft.invoice } : {}),
-        };
+        const body = draftBody(draft);
         const res = await api.post('/shop/invoice/preview.pdf', body, { responseType: 'arraybuffer', params: { lang } });
         if (!live) return;
         const bytes = new Uint8Array(res.data as ArrayBuffer);
@@ -88,9 +112,9 @@ export default function SheetPreview({ draft }: { draft: Draft }) {
       live = false;
       window.clearTimeout(tick);
     };
-    // `key` stands for the whole draft.
+    // `key` stands for the whole draft; `version` changes when a picture does.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, lang]);
+  }, [key, lang, version]);
 
   useEffect(
     () => () => {

@@ -152,6 +152,10 @@ const BN: Record<string, string> = {
   'A sample sheet — nothing here was delivered.': 'নমুনা পাতা — এখানের কিছুই আসলে আসেনি।',
   'For the shop': 'দোকানের পক্ষে',
   'Taka only': 'টাকা মাত্র',
+  Top: 'ওপরে',
+  Bottom: 'নিচে',
+  'Your pad’s printed header — left blank': 'আপনার প্যাডের ছাপা হেডার — ফাঁকা রাখা হবে',
+  'Your pad’s printed footer — left blank': 'আপনার প্যাডের ছাপা ফুটার — ফাঁকা রাখা হবে',
 };
 
 /** The translator for one document: exact phrases, the rest as written. */
