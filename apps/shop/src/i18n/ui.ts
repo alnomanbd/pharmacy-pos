@@ -1770,6 +1770,24 @@ const bn: Record<string, string> = {
   'Week': 'সপ্তাহ',
   'Fortnight': 'পক্ষ',
   'How customers paid': 'কাস্টমার কীভাবে দিলেন',
+  /* ---- dashboard ---- */
+  'Dashboard': 'ড্যাশবোর্ড',
+  'Good morning': 'শুভ সকাল',
+  'Good afternoon': 'শুভ দুপুর',
+  'Good evening': 'শুভ সন্ধ্যা',
+  'Sold this week': 'এই সপ্তাহে বিক্রি',
+  'Margin this week': 'এই সপ্তাহে লাভ',
+  'Bills this week': 'এই সপ্তাহে বিল',
+  'vs the week before': 'আগের সপ্তাহের তুলনায়',
+  'Today, hour by hour': 'আজ, ঘণ্টা অনুযায়ী',
+  'on the khata': 'বাকি খাতায়',
+  'Counters right now': 'এখন কাউন্টারে',
+  'No counters yet.': 'এখনো কোনো কাউন্টার নেই।',
+  'Best sellers this week': 'এই সপ্তাহের সেরা বিক্রি',
+  'All the reports': 'সব রিপোর্ট',
+  'This week against the last': 'এই সপ্তাহ আর আগের সপ্তাহ',
+  'The week before': 'আগের সপ্তাহ',
+  'No bills yet today.': 'আজ এখনো কোনো বিল হয়নি।',
 };
 
 export const useT = makeUseT(bn);

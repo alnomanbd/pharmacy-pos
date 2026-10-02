@@ -183,7 +183,8 @@ export default function Login() {
         return;
       }
       login(res.user, res.accessToken);
-      navigate('/');
+      /* The owner and the pharmacist start on the dashboard; a salesman on the POS. */
+      navigate(res.user.role === 'salesman' ? '/' : '/dashboard');
     } catch (err: unknown) {
       const res = (err as { response?: { data?: { message?: string } } }).response;
       setError(res?.data?.message || 'Sign-in failed');

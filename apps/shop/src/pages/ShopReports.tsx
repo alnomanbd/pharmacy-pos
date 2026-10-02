@@ -64,7 +64,7 @@ import { CountUp, Rise, useSeen } from '../components/motion';
 const time = (iso: string) =>
   new Date(iso).toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit', hour12: true });
 
-const METHOD_LABEL: Record<string, string> = {
+export const METHOD_LABEL: Record<string, string> = {
   cash: 'Cash',
   bkash: 'bKash',
   nagad: 'Nagad',
@@ -85,7 +85,7 @@ const METHOD_DOT: Record<string, string> = {
 };
 
 /** The shop's own calendar day, not the UTC one. See Sales.tsx. */
-const dayOf = (back = 0) => {
+export const dayOf = (back = 0) => {
   const d = new Date();
   d.setDate(d.getDate() - back);
   return toLocalDate(d);
@@ -108,7 +108,7 @@ const RANGES = [
   { key: 'quarter', label: 'Last 90 days', from: () => dayOf(89), to: () => dayOf(0) },
 ] as const;
 
-const shortDay = (key: string) =>
+export const shortDay = (key: string) =>
   new Date(`${key}T00:00:00.000Z`).toLocaleDateString('en-GB', {
     day: '2-digit',
     month: 'short',
@@ -116,7 +116,7 @@ const shortDay = (key: string) =>
   });
 
 /** Figures in the reader's digits; bill numbers and dates as the paper reads them. */
-function useNumbers() {
+export function useNumbers() {
   const lang = useUiLang();
   return useMemo(() => {
     const n = (v: number | string) => (lang === 'bn' ? bnNumerals(String(v)) : String(v));
@@ -492,7 +492,7 @@ function MethodRow({
  * permanent zeroes is a dashboard people stop reading, and then the one that is
  * not a zero goes unread with it.
  */
-function Attention({ needs }: { needs: NonNullable<Awaited<ReturnType<typeof shopApi.attention>>> }) {
+export function Attention({ needs }: { needs: NonNullable<Awaited<ReturnType<typeof shopApi.attention>>> }) {
   const t = useT();
   const { n, money } = useNumbers();
 
@@ -1271,7 +1271,7 @@ function DailyChart({
  * told the total of. It draws itself in once, and carries no figures — the
  * figures are the headline's job and the daily chart's.
  */
-function Sparkline({ rows, negative }: { rows: { margin: number }[]; negative: boolean }) {
+export function Sparkline({ rows, negative }: { rows: { margin: number }[]; negative: boolean }) {
   const [ref, seen] = useSeen<SVGSVGElement>();
   if (rows.length < 2) return null;
   const vals = rows.map((r) => r.margin);
@@ -1323,12 +1323,16 @@ function Sparkline({ rows, negative }: { rows: { margin: number }[]; negative: b
  * days for a week, a fortnight for a quarter, so there are never too many to
  * read. Each piece names both figures on hover and in its label.
  */
-function PeriodCompare({
+export function PeriodCompare({
   now,
   before,
+  title = 'This stretch against the last',
+  labels = ['This stretch', 'The one before'],
 }: {
   now: { dayKey: string; sales: number }[];
   before: { dayKey: string; sales: number }[];
+  title?: string;
+  labels?: [string, string];
 }) {
   const t = useT();
   const { n, money } = useNumbers();
@@ -1357,14 +1361,14 @@ function PeriodCompare({
     <Rise className="card mb-0 min-w-0">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="mb-0">
-          <BarChart3 className="h-4 w-4" /> {t('This stretch against the last')}
+          <BarChart3 className="h-4 w-4" /> {t(title)}
         </h3>
         <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
           <span className="inline-flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-sm bg-primary" /> {t('This stretch')}
+            <span className="h-2.5 w-2.5 rounded-sm bg-primary" /> {t(labels[0])}
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-sm bg-muted-foreground/40" /> {t('The one before')}
+            <span className="h-2.5 w-2.5 rounded-sm bg-muted-foreground/40" /> {t(labels[1])}
           </span>
         </div>
       </div>
@@ -1430,7 +1434,7 @@ const MIX_SLOTS = ['var(--mix-0)', 'var(--mix-1)', 'var(--mix-2)', 'var(--mix-3)
  * the figure and the share written beside each swatch, so the colour is never
  * the only way to read it.
  */
-function PaymentMix({ rows }: { rows: { method: string; amount: number; bills: number }[] }) {
+export function PaymentMix({ rows }: { rows: { method: string; amount: number; bills: number }[] }) {
   const t = useT();
   const { n, money } = useNumbers();
   const [ref, seen] = useSeen<HTMLDivElement>();

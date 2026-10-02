@@ -29,6 +29,7 @@ import {
   Headset,
   LifeBuoy,
   MapPin,
+  LayoutDashboard,
   X,
 } from 'lucide-react';
 import { useAuthStore } from '@dawai/shared/store/auth.store';
@@ -92,6 +93,8 @@ const GROUPS: ShopGroup[] = [
     links: [
       /* Back to the counter. It has no rail of its own — a till is full bleed —
          so this is the only way back into it from the shop. */
+      /* The owner's first screen: the shop at a glance. */
+      { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, end: false, adminOnly: true },
       { to: '/', label: 'POS', icon: ScanLine, end: true },
       /* Beside the counter, because it is the counter's own screen as much as
          the owner's: somebody comes back holding a slip, and that is where the

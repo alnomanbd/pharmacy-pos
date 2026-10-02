@@ -14,6 +14,7 @@ import Support from './pages/Support';
 import Help from './pages/Help';
 import Branches from './pages/Branches';
 import Transfers from './pages/Transfers';
+import Dashboard from './pages/Dashboard';
 import Trash from './pages/Trash';
 import Stock from './pages/Stock';
 import CountStock from './pages/CountStock';
@@ -111,6 +112,7 @@ export default function App() {
           </Protected>
         }
       >
+        <Route path="dashboard" element={<BackRoom><Dashboard /></BackRoom>} />
         <Route path="sales" element={<Sales />} />
         <Route path="customers" element={<Customers />} />
         <Route path="counters" element={<BackRoom><Counters /></BackRoom>} />
