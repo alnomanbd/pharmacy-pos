@@ -1677,3 +1677,29 @@ label.field span {
 .pwm-text b.is-s1 { color: hsl(var(--destructive)); }
 .pwm-text b.is-s2 { color: #b45309; }
 .pwm-text b.is-s3 { color: hsl(var(--primary)); }
+
+/* The console's sign-in card: a border of light that shifts slowly round
+   it — indigo to cyan and back — the hub the control room turns about.
+   Different from the shop's turning ring, on purpose. */
+.console-card {
+  background: linear-gradient(120deg, rgb(99 102 241 / 0.9), rgb(34 211 238 / 0.9), rgb(167 139 250 / 0.9), rgb(99 102 241 / 0.9));
+  background-size: 300% 300%;
+  animation: console-border 8s ease-in-out infinite;
+  box-shadow:
+    0 30px 90px -20px rgb(0 0 0 / 0.7),
+    0 0 60px -10px rgb(99 102 241 / 0.45);
+}
+@keyframes console-border {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .console-card {
+    animation: none;
+  }
+}

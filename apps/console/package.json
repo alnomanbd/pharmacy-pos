@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Dawai \u2014 the operator console",
+  "description": "Dawai — the operator console",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -16,6 +16,7 @@
   "dependencies": {
     "autoprefixer": "^10.5.4",
     "axios": "^1.7.2",
+    "framer-motion": "^11.18.2",
     "lucide-react": "^1.37.0",
     "postcss": "^8.5.26",
     "react": "^18.3.1",

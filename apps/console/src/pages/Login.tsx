@@ -16,7 +16,9 @@ import {
 import { authApi } from '@dawai/shared/api';
 import { useAuthStore } from '@dawai/shared/store/auth.store';
 import type { Role } from '@dawai/shared/types';
+import { motion, AnimatePresence } from 'framer-motion';
 import { BRAND } from '../brand';
+import ControlRoom, { FEED, useFeed } from '../components/ControlRoom';
 
 /**
  * The console's own sign-in.
@@ -127,74 +129,41 @@ export default function Login() {
     }
   };
 
-  const terms = (
-    <ul className="flex flex-col gap-4">
-      {TERMS.map(({ icon: Icon, head, body }) => (
-        <li key={head} className="flex items-start gap-3.5">
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/[0.07] text-emerald-300 ring-1 ring-white/10">
-            <Icon className="h-[18px] w-[18px]" />
-          </span>
-          <div className="min-w-0 pt-0.5">
-            <strong className="block text-[14px] font-semibold text-white">{head}</strong>
-            <p className="mt-0.5 text-[13px] leading-relaxed text-white/55">{body}</p>
-          </div>
-        </li>
-      ))}
-    </ul>
-  );
-
   return (
-    <main className="grid min-h-screen grid-cols-1 bg-[#f3f8f7] dark:bg-background lg:grid-cols-[minmax(0,1fr)_minmax(460px,0.9fr)]">
-      {/* ------------------------------- the brand panel ------------------------- */}
-      <section className="relative isolate overflow-hidden bg-[#04211d] text-white">
-        {/* One soft glow, drifting. Decorative, so it is hidden from readers. */}
-        <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
-          <div className="dw-glow absolute -left-[20%] -top-[30%] h-[80%] w-[80%] rounded-full bg-emerald-500/25 blur-[110px]" />
-          <div className="dw-glow-slow absolute -bottom-[35%] -right-[15%] h-[75%] w-[75%] rounded-full bg-cyan-500/20 blur-[120px]" />
-          <div className="absolute inset-0 bg-[radial-gradient(rgb(255_255_255/0.06)_1px,transparent_1px)] [background-size:22px_22px] [mask-image:linear-gradient(to_bottom,black,transparent_85%)]" />
-        </div>
+    <main className="relative isolate flex min-h-screen flex-col overflow-hidden bg-[radial-gradient(120%_90%_at_50%_0%,#18225a_0%,#0a1030_45%,#04071a_100%)] text-white">
+      {/* The light: two slow pools, indigo and cyan, behind a fading dot grid. */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
+        <div className="dw-glow absolute -left-[15%] -top-[25%] h-[75%] w-[75%] rounded-full bg-indigo-500/25 blur-[120px]" />
+        <div className="dw-glow-slow absolute -bottom-[30%] -right-[10%] h-[70%] w-[70%] rounded-full bg-cyan-500/20 blur-[120px]" />
+        <div className="absolute inset-0 bg-[radial-gradient(rgb(255_255_255/0.07)_1px,transparent_1px)] [background-size:24px_24px] [mask-image:radial-gradient(ellipse_at_center,black_25%,transparent_75%)]" />
+      </div>
 
-        <div className="flex h-full flex-col px-5 py-5 sm:px-10 lg:px-14 lg:py-12">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <Mark className="h-10 w-10 lg:h-11 lg:w-11" />
-              <div className="leading-tight">
-                <strong className="block text-[16px] font-bold tracking-tight">{BRAND.name}</strong>
-                <small className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-300/80">
-                  {BRAND.console}
-                </small>
-              </div>
-            </div>
-            <EnvBadge local={isLocal} />
+      {/* Every pharmacy, from above — see components/ControlRoom. */}
+      <ControlRoom />
+
+      {/* ---- the top bar ---- */}
+      <header className="relative z-10 flex items-center justify-between gap-4 px-5 pt-5 sm:px-8 sm:pt-7">
+        <div className="flex items-center gap-3">
+          <Mark className="h-10 w-10" />
+          <div className="leading-tight">
+            <strong className="block text-[16px] font-bold tracking-tight">{BRAND.name}</strong>
+            <small className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-200/80">{BRAND.console}</small>
           </div>
-
-          {/* The headline and the terms: the large screen's panel only. */}
-          <div className="dw-rise my-auto hidden max-w-md py-16 lg:block">
-            <h1 className="text-[40px] font-bold leading-[1.08] tracking-[-0.02em]">
-              Run every shop
-              <span className="block bg-gradient-to-r from-emerald-300 to-cyan-300 bg-clip-text text-transparent">
-                from one desk.
-              </span>
-            </h1>
-            <p className="mt-4 text-[15px] leading-relaxed text-white/60">
-              Approvals, payments, plans and support for every pharmacy on {BRAND.name}.
-            </p>
-            <div className="mt-10">{terms}</div>
-          </div>
-
-          <a
-            href={APP_URL}
-            className="group mt-auto hidden items-center gap-1.5 self-start text-[13px] text-white/50 transition-colors hover:text-white lg:inline-flex"
-          >
-            Shop owners sign in at <span className="font-semibold text-white/75 group-hover:text-white">{shopHost}</span>
-            <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-          </a>
         </div>
-      </section>
+        <EnvBadge local={isLocal} />
+      </header>
 
-      {/* -------------------------------- the form ------------------------------ */}
-      <section className="flex flex-col items-center justify-center px-4 py-8 sm:px-8 lg:py-12">
-        <div className="dw-rise-2 w-full max-w-[420px] rounded-3xl border border-border/70 bg-card p-6 shadow-[0_24px_60px_-24px_rgb(4_33_29/0.25)] sm:p-9">
+      <section className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 py-8 sm:px-8">
+        {/* On a phone the room is too small to draw; the feed passes above the card instead. */}
+        <PhoneFeed />
+
+        <motion.div
+          initial={{ opacity: 0, y: 28, scale: 0.97 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.7, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+          className="console-card relative w-full max-w-[420px] rounded-[28px] p-[1.5px] text-foreground"
+        >
+        <div className="relative w-full rounded-[26px] bg-card p-6 sm:p-9">
           <div className="flex items-center gap-2 text-[12px] font-semibold text-primary">
             <ShieldCheck className="h-4 w-4" />
             Operators only
@@ -329,16 +298,53 @@ export default function Login() {
           </p>
         </div>
 
-        {/* On a phone the conditions and the shop link sit under the form. */}
-        <div className="dw-rise-3 mt-6 w-full max-w-[420px] rounded-3xl bg-[#04211d] p-6 lg:hidden">{terms}</div>
+        </motion.div>
+
+        {/* The three conditions of entry, as three small marks under the card. */}
+        <div className="mt-6 flex max-w-[420px] flex-wrap justify-center gap-2">
+          {TERMS.map(({ icon: Icon, head }, i) => (
+            <motion.span
+              key={head}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.5 + i * 0.1 }}
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5 text-[12px] text-white/70 backdrop-blur"
+            >
+              <Icon className="h-3.5 w-3.5 text-indigo-200" /> {head}
+            </motion.span>
+          ))}
+        </div>
         <a
           href={APP_URL}
-          className="mt-5 inline-flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground lg:hidden"
+          className="group mt-5 inline-flex items-center gap-1 text-[13px] text-white/50 transition-colors hover:text-white"
         >
-          Shop owners sign in at <span className="font-semibold text-foreground">{shopHost}</span>
-          <ArrowUpRight className="h-3.5 w-3.5" />
+          Shop owners sign in at <span className="font-semibold text-white/75 group-hover:text-white">{shopHost}</span>
+          <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
         </a>
       </section>
     </main>
+  );
+}
+
+/** The operators' feed, one line at a time, for a screen too small for the room. */
+function PhoneFeed() {
+  const { n } = useFeed(2800);
+  const f = FEED[n % FEED.length];
+  return (
+    <div className="mb-5 h-8 lg:hidden" aria-hidden="true">
+      <AnimatePresence mode="wait">
+        <motion.span
+          key={n}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.35 }}
+          className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-white/12 bg-white/[0.06] px-3 py-1.5 text-xs font-semibold text-white/85"
+        >
+          <f.icon className={`h-3.5 w-3.5 ${f.tone}`} />
+          {f.text} · <span className="font-normal text-white/60">{f.who}</span>
+        </motion.span>
+      </AnimatePresence>
+    </div>
   );
 }
