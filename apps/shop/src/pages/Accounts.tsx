@@ -56,6 +56,7 @@ import { toLocalDate } from '@dawai/shared/lib/date';
 import ConfirmWithReason from '../components/ConfirmWithReason';
 import Pager from '../components/Pager';
 import Modal from '../components/Modal';
+import { CountUp } from '../components/motion';
 import { useT, useUiLang, bnNumerals } from '../i18n/ui';
 
 
@@ -356,16 +357,16 @@ function Overview({ data, n, money }: { data: ShopAccounts; n: (v: number | stri
 
       {/* ---- four tiles, one shape ---- */}
       <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Tile icon={ShoppingCart} tone="bg-primary/10 text-primary" label={t('Sold')} value={money(p.sales)}>
+        <Tile icon={ShoppingCart} tone="bg-primary/10 text-primary" label={t('Sold')} value={<CountUp value={p.sales} format={money} />}>
           {n(p.bills)} {t('bills')}
         </Tile>
-        <Tile icon={Coins} tone="bg-violet-500/10 text-violet-600 dark:text-violet-400" label={t('Gross margin')} value={money(p.margin)}>
+        <Tile icon={Coins} tone="bg-violet-500/10 text-violet-600 dark:text-violet-400" label={t('Gross margin')} value={<CountUp value={p.margin} format={money} />}>
           {n(p.marginPercent)}% {t('of what was sold')}
         </Tile>
-        <Tile icon={HandCoins} tone="bg-sky-500/10 text-sky-600 dark:text-sky-400" label={t('Other income')} value={money(p.otherIncome)}>
+        <Tile icon={HandCoins} tone="bg-sky-500/10 text-sky-600 dark:text-sky-400" label={t('Other income')} value={<CountUp value={p.otherIncome} format={money} />}>
           {t('bonus, service charge, commission')}
         </Tile>
-        <Tile icon={Wallet} tone="bg-destructive/10 text-destructive" label={t('Expenses')} value={money(p.expenses)}>
+        <Tile icon={Wallet} tone="bg-destructive/10 text-destructive" label={t('Expenses')} value={<CountUp value={p.expenses} format={money} />}>
           {t('rent, salary, bills')}
         </Tile>
       </div>
@@ -540,7 +541,7 @@ function Flow({
               <span className="font-semibold tabular-nums">{money(v)}</span>
             </div>
             <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted">
-              <div className={`h-full rounded-full ${bar}`} style={{ width: `${(v / sum) * 100}%` }} />
+              <div className={`motion-grow-x h-full rounded-full ${bar}`} style={{ width: `${(v / sum) * 100}%` }} />
             </div>
           </li>
         ))}
@@ -810,7 +811,7 @@ function IncomeView({
                       <span className="font-semibold tabular-nums">{money(amount)}</span>
                     </span>
                     <span className="mt-1 block h-1.5 overflow-hidden rounded-full bg-muted">
-                      <span className="block h-full rounded-full bg-emerald-500" style={{ width: `${(amount / total) * 100}%` }} />
+                      <span className="motion-grow-x block h-full rounded-full bg-emerald-500" style={{ width: `${(amount / total) * 100}%` }} />
                     </span>
                   </span>
                 </li>
@@ -1014,7 +1015,7 @@ function Tile({
   icon: typeof Wallet;
   tone: string;
   label: string;
-  value: string;
+  value: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
@@ -1105,16 +1106,16 @@ function OwnerBank({
   return (
     <>
       <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Tile icon={LogOut} tone={MOVE_LOOK.drawing.tone} label={t('Owner took out')} value={money(sum('drawing'))}>
+        <Tile icon={LogOut} tone={MOVE_LOOK.drawing.tone} label={t('Owner took out')} value={<CountUp value={sum('drawing')} format={money} />}>
           {t('the owner’s share — not an expense')}
         </Tile>
-        <Tile icon={LogIn} tone={MOVE_LOOK.capital.tone} label={t('Owner put in')} value={money(sum('capital'))}>
+        <Tile icon={LogIn} tone={MOVE_LOOK.capital.tone} label={t('Owner put in')} value={<CountUp value={sum('capital')} format={money} />}>
           {t('money into the shop — not income')}
         </Tile>
-        <Tile icon={ArrowLeftRight} tone={MOVE_LOOK.bank_deposit.tone} label={t('Into the bank')} value={money(sum('bank_deposit'))}>
+        <Tile icon={ArrowLeftRight} tone={MOVE_LOOK.bank_deposit.tone} label={t('Into the bank')} value={<CountUp value={sum('bank_deposit')} format={money} />}>
           {money(sum('bank_withdrawal'))} {t('brought back')}
         </Tile>
-        <Tile icon={Landmark} tone="bg-primary/10 text-primary" label={t('In the bank')} value={money(bank)}>
+        <Tile icon={Landmark} tone="bg-primary/10 text-primary" label={t('In the bank')} value={<CountUp value={bank} format={money} />}>
           {t('deposits less withdrawals, all time')}
         </Tile>
       </div>

@@ -348,7 +348,7 @@ export default function Purchases() {
                       </div>
                       <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-muted">
                         <div
-                          className={`h-full rounded-full ${due > 0 ? 'bg-amber-500' : 'bg-primary'}`}
+                          className={`motion-grow-x h-full rounded-full ${due > 0 ? 'bg-amber-500' : 'bg-primary'}`}
                           style={{ width: `${share * 100}%` }}
                         />
                       </div>
@@ -432,7 +432,7 @@ export default function Purchases() {
                         </div>
                         <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted">
                           <div
-                            className={`h-full rounded-full ${due > 0 ? 'bg-amber-500' : 'bg-primary'}`}
+                            className={`motion-grow-x h-full rounded-full ${due > 0 ? 'bg-amber-500' : 'bg-primary'}`}
                             style={{ width: `${share * 100}%` }}
                           />
                         </div>

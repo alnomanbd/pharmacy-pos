@@ -352,7 +352,7 @@ export function ExpensesView({
                               </span>
                               <span className="mt-1 block h-1.5 overflow-hidden rounded-full bg-muted">
                                 <span
-                                  className={`block h-full rounded-full ${look.bar}`}
+                                  className={`motion-grow-x block h-full rounded-full ${look.bar}`}
                                   style={{ width: `${amount > 0 ? Math.max(2, (c.amount / amount) * 100) : 0}%` }}
                                 />
                               </span>

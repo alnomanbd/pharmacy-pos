@@ -40,6 +40,7 @@ import ExportCsv from '../components/ExportCsv';
 import ConfirmWithReason from '../components/ConfirmWithReason';
 import { useAlertStore } from '../alerts/useStockAlerts';
 import { fetchBranchSwitcher } from '../branch';
+import { CountUp } from '../components/motion';
 import { AskForMedicine, MedicineRequestsPanel } from '../components/MedicineRequests';
 
 /**
@@ -317,7 +318,7 @@ export default function Stock() {
         <Tile
           icon={Wallet}
           tone="bg-primary/10 text-primary"
-          value={money(summary.value)}
+          value={<CountUp value={summary.value} format={money} />}
           label={t('Value on the shelf')}
           sub={`${n(summary.items)} ${t('items on the list')}`}
           active={status === 'all' && filtering === false}
@@ -326,7 +327,7 @@ export default function Stock() {
         <Tile
           icon={TrendingDown}
           tone="bg-amber-500/15 text-amber-600 dark:text-amber-400"
-          value={n(summary.low)}
+          value={<CountUp value={summary.low} format={n} />}
           label={t('To reorder')}
           sub={t('at or below the level you set')}
           active={status === 'low'}
@@ -336,7 +337,7 @@ export default function Stock() {
         <Tile
           icon={PackageX}
           tone="bg-destructive/10 text-destructive"
-          value={n(summary.out)}
+          value={<CountUp value={summary.out} format={n} />}
           label={t('Out of stock')}
           sub={t('nothing left to sell')}
           active={status === 'out'}
@@ -346,7 +347,7 @@ export default function Stock() {
         <Tile
           icon={CalendarClock}
           tone="bg-sky-500/10 text-sky-600 dark:text-sky-400"
-          value={n(summary.expiring)}
+          value={<CountUp value={summary.expiring} format={n} />}
           label={t('Expiring soon')}
           sub={`${t('first lot within')} ${n(summary.expiryDays)} ${t('days')}`}
           active={status === 'expiring'}
@@ -633,7 +634,7 @@ function Tile({
 }: {
   icon: typeof Boxes;
   tone: string;
-  value: string;
+  value: React.ReactNode;
   label: string;
   sub: string;
   active: boolean;
@@ -734,7 +735,7 @@ function LevelBar({ product: p }: { product: ShopProduct }) {
   return (
     <span className="mt-1.5 block h-1 w-full max-w-[9rem] overflow-hidden rounded-full bg-muted">
       <span
-        className={`block h-full rounded-full ${
+        className={`motion-grow-x block h-full rounded-full ${
           s === 'out' ? 'bg-destructive' : s === 'low' ? 'bg-amber-500' : 'bg-primary'
         }`}
         style={{ width: `${Math.max(share * 100, s === 'out' ? 0 : 4)}%` }}

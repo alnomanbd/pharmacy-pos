@@ -405,7 +405,7 @@ function StaffCard({
           </dl>
           {/* Against whoever sold most this month, so the cards compare. */}
           <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted" aria-hidden="true">
-            <div className="h-full rounded-full bg-primary" style={{ width: `${(month.total / mostMonth) * 100}%` }} />
+            <div className="motion-grow-x h-full rounded-full bg-primary" style={{ width: `${(month.total / mostMonth) * 100}%` }} />
           </div>
         </div>
       </div>

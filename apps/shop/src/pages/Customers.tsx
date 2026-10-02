@@ -429,7 +429,7 @@ export default function Customers() {
                       {owes && (
                         <span className="mt-2 block h-1 overflow-hidden rounded-full bg-muted">
                           <span
-                            className={`block h-full rounded-full ${over ? 'bg-amber-500' : 'bg-destructive/70'}`}
+                            className={`motion-grow-x block h-full rounded-full ${over ? 'bg-amber-500' : 'bg-destructive/70'}`}
                             style={{ width: `${Math.max(4, (c.balance / most) * 100)}%` }}
                           />
                         </span>

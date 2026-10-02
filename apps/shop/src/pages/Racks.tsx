@@ -441,7 +441,7 @@ function RackCard({
           </div>
           <div className="h-1.5 overflow-hidden rounded-full bg-muted">
             <div
-              className={`h-full rounded-full ${r.items ? tone.band : ''}`}
+              className={`motion-grow-x h-full rounded-full ${r.items ? tone.band : ''}`}
               style={{ width: `${(r.items / most) * 100}%` }}
             />
           </div>

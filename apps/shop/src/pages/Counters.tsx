@@ -19,6 +19,7 @@ import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import ConfirmWithReason from '../components/ConfirmWithReason';
 import { useT, useUiLang, bnNumerals } from '../i18n/ui';
 import { fetchBranchSwitcher, useBranchStore, type BranchSwitcherInfo } from '../branch';
+import { CountUp } from '../components/motion';
 import Modal from '../components/Modal';
 
 /**
@@ -175,17 +176,17 @@ export default function Counters() {
         <>
           {/* ---- four tiles, one shape ---- */}
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <Tile icon={Monitor} tone="bg-primary/10 text-primary" label={t('Counters')} value={n(rows.length)}>
+            <Tile icon={Monitor} tone="bg-primary/10 text-primary" label={t('Counters')} value={<CountUp value={rows.length} format={n} />}>
               {n(active)} {t('in use')}
               {rows.length - active > 0 ? ` · ${n(rows.length - active)} ${t('turned off')}` : ''}
             </Tile>
-            <Tile icon={Radio} tone="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" label={t('Open now')} value={n(openNow.length)}>
+            <Tile icon={Radio} tone="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" label={t('Open now')} value={<CountUp value={openNow.length} format={n} />}>
               {openNow.length ? openNow.map((r) => calledBy(r.openShift!.userName)).join(', ') : t('nobody on a counter')}
             </Tile>
-            <Tile icon={Banknote} tone="bg-violet-500/10 text-violet-600 dark:text-violet-400" label={t('Taken today')} value={money(takenToday)}>
+            <Tile icon={Banknote} tone="bg-violet-500/10 text-violet-600 dark:text-violet-400" label={t('Taken today')} value={<CountUp value={takenToday} format={money} />}>
               {t('across every counter')}
             </Tile>
-            <Tile icon={ReceiptText} tone="bg-sky-500/10 text-sky-600 dark:text-sky-400" label={t('Bills today')} value={n(billsToday)}>
+            <Tile icon={ReceiptText} tone="bg-sky-500/10 text-sky-600 dark:text-sky-400" label={t('Bills today')} value={<CountUp value={billsToday} format={n} />}>
               {billsToday > 0 ? `${money(takenToday / billsToday)} ${t('a bill, on average')}` : t('none yet')}
             </Tile>
           </div>
@@ -215,7 +216,7 @@ export default function Counters() {
                     </div>
                     <div className="mt-1 h-2 overflow-hidden rounded-full bg-muted">
                       <div
-                        className="h-full rounded-full bg-primary"
+                        className="motion-grow-x h-full rounded-full bg-primary"
                         style={{ width: `${Math.max(2, ((r.today?.total ?? 0) / most) * 100)}%` }}
                       />
                     </div>
@@ -280,7 +281,7 @@ function Tile({
   icon: typeof Monitor;
   tone: string;
   label: string;
-  value: string;
+  value: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
