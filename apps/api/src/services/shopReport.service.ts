@@ -325,6 +325,23 @@ async function byDay(org: Scope, from: string, to: string) {
   return out;
 }
 
+/**
+ * How the stretch was paid for, by method, biggest first.
+ *
+ * From the payment lines rather than the totals, so a bill split between cash
+ * and bKash counts in both. "due" is what went on the baki khata.
+ */
+async function byMethod(org: Scope, from: string, to: string) {
+  const rows = await SaleModel.aggregate<{ _id: string; amount: number; bills: number }>([
+    { $match: { ...org, dayKey: { $gte: from, $lte: to }, deletedAt: null, status: { $ne: 'void' } } },
+    { $unwind: '$payments' },
+    { $match: { 'payments.amount': { $gt: 0 } } },
+    { $group: { _id: '$payments.method', amount: { $sum: '$payments.amount' }, bills: { $sum: 1 } } },
+    { $sort: { amount: -1 } },
+  ]);
+  return rows.map((r) => ({ method: r._id || 'cash', amount: money(r.amount), bills: r.bills }));
+}
+
 /** What sold, ranked by what it earned rather than by how much of it left. */
 async function topProducts(org: Scope, from: string, to: string, limit = 12) {
   /* Net of what came back: a strip sold and returned earned nothing, and a
@@ -504,10 +521,13 @@ export async function ownerReport(actor: Actor, opts: { from?: string; to?: stri
   const range = rangeOf(opts);
   const org = scopeOf(actor);
 
-  const [now, before, days, top, suppliers, dead, expenseCategories] = await Promise.all([
+  const [now, before, days, daysBefore, methods, top, suppliers, dead, expenseCategories] = await Promise.all([
     totalsFor(org, range.from, range.to),
     totalsFor(org, range.previousFrom, range.previousTo),
     byDay(org, range.from, range.to),
+    /* The stretch before, day by day, so the two can be drawn side by side. */
+    byDay(org, range.previousFrom, range.previousTo),
+    byMethod(org, range.from, range.to),
     topProducts(org, range.from, range.to),
     bySupplier(org, range.from, range.to),
     deadStock(org, range.from, range.to),
@@ -519,6 +539,8 @@ export async function ownerReport(actor: Actor, opts: { from?: string; to?: stri
     now,
     before,
     byDay: days,
+    byDayBefore: daysBefore,
+    byMethod: methods,
     topProducts: top.map((p) => ({
       _id: String(p._id),
       name: p.name,

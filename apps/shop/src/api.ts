@@ -104,6 +104,10 @@ export interface OwnerReport {
   now: RangeTotals;
   before: RangeTotals;
   byDay: { dayKey: string; sales: number; cost: number; margin: number; bills: number }[];
+  /** The stretch before, day by day — drawn beside this one. */
+  byDayBefore?: { dayKey: string; sales: number; cost: number; margin: number; bills: number }[];
+  /** How it was paid, by method, biggest first. `due` went on the baki khata. */
+  byMethod?: { method: string; amount: number; bills: number }[];
   topProducts: { _id: string; name: string; pieces: number; sales: number; margin: number }[];
   bySupplier: {
     _id: string;

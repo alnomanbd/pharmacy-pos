@@ -41,6 +41,7 @@ import { useAuthStore } from '@dawai/shared/store/auth.store';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import { toLocalDate } from '@dawai/shared/lib/date';
 import { useT, useUiLang, bnNumerals } from '../i18n/ui';
+import { CountUp, Rise, useSeen } from '../components/motion';
 
 /**
  * Two questions, and they are not the same question.
@@ -250,6 +251,7 @@ function TodayView({ backRoom }: { backRoom: boolean }) {
           tone="bg-primary/10 text-primary"
           label={t('Sold today')}
           value={money(day?.total ?? 0)}
+            amount={day?.total ?? 0}
           sub={`${n(day?.count ?? 0)} ${t('bills')}${
             (day?.returned ?? 0) > 0 ? ` · ${money(day?.returned ?? 0)} ${t('taken back')}` : ''
           }`}
@@ -260,6 +262,7 @@ function TodayView({ backRoom }: { backRoom: boolean }) {
             tone="bg-violet-500/10 text-violet-600 dark:text-violet-400"
             label={t('Margin')}
             value={money(day?.margin ?? 0)}
+            amount={day?.margin ?? 0}
             sub={t('after what the stock cost')}
           />
         )}
@@ -268,6 +271,7 @@ function TodayView({ backRoom }: { backRoom: boolean }) {
           tone="bg-amber-500/15 text-amber-600 dark:text-amber-400"
           label={t('On account today')}
           value={money(day?.due ?? 0)}
+            amount={day?.due ?? 0}
           sub={t('left on the khata')}
         />
         {backRoom && (
@@ -276,6 +280,7 @@ function TodayView({ backRoom }: { backRoom: boolean }) {
             tone="bg-sky-500/10 text-sky-600 dark:text-sky-400"
             label={t('Came in today')}
             value={money(cameIn.value)}
+            amount={cameIn.value}
             sub={`${n(cameIn.count)} ${t('deliveries')}`}
           />
         )}
@@ -284,6 +289,7 @@ function TodayView({ backRoom }: { backRoom: boolean }) {
           tone="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
           label={t('Owed to you')}
           value={money(book.owed)}
+            amount={book.owed}
           sub={`${n(book.owing)} ${t('on the baki khata')}`}
         />
         {backRoom && (
@@ -292,6 +298,7 @@ function TodayView({ backRoom }: { backRoom: boolean }) {
             tone="bg-destructive/10 text-destructive"
             label={t('You owe')}
             value={money(owed)}
+            amount={owed}
             sub={t('to the companies')}
             bad={owed > 0}
           />
@@ -465,7 +472,7 @@ function MethodRow({
           only how much. */}
       <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted">
         <div
-          className={`h-full rounded-full ${muted ? 'bg-destructive/60' : 'bg-primary'}`}
+          className={`motion-grow-x h-full rounded-full ${muted ? 'bg-destructive/60' : 'bg-primary'}`}
           style={{ width: `${Math.max(2, share * 100)}%` }}
         />
       </div>
@@ -686,26 +693,30 @@ function StretchView() {
       ) : (
         <>
           {/* ---- the headline: what was kept ---- */}
-          <div
-            className={`mt-4 flex flex-wrap items-center gap-4 rounded-[var(--radius)] border p-5 ${
-              report.now.net >= 0 ? 'border-primary/30 bg-primary/5' : 'border-destructive/30 bg-destructive/5'
+          <Rise
+            className={`relative mt-4 flex flex-wrap items-center gap-4 overflow-hidden rounded-[var(--radius)] border p-5 sm:p-6 ${
+              report.now.net >= 0
+                ? 'border-primary/30 bg-gradient-to-br from-primary/[0.12] via-primary/[0.05] to-transparent'
+                : 'border-destructive/30 bg-destructive/5'
             }`}
           >
+            <Sparkline rows={report.byDay} negative={report.now.net < 0} />
+            {/* Positioned, so they sit over the line drawn behind them. */}
             <span
-              className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl ${
+              className={`relative grid h-12 w-12 shrink-0 place-items-center rounded-2xl ${
                 report.now.net >= 0 ? 'bg-primary/15 text-primary' : 'bg-destructive/15 text-destructive'
               }`}
             >
               <PiggyBank className="h-6 w-6" />
             </span>
-            <div className="min-w-0 flex-1">
+            <div className="relative min-w-0 flex-1">
               <div className="eyebrow">{t('Net profit')}</div>
               <div
-                className={`text-3xl font-semibold tabular-nums ${
+                className={`text-3xl font-semibold tabular-nums sm:text-4xl ${
                   report.now.net >= 0 ? 'text-primary' : 'text-destructive'
                 }`}
               >
-                {money(report.now.net)}
+                <CountUp value={report.now.net} format={money} duration={1200} />
               </div>
               <div className="text-xs text-muted-foreground">
                 {`${money(report.now.margin)} ${t('margin')}`}
@@ -715,8 +726,10 @@ function StretchView() {
                   : ` — ${t('no spending recorded')}`}
               </div>
             </div>
-            <Delta now={report.now.net} before={report.before.net} money={money} n={n} />
-          </div>
+            <div className="relative">
+              <Delta now={report.now.net} before={report.before.net} money={money} n={n} />
+            </div>
+          </Rise>
 
           {/* ---- six figures, each against last time ---- */}
           <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
@@ -755,6 +768,11 @@ function StretchView() {
             />
           </div>
 
+          <div className="mt-4 grid gap-4 lg:grid-cols-[1.45fr_1fr]">
+            <PeriodCompare now={report.byDay} before={report.byDayBefore ?? []} />
+            <PaymentMix rows={report.byMethod ?? []} />
+          </div>
+
           <DailyChart rows={report.byDay} />
 
           <div className="mt-4 grid gap-4 lg:grid-cols-2">
@@ -783,8 +801,8 @@ function StretchView() {
                         </span>
                         <span className="mt-1 block h-1.5 overflow-hidden rounded-full bg-muted">
                           <span
-                            className="block h-full rounded-full bg-primary"
-                            style={{ width: `${Math.max(2, (p.margin / topMargin) * 100)}%` }}
+                            className="motion-grow-x block h-full rounded-full bg-primary"
+                            style={{ width: `${Math.max(2, (p.margin / topMargin) * 100)}%`, animationDelay: `${i * 60}ms` }}
                           />
                         </span>
                         <span className="mt-0.5 block text-[11px] tabular-nums text-muted-foreground">
@@ -861,7 +879,7 @@ function StretchView() {
                     </div>
                     <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted">
                       <div
-                        className="h-full rounded-full bg-primary"
+                        className="motion-grow-x h-full rounded-full bg-primary"
                         style={{ width: `${spent > 0 ? Math.max(2, (e.amount / spent) * 100) : 0}%` }}
                       />
                     </div>
@@ -969,6 +987,7 @@ function Tile({
   value,
   sub,
   bad,
+  amount,
 }: {
   icon: typeof Users;
   tone: string;
@@ -976,7 +995,10 @@ function Tile({
   value: string;
   sub: string;
   bad?: boolean;
+  /** The figure as a number, so it can count up; `value` is what it settles on. */
+  amount?: number;
 }) {
+  const { money } = useNumbers();
   return (
     <div className="stat flex h-full min-h-[128px] flex-col">
       <div className="flex items-start justify-between gap-2">
@@ -985,7 +1007,9 @@ function Tile({
           <Icon className="h-[18px] w-[18px]" />
         </span>
       </div>
-      <div className={`value mt-1 stat-fit [--fit-max:20px] ${bad ? 'text-destructive' : ''}`}>{value}</div>
+      <div className={`value mt-1 stat-fit [--fit-max:20px] ${bad ? 'text-destructive' : ''}`}>
+        {amount !== undefined ? <CountUp value={amount} format={money} /> : value}
+      </div>
       <div className="mt-auto line-clamp-2 pt-1 text-[11.5px] leading-snug text-muted-foreground">{sub}</div>
     </div>
   );
@@ -1066,7 +1090,9 @@ function Compare({
           <Icon className="h-4 w-4" />
         </span>
       </div>
-      <div className="value mt-1 stat-fit [--fit-max:20px]">{isMoney ? money(now) : n(now)}</div>
+      <div className="value mt-1 stat-fit [--fit-max:20px]">
+        <CountUp value={now} format={(v) => (isMoney ? money(v) : n(v))} />
+      </div>
       <div className="mt-auto pt-1">
         <Delta now={now} before={before} money={money} n={n} isMoney={isMoney} upIsBad={upIsBad} neutral={neutral} />
       </div>
@@ -1096,6 +1122,7 @@ function DailyChart({
   const t = useT();
   const { n, money } = useNumbers();
   const [asTable, setAsTable] = useState(false);
+  const [plotRef, seen] = useSeen<HTMLDivElement>();
 
   if (rows.length === 0) return null;
 
@@ -1174,6 +1201,7 @@ function DailyChart({
               />
             ))}
             <div
+              ref={plotRef}
               className="relative flex h-44 items-end gap-[2px] border-b border-border"
               role="img"
               aria-label={t('Sales by day')}
@@ -1202,10 +1230,14 @@ function DailyChart({
                       </span>
                     )}
                     <div
-                      className={`w-full rounded-t-[4px] transition-colors ${
+                      className={`w-full rounded-t-[4px] transition-colors ${seen ? 'motion-grow-y' : 'scale-y-0'} ${
                         best ? 'bg-primary' : 'bg-primary/70 group-hover:bg-primary'
                       }`}
-                      style={{ height: `${(r.sales / top) * 100}%`, minHeight: r.sales > 0 ? 2 : 0 }}
+                      style={{
+                        height: `${(r.sales / top) * 100}%`,
+                        minHeight: r.sales > 0 ? 2 : 0,
+                        animationDelay: `${Math.min(900, i * (900 / rows.length))}ms`,
+                      }}
                     />
                     <div className={`pointer-events-none absolute top-0 z-10 hidden whitespace-nowrap rounded-lg border border-border bg-card px-2.5 py-1.5 text-[11px] shadow-lg group-hover:block ${edge}`}>
                       <span className="font-semibold">{n(shortDay(r.dayKey))}</span>
@@ -1227,5 +1259,221 @@ function DailyChart({
         </div>
       )}
     </div>
+  );
+}
+
+/* ------------------------------------------------------------ pictures -- */
+
+/**
+ * The stretch's margin, day by day, as one quiet line behind the headline.
+ *
+ * Decoration with a meaning: the shape of the month an owner has just been
+ * told the total of. It draws itself in once, and carries no figures — the
+ * figures are the headline's job and the daily chart's.
+ */
+function Sparkline({ rows, negative }: { rows: { margin: number }[]; negative: boolean }) {
+  const [ref, seen] = useSeen<SVGSVGElement>();
+  if (rows.length < 2) return null;
+  const vals = rows.map((r) => r.margin);
+  const hi = Math.max(...vals, 1);
+  const lo = Math.min(...vals, 0);
+  const W = 400;
+  const H = 100;
+  const pts = vals.map((v, i) => [(i / (vals.length - 1)) * W, H - 8 - ((v - lo) / (hi - lo || 1)) * (H - 16)]);
+  const d = pts.map(([x, y], i) => `${i ? 'L' : 'M'}${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
+  return (
+    <svg
+      ref={ref}
+      viewBox={`0 0 ${W} ${H}`}
+      preserveAspectRatio="none"
+      aria-hidden="true"
+      /* Low along the band's floor, under the words rather than through them. */
+      className="pointer-events-none absolute bottom-0 right-0 h-2/5 w-full opacity-40 sm:h-3/5 sm:w-1/2"
+    >
+      <defs>
+        <linearGradient id="spark-fill" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0" stopColor="currentColor" stopOpacity="0.18" />
+          <stop offset="1" stopColor="currentColor" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <g className={negative ? 'text-destructive' : 'text-primary'}>
+        <path d={`${d} L${W},${H} L0,${H} Z`} fill="url(#spark-fill)" className={seen ? 'motion-rise' : 'opacity-0'} />
+        <path
+          d={d}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          vectorEffect="non-scaling-stroke"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          pathLength={1000}
+          className={seen ? 'motion-draw' : 'opacity-0'}
+        />
+      </g>
+    </svg>
+  );
+}
+
+/**
+ * This stretch against the one before it, in four or so equal pieces.
+ *
+ * Grouped bars, two series: the stretch in the brand's colour, the one before
+ * in a quiet grey, side by side in each piece — the same picture the website
+ * shows, drawn from the shop's own bills. The pieces are weeks for a month,
+ * days for a week, a fortnight for a quarter, so there are never too many to
+ * read. Each piece names both figures on hover and in its label.
+ */
+function PeriodCompare({
+  now,
+  before,
+}: {
+  now: { dayKey: string; sales: number }[];
+  before: { dayKey: string; sales: number }[];
+}) {
+  const t = useT();
+  const { n, money } = useNumbers();
+  const [ref, seen] = useSeen<HTMLDivElement>();
+  const [hover, setHover] = useState<number | null>(null);
+  if (now.length === 0) return null;
+
+  const size = now.length <= 7 ? 1 : now.length <= 31 ? 7 : 14;
+  const chunks = (rows: { sales: number }[]) => {
+    const out: number[] = [];
+    for (let i = 0; i < rows.length; i += size) out.push(rows.slice(i, i + size).reduce((a, r) => a + r.sales, 0));
+    return out;
+  };
+  const a = chunks(now);
+  const b = chunks(before);
+  const top = Math.max(1, ...a, ...b);
+  /* The last piece is often short — two days of a fifth week — and says so,
+     rather than looking like a week that went badly. */
+  const label = (i: number) => {
+    if (size === 1) return n(shortDay(now[i].dayKey));
+    const len = Math.min(size, now.length - i * size);
+    return len < size ? `${n(len)} ${t('days')}` : `${t(size === 7 ? 'Week' : 'Fortnight')} ${n(i + 1)}`;
+  };
+
+  return (
+    <Rise className="card mb-0 min-w-0">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="mb-0">
+          <BarChart3 className="h-4 w-4" /> {t('This stretch against the last')}
+        </h3>
+        <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-sm bg-primary" /> {t('This stretch')}
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-sm bg-muted-foreground/40" /> {t('The one before')}
+          </span>
+        </div>
+      </div>
+      <div ref={ref} className="relative mt-5 flex h-44 items-end gap-3 border-b border-border sm:gap-5" onMouseLeave={() => setHover(null)}>
+        {a.map((v, i) => (
+          <div
+            key={i}
+            tabIndex={0}
+            onMouseEnter={() => setHover(i)}
+            onFocus={() => setHover(i)}
+            onBlur={() => setHover(null)}
+            aria-label={`${label(i)}: ${money(v)}, ${t('the one before')} ${money(b[i] ?? 0)}`}
+            className="relative flex h-full flex-1 items-end justify-center gap-[2px] outline-none"
+          >
+            {[b[i] ?? 0, v].map((x, j) => (
+              <div
+                key={j}
+                className={`w-full max-w-8 rounded-t-[4px] ${j === 1 ? 'bg-primary' : 'bg-muted-foreground/40'} ${seen ? 'motion-grow-y' : 'scale-y-0'}`}
+                style={{ height: `${(x / top) * 100}%`, minHeight: x > 0 ? 2 : 0, animationDelay: `${i * 110 + j * 60}ms` }}
+              />
+            ))}
+            {hover === i && (
+              <div
+                className={`pointer-events-none absolute -top-2 z-10 w-max -translate-y-full rounded-lg border border-border bg-card px-2.5 py-1.5 text-[11px] shadow-lg ${
+                  i === 0 ? 'left-0' : i === a.length - 1 ? 'right-0' : 'left-1/2 -translate-x-1/2'
+                }`}
+              >
+                <span className="font-semibold">{label(i)}</span>
+                <span className="mt-0.5 flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-sm bg-primary" />
+                  <span className="text-muted-foreground">{t('This stretch')}</span>
+                  <span className="ml-auto pl-3 font-semibold tabular-nums">{money(v)}</span>
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-sm bg-muted-foreground/40" />
+                  <span className="text-muted-foreground">{t('The one before')}</span>
+                  <span className="ml-auto pl-3 font-semibold tabular-nums">{money(b[i] ?? 0)}</span>
+                </span>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+      <div className="mt-1.5 flex gap-3 sm:gap-5">
+        {a.map((_, i) => (
+          <span key={i} className="flex-1 truncate text-center text-[10px] tabular-nums text-muted-foreground">
+            {label(i)}
+          </span>
+        ))}
+      </div>
+    </Rise>
+  );
+}
+
+/* The four categorical slots, in order, validated light and dark; the rest fold into Other. */
+const MIX_SLOTS = ['var(--mix-0)', 'var(--mix-1)', 'var(--mix-2)', 'var(--mix-3)'];
+
+/**
+ * How the stretch was paid for — one bar split by method, every part named.
+ *
+ * Four methods at most, the rest folded into "Other": a fifth colour is the
+ * one nobody can tell from the fourth. A two-pixel gap between the parts, and
+ * the figure and the share written beside each swatch, so the colour is never
+ * the only way to read it.
+ */
+function PaymentMix({ rows }: { rows: { method: string; amount: number; bills: number }[] }) {
+  const t = useT();
+  const { n, money } = useNumbers();
+  const [ref, seen] = useSeen<HTMLDivElement>();
+  const total = rows.reduce((a, r) => a + r.amount, 0);
+  const main = rows.slice(0, 4);
+  const rest = rows.slice(4).reduce((a, r) => a + r.amount, 0);
+  const parts = [
+    ...main.map((r, i) => ({ key: r.method, label: t(METHOD_LABEL[r.method] ?? r.method), amount: r.amount, color: MIX_SLOTS[i] })),
+    ...(rest > 0 ? [{ key: 'other', label: t('Other'), amount: rest, color: 'var(--mix-other)' }] : []),
+  ];
+
+  return (
+    <Rise delay={80} className="card mb-0 flex min-w-0 flex-col">
+      <h3>
+        <Wallet className="h-4 w-4" /> {t('How customers paid')}
+      </h3>
+      {total <= 0 ? (
+        <div className="empty">{t('Nothing sold in this stretch.')}</div>
+      ) : (
+        <>
+          <div ref={ref} className="mt-2 flex h-4 gap-[2px] overflow-hidden rounded-full">
+            {parts.map((p, i) => (
+              <div
+                key={p.key}
+                className={`h-full first:rounded-l-full last:rounded-r-full ${seen ? 'motion-grow-x' : 'scale-x-0'}`}
+                style={{ width: `${(p.amount / total) * 100}%`, background: p.color, animationDelay: `${200 + i * 110}ms` }}
+              />
+            ))}
+          </div>
+          <ul className="mt-5 flex flex-col gap-2.5">
+            {parts.map((p) => (
+              <li key={p.key} className="flex items-center gap-2.5 text-sm">
+                <span className="h-3 w-3 shrink-0 rounded-sm" style={{ background: p.color }} aria-hidden="true" />
+                <span className="min-w-0 flex-1 truncate">{p.label}</span>
+                <span className="font-semibold tabular-nums">{money(p.amount)}</span>
+                <span className="w-11 text-right text-xs tabular-nums text-muted-foreground">
+                  {n(Math.round((p.amount / total) * 100))}%
+                </span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </Rise>
   );
 }

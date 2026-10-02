@@ -1762,6 +1762,14 @@ const bn: Record<string, string> = {
   'Optional': 'ঐচ্ছিক',
   'Photos of your pad': 'আপনার প্যাডের ছবি',
   'optional — to line it up on screen, never printed': 'ঐচ্ছিক — শুধু স্ক্রিনে মিলিয়ে দেখার জন্য, প্রিন্ট হবে না',
+  /* ---- report pictures ---- */
+  'This stretch against the last': 'এই সময় আর আগের সময়',
+  'This stretch': 'এই সময়',
+  'The one before': 'আগের সময়',
+  'the one before': 'আগের সময়',
+  'Week': 'সপ্তাহ',
+  'Fortnight': 'পক্ষ',
+  'How customers paid': 'কাস্টমার কীভাবে দিলেন',
 };
 
 export const useT = makeUseT(bn);
