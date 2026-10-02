@@ -367,22 +367,22 @@ const en = {
     compareCta: 'See the full comparison',
     plans: [
       {
+        key: 'trial',
         name: 'Trial',
         price: 'Free',
         period: 'for 14 days',
-        blurb: 'The whole shop, nothing held back. This is how a shop decides.',
+        blurb: 'Every feature, on a real counter, for two weeks. This is how a shop decides.',
         cta: 'Start the trial',
         highlight: false,
         features: [
           'Every feature, all of them',
-          'Every billing counter you have',
-          'A login for each counter',
           'Unlimited bills',
           'We switch it on for you',
           'Your data exports to CSV from day one',
         ],
       },
       {
+        key: 'basic',
         name: 'Pharmacy Basic',
         price: '৳1,500',
         period: 'per month',
@@ -392,9 +392,6 @@ const en = {
         badge: 'Most shops start here',
         features: [
           'Everything in the trial',
-          'One outlet',
-          'One billing screen',
-          'Two users — owner and one salesman',
           'Full stock, batches, expiry and FEFO',
           'Purchase, suppliers and the ledger',
           'The baki khata and SMS reminders',
@@ -404,6 +401,7 @@ const en = {
         ],
       },
       {
+        key: 'plus',
         name: 'Pharmacy Plus',
         price: '৳3,000',
         period: 'per month',
@@ -412,8 +410,6 @@ const en = {
         highlight: false,
         features: [
           'Everything in Basic',
-          'Several billing screens',
-          'Up to ten users, with roles',
           'Multiple counters and shifts per day',
           'Purchases, supplier ledgers and statements',
           'Ordering: what to ask each rep for',
@@ -423,7 +419,7 @@ const en = {
       },
     ],
     footnote:
-      'Prices in BDT, VAT included. Pay monthly online, by bKash, Nagad or bank — and leave whenever you like, with your data.',
+      'Prices in BDT, VAT included. More than one branch? Open them from inside the app — each card says how many a plan holds, and what an extra one adds to the month. Pay online, by bKash, Nagad or bank, and leave whenever you like, with your data.',
   },
 
   faq: {
@@ -1207,13 +1203,11 @@ const bn: DeepPartial<Dictionary> = {
         name: 'ট্রায়াল',
         price: 'ফ্রি',
         period: '১৪ দিনের জন্য',
-        blurb: 'পুরো দোকান, কিছুই বাদ দেওয়া হয়নি। এভাবেই দোকান সিদ্ধান্ত নেয়।',
+        blurb: 'সব ফিচার, আসল কাউন্টারে, দুই সপ্তাহ। এভাবেই দোকান সিদ্ধান্ত নেয়।',
         cta: 'ট্রায়াল শুরু করুন',
         highlight: false,
         features: [
           'সব ফিচার, একটাও বাদ নয়',
-          'আপনার সবগুলো বিলিং কাউন্টার',
-          'প্রতিটা কাউন্টারের জন্য একটা লগইন',
           'সীমাহীন বিল',
           'আমরা চালু করে দিই',
           'তথ্য প্রথম দিন থেকেই CSV-তে নেওয়া যায়',
@@ -1229,9 +1223,6 @@ const bn: DeepPartial<Dictionary> = {
         badge: 'বেশিরভাগ দোকান এখান থেকেই শুরু করে',
         features: [
           'ট্রায়ালের সবকিছু',
-          'একটি আউটলেট',
-          'একটি বিলিং স্ক্রিন',
-          'দুইজন ইউজার — মালিক ও একজন সেলসম্যান',
           'সম্পূর্ণ স্টক, ব্যাচ, মেয়াদ ও FEFO',
           'মাল কেনা, সাপ্লায়ার ও তাদের খাতা',
           'বাকি খাতা ও এসএমএস মনে করিয়ে দেওয়া',
@@ -1249,8 +1240,6 @@ const bn: DeepPartial<Dictionary> = {
         highlight: false,
         features: [
           'Basic-এর সবকিছু',
-          'একাধিক বিলিং স্ক্রিন',
-          'ভূমিকাসহ দশজন পর্যন্ত ইউজার',
           'একাধিক কাউন্টার ও দিনে একাধিক শিফট',
           'মাল কেনা, সাপ্লায়ারের খাতা ও বিবরণী',
           'অর্ডার: কার কাছে কী চাইতে হবে',
@@ -1260,7 +1249,7 @@ const bn: DeepPartial<Dictionary> = {
       },
     ],
     footnote:
-      'দাম টাকায়, ভ্যাটসহ। প্রতি মাসে অনলাইনে, বিকাশ, নগদ বা ব্যাংকে দিন — যখন খুশি ছেড়ে দিন, তথ্য আপনার সাথেই।',
+      'দাম টাকায়, ভ্যাটসহ। একাধিক শাখা? অ্যাপের ভেতর থেকেই খুলুন — প্রতিটি প্ল্যানে কয়টি শাখা আর অতিরিক্ত শাখায় মাসে কত যোগ হয়, কার্ডেই লেখা। অনলাইনে, বিকাশ, নগদ বা ব্যাংকে দিন — যখন খুশি ছেড়ে দিন, তথ্য আপনার সাথেই।',
   },
 
   faq: {
