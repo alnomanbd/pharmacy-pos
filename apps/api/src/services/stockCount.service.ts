@@ -8,6 +8,7 @@ import {
 } from '../models/index.js';
 import { badRequest, notFound } from '../utils/AppError.js';
 import type { Actor } from './shop.service.js';
+import { branchMatch, writeBranchOf } from './branchScope.service.js';
 
 /**
  * Counting the shelf.
@@ -43,7 +44,9 @@ const oid = (id: string) => {
  * somebody acts on it.
  */
 export async function startCount(actor: Actor, input: { rackId?: string } = {}) {
-  const open = await StockCountModel.findOne({ organization: actor.org, status: 'open' }).lean();
+  /* One count open per branch: each branch counts its own shelves. */
+  const branch = await writeBranchOf(actor);
+  const open = await StockCountModel.findOne({ organization: actor.org, branch, status: 'open' }).lean();
   if (open) return open;
 
   let rack = null;
@@ -72,6 +75,7 @@ export async function startCount(actor: Actor, input: { rackId?: string } = {}) 
    */
   const batches = await StockBatchModel.find({
     organization: actor.org,
+    branch,
     product: { $in: products.map((p) => p._id) },
   })
     .select('product batchNo expiry qtyOnHand costPerPiece')
@@ -94,6 +98,7 @@ export async function startCount(actor: Actor, input: { rackId?: string } = {}) 
 
   const made = await StockCountModel.create({
     organization: actor.org,
+    branch,
     rack: rack?._id ?? null,
     rackLabel: rack?.name ?? '',
     lines,
@@ -105,12 +110,12 @@ export async function startCount(actor: Actor, input: { rackId?: string } = {}) 
 
 /** The count in progress, if there is one. */
 export async function openCount(actor: Actor) {
-  return StockCountModel.findOne({ organization: actor.org, status: 'open' }).lean();
+  return StockCountModel.findOne({ organization: actor.org, status: 'open', ...branchMatch(actor.branch) }).lean();
 }
 
 /** The history, without dragging every line of every sheet back with it. */
 export async function listCounts(actor: Actor, limit = 20) {
-  const rows = await StockCountModel.find({ organization: actor.org })
+  const rows = await StockCountModel.find({ organization: actor.org, ...branchMatch(actor.branch) })
     .select(
       'rackLabel status startedAt startedByName appliedAt appliedByName shortPieces extraPieces valueDelta lines',
     )
@@ -126,7 +131,7 @@ export async function listCounts(actor: Actor, limit = 20) {
 }
 
 export async function getCount(actor: Actor, id: string) {
-  const found = await StockCountModel.findOne({ _id: oid(id), organization: actor.org }).lean();
+  const found = await StockCountModel.findOne({ _id: oid(id), organization: actor.org, ...branchMatch(actor.branch) }).lean();
   if (!found) throw notFound('Stock count');
   return found;
 }
@@ -142,7 +147,7 @@ export async function saveCount(
   id: string,
   lines: { lineId: string; counted: number | null }[],
 ) {
-  const count = await StockCountModel.findOne({ _id: oid(id), organization: actor.org });
+  const count = await StockCountModel.findOne({ _id: oid(id), organization: actor.org, ...branchMatch(actor.branch) });
   if (!count) throw notFound('Stock count');
   if (count.status !== 'open') throw badRequest('That count has already been finished');
 
@@ -209,7 +214,7 @@ export function summarise(lines: { expected: number; counted?: number | null; co
  * treating it as zero writes off a whole rack somebody ran out of time on.
  */
 export async function applyCount(actor: Actor, id: string, input: { note?: string } = {}) {
-  const count = await StockCountModel.findOne({ _id: oid(id), organization: actor.org });
+  const count = await StockCountModel.findOne({ _id: oid(id), organization: actor.org, ...branchMatch(actor.branch) });
   if (!count) throw notFound('Stock count');
   if (count.status !== 'open') throw badRequest('That count has already been finished');
 
@@ -261,7 +266,7 @@ export async function applyCount(actor: Actor, id: string, input: { note?: strin
 
 /** Walked away from. Kept, because a count somebody abandoned is also a fact. */
 export async function abandonCount(actor: Actor, id: string) {
-  const count = await StockCountModel.findOne({ _id: oid(id), organization: actor.org });
+  const count = await StockCountModel.findOne({ _id: oid(id), organization: actor.org, ...branchMatch(actor.branch) });
   if (!count) throw notFound('Stock count');
   if (count.status !== 'open') throw badRequest('That count has already been finished');
   count.status = 'abandoned';

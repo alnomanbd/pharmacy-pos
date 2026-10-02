@@ -50,6 +50,8 @@ const lineSchema = new Schema(
 const schema = new Schema(
   {
     organization: { type: Schema.Types.ObjectId, ref: 'Organization', required: true, index: true },
+    /** Which branch of the shop this belongs to. Everything made before branches is in the Main branch. */
+    branch: { type: Schema.Types.ObjectId, ref: 'Branch', default: null, index: true },
 
     /** One rack, or the whole shop when null. */
     rack: { type: Schema.Types.ObjectId, ref: 'ShopRack', default: null },

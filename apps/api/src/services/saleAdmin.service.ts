@@ -12,6 +12,7 @@ import { assertMonthOpen } from './shopCash.service.js';
 import { badRequest, notFound, forbidden } from '../utils/AppError.js';
 import { recordAudit } from './audit.service.js';
 import type { Actor } from './shop.service.js';
+import { branchMatch } from './branchScope.service.js';
 
 /**
  * Changing a bill after it has been rung up.
@@ -265,7 +266,7 @@ export async function voidSale(
     throw badRequest('Say why this bill is being cancelled — it is kept with it');
   }
 
-  const sale = await SaleModel.findOne({ _id: oid(id), organization: actor.org });
+  const sale = await SaleModel.findOne({ _id: oid(id), organization: actor.org, ...branchMatch(actor.branch) });
   if (!sale) throw notFound('Bill');
   /* A closed month's bills stay as they were closed. */
   await assertMonthOpen(actor.org, sale.soldAt);
@@ -324,7 +325,7 @@ export async function editSale(
     throw badRequest('Say why this bill is being changed — it is kept with it');
   }
 
-  const sale = await SaleModel.findOne({ _id: oid(id), organization: actor.org });
+  const sale = await SaleModel.findOne({ _id: oid(id), organization: actor.org, ...branchMatch(actor.branch) });
   if (!sale) throw notFound('Bill');
   /* A closed month's bills stay as they were closed. */
   await assertMonthOpen(actor.org, sale.soldAt);
@@ -404,7 +405,7 @@ export async function revertSale(
     throw badRequest('Say why this bill is coming back — it is kept with it');
   }
 
-  const sale = await SaleModel.findOne({ _id: oid(id), organization: actor.org });
+  const sale = await SaleModel.findOne({ _id: oid(id), organization: actor.org, ...branchMatch(actor.branch) });
   if (!sale) throw notFound('Bill');
   /* A closed month's bills stay as they were closed. */
   await assertMonthOpen(actor.org, sale.soldAt);
@@ -451,7 +452,7 @@ export async function holdSale(
   id: string,
   input: { hold: boolean; reason?: string },
 ) {
-  const sale = await SaleModel.findOne({ _id: oid(id), organization: actor.org });
+  const sale = await SaleModel.findOne({ _id: oid(id), organization: actor.org, ...branchMatch(actor.branch) });
   if (!sale) throw notFound('Bill');
   /* A closed month's bills stay as they were closed. */
   await assertMonthOpen(actor.org, sale.soldAt);
@@ -504,7 +505,7 @@ export async function deleteSale(
     throw badRequest('Say why this bill is being deleted — it is kept with it');
   }
 
-  const sale = await SaleModel.findOne({ _id: oid(id), organization: actor.org });
+  const sale = await SaleModel.findOne({ _id: oid(id), organization: actor.org, ...branchMatch(actor.branch) });
   if (!sale) throw notFound('Bill');
   /* A closed month's bills stay as they were closed. */
   await assertMonthOpen(actor.org, sale.soldAt);
@@ -556,6 +557,7 @@ export async function restoreSale(actor: Actor & { role?: string }, id: string) 
     _id: oid(id),
     organization: actor.org,
     deletedAt: { $ne: null },
+    ...branchMatch(actor.branch),
   });
   if (!sale) throw notFound('Bill in the bin');
   await assertMonthOpen(actor.org, sale.soldAt);

@@ -47,6 +47,8 @@ const lineSchema = new Schema(
 const schema = new Schema(
   {
     organization: { type: Schema.Types.ObjectId, ref: 'Organization', required: true, index: true },
+    /** Which branch of the shop this belongs to. Everything made before branches is in the Main branch. */
+    branch: { type: Schema.Types.ObjectId, ref: 'Branch', default: null, index: true },
     supplier: { type: Schema.Types.ObjectId, ref: 'Supplier', required: true, index: true },
 
     /** The company's own invoice number — how the rep will refer to it. */

@@ -8,6 +8,11 @@ import { ROLES, type Role } from '../types/enums.js';
 const schema = new Schema(
   {
     organization: { type: Schema.Types.ObjectId, ref: 'Organization' },
+    /**
+     * The branches this person works in. Empty: all of them. The owner always
+     * sees every branch, whatever this says.
+     */
+    branches: { type: [Schema.Types.ObjectId], ref: 'Branch', default: [] },
     role: { type: String, enum: ROLES, default: 'salesman' },
     name: { type: String, required: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },

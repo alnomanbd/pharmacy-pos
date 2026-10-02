@@ -13,6 +13,7 @@ import { badRequest } from '../utils/AppError.js';
 import { formatDayKey, parseDayKey } from '../utils/date.js';
 import { dayRangeInstants } from './shopReport.service.js';
 import { backfillRefunds } from './shopCash.service.js';
+import { branchMatch } from './branchScope.service.js';
 import { listSuppliers, type Actor } from './shop.service.js';
 
 /**
@@ -70,6 +71,8 @@ export async function accounts(
   /* Earlier returns that never reached the accounts, written in once. */
   await backfillRefunds(actor.org).catch(() => 0);
   const org = new Types.ObjectId(actor.org);
+  // The branches in view — a branch's takings, spend, drawer and shelf; baki and companies are the shop's.
+  const bm = branchMatch(actor.branch);
   const to = formatDayKey(parseDayKey(opts.to));
   const from = opts.from ? formatDayKey(parseDayKey(opts.from)) : shiftKey(to, -29);
   if (to < from) throw badRequest('That date range runs backwards');
@@ -80,12 +83,12 @@ export async function accounts(
   const [sales, takings, khata, paidOut, spent, earned, owed, suppliers, stock, moves, bank] = await Promise.all([
     /* ---- earned: the bills, at what they sold for and what they cost ---- */
     SaleModel.aggregate<{ sales: number; cost: number; due: number; bills: number }>([
-      { $match: { organization: org, dayKey: { $gte: from, $lte: to }, deletedAt: null, status: { $ne: 'void' } } },
+      { $match: { organization: org, ...bm, dayKey: { $gte: from, $lte: to }, deletedAt: null, status: { $ne: 'void' } } },
       { $group: { _id: null, sales: { $sum: '$total' }, cost: { $sum: '$cost' }, due: { $sum: '$due' }, bills: { $sum: 1 } } },
     ]),
     /* ---- received at the counter, per day and method, net of change ---- */
     SaleModel.aggregate<{ _id: { day: string; method: string }; amount: number; bills: number }>([
-      { $match: { organization: org, dayKey: { $gte: from, $lte: to }, deletedAt: null, status: { $ne: 'void' } } },
+      { $match: { organization: org, ...bm, dayKey: { $gte: from, $lte: to }, deletedAt: null, status: { $ne: 'void' } } },
       { $unwind: '$payments' },
       { $match: { 'payments.method': { $ne: 'due' } } },
       { $group: { _id: { day: '$dayKey', method: '$payments.method' }, amount: { $sum: '$payments.amount' }, bills: { $sum: 1 } } },
@@ -100,8 +103,8 @@ export async function accounts(
       .populate<{ supplier: { name?: string } | null }>('supplier', 'name')
       .sort({ at: -1 })
       .lean(),
-    ExpenseModel.find({ organization: org, deletedAt: null, expenseDate: { $gte: start, $lte: end } }).sort({ expenseDate: -1 }).lean(),
-    IncomeModel.find({ organization: org, deletedAt: null, incomeDate: { $gte: start, $lte: end } }).sort({ incomeDate: -1 }).lean(),
+    ExpenseModel.find({ organization: org, ...bm, deletedAt: null, expenseDate: { $gte: start, $lte: end } }).sort({ expenseDate: -1 }).lean(),
+    IncomeModel.find({ organization: org, ...bm, deletedAt: null, incomeDate: { $gte: start, $lte: end } }).sort({ incomeDate: -1 }).lean(),
     /* ---- where it stands, today ---- */
     ShopCustomerModel.aggregate<{ owed: number; people: number }>([
       { $match: { organization: org, deletedAt: null, balance: { $gt: 0 } } },
@@ -109,14 +112,14 @@ export async function accounts(
     ]),
     listSuppliers(actor),
     StockBatchModel.aggregate<{ value: number }>([
-      { $match: { organization: org, qtyOnHand: { $gt: 0 } } },
+      { $match: { organization: org, ...bm, qtyOnHand: { $gt: 0 } } },
       { $group: { _id: null, value: { $sum: { $multiply: ['$qtyOnHand', '$costPerPiece'] } } } },
     ]),
     /* ---- the owner's money, the bank, and refunds, in the stretch ---- */
-    CashMoveModel.find({ organization: org, deletedAt: null, moveDate: { $gte: start, $lte: end } }).sort({ moveDate: -1 }).lean(),
+    CashMoveModel.find({ organization: org, ...bm, deletedAt: null, moveDate: { $gte: start, $lte: end } }).sort({ moveDate: -1 }).lean(),
     /* ---- the bank, all time: what was carried there, less what came back ---- */
     CashMoveModel.aggregate<{ _id: string; amount: number }>([
-      { $match: { organization: org, deletedAt: null, kind: { $in: ['bank_deposit', 'bank_withdrawal'] } } },
+      { $match: { organization: org, ...bm, deletedAt: null, kind: { $in: ['bank_deposit', 'bank_withdrawal'] } } },
       { $group: { _id: '$kind', amount: { $sum: '$amount' } } },
     ]),
   ]);

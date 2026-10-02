@@ -15,6 +15,7 @@ import { badRequest, notFound } from '../utils/AppError.js';
 import { todayKey, calendarPartsInAppTz, parseDayKey, formatDayKey } from '../utils/date.js';
 import type { Actor } from './shop.service.js';
 import { recordRefund } from './shopCash.service.js';
+import { branchMatch, writeBranchOf, inScope } from './branchScope.service.js';
 import { bdMobile, BD_MOBILE_MESSAGE } from '../utils/phone.js';
 
 /**
@@ -48,6 +49,31 @@ const money = (n: number) => Math.round(n * 100) / 100;
 /* ------------------------------------------------------------------ shift -- */
 
 /** The shift this person has open, if any. The till asks on every load. */
+/**
+ * The branch a sale belongs to: the one its counter is in when a shift is open,
+ * otherwise the branch the person is working in. A bill never lands in "all
+ * branches" — stock comes off one shelf.
+ */
+async function sellingBranch(
+  actor: Actor,
+  shift?: { branch?: unknown; terminal?: string | null } | null,
+  /** A sale refuses a mismatch; a search just looks in the branch picked. */
+  strict = false,
+): Promise<Types.ObjectId> {
+  const open = shift === undefined ? await openShift(actor) : shift;
+  if (open?.branch) {
+    if (inScope(actor.branch, open.branch)) return open.branch as Types.ObjectId;
+    /* The POS is open at a counter in another branch than the one picked at the
+       top: selling here would take stock off the wrong shelf, into the wrong drawer. */
+    if (strict) {
+      throw badRequest(
+        `Your POS is open on ${open.terminal || 'a counter'} in another branch — switch back to that branch to sell, or close the day there first.`,
+      );
+    }
+  }
+  return writeBranchOf(actor);
+}
+
 export async function openShift(actor: Actor) {
   return ShiftModel.findOne({
     organization: actor.org,
@@ -80,6 +106,8 @@ export async function startShift(
       organization: actor.org,
     }).lean();
     if (!counter) throw notFound('Counter');
+    // A counter in a branch this person does not work in is not theirs to open.
+    if (!inScope(actor.branch, counter.branch)) throw notFound('Counter');
 
     /* Two people on one counter is two cash counts against one box, and the
        second close would be measured against the first one's takings. */
@@ -93,6 +121,8 @@ export async function startShift(
 
   const shift = await ShiftModel.create({
     organization: actor.org,
+    // The counter's branch; a shift with no counter works in the branch picked.
+    branch: counter?.branch ?? (await writeBranchOf(actor)),
     user: actor.id,
     userName: actor.name,
     counter: counter?._id ?? null,
@@ -162,12 +192,15 @@ export async function searchForSale(actor: Actor, q: string) {
   }).lean();
 
   const rx = new RegExp(text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+  // What is on *this* branch's shelves: the counter sells from here, not from across town.
+  const branch = await sellingBranch(actor);
   /* The batch number read off a strip in the customer's hand finds it too. */
   const lots =
     scanned || text.length < 3
       ? []
       : await StockBatchModel.find({
           organization: actor.org,
+          branch,
           batchNo: rx,
           qtyOnHand: { $gt: 0 },
         }).distinct('product');
@@ -192,6 +225,7 @@ export async function searchForSale(actor: Actor, q: string) {
     {
       $match: {
         organization: new Types.ObjectId(actor.org),
+        branch,
         product: { $in: ids },
         qtyOnHand: { $gt: 0 },
         $or: [{ expiry: null }, { expiry: { $gte: new Date() } }],
@@ -280,9 +314,12 @@ async function allocate(
    * somebody needs to count, and that is better than a sale nobody recorded.
    */
   allowShort = false,
+  /** Only this branch's lots — a bill takes stock off the shelf it was rung up at. */
+  branch: Types.ObjectId | null = null,
 ) {
   const batches = await StockBatchModel.find({
     organization: org,
+    ...(branch ? { branch } : {}),
     product: productId,
     ...(allowShort ? {} : { qtyOnHand: { $gt: 0 } }),
   }).lean();
@@ -533,6 +570,8 @@ export async function createSale(
   const soldAt = offline ? effectiveSoldAt(input.soldAt) : new Date();
 
   const shift = await openShift(actor);
+  // A bill queued offline went through at its own counter; it lands there whatever is picked now.
+  const branch = offline && shift?.branch ? (shift.branch as Types.ObjectId) : await sellingBranch(actor, shift, true);
   const products = await ShopProductModel.find({
     _id: { $in: input.lines.map((l) => oid(l.productId)) },
     organization: actor.org,
@@ -560,7 +599,7 @@ export async function createSale(
       product,
       price: line.pricePerPiece ?? product.mrpPerPiece ?? 0,
       discount: line.discount ?? 0,
-      picks: await allocate(actor.org, product._id as Types.ObjectId, line.qtyPieces, offline),
+      picks: await allocate(actor.org, product._id as Types.ObjectId, line.qtyPieces, offline, branch),
     });
 
     if (product.controlled) {
@@ -678,6 +717,7 @@ export async function createSale(
       wasOffline: offline,
       salesman: actor.id,
       salesmanName: actor.name,
+      branch,
       shift: shift?._id ?? null,
       counter: shift?.counter ?? null,
       terminal: shift?.terminal ?? '',
@@ -718,6 +758,7 @@ export async function createSale(
 
     await StockLedgerModel.create({
       organization: actor.org,
+      branch: batch.branch,
       product: line.product,
       batch: batch._id,
       move: 'sale',
@@ -812,7 +853,7 @@ export async function returnSale(
   saleId: string,
   input: { lines: { lineId: string; pieces: number }[]; reason?: string },
 ) {
-  const sale = await SaleModel.findOne({ _id: oid(saleId), organization: actor.org });
+  const sale = await SaleModel.findOne({ _id: oid(saleId), organization: actor.org, ...branchMatch(actor.branch) });
   if (!sale) throw notFound('Bill');
   if (!input.lines?.length) throw badRequest('Which items are coming back?');
 
@@ -840,6 +881,7 @@ export async function returnSale(
         await batch.save();
         await StockLedgerModel.create({
           organization: actor.org,
+          branch: batch.branch,
           product: line.product,
           batch: batch._id,
           move: 'sale_return',
@@ -978,6 +1020,7 @@ export async function daySummary(actor: Actor, opts: { all?: boolean; dayKey?: s
     organization: actor.org,
     dayKey: formatDayKey(parseDayKey(opts.dayKey)),
     deletedAt: null,
+    ...branchMatch(actor.branch),
   };
   if (!opts.all) filter.salesman = actor.id;
 
@@ -1072,6 +1115,7 @@ export async function listSales(
   const filter: Record<string, unknown> = {
     organization: actor.org,
     dayKey: { $gte: from, $lte: to },
+    ...branchMatch(actor.branch),
     /* The bin is a screen of its own. A deleted bill on the register would be a
        bill somebody has to work out the status of every time they look. */
     deletedAt: null,
@@ -1201,14 +1245,14 @@ export async function listSales(
 }
 
 export async function getSale(actor: Actor, id: string) {
-  const sale = await SaleModel.findOne({ _id: oid(id), organization: actor.org }).lean();
+  const sale = await SaleModel.findOne({ _id: oid(id), organization: actor.org, ...branchMatch(actor.branch) }).lean();
   if (!sale) throw notFound('Bill');
   return sale;
 }
 
 /** Finding the bill a customer has come back with. */
 export async function findSale(actor: Actor, billNo: string) {
-  return SaleModel.find({ organization: actor.org, billNo: billNo.trim() })
+  return SaleModel.find({ organization: actor.org, billNo: billNo.trim(), ...branchMatch(actor.branch) })
     .sort({ soldAt: -1 })
     .limit(5)
     .lean();
@@ -1603,6 +1647,7 @@ export async function stockAlerts(actor: Actor) {
   const [lots, shelves] = await Promise.all([
     StockBatchModel.find({
       organization: org,
+      ...branchMatch(actor.branch),
       qtyOnHand: { $gt: 0 },
       expiry: { $ne: null, $lte: soon },
     })
@@ -1612,7 +1657,7 @@ export async function stockAlerts(actor: Actor) {
       .sort({ expiry: 1 })
       .lean(),
     StockBatchModel.aggregate<{ _id: Types.ObjectId; onHand: number }>([
-      { $match: { organization: org } },
+      { $match: { organization: org, ...branchMatch(actor.branch) } },
       {
         $group: {
           _id: '$product',

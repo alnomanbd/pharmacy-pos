@@ -21,6 +21,8 @@ export type CashMoveKind = (typeof CASH_MOVE_KINDS)[number];
 const schema = new Schema(
   {
     organization: { type: Schema.Types.ObjectId, ref: 'Organization', required: true, index: true },
+    /** Which branch of the shop this belongs to. Everything made before branches is in the Main branch. */
+    branch: { type: Schema.Types.ObjectId, ref: 'Branch', default: null, index: true },
     kind: { type: String, enum: CASH_MOVE_KINDS, required: true, index: true },
     /** Cash that moved, always positive — the kind says which way. */
     amount: { type: Number, required: true, min: 0 },
@@ -44,6 +46,13 @@ const schema = new Schema(
 );
 
 schema.index({ organization: 1, moveDate: -1 });
+
+/* A refund is paid out of the drawer the bill was rung up at. */
+schema.pre('save', async function () {
+  if (this.branch || !this.sale) return;
+  const sale = await model('Sale').findById(this.sale).select('branch').lean<{ branch?: unknown }>();
+  if (sale?.branch) this.set('branch', sale.branch);
+});
 
 export type CashMove = InferSchemaType<typeof schema>;
 export type CashMoveDoc = HydratedDocument<CashMove>;

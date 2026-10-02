@@ -12,6 +12,7 @@ import { badRequest, notFound } from '../utils/AppError.js';
 import { calendarPartsInAppTz, formatDayKey, instantFromDayKeyAndTime, parseDayKey } from '../utils/date.js';
 import { dayRangeInstants } from './shopReport.service.js';
 import type { Actor } from './shop.service.js';
+import { branchMatch, writeBranchOf } from './branchScope.service.js';
 
 /*
  * The owner's money, the bank, refunds, and the month's close.
@@ -85,6 +86,7 @@ export async function listCashMoves(actor: Actor, opts: { from?: string; to?: st
     organization: new Types.ObjectId(actor.org),
     moveDate: { $gte: start, $lte: end },
     deletedAt: null,
+    ...branchMatch(actor.branch),
   })
     .sort({ moveDate: -1, createdAt: -1 })
     .lean();
@@ -112,6 +114,7 @@ export async function createCashMove(
   await assertMonthOpen(actor.org, when);
   const doc = await CashMoveModel.create({
     organization: new Types.ObjectId(actor.org),
+    branch: await writeBranchOf(actor),
     kind: payload.kind,
     amount: money(payload.amount),
     note: payload.note ?? '',
@@ -128,7 +131,7 @@ export async function updateCashMove(
   id: string,
   payload: { amount?: number; note?: string; reference?: string; date?: string },
 ) {
-  const doc = await CashMoveModel.findOne({ _id: oid(id), organization: actor.org, deletedAt: null });
+  const doc = await CashMoveModel.findOne({ _id: oid(id), organization: actor.org, deletedAt: null, ...branchMatch(actor.branch) });
   if (!doc) throw notFound('That line');
   if (doc.kind === 'refund') throw badRequest('A refund belongs to its bill — take it back from the bill');
   const next = payload.date ? instantFromDayKeyAndTime(parseDayKey(payload.date), '12:00') : null;
@@ -216,7 +219,7 @@ export async function backfillRefunds(org: string) {
   const orgId = new Types.ObjectId(org);
 
   const sales = await SaleModel.find({ organization: orgId, 'lines.returnedPieces': { $gt: 0 } })
-    .select('billNo lines soldAt')
+    .select('billNo lines soldAt branch')
     .lean();
   if (!sales.length) return 0;
   const ids = sales.map((s) => s._id);
@@ -249,6 +252,7 @@ export async function backfillRefunds(org: string) {
     if (!gap) continue;
     rows.push({
       organization: orgId,
+      branch: sale.branch ?? null,
       kind: 'refund',
       amount: gap.cash,
       returnValue: gap.value,

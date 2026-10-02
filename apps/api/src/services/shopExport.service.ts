@@ -9,6 +9,7 @@ import { formatDayKey, parseDayKey } from '../utils/date.js';
 import { badRequest } from '../utils/AppError.js';
 import { buildCsv, type CsvColumn } from '../utils/csv.js';
 import { listSuppliers, type Actor } from './shop.service.js';
+import { branchMatch } from './branchScope.service.js';
 
 /**
  * The four things a shop is asked to hand over.
@@ -86,6 +87,7 @@ export async function salesCsv(actor: Actor, opts: { from?: string; to?: string 
 
   const sales = await SaleModel.find({
     organization: actor.org,
+    ...branchMatch(actor.branch),
     dayKey: { $gte: from, $lte: to },
     /* The bin is its own screen, and a deleted bill is not the shop's register.
        A cancelled one stays: its number was printed on somebody's slip, and the
@@ -168,7 +170,7 @@ export async function stockCsv(actor: Actor) {
     value: number;
     nearestExpiry: Date | null;
   }>([
-    { $match: { organization: org, qtyOnHand: { $gt: 0 } } },
+    { $match: { organization: org, ...branchMatch(actor.branch), qtyOnHand: { $gt: 0 } } },
     {
       $group: {
         _id: '$product',

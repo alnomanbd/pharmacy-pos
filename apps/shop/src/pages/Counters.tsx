@@ -11,12 +11,14 @@ import {
   ReceiptText,
   BarChart3,
   Clock,
+  MapPin,
 } from 'lucide-react';
 import { shopApi, taka, type ShopCounter } from '../api';
 import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import ConfirmWithReason from '../components/ConfirmWithReason';
 import { useT, useUiLang, bnNumerals } from '../i18n/ui';
+import { fetchBranchSwitcher, useBranchStore, type BranchSwitcherInfo } from '../branch';
 import Modal from '../components/Modal';
 
 /**
@@ -71,6 +73,15 @@ export default function Counters() {
   /* Deleting asks why, and the answer is kept with it in the bin. */
   const [binning, setBinning] = useState<ShopCounter | null>(null);
   const [busy, setBusy] = useState(false);
+  /* The shop's branches, when it has more than one: each counter says which it stands in. */
+  const [branches, setBranches] = useState<BranchSwitcherInfo | null>(null);
+  useEffect(() => {
+    fetchBranchSwitcher()
+      .then(setBranches)
+      .catch(() => undefined);
+  }, []);
+  const branchName = (id?: string | null) =>
+    branches && branches.count > 1 ? branches.branches.find((b) => b._id === id)?.name : undefined;
 
   const n = useCallback((v: number | string) => (lang === 'bn' ? bnNumerals(String(v)) : String(v)), [lang]);
   const money = useCallback((v: number) => n(taka(v)), [n]);
@@ -220,6 +231,7 @@ export default function Counters() {
               <CounterCard
                 key={c._id}
                 counter={c}
+                branchName={branchName(c.branch)}
                 n={n}
                 money={money}
                 onEdit={() => setEditing(c)}
@@ -246,6 +258,7 @@ export default function Counters() {
       {editing && (
         <CounterForm
           counter={editing === 'new' ? null : editing}
+          branches={branches && branches.count > 1 ? branches.branches : []}
           onClose={() => setEditing(null)}
           onSaved={() => {
             setEditing(null);
@@ -290,6 +303,7 @@ function Tile({
  */
 function CounterCard({
   counter: c,
+  branchName,
   n,
   money,
   onEdit,
@@ -297,6 +311,7 @@ function CounterCard({
   onBin,
 }: {
   counter: ShopCounter;
+  branchName?: string;
   n: (v: number | string) => string;
   money: (v: number) => string;
   onEdit: () => void;
@@ -336,7 +351,15 @@ function CounterCard({
             <h3 className="truncate text-[15px] font-semibold" title={c.name}>
               {c.name}
             </h3>
-            <p className="line-clamp-1 text-[11.5px] text-muted-foreground">{c.note || ' '}</p>
+            <p className="line-clamp-1 text-[11.5px] text-muted-foreground">
+              {branchName && (
+                <span className="mr-1 inline-flex items-center gap-0.5 font-semibold text-foreground/80">
+                  <MapPin className="h-3 w-3" /> {branchName}
+                  {c.note ? ' ·' : ''}
+                </span>
+              )}
+              {c.note || (branchName ? '' : ' ')}
+            </p>
           </div>
           <span className={`pill shrink-0 ${off ? 'danger' : open ? 'success' : 'neutral'}`}>
             {off ? t('Turned off') : open ? t('Open') : t('Idle')}
@@ -433,10 +456,12 @@ function CounterCard({
 
 function CounterForm({
   counter,
+  branches,
   onClose,
   onSaved,
 }: {
   counter: ShopCounter | null;
+  branches: BranchSwitcherInfo['branches'];
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -445,6 +470,11 @@ function CounterForm({
   const [name, setName] = useState(counter?.name ?? '');
   const [note, setNote] = useState(counter?.note ?? '');
   const [float, setFloat] = useState(String(counter?.openingFloat ?? ''));
+  const working = useBranchStore((st) => st.branch);
+  /* Its own branch; a new one goes in the branch being worked in, or the first. */
+  const [branchId, setBranchId] = useState(
+    counter?.branch ?? (branches.some((b) => b._id === working) ? working : (branches[0]?._id ?? '')),
+  );
   const [busy, setBusy] = useState(false);
 
   const save = async () => {
@@ -455,6 +485,7 @@ function CounterForm({
         name: name.trim(),
         note: note.trim(),
         openingFloat: Number(float) || 0,
+        ...(branches.length > 1 && branchId ? { branchId } : {}),
       };
       if (counter) await shopApi.updateCounter(counter._id, payload);
       else await shopApi.createCounter(payload);
@@ -532,6 +563,21 @@ function CounterForm({
               {t('Filled in for whoever opens the day, so nobody types it every morning.')}
             </p>
           </div>
+          {branches.length > 1 && (
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-muted-foreground" htmlFor="c-branch">
+                {t('Branch')}
+              </label>
+              <select id="c-branch" className="input h-10" value={branchId} onChange={(e) => setBranchId(e.target.value)}>
+                {branches.map((b) => (
+                  <option key={b._id} value={b._id}>
+                    {b.name}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-[11px] text-muted-foreground">{t('It sells that branch’s stock, and its takings are that branch’s.')}</p>
+            </div>
+          )}
         </div>
 
         <div className="mt-4 flex justify-end gap-2">

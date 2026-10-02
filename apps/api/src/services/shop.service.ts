@@ -15,6 +15,7 @@ import {
 import { assertMonthOpen } from './shopCash.service.js';
 import { badRequest, notFound } from '../utils/AppError.js';
 import { expiryFromInput, calendarPartsInAppTz, dayKeyFromParts } from '../utils/date.js';
+import { branchMatch, writeBranchOf, type BranchScope } from './branchScope.service.js';
 import { orderForDelivery, closeWithDelivery } from './shopOrder.service.js';
 
 /**
@@ -66,6 +67,12 @@ export interface Actor {
   org: string;
   id: string;
   name: string;
+  /**
+   * Which branch(es) this request reads, and which one it writes to — see
+   * `branchScope.service.ts`. Absent when a service is called from outside a
+   * shop request, which reads every branch and writes to the Main one.
+   */
+  branch?: BranchScope | null;
 }
 
 /* ------------------------------------------------------------------ units -- */
@@ -693,7 +700,7 @@ export async function listProducts(
     const rx = new RegExp(opts.q.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
     /* The number printed on the strip finds the item too: "D-10007" is what
        somebody reads off a box they are holding. */
-    const lots = await StockBatchModel.find({ organization: actor.org, batchNo: rx }).distinct('product');
+    const lots = await StockBatchModel.find({ organization: actor.org, ...branchMatch(actor.branch), batchNo: rx }).distinct('product');
     filter.$or = [
       { name: rx },
       { genericName: rx },
@@ -742,6 +749,8 @@ export async function listProducts(
         as: 'held',
         pipeline: [
           { $match: { $expr: { $eq: ['$product', '$$product'] } } },
+          /* The branch picked — or all of them, added up, when the owner looks at all. */
+          { $match: branchMatch(actor.branch) },
           {
             $group: {
               _id: null,
@@ -788,6 +797,7 @@ export async function listProducts(
                     $expr: { $and: [{ $eq: ['$product', '$$product'] }, { $gt: ['$qtyOnHand', 0] }] },
                   },
                 },
+                { $match: branchMatch(actor.branch) },
                 { $sort: { expiry: 1, receivedAt: 1 } },
                 { $project: { _id: 0, batchNo: 1, expiry: 1, qtyOnHand: 1 } },
               ],
@@ -870,6 +880,7 @@ export async function productBatches(actor: Actor, productId: string) {
   return (
     StockBatchModel.find({
       organization: actor.org,
+      ...branchMatch(actor.branch),
       product: oid(productId),
       qtyOnHand: { $gt: 0 },
     })
@@ -994,9 +1005,12 @@ export async function createPurchase(
   }
   /* A delivery dated into a closed month would change figures already closed. */
   await assertMonthOpen(actor.org, input.invoiceDate ? new Date(input.invoiceDate) : new Date());
+  /* A delivery is unloaded at one branch's door, and its stock is that branch's. */
+  const branch = await writeBranchOf(actor);
 
   const purchase = await PurchaseModel.create({
     organization: actor.org,
+    branch,
     supplier: supplier._id,
     invoiceNo: input.invoiceNo ?? '',
     invoiceDate: input.invoiceDate ? new Date(input.invoiceDate) : new Date(),
@@ -1026,6 +1040,7 @@ export async function createPurchase(
     const existing = line.batchNo
       ? await StockBatchModel.findOne({
           organization: actor.org,
+          branch,
           product: line.product,
           batchNo: line.batchNo,
         })
@@ -1044,6 +1059,7 @@ export async function createPurchase(
     } else {
       batch = await StockBatchModel.create({
         organization: actor.org,
+        branch,
         product: line.product,
         batchNo: line.batchNo,
         expiry: line.expiry,
@@ -1126,7 +1142,7 @@ export async function listPurchases(
   const page = Math.max(1, opts.page || 1);
   const limit = Math.min(100, Math.max(1, opts.limit || 25));
 
-  const filter: Record<string, unknown> = { organization: actor.org };
+  const filter: Record<string, unknown> = { organization: actor.org, ...branchMatch(actor.branch) };
   if (opts.supplierId) filter.supplier = oid(opts.supplierId);
   if (opts.paid === 'due') filter.$expr = { $lt: ['$paidAmount', '$total'] };
   if (opts.paid === 'paid') filter.$expr = { $gte: ['$paidAmount', '$total'] };
@@ -1162,7 +1178,7 @@ export async function listPurchases(
       .lean(),
     PurchaseModel.countDocuments(filter),
     PurchaseModel.aggregate<{ _id: null; count: number; total: number; paid: number }>([
-      { $match: { organization: new Types.ObjectId(actor.org), invoiceDate: monthRange } },
+      { $match: { organization: new Types.ObjectId(actor.org), invoiceDate: monthRange, ...branchMatch(actor.branch) } },
       {
         $group: {
           _id: null,
@@ -1189,7 +1205,7 @@ export async function listPurchases(
 }
 
 export async function getPurchase(actor: Actor, id: string) {
-  const purchase = await PurchaseModel.findOne({ _id: oid(id), organization: actor.org })
+  const purchase = await PurchaseModel.findOne({ _id: oid(id), organization: actor.org, ...branchMatch(actor.branch) })
     .populate('supplier', 'name phone repName')
     .lean();
   if (!purchase) throw notFound('Purchase');
@@ -1234,6 +1250,7 @@ export async function returnToSupplier(
     const batch = await StockBatchModel.findOne({
       _id: oid(line.batchId),
       organization: actor.org,
+      ...branchMatch(actor.branch),
     });
     if (!batch) throw notFound('Batch');
     if (line.pieces <= 0 || line.pieces > batch.qtyOnHand) {
@@ -1303,6 +1320,7 @@ export async function expiryReport(actor: Actor, days = 90) {
 
   const rows = await StockBatchModel.find({
     organization: actor.org,
+    ...branchMatch(actor.branch),
     qtyOnHand: { $gt: 0 },
     expiry: { $ne: null, $lte: horizon },
   })
@@ -1322,6 +1340,7 @@ export async function expiryReport(actor: Actor, days = 90) {
    */
   const undated = await StockBatchModel.countDocuments({
     organization: actor.org,
+    ...branchMatch(actor.branch),
     qtyOnHand: { $gt: 0 },
     expiry: null,
   });
@@ -1341,7 +1360,7 @@ export async function expiryReport(actor: Actor, days = 90) {
 
 /** One product's whole history, newest first. */
 export async function productLedger(actor: Actor, productId: string, limit = 100) {
-  return StockLedgerModel.find({ organization: actor.org, product: oid(productId) })
+  return StockLedgerModel.find({ organization: actor.org, ...branchMatch(actor.branch), product: oid(productId) })
     .sort({ createdAt: -1 })
     .limit(Math.min(500, limit))
     .lean();
@@ -1364,6 +1383,7 @@ export async function adjustStock(
   const batch = await StockBatchModel.findOne({
     _id: oid(input.batchId),
     organization: actor.org,
+    ...branchMatch(actor.branch),
   });
   if (!batch) throw notFound('Batch');
 

@@ -16,6 +16,8 @@ import { Schema, model, type InferSchemaType, type HydratedDocument } from 'mong
 const schema = new Schema(
   {
     organization: { type: Schema.Types.ObjectId, ref: 'Organization', required: true, index: true },
+    /** Which branch of the shop this belongs to. Everything made before branches is in the Main branch. */
+    branch: { type: Schema.Types.ObjectId, ref: 'Branch', default: null, index: true },
     user: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     userName: { type: String, default: '' },
 

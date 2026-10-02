@@ -52,6 +52,8 @@ export type OrderStatus = (typeof ORDER_STATUS)[number];
 const schema = new Schema(
   {
     organization: { type: Schema.Types.ObjectId, ref: 'Organization', required: true, index: true },
+    /** Which branch of the shop this belongs to. Everything made before branches is in the Main branch. */
+    branch: { type: Schema.Types.ObjectId, ref: 'Branch', default: null, index: true },
     supplier: { type: Schema.Types.ObjectId, ref: 'Supplier', required: true, index: true },
     supplierName: { type: String, default: '', trim: true, maxlength: 120 },
 

@@ -9,6 +9,7 @@ import { currencyPrefix, resolveFonts, safeText, warnIfUnsupported } from './pdf
 import { pdfWords, type PdfLang } from './pdfWords.js';
 import { bnAmountInWords } from '../utils/bnWords.js';
 import type { Actor } from './shop.service.js';
+import { branchMatch } from './branchScope.service.js';
 
 /**
  * The two documents a pharmacy is asked for on paper that is not a till roll.
@@ -246,7 +247,7 @@ export async function letterheadOf(org: string): Promise<LetterheadShop> {
 }
 
 export async function deliverySheet(actor: Actor, id: string): Promise<DeliverySheetData> {
-  const purchase = await PurchaseModel.findOne({ _id: oid(id), organization: actor.org })
+  const purchase = await PurchaseModel.findOne({ _id: oid(id), organization: actor.org, ...branchMatch(actor.branch) })
     .populate('supplier', 'name phone')
     .lean();
   if (!purchase) throw notFound('Delivery');

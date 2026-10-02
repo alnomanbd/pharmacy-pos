@@ -4,6 +4,7 @@ import { badRequest, notFound } from '../utils/AppError.js';
 import { formatDayKey, instantFromDayKeyAndTime, parseDayKey } from '../utils/date.js';
 import { dayRangeInstants } from './shopReport.service.js';
 import type { Actor } from './shop.service.js';
+import { branchMatch, writeBranchOf } from './branchScope.service.js';
 import { assertMonthOpen } from './shopCash.service.js';
 
 /*
@@ -35,7 +36,7 @@ export async function listIncome(actor: Actor, opts: { from?: string; to?: strin
   if (to < from) throw badRequest('That date range runs backwards');
 
   const { start, end } = dayRangeInstants(from, to);
-  const rows = await IncomeModel.find({ organization: org, incomeDate: { $gte: start, $lte: end }, deletedAt: null })
+  const rows = await IncomeModel.find({ organization: org, incomeDate: { $gte: start, $lte: end }, deletedAt: null, ...branchMatch(actor.branch) })
     .sort({ incomeDate: -1, createdAt: -1 })
     .lean();
 
@@ -64,6 +65,7 @@ export async function createIncome(
   await assertMonthOpen(actor.org, when);
   const doc = await IncomeModel.create({
     organization: new Types.ObjectId(actor.org),
+    branch: await writeBranchOf(actor),
     amount: money(payload.amount),
     category: payload.category,
     note: payload.note ?? '',
@@ -79,7 +81,7 @@ export async function updateIncome(
   id: string,
   payload: { amount?: number; category?: IncomeCategory; note?: string; date?: string },
 ) {
-  const doc = await IncomeModel.findOne({ _id: oid(id), organization: new Types.ObjectId(actor.org), deletedAt: null });
+  const doc = await IncomeModel.findOne({ _id: oid(id), organization: new Types.ObjectId(actor.org), deletedAt: null, ...branchMatch(actor.branch) });
   if (!doc) throw notFound('Income');
   await assertMonthOpen(
     actor.org,

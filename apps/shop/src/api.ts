@@ -565,7 +565,7 @@ export const shopApi = {
 
   /* ---- where people stand ---- */
   counters: () => getData<ShopCounter[]>(api.get('/shop/counters')),
-  createCounter: (payload: { name: string; note?: string; openingFloat?: number }) =>
+  createCounter: (payload: { name: string; note?: string; openingFloat?: number; branchId?: string }) =>
     getData<ShopCounter>(api.post('/shop/counters', payload)),
   updateCounter: (id: string, payload: Record<string, unknown>) =>
     getData<ShopCounter>(api.patch(`/shop/counters/${id}`, payload)),
@@ -936,6 +936,8 @@ export interface BinItem {
 export interface ShopCounter {
   _id: string;
   name: string;
+  /** The branch it stands in. */
+  branch?: string | null;
   note?: string;
   openingFloat: number;
   paperWidthMm?: number | null;
@@ -1186,6 +1188,8 @@ export interface StaffMember {
   /** The last thirty days, cancelled bills left out. */
   month?: { total: number; count: number };
   createdAt?: string;
+  /** The branches they work in; empty is all of them. */
+  branches?: string[];
 }
 
 export const staffApi = {
@@ -1199,7 +1203,7 @@ export const staffApi = {
   }) => getData<StaffMember>(api.post('/shop/staff', payload)),
   update: (
     id: string,
-    payload: { name?: string; phone?: string; role?: 'pharmacist' | 'salesman'; isActive?: boolean },
+    payload: { name?: string; phone?: string; role?: 'pharmacist' | 'salesman'; isActive?: boolean; branchIds?: string[] },
   ) => getData<StaffMember>(api.patch(`/shop/staff/${id}`, payload)),
   setPassword: (id: string, password: string) =>
     getData<{ _id: string; name: string }>(api.post(`/shop/staff/${id}/password`, { password })),

@@ -1,5 +1,6 @@
 import { Types } from 'mongoose';
-import { ShopCounterModel, ShiftModel, SaleModel } from '../models/index.js';
+import { ShopCounterModel, ShiftModel, SaleModel, BranchModel } from '../models/index.js';
+import { branchMatch, writeBranchOf, inScope } from './branchScope.service.js';
 import { assertOrgWithinLimit } from './plan.service.js';
 import { badRequest, notFound } from '../utils/AppError.js';
 import { todayKey, formatDayKey } from '../utils/date.js';
@@ -24,13 +25,22 @@ const oid = (id: string) => {
 
 const money = (n: number) => Math.round(n * 100) / 100;
 
+/** The branch a counter is put in: the one asked for, if it is the shop's and in reach, else the one being worked in. */
+async function counterBranch(actor: Actor, branchId?: string | null) {
+  if (!branchId) return writeBranchOf(actor);
+  const b = await BranchModel.findOne({ _id: oid(branchId), organization: actor.org, active: true }).select('_id').lean();
+  if (!b || !inScope(actor.branch, b._id)) throw badRequest('That branch is not one of yours');
+  return b._id as Types.ObjectId;
+}
+
 /** The counters, each with whoever is on it and what it has taken today. */
 export async function listCounters(actor: Actor) {
-  const counters = await ShopCounterModel.find({ organization: actor.org, deletedAt: null })
+  // The counters of the branch picked; all of them, each with its branch, when the owner looks at all.
+  const counters = await ShopCounterModel.find({ organization: actor.org, deletedAt: null, ...branchMatch(actor.branch) })
     .sort({ sortOrder: 1, name: 1 })
     .lean();
 
-  const open = await ShiftModel.find({ organization: actor.org, closedAt: null })
+  const open = await ShiftModel.find({ organization: actor.org, closedAt: null, ...branchMatch(actor.branch) })
     .select('counter terminal user userName openedAt salesCount salesTotal cashTaken openingFloat')
     .lean();
 
@@ -55,7 +65,7 @@ export async function listCounters(actor: Actor) {
     salesTotal: number;
     salesCount: number;
   }>([
-    { $match: { organization: new Types.ObjectId(actor.org), closedAt: { $ne: null } } },
+    { $match: { organization: new Types.ObjectId(actor.org), closedAt: { $ne: null }, ...branchMatch(actor.branch) } },
     { $sort: { closedAt: -1 } },
     {
       $group: {
@@ -78,6 +88,7 @@ export async function listCounters(actor: Actor) {
         organization: new Types.ObjectId(actor.org),
         dayKey: today,
         status: { $ne: 'void' },
+        ...branchMatch(actor.branch),
       },
     },
     { $group: { _id: '$terminal', total: { $sum: '$total' }, count: { $sum: 1 } } },
@@ -91,6 +102,7 @@ export async function listCounters(actor: Actor) {
     return {
       ...c,
       _id: String(c._id),
+      branch: c.branch ? String(c.branch) : null,
       openShift: shift
         ? {
             _id: String(shift._id),
@@ -121,6 +133,7 @@ export async function pickableCounters(actor: Actor) {
     organization: actor.org,
     isActive: { $ne: false },
     deletedAt: null,
+    ...branchMatch(actor.branch),
   })
     .select('name openingFloat paperWidthMm')
     .sort({ sortOrder: 1, name: 1 })
@@ -141,7 +154,7 @@ export async function pickableCounters(actor: Actor) {
 
 export async function createCounter(
   actor: Actor,
-  input: { name: string; note?: string; openingFloat?: number; paperWidthMm?: number | null },
+  input: { name: string; note?: string; openingFloat?: number; paperWidthMm?: number | null; branchId?: string | null },
 ) {
   const name = input.name?.trim();
   if (!name) throw badRequest('What is this counter called?');
@@ -155,6 +168,7 @@ export async function createCounter(
 
   const made = await ShopCounterModel.create({
     organization: actor.org,
+    branch: await counterBranch(actor, input.branchId),
     name,
     note: input.note?.trim() ?? '',
     openingFloat: input.openingFloat ?? 0,
@@ -173,10 +187,19 @@ export async function updateCounter(
     paperWidthMm?: number | null;
     isActive?: boolean;
     sortOrder?: number;
+    branchId?: string;
   },
 ) {
-  const counter = await ShopCounterModel.findOne({ _id: oid(id), organization: actor.org });
+  const counter = await ShopCounterModel.findOne({ _id: oid(id), organization: actor.org, ...branchMatch(actor.branch) });
   if (!counter) throw notFound('Counter');
+
+  /* Moving a counter to another branch: never with a till open on it — that
+     shift's cash and bills belong where it was opened. */
+  if (input.branchId && String(input.branchId) !== String(counter.branch)) {
+    const open = await ShiftModel.exists({ organization: actor.org, closedAt: null, counter: counter._id });
+    if (open) throw badRequest(`${counter.name} still has the POS open — close the day on it first`);
+    counter.branch = await counterBranch(actor, input.branchId);
+  }
 
   // Turning a counter back on is a till again, held to the plan like a new one.
   if (input.isActive === true && counter.isActive === false) {

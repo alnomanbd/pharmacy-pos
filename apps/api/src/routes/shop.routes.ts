@@ -1,3 +1,4 @@
+import { attachBranch, scopeOf } from '../services/branchScope.service.js';
 import { Router } from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
@@ -65,7 +66,7 @@ router.use('/announcements', announcementRoutes);
 router.use('/help', helpRoutes);
 router.use('/branches', branchRoutes);
 
-router.use(requireAuth, requireWritableTenant, requireRole(...SHOP_ADMIN_ROLES));
+router.use(requireAuth, requireWritableTenant, requireRole(...SHOP_ADMIN_ROLES), attachBranch);
 
 /* Every change that succeeds goes on the owner's Activity page. */
 router.use(shopActivity('shop'));
@@ -115,6 +116,7 @@ const actorOf = (req: Request): shop.Actor => ({
   org: req.user!.org!,
   id: req.user!.id,
   name: req.user!.name,
+  branch: scopeOf(req),
 });
 
 const str = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : undefined);
@@ -923,6 +925,7 @@ router.patch(
       phone: z.string().trim().max(40).optional(),
       role: z.enum(['pharmacist', 'salesman']).optional(),
       isActive: z.boolean().optional(),
+      branchIds: z.array(z.string()).max(100).optional(),
     }),
   ),
   handle((req) => staff.updateStaff(actorOf(req), req.params.id, req.body), 'Saved'),
@@ -1076,6 +1079,7 @@ router.post(
       note: z.string().trim().max(240).optional(),
       openingFloat: z.number().min(0).max(10_000_000).optional(),
       paperWidthMm: z.number().min(40).max(210).nullable().optional(),
+      branchId: z.string().optional(),
     }),
   ),
   make((req) => counters.createCounter(actorOf(req), req.body), 'Counter added'),
@@ -1089,6 +1093,7 @@ router.patch(
       note: z.string().trim().max(240).optional(),
       openingFloat: z.number().min(0).max(10_000_000).optional(),
       paperWidthMm: z.number().min(40).max(210).nullable().optional(),
+      branchId: z.string().optional(),
       isActive: z.boolean().optional(),
       sortOrder: z.number().int().min(0).max(999).optional(),
     }),

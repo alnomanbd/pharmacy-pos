@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { Types } from 'mongoose';
-import { UserModel, SaleModel, ShiftModel } from '../models/index.js';
+import { UserModel, SaleModel, ShiftModel, BranchModel } from '../models/index.js';
 import { assertOrgWithinLimit } from './plan.service.js';
 import { badRequest, conflict, notFound } from '../utils/AppError.js';
 import { todayKey, formatDayKey } from '../utils/date.js';
@@ -41,7 +41,7 @@ export async function listStaff(actor: Actor) {
     organization: actor.org,
     role: { $in: ['admin', ...SHOP_STAFF_ROLES] },
   })
-    .select('name email phone role isActive lastLoginAt createdAt')
+    .select('name email phone role isActive lastLoginAt createdAt branches')
     .sort({ createdAt: 1 })
     .lean();
 
@@ -162,10 +162,20 @@ export async function createStaff(
 export async function updateStaff(
   actor: Actor,
   id: string,
-  input: { name?: string; phone?: string; role?: ShopStaffRole; isActive?: boolean },
+  input: { name?: string; phone?: string; role?: ShopStaffRole; isActive?: boolean; branchIds?: string[] },
 ) {
   const user = await UserModel.findOne({ _id: oid(id), organization: actor.org });
   if (!user) throw notFound('That person');
+
+  /* Which branches somebody works in. None picked: all of them, which is what
+     a one-branch shop is anyway. The owner always sees every branch. */
+  if (input.branchIds !== undefined) {
+    if (user.role === 'admin') throw badRequest('The account owner works in every branch');
+    const ids = [...new Set(input.branchIds)].map(oid);
+    const found = await BranchModel.countDocuments({ organization: actor.org, _id: { $in: ids } });
+    if (found !== ids.length) throw badRequest('One of those branches is not this shop’s');
+    user.set('branches', ids);
+  }
 
   if (String(user._id) === actor.id && input.isActive === false) {
     throw badRequest('You cannot switch off your own account');
@@ -195,7 +205,13 @@ export async function updateStaff(
   }
 
   await user.save();
-  return { _id: String(user._id), name: user.name, role: user.role, isActive: user.isActive };
+  return {
+    _id: String(user._id),
+    name: user.name,
+    role: user.role,
+    isActive: user.isActive,
+    branches: ((user.get('branches') as unknown[]) ?? []).map(String),
+  };
 }
 
 /**

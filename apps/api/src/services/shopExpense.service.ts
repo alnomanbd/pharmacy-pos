@@ -8,6 +8,7 @@ import { badRequest, notFound } from '../utils/AppError.js';
 import { formatDayKey, instantFromDayKeyAndTime, parseDayKey } from '../utils/date.js';
 import { dayRangeInstants } from './shopReport.service.js';
 import type { Actor } from './shop.service.js';
+import { branchMatch, writeBranchOf } from './branchScope.service.js';
 import { assertMonthOpen } from './shopCash.service.js';
 
 /* ------------------------------------------------------------------ utils -- */
@@ -57,6 +58,7 @@ export async function listExpenses(
     organization: org,
     expenseDate: { $gte: start, $lte: end },
     deletedAt: null,
+    ...branchMatch(actor.branch),
   };
   const [rows, count] = await Promise.all([
     ExpenseModel.find(filter).sort({ expenseDate: -1, createdAt: -1 }).lean(),
@@ -92,6 +94,7 @@ export async function createExpense(
 
   const doc = await ExpenseModel.create({
     organization: new Types.ObjectId(actor.org),
+    branch: await writeBranchOf(actor),
     amount: money(payload.amount),
     category: payload.category,
     note: payload.note ?? '',
@@ -116,6 +119,7 @@ export async function updateExpense(
     _id: oid(id),
     organization: new Types.ObjectId(actor.org),
     deletedAt: null,
+    ...branchMatch(actor.branch),
   });
   if (!doc) throw notFound('Expense');
   await assertMonthOpen(

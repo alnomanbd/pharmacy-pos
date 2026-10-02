@@ -8,6 +8,7 @@ import {
 } from '../models/index.js';
 import { badRequest, notFound } from '../utils/AppError.js';
 import type { Actor } from './shop.service.js';
+import { branchMatch, writeBranchOf } from './branchScope.service.js';
 
 /**
  * Ordering, which until now happened on a scrap of paper.
@@ -84,7 +85,8 @@ export async function suggestOrder(
   const ids = products.map((p) => p._id);
 
   const onHand = await StockBatchModel.aggregate<{ _id: Types.ObjectId; onHand: number }>([
-    { $match: { organization: org, product: { $in: ids } } },
+    // What this branch holds — an order is for the shelf it will be unloaded onto.
+    { $match: { organization: org, ...branchMatch(actor.branch), product: { $in: ids } } },
     { $group: { _id: '$product', onHand: { $sum: '$qtyOnHand' } } },
   ]);
   const held = new Map(onHand.map((r) => [String(r._id), r.onHand]));
@@ -169,10 +171,12 @@ export async function createOrder(
     .lean();
   const byId = new Map(products.map((p) => [String(p._id), p]));
 
+  const branch = await writeBranchOf(actor);
   const stock = await StockBatchModel.aggregate<{ _id: Types.ObjectId; onHand: number }>([
     {
       $match: {
         organization: new Types.ObjectId(actor.org),
+        branch,
         product: { $in: products.map((p) => p._id) },
       },
     },
@@ -195,6 +199,7 @@ export async function createOrder(
 
   const order = await ShopOrderModel.create({
     organization: actor.org,
+    branch,
     supplier: supplier._id,
     supplierName: supplier.name,
     lines,
@@ -211,7 +216,7 @@ export async function listOrders(
   actor: Actor,
   opts: { status?: OrderStatus; supplierId?: string; limit?: number } = {},
 ) {
-  const filter: Record<string, unknown> = { organization: actor.org };
+  const filter: Record<string, unknown> = { organization: actor.org, ...branchMatch(actor.branch) };
   if (opts.status) filter.status = opts.status;
   if (opts.supplierId) filter.supplier = oid(opts.supplierId);
 
@@ -224,7 +229,7 @@ export async function listOrders(
 export async function getOrder(actor: Actor, id: string) {
   /* The item behind each line, for the printed order: its strength and pack
      size turn "100 pieces" into "10 strip", which is how the rep writes it. */
-  const order = await ShopOrderModel.findOne({ _id: oid(id), organization: actor.org })
+  const order = await ShopOrderModel.findOne({ _id: oid(id), organization: actor.org, ...branchMatch(actor.branch) })
     .populate('lines.product', 'name strength genericName companyName piecesPerStrip stripsPerBox')
     .lean();
   if (!order) throw notFound('Order');
@@ -251,7 +256,7 @@ export async function setOrderStatus(
   id: string,
   input: { status: OrderStatus; reason?: string },
 ) {
-  const order = await ShopOrderModel.findOne({ _id: oid(id), organization: actor.org });
+  const order = await ShopOrderModel.findOne({ _id: oid(id), organization: actor.org, ...branchMatch(actor.branch) });
   if (!order) throw notFound('Order');
 
   const from = order.status as OrderStatus;
@@ -277,7 +282,7 @@ export async function setOrderStatus(
  * shop enters twice trying to get the order closed.
  */
 export async function orderForDelivery(actor: Actor, orderId: string, supplierId: string) {
-  const order = await ShopOrderModel.findOne({ _id: oid(orderId), organization: actor.org });
+  const order = await ShopOrderModel.findOne({ _id: oid(orderId), organization: actor.org, ...branchMatch(actor.branch) });
   if (!order) throw notFound('Order');
   if (order.status !== 'sent') {
     throw badRequest(`That order is ${order.status} — only one given to the rep can arrive`);

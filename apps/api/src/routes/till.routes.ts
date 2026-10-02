@@ -1,3 +1,4 @@
+import { attachBranch, scopeOf, switcherOf } from '../services/branchScope.service.js';
 import { Router } from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
@@ -28,10 +29,19 @@ import { shopActivity } from '../middlewares/shopActivity.js';
  */
 const router = Router();
 
-router.use(requireAuth, requireWritableTenant, requireRole(...SHOP_ROLES));
+router.use(requireAuth, requireWritableTenant, requireRole(...SHOP_ROLES), attachBranch);
 
 /* Every change that succeeds goes on the owner's Activity page. */
 router.use(shopActivity('till'));
+
+/* The branch switcher: which branches this person works in, and which one they are on. */
+router.get('/branches', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    ok(res, await switcherOf(req.user!.org!, scopeOf(req)));
+  } catch (err) {
+    next(err);
+  }
+});
 
 const handle =
   <T>(run: (req: Request) => Promise<T>, message?: string) =>
@@ -57,6 +67,7 @@ const actorOf = (req: Request): Actor => ({
   org: req.user!.org!,
   id: req.user!.id,
   name: req.user!.name,
+  branch: scopeOf(req),
 });
 
 const str = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : undefined);

@@ -8,6 +8,7 @@ import {
   StockBatchModel,
 } from '../models/index.js';
 import type { Actor } from './shop.service.js';
+import { branchMatch } from './branchScope.service.js';
 
 /**
  * One box that finds anything in the shop.
@@ -50,6 +51,7 @@ export async function searchEverything(
 
   const rx = new RegExp(escape(text), 'i');
   const org = new Types.ObjectId(actor.org);
+  const bm = branchMatch(actor.branch);
 
   /*
    * A bill number is what a customer reads out, and they read out the serial —
@@ -58,6 +60,7 @@ export async function searchEverything(
    */
   const bills = SaleModel.find({
     organization: org,
+    ...bm,
     /* The bin is its own screen — even in the box that finds everything. */
     deletedAt: null,
     $or: [{ billNo: rx }, { customerName: rx }, { customerPhone: rx }],
@@ -87,7 +90,7 @@ export async function searchEverything(
     .lean();
 
   const purchases = opts.backRoom
-    ? PurchaseModel.find({ organization: org, invoiceNo: rx })
+    ? PurchaseModel.find({ organization: org, ...bm, invoiceNo: rx })
         .populate('supplier', 'name')
         .select('invoiceNo invoiceDate total supplier')
         .sort({ invoiceDate: -1 })
@@ -107,7 +110,7 @@ export async function searchEverything(
     : Promise.resolve([]);
 
   /* A batch number, read off a strip: which lot, what it is, when it expires. */
-  const lots = StockBatchModel.find({ organization: org, batchNo: rx })
+  const lots = StockBatchModel.find({ organization: org, ...bm, batchNo: rx })
     .populate('product', 'name strength deletedAt')
     .select('batchNo expiry qtyOnHand product')
     .sort({ expiry: 1 })

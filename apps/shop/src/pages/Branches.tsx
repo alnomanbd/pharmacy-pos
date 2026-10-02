@@ -5,6 +5,7 @@ import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import Modal from '../components/Modal';
 import { useT, useUiLang, bnNumerals } from '../i18n/ui';
+import { useBranchStore } from '../branch';
 
 /**
  * The shop's branches — the owner's page.
@@ -49,6 +50,7 @@ export default function Branches() {
       toast(editing.id ? t('Branch saved.') : t('Branch opened.'));
       setEditing(null);
       await load();
+      useBranchStore.getState().changed();
     } catch (e: unknown) {
       const msg = (e as { response?: { data?: { message?: string } } }).response?.data?.message;
       toast(msg || t('Could not save that branch.'), 'error');
@@ -62,6 +64,7 @@ export default function Branches() {
     try {
       await branchesApi.update(b._id, { active });
       await load();
+      useBranchStore.getState().changed();
     } catch (e: unknown) {
       const msg = (e as { response?: { data?: { message?: string } } }).response?.data?.message;
       toast(msg || t('Could not change that branch.'), 'error');

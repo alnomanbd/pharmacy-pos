@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
   Store,
@@ -42,6 +42,8 @@ import { useStockAlertsPoll } from '../alerts/useStockAlerts';
 import { BRAND } from '../brand';
 import { supportApi } from '../api';
 import SetupChecklist from '../components/SetupChecklist';
+import BranchSwitcher from '../components/BranchSwitcher';
+import { useBranchStore } from '../branch';
 
 /**
  * The shop's shell.
@@ -228,6 +230,8 @@ export default function ShopLayout() {
   const user = useAuthStore((s) => s.user);
   const { theme, toggle } = useTheme();
   const [moreOpen, setMoreOpen] = useState(false);
+  /* A switch of branch starts the page again, so nothing on it is the old branch's. */
+  const branchKey = useBranchStore((s) => s.branch);
   /* Expired lots and empty shelves, polled for the bell and the ticker. */
   useStockAlertsPoll();
 
@@ -345,6 +349,8 @@ export default function ShopLayout() {
               are read by people in the same one.
             */}
             {/* The owner's alone: setting the shop up is their job. */}
+            {/* Only drawn for a shop with more than one branch. */}
+            <BranchSwitcher />
             {owns && <SetupChecklist />}
             <AlertBell runsTheShop={runsTheShop} />
             <button
@@ -491,7 +497,9 @@ export default function ShopLayout() {
           onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 400)}
           className="min-w-0 flex-1 overflow-y-auto px-4 py-5 pb-20 sm:px-6 lg:pb-20"
         >
-          <Outlet />
+          <Fragment key={branchKey}>
+            <Outlet />
+          </Fragment>
         </main>
 
         {/* In the flow under the page rather than fixed, so it never covers the

@@ -12,6 +12,11 @@ import {
 } from '../models/index.js';
 import { formatDayKey, instantFromDayKeyAndTime, parseDayKey } from '../utils/date.js';
 import type { Actor } from './shop.service.js';
+import { branchMatch } from './branchScope.service.js';
+
+/** The shop, and the branches in view: what every figure on the report is matched on. */
+type Scope = { organization: Types.ObjectId } & Record<string, unknown>;
+const scopeOf = (actor: Actor): Scope => ({ organization: new Types.ObjectId(actor.org), ...branchMatch(actor.branch) });
 import { backfillRefunds } from './shopCash.service.js';
 
 /**
@@ -137,10 +142,10 @@ export function dayRangeInstants(from: string, to: string) {
 }
 
 /** The deliveries a shop took in over a range, as one line of figures. */
-export async function goodsIn(org: Types.ObjectId, from: string, to: string) {
+export async function goodsIn(org: Scope, from: string, to: string) {
   const { start, end } = dayRangeInstants(from, to);
   const [row] = await PurchaseModel.aggregate<{ count: number; value: number; pieces: number }>([
-    { $match: { organization: org, invoiceDate: { $gte: start, $lte: end } } },
+    { $match: { ...org, invoiceDate: { $gte: start, $lte: end } } },
     {
       $group: {
         _id: null,
@@ -158,12 +163,12 @@ export async function goodsIn(org: Types.ObjectId, from: string, to: string) {
 }
 
 /** Money handed out for the shop itself, over a range. */
-async function spendFor(org: Types.ObjectId, from: string, to: string) {
+async function spendFor(org: Scope, from: string, to: string) {
   const { start, end } = dayRangeInstants(from, to);
   const [row] = await ExpenseModel.aggregate<{ count: number; amount: number }>([
     {
       $match: {
-        organization: org,
+        ...org,
         expenseDate: { $gte: start, $lte: end },
         deletedAt: null,
       },
@@ -174,32 +179,32 @@ async function spendFor(org: Types.ObjectId, from: string, to: string) {
 }
 
 /** What returns took off the stretch's sales and its stock's cost. */
-async function returnsFor(org: Types.ObjectId, from: string, to: string) {
+async function returnsFor(org: Scope, from: string, to: string) {
   const { start, end } = dayRangeInstants(from, to);
   const [row] = await CashMoveModel.aggregate<{ value: number; cost: number }>([
-    { $match: { organization: org, kind: 'refund', deletedAt: null, moveDate: { $gte: start, $lte: end } } },
+    { $match: { ...org, kind: 'refund', deletedAt: null, moveDate: { $gte: start, $lte: end } } },
     { $group: { _id: null, value: { $sum: '$returnValue' }, cost: { $sum: '$returnCost' } } },
   ]);
   return { value: row?.value ?? 0, cost: row?.cost ?? 0 };
 }
 
 /** Money in that is not a sale, over a range. */
-async function incomeFor(org: Types.ObjectId, from: string, to: string) {
+async function incomeFor(org: Scope, from: string, to: string) {
   const { start, end } = dayRangeInstants(from, to);
   const [row] = await IncomeModel.aggregate<{ amount: number }>([
-    { $match: { organization: org, incomeDate: { $gte: start, $lte: end }, deletedAt: null } },
+    { $match: { ...org, incomeDate: { $gte: start, $lte: end }, deletedAt: null } },
     { $group: { _id: null, amount: { $sum: '$amount' } } },
   ]);
   return money(row?.amount ?? 0);
 }
 
 /** What the shop itself cost, by what it was for. */
-export async function expensesByCategory(org: Types.ObjectId, from: string, to: string) {
+export async function expensesByCategory(org: Scope, from: string, to: string) {
   const { start, end } = dayRangeInstants(from, to);
   const rows = await ExpenseModel.aggregate<{ _id: string; amount: number }>([
     {
       $match: {
-        organization: org,
+        ...org,
         expenseDate: { $gte: start, $lte: end },
         deletedAt: null,
       },
@@ -211,7 +216,7 @@ export async function expensesByCategory(org: Types.ObjectId, from: string, to: 
 }
 
 /** The bills in a range, as one row of totals. */
-async function totalsFor(org: Types.ObjectId, from: string, to: string): Promise<RangeTotals> {
+async function totalsFor(org: Scope, from: string, to: string): Promise<RangeTotals> {
   const [[row], received, spent, earned, back] = await Promise.all([
     SaleModel.aggregate<{
       bills: number;
@@ -224,7 +229,7 @@ async function totalsFor(org: Types.ObjectId, from: string, to: string): Promise
         $match: {
           /* Cast, always: an aggregation does not put a string through the
              schema, and an un-cast id reports itself as a zero. */
-          organization: org,
+          ...org,
           dayKey: { $gte: from, $lte: to },
           deletedAt: null,
           status: { $ne: 'void' },
@@ -278,7 +283,7 @@ async function totalsFor(org: Types.ObjectId, from: string, to: string): Promise
 }
 
 /** Every day in the range with a figure against it, the empty ones included. */
-async function byDay(org: Types.ObjectId, from: string, to: string) {
+async function byDay(org: Scope, from: string, to: string) {
   const rows = await SaleModel.aggregate<{
     _id: string;
     sales: number;
@@ -287,7 +292,7 @@ async function byDay(org: Types.ObjectId, from: string, to: string) {
   }>([
     {
       $match: {
-        organization: org,
+        ...org,
         dayKey: { $gte: from, $lte: to },
         deletedAt: null,
         status: { $ne: 'void' },
@@ -321,7 +326,7 @@ async function byDay(org: Types.ObjectId, from: string, to: string) {
 }
 
 /** What sold, ranked by what it earned rather than by how much of it left. */
-async function topProducts(org: Types.ObjectId, from: string, to: string, limit = 12) {
+async function topProducts(org: Scope, from: string, to: string, limit = 12) {
   /* Net of what came back: a strip sold and returned earned nothing, and a
      product that is bought and returned all day is the opposite of a mover. */
   const netPieces = {
@@ -337,7 +342,7 @@ async function topProducts(org: Types.ObjectId, from: string, to: string, limit 
   }>([
     {
       $match: {
-        organization: org,
+        ...org,
         dayKey: { $gte: from, $lte: to },
         deletedAt: null,
         status: { $ne: 'void' },
@@ -370,7 +375,7 @@ async function topProducts(org: Types.ObjectId, from: string, to: string, limit 
  * a Mitford wholesaler the next, at two different costs, and telling those two
  * apart is the whole of the question.
  */
-async function bySupplier(org: Types.ObjectId, from: string, to: string) {
+async function bySupplier(org: Scope, from: string, to: string) {
   return SaleModel.aggregate<{
     _id: Types.ObjectId | null;
     name: string;
@@ -379,7 +384,7 @@ async function bySupplier(org: Types.ObjectId, from: string, to: string) {
   }>([
     {
       $match: {
-        organization: org,
+        ...org,
         dayKey: { $gte: from, $lte: to },
         deletedAt: null,
         status: { $ne: 'void' },
@@ -428,11 +433,11 @@ async function bySupplier(org: Types.ObjectId, from: string, to: string) {
  * the shop paid for it — which is the number that matters, because that is the
  * money it cannot spend on something that moves.
  */
-async function deadStock(org: Types.ObjectId, from: string, to: string, limit = 25) {
+async function deadStock(org: Scope, from: string, to: string, limit = 25) {
   const sold = await SaleModel.aggregate<{ _id: Types.ObjectId }>([
     {
       $match: {
-        organization: org,
+        ...org,
         dayKey: { $gte: from, $lte: to },
         deletedAt: null,
         status: { $ne: 'void' },
@@ -449,7 +454,7 @@ async function deadStock(org: Types.ObjectId, from: string, to: string, limit = 
     onHand: number;
     value: number;
   }>([
-    { $match: { organization: org, qtyOnHand: { $gt: 0 }, product: { $nin: movers } } },
+    { $match: { ...org, qtyOnHand: { $gt: 0 }, product: { $nin: movers } } },
     {
       $group: {
         _id: '$product',
@@ -497,7 +502,7 @@ export async function ownerReport(actor: Actor, opts: { from?: string; to?: stri
   /* Earlier returns that never reached the accounts, written in once. */
   await backfillRefunds(actor.org).catch(() => 0);
   const range = rangeOf(opts);
-  const org = new Types.ObjectId(actor.org);
+  const org = scopeOf(actor);
 
   const [now, before, days, top, suppliers, dead, expenseCategories] = await Promise.all([
     totalsFor(org, range.from, range.to),
@@ -547,7 +552,7 @@ export async function ownerReport(actor: Actor, opts: { from?: string; to?: stri
  * the admin's report router rather than being smuggled into the counter's.
  */
 export async function todayGoodsIn(actor: Actor) {
-  const org = new Types.ObjectId(actor.org);
+  const org = scopeOf(actor);
   const today = formatDayKey(parseDayKey());
   return { dayKey: today, cameIn: await goodsIn(org, today, today) };
 }
@@ -579,6 +584,7 @@ export async function needsAttention(actor: Actor) {
       {
         $match: {
           organization: org,
+          ...branchMatch(actor.branch),
           qtyOnHand: { $gt: 0 },
           expiry: { $ne: null, $lte: soon },
         },
@@ -606,6 +612,7 @@ export async function needsAttention(actor: Actor) {
           as: 'held',
           pipeline: [
             { $match: { $expr: { $eq: ['$product', '$$product'] } } },
+            { $match: branchMatch(actor.branch) },
             { $group: { _id: null, onHand: { $sum: '$qtyOnHand' } } },
           ],
         },
@@ -619,7 +626,7 @@ export async function needsAttention(actor: Actor) {
       },
       { $group: { _id: null, count: { $sum: 1 } } },
     ]),
-    ShopOrderModel.countDocuments({ organization: org, status: { $in: ['open', 'sent'] } }),
+    ShopOrderModel.countDocuments({ organization: org, status: { $in: ['open', 'sent'] }, ...branchMatch(actor.branch) }),
     ShopCustomerModel.aggregate<{ _id: null; count: number; owed: number }>([
       { $match: { organization: org, deletedAt: null, balance: { $gt: 0 } } },
       { $group: { _id: null, count: { $sum: 1 }, owed: { $sum: '$balance' } } },

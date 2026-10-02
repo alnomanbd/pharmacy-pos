@@ -23,6 +23,7 @@ import { staffApi, taka, type StaffMember } from '../api';
 import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import { useT, useUiLang, bnNumerals } from '../i18n/ui';
+import { fetchBranchSwitcher, type BranchSwitcherInfo } from '../branch';
 import Modal from '../components/Modal';
 
 /**
@@ -470,6 +471,15 @@ function EditStaff({
   const [phone, setPhone] = useState(member.phone ?? '');
   const [role, setRole] = useState(member.role);
   const [busy, setBusy] = useState(false);
+  /* Which branches they work in — asked only of a shop with more than one. None ticked: all. */
+  const [branches, setBranches] = useState<BranchSwitcherInfo['branches']>([]);
+  const [worksIn, setWorksIn] = useState<string[]>(member.branches ?? []);
+  useEffect(() => {
+    fetchBranchSwitcher()
+      .then((d) => setBranches(d.count > 1 ? d.branches : []))
+      .catch(() => undefined);
+  }, []);
+  const askBranches = branches.length > 1 && member.role !== 'admin';
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -479,6 +489,7 @@ function EditStaff({
         name: name.trim(),
         phone: phone.trim(),
         ...(member.role !== 'admin' && role !== 'admin' ? { role } : {}),
+        ...(askBranches ? { branchIds: worksIn.filter((id) => branches.some((b) => b._id === id)) } : {}),
       });
       toast(`${name.trim()} ${t('saved')}.`);
       onSaved();
@@ -515,6 +526,32 @@ function EditStaff({
             <input className="input h-10" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
           </label>
         </div>
+        {askBranches && (
+          <fieldset>
+            <legend className="mb-1 block text-xs font-semibold text-muted-foreground">{t('Works in')}</legend>
+            <div className="flex flex-wrap gap-2">
+              {branches.map((b) => {
+                const on = worksIn.includes(b._id);
+                return (
+                  <label
+                    key={b._id}
+                    className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm ${on ? 'border-primary bg-primary/5' : 'border-border'}`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={on}
+                      onChange={() => setWorksIn(on ? worksIn.filter((x) => x !== b._id) : [...worksIn, b._id])}
+                    />
+                    {b.name}
+                  </label>
+                );
+              })}
+            </div>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              {worksIn.length === 0 ? t('None ticked: every branch.') : t('They see and sell only in the branches ticked.')}
+            </p>
+          </fieldset>
+        )}
         <div className="mt-1 flex justify-end gap-2">
           <button type="button" className="btn btn-ghost" onClick={onClose}>
             {t('Cancel')}

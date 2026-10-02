@@ -1701,6 +1701,15 @@ const bn: Record<string, string> = {
   'plan': 'প্ল্যান',
   'extra branch': 'অতিরিক্ত শাখা',
   'extra branches': 'অতিরিক্ত শাখা',
+  /* ---- branch switcher ---- */
+  'All branches': 'সব শাখা',
+  'Working in': 'যে শাখায় কাজ করছেন',
+  'Figures added up — pick one branch to sell or receive stock': 'সব শাখার হিসাব একসাথে — বিক্রি বা মাল তুলতে একটি শাখা বেছে নিন',
+  'It sells that branch’s stock, and its takings are that branch’s.': 'এটি ওই শাখার স্টক বিক্রি করে, আর এর বিক্রির টাকা ওই শাখার।',
+  'Works in': 'যে শাখায় কাজ করেন',
+  'None ticked: every branch.': 'কোনোটি না বাছলে: সব শাখা।',
+  'They see and sell only in the branches ticked.': 'শুধু বাছাই করা শাখাগুলোতেই দেখতে ও বিক্রি করতে পারবেন।',
+  'Pick a branch at the top of the screen first — this goes into one branch.': 'আগে স্ক্রিনের ওপরে একটি শাখা বেছে নিন — এটি একটি শাখাতেই যাবে।',
 };
 
 export const useT = makeUseT(bn);

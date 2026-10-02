@@ -35,6 +35,8 @@ export type StockMove = (typeof STOCK_MOVES)[number];
 const schema = new Schema(
   {
     organization: { type: Schema.Types.ObjectId, ref: 'Organization', required: true, index: true },
+    /** Which branch of the shop this belongs to. Everything made before branches is in the Main branch. */
+    branch: { type: Schema.Types.ObjectId, ref: 'Branch', default: null, index: true },
     product: { type: Schema.Types.ObjectId, ref: 'ShopProduct', required: true, index: true },
     batch: { type: Schema.Types.ObjectId, ref: 'StockBatch', default: null, index: true },
 
@@ -66,6 +68,14 @@ const schema = new Schema(
    number looks wrong. */
 schema.index({ organization: 1, product: 1, createdAt: -1 });
 schema.index({ organization: 1, createdAt: -1 });
+
+/* A row is in the branch its lot is in. Filled here rather than at each of the
+   places stock moves, so no new move can forget it. */
+schema.pre('save', async function () {
+  if (this.branch || !this.batch) return;
+  const lot = await model('StockBatch').findById(this.batch).select('branch').lean<{ branch?: unknown }>();
+  if (lot?.branch) this.set('branch', lot.branch);
+});
 
 export type StockLedger = InferSchemaType<typeof schema>;
 export type StockLedgerDoc = HydratedDocument<StockLedger>;
