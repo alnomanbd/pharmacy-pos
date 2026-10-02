@@ -15,6 +15,7 @@ import { audit } from '../services/audit.service.js';
 import { quoteForShop } from '../services/coupon.service.js';
 import { referralSummary } from '../services/referral.service.js';
 import { startCheckout } from '../services/onlinePayment.service.js';
+import * as leaving from '../services/leaving.service.js';
 
 /**
  * The shop's own billing: where it stands, and telling us it has paid.
@@ -72,6 +73,29 @@ router.post(
       const checkout = await startCheckout(req.user!.org!, req.user!.id, req.body);
       await audit(req, 'billing.payment.submit', { model: 'Payment', id: checkout.paymentId, label: `${checkout.amount} online` }, { after: { gateway: 'sslcommerz', amount: checkout.amount } });
       ok(res, checkout);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+/** Whether to ask why the shop did not renew, and its answer if it gave one. */
+router.get('/leaving', async (req, res, next) => {
+  try {
+    await requireOrgAdmin(actorOf(req));
+    ok(res, await leaving.leavingState(req.user!.org!));
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post(
+  '/leaving',
+  validate(z.object({ reason: z.enum(leaving.LEAVING_REASONS), note: z.string().trim().max(500).optional() })),
+  async (req, res, next) => {
+    try {
+      await requireOrgAdmin(actorOf(req));
+      ok(res, await leaving.answer(req.user!.org!, req.user!.id, req.body), 'Thank you');
     } catch (err) {
       next(err);
     }

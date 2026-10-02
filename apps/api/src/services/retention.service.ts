@@ -5,6 +5,7 @@ import * as notify from './notification.service.js';
 import { sendSms } from '../integrations/sms.js';
 import { badRequest, notFound } from '../utils/AppError.js';
 import { setupForMany } from './onboarding.service.js';
+import { latestFor, LEAVING_LABEL } from './leaving.service.js';
 
 /**
  * Who is about to leave, and who already has.
@@ -111,7 +112,7 @@ export async function retentionBoard(opts: { days?: number } = {}) {
     inactive: [],
     stuck: [],
   };
-  const setup = await setupForMany(ids);
+  const [setup, answers] = await Promise.all([setupForMany(ids), latestFor(ids)]);
 
   function row(o: (typeof orgs)[number], lastActivityAt: Date | null) {
     const plan = planOf.get(o.plan);
@@ -133,6 +134,9 @@ export async function retentionBoard(opts: { days?: number } = {}) {
         : { name: '', email: o.contactEmail || '', phone: o.contactPhone || '' },
       lastManualReminder: o.lastManualReminder?.at ? o.lastManualReminder : null,
       setup: setup.get(String(o._id)) ? { done: setup.get(String(o._id))!.done, total: setup.get(String(o._id))!.total } : null,
+      leaving: answers.get(String(o._id))
+        ? { label: LEAVING_LABEL[answers.get(String(o._id))!.reason], note: answers.get(String(o._id))!.note }
+        : null,
     };
   }
 

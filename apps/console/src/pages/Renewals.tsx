@@ -170,6 +170,12 @@ export default function Renewals() {
                       {!r.trial && r.price > 0 && <span>{taka(r.price)} / month</span>}
                       <span>Last active {lastSeen(r.lastActivityAt) ?? 'never'}</span>
                       {r.setup && r.setup.done < r.setup.total && <span>Setup {r.setup.done}/{r.setup.total}</span>}
+                      {r.leaving && (
+                        <span className="font-medium text-foreground/80">
+                          Said: {r.leaving.label}
+                          {r.leaving.note ? ` — “${r.leaving.note}”` : ''}
+                        </span>
+                      )}
                       {r.lastManualReminder?.at && (
                         <span className="font-medium text-foreground/80">
                           Reminded {lastSeen(r.lastManualReminder.at)}

@@ -222,6 +222,26 @@ export default function Overview() {
         </div>
       </div>
 
+      {data.leaving.length > 0 && (
+        <div className="card mt-4">
+          <h3 className="mb-2">Why shops did not renew <span className="text-xs font-normal text-muted-foreground">· last 90 days, in their words</span></h3>
+          <div className="space-y-1.5">
+            {data.leaving.map((l) => {
+              const max = Math.max(...data.leaving.map((x) => x.count));
+              return (
+                <div key={l.reason} className="flex items-center gap-3 text-sm">
+                  <span className="w-56 shrink-0 truncate">{l.label}</span>
+                  <span className="h-2 flex-1 rounded-full bg-muted">
+                    <span className="block h-2 rounded-full" style={{ width: `${(l.count / max) * 100}%`, background: 'hsl(var(--primary))' }} />
+                  </span>
+                  <strong className="w-8 shrink-0 text-right tabular-nums">{l.count}</strong>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {followUps.length > 0 && (
         <div className="card mt-4" id="follow-ups">
           <h3 className="mb-2 flex items-center gap-2">

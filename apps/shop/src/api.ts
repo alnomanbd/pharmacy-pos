@@ -1466,6 +1466,9 @@ export const billingApi = {
   /** Starts an online payment; the answer is the gateway page to send the browser to. */
   checkout: (payload: { plan: string; months: number; couponCode?: string }) =>
     getData<{ url: string; paymentId: string; amount: number }>(api.post('/billing/checkout', payload)),
+  /** Whether to ask why the shop did not renew. */
+  leaving: () => getData<{ ask: boolean; answered: { reason: string; note: string } | null }>(api.get('/billing/leaving')),
+  tellLeaving: (reason: string, note?: string) => getData<unknown>(api.post('/billing/leaving', { reason, note })),
   /** This shop's referral code, and how many have signed up and paid through it. */
   referral: () => getData<{ code: string; signedUp: number; paying: number }>(api.get('/billing/referral')),
   /** A blob rather than a link, because the route needs the Authorization header. */

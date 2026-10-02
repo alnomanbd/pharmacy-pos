@@ -171,6 +171,8 @@ export interface PlatformOverview {
   signups: { thisMonth: number; lastMonth: number; byMonth: { month: string; count: number }[] };
   conversion: { signedUp: number; paid: number; rate: number | null };
   lost30d: number;
+  /** Why shops said they did not renew, last 90 days, most common first. */
+  leaving: { reason: string; label: string; count: number }[];
   todo: {
     pendingPayments: number;
     pendingApprovals: number;
@@ -282,6 +284,8 @@ export interface RetentionRow {
   lastManualReminder: { at: string; kind: string } | null;
   /** Getting-started steps done, of the total. */
   setup: { done: number; total: number } | null;
+  /** Why it did not renew, in its own words, when it said. */
+  leaving: { label: string; note: string } | null;
 }
 
 /** A shop's getting-started checklist. */

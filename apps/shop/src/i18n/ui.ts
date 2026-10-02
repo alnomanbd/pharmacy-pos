@@ -1637,6 +1637,20 @@ const bn: Record<string, string> = {
   'The online payment did not go through. Nothing was taken — try again, or pay by hand below.': 'অনলাইন পেমেন্ট সম্পন্ন হয়নি। কোনো টাকা কাটা হয়নি — আবার চেষ্টা করুন, অথবা নিচে হাতে পেমেন্ট করুন।',
   'You cancelled the online payment. Nothing was taken.': 'আপনি অনলাইন পেমেন্ট বাতিল করেছেন। কোনো টাকা কাটা হয়নি।',
   'Online payment is not set up yet — please pay by bKash or Nagad and submit it below.': 'অনলাইন পেমেন্ট এখনো চালু হয়নি — বিকাশ বা নগদে পাঠিয়ে নিচে জমা দিন।',
+  /* ---- why not renewed ---- */
+  'Why have you not renewed?': 'কেন নবায়ন করেননি?',
+  'One tap. It tells us what to fix — nothing else changes.': 'শুধু একটা ট্যাপ। এতে আমরা বুঝব কী ঠিক করতে হবে — আর কিছু বদলাবে না।',
+  'I will renew — I just have not yet': 'নবায়ন করব — এখনো করা হয়নি',
+  'It costs too much': 'দাম বেশি',
+  'We went back to the notebook': 'আবার খাতায় ফিরে গেছি',
+  'We use other software now': 'এখন অন্য সফটওয়্যার ব্যবহার করি',
+  'It was hard to use': 'ব্যবহার করা কঠিন ছিল',
+  'Something we need is missing': 'আমাদের দরকারি কিছু নেই',
+  'The shop closed or was sold': 'দোকান বন্ধ বা বিক্রি হয়ে গেছে',
+  'What do you need?': 'কী দরকার?',
+  'Anything else? (optional)': 'আর কিছু? (ঐচ্ছিক)',
+  'Thank you for telling us.': 'জানানোর জন্য ধন্যবাদ।',
+  'If there is anything we can fix, we will be in touch.': 'ঠিক করার মতো কিছু থাকলে আমরা যোগাযোগ করব।',
 };
 
 export const useT = makeUseT(bn);

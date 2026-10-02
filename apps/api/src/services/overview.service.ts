@@ -8,6 +8,7 @@ import {
 } from '../models/index.js';
 import { everyPlan } from './plan.service.js';
 import { endOfDay } from './shopNote.service.js';
+import { breakdown } from './leaving.service.js';
 
 /**
  * The console's first page: how the business is doing, and what needs doing.
@@ -119,6 +120,7 @@ export async function overview(opts: { money: boolean }) {
     },
     conversion: { signedUp: recent.length, paid: recentPaid, rate: conversionRate(recent.length, recentPaid) },
     lost30d: lost,
+    leaving: await breakdown(90),
     todo: {
       pendingPayments,
       pendingApprovals: status.pending ?? 0,

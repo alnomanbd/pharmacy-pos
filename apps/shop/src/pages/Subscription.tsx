@@ -649,6 +649,9 @@ export default function Subscription() {
         </button>
       </div>
 
+      {/* ---------------- why not renewed ---------------- */}
+      <LeavingCard />
+
       {/* ---------------- refer ---------------- */}
       {referral && <ReferCard referral={referral} lang={lang} />}
 
@@ -729,6 +732,95 @@ function ReferCard({ referral, lang }: { referral: { code: string; signedUp: num
       <p className="mt-2 text-xs text-muted-foreground">
         {t('Your code')}: <strong className="font-mono">{referral.code}</strong> · {n(referral.signedUp)} {t('signed up')} · {n(referral.paying)} {t('paying')}
       </p>
+    </div>
+  );
+}
+
+const LEAVING: { key: string; label: string }[] = [
+  { key: 'will_renew', label: 'I will renew — I just have not yet' },
+  { key: 'too_expensive', label: 'It costs too much' },
+  { key: 'back_to_paper', label: 'We went back to the notebook' },
+  { key: 'other_software', label: 'We use other software now' },
+  { key: 'hard_to_use', label: 'It was hard to use' },
+  { key: 'missing_feature', label: 'Something we need is missing' },
+  { key: 'shop_closed', label: 'The shop closed or was sold' },
+  { key: 'other', label: 'Something else' },
+];
+
+/**
+ * One question, once, while the shop is read-only: why it did not renew.
+ * One tap answers it; a note is optional. Nothing else on the page changes.
+ */
+function LeavingCard() {
+  const t = useT();
+  const { toast } = useToast();
+  const [ask, setAsk] = useState(false);
+  const [reason, setReason] = useState('');
+  const [note, setNote] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    billingApi
+      .leaving()
+      .then((r) => setAsk(r.ask))
+      .catch(() => undefined);
+  }, []);
+
+  if (!ask) return null;
+  if (done) {
+    return (
+      <div className="card text-sm">
+        <strong>{t('Thank you for telling us.')}</strong> {t('If there is anything we can fix, we will be in touch.')}
+      </div>
+    );
+  }
+
+  const send = async () => {
+    setBusy(true);
+    try {
+      await billingApi.tellLeaving(reason, note.trim() || undefined);
+      setDone(true);
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { message?: string } } }).response?.data?.message;
+      toast(msg || t('Could not send that.'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="card">
+      <h3>{t('Why have you not renewed?')}</h3>
+      <p className="mt-1 text-sm text-muted-foreground">{t('One tap. It tells us what to fix — nothing else changes.')}</p>
+      <div className="mt-3 flex flex-wrap gap-1.5">
+        {LEAVING.map((r) => (
+          <button
+            key={r.key}
+            type="button"
+            onClick={() => setReason(r.key)}
+            className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+              reason === r.key ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card hover:bg-muted'
+            }`}
+          >
+            {t(r.label)}
+          </button>
+        ))}
+      </div>
+      {reason && (
+        <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+          <input
+            className="input h-10"
+            maxLength={500}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder={reason === 'missing_feature' ? t('What do you need?') : t('Anything else? (optional)')}
+          />
+          <button type="button" className="btn h-10 shrink-0" onClick={() => void send()} disabled={busy}>
+            {t('Send')}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
