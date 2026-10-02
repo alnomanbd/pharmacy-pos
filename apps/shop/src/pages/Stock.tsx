@@ -20,6 +20,7 @@ import {
   ShoppingBag,
   Inbox,
   MessageSquarePlus,
+  ArrowRightLeft,
 } from 'lucide-react';
 import {
   shopApi,
@@ -38,6 +39,7 @@ import Modal from '../components/Modal';
 import ExportCsv from '../components/ExportCsv';
 import ConfirmWithReason from '../components/ConfirmWithReason';
 import { useAlertStore } from '../alerts/useStockAlerts';
+import { fetchBranchSwitcher } from '../branch';
 import { AskForMedicine, MedicineRequestsPanel } from '../components/MedicineRequests';
 
 /**
@@ -169,6 +171,13 @@ const standing = (p: ShopProduct): 'out' | 'low' | 'ok' =>
 
 export default function Stock() {
   const t = useT();
+  /* How many branches the shop has — the transfer button is only for more than one. */
+  const [branchCount, setBranchCount] = useState(1);
+  useEffect(() => {
+    fetchBranchSwitcher()
+      .then((d) => setBranchCount(d.count))
+      .catch(() => undefined);
+  }, []);
   const lang = useUiLang();
   const { toast } = useToast();
   /* The rack page links here with a shelf in the URL: "show me what is on R2"
@@ -281,6 +290,12 @@ export default function Stock() {
           <Link to="/purchases" className="btn btn-ghost h-9">
             <Truck className="h-4 w-4" /> {t('Receive stock')}
           </Link>
+          {/* Only for a shop with more than one branch: somewhere to send it. */}
+          {branchCount > 1 && (
+            <Link to="/transfers" className="btn btn-ghost h-9">
+              <ArrowRightLeft className="h-4 w-4" /> {t('Send to a branch')}
+            </Link>
+          )}
           {/* What the shop asked Dawai to put in the catalogue. Here, beside
               "new item", because that is where a missing medicine is noticed. */}
           <button type="button" className="btn btn-ghost h-9" onClick={() => setRequests(true)}>

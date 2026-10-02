@@ -1710,6 +1710,24 @@ const bn: Record<string, string> = {
   'None ticked: every branch.': 'কোনোটি না বাছলে: সব শাখা।',
   'They see and sell only in the branches ticked.': 'শুধু বাছাই করা শাখাগুলোতেই দেখতে ও বিক্রি করতে পারবেন।',
   'Pick a branch at the top of the screen first — this goes into one branch.': 'আগে স্ক্রিনের ওপরে একটি শাখা বেছে নিন — এটি একটি শাখাতেই যাবে।',
+  /* ---- transfers ---- */
+  'Send to a branch': 'অন্য শাখায় পাঠান',
+  'Stock leaves the branch picked at the top and is on the other branch’s shelf the moment you send it.': 'ওপরে বাছাই করা শাখা থেকে মাল যাবে, আর পাঠানো মাত্র অন্য শাখার স্টকে উঠে যাবে।',
+  'Your shop has one branch, so there is nowhere to send stock.': 'আপনার দোকানের একটিই শাখা, তাই মাল পাঠানোর জায়গা নেই।',
+  'Pick the branch the stock is leaving from at the top of the screen.': 'যে শাখা থেকে মাল যাবে, স্ক্রিনের ওপরে সেটি বেছে নিন।',
+  'Pick a branch': 'শাখা বাছুন',
+  'Find an item on this branch’s shelf': 'এই শাখার স্টক থেকে আইটেম খুঁজুন',
+  'Nothing of this on the shelf here.': 'এখানে এর কোনো স্টক নেই।',
+  'expires': 'মেয়াদ',
+  'here': 'এখানে',
+  'Note — who took it across, what for': 'নোট — কে নিয়ে গেল, কেন',
+  'At cost': 'কেনা দামে',
+  'Recent transfers': 'সাম্প্রতিক পাঠানো মাল',
+  'Nothing sent between branches yet.': 'এখনো কোনো শাখায় মাল পাঠানো হয়নি।',
+  'Could not load the transfers.': 'পাঠানোর তালিকা আনা যায়নি।',
+  'Could not load that item’s lots.': 'আইটেমটির ব্যাচগুলো আনা যায়নি।',
+  'Every line needs how many pieces are going.': 'প্রতিটি লাইনে কত পিস যাচ্ছে লিখুন।',
+  'Sent across. The other branch has it on its shelf now.': 'পাঠানো হয়েছে। অন্য শাখার স্টকে এখন এটি আছে।',
 };
 
 export const useT = makeUseT(bn);

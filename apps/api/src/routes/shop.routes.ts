@@ -13,6 +13,7 @@ import * as remind from '../services/shopRemind.service.js';
 import * as invoices from '../services/shopInvoicePdf.service.js';
 import * as counts from '../services/stockCount.service.js';
 import * as counters from '../services/counters.service.js';
+import * as transfers from '../services/stockTransfer.service.js';
 import * as saleAdmin from '../services/saleAdmin.service.js';
 import * as bin from '../services/shopTrash.service.js';
 import * as expenses from '../services/shopExpense.service.js';
@@ -1056,6 +1057,29 @@ router.post(
 router.post(
   '/counts/:id/abandon',
   handle((req) => counts.abandonCount(actorOf(req), req.params.id), 'Count dropped'),
+);
+
+/* ------------------------------------------------------------- transfers -- */
+
+/* Stock carried from the branch being worked in to another. */
+router.get(
+  '/transfers',
+  handle((req) => transfers.listTransfers(actorOf(req), Number(req.query.limit) || 50)),
+);
+
+router.post(
+  '/transfers',
+  validate(
+    z.object({
+      toBranchId: z.string().trim().min(1).max(40),
+      lines: z
+        .array(z.object({ batchId: z.string().trim().min(1).max(40), pieces: z.number().int().positive().max(1_000_000) }))
+        .min(1)
+        .max(200),
+      note: z.string().trim().max(240).optional(),
+    }),
+  ),
+  make((req) => transfers.createTransfer(actorOf(req), req.body), 'Sent across'),
 );
 
 /* -------------------------------------------------------------- counters -- */

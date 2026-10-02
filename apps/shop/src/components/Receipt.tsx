@@ -197,7 +197,7 @@ export interface ReceiptShop extends Partial<ShopSettings> {
 
 export default function Receipt({
   sale,
-  settings,
+  settings: shop,
   onDone,
   auto = true,
 }: {
@@ -207,6 +207,11 @@ export default function Receipt({
   /** Open the print dialog as soon as it is on screen. */
   auto?: boolean;
 }) {
+  /* A branch's own address and phone, where it has them, in place of the shop's. */
+  const b = sale.branchInfo;
+  const settings: ReceiptShop = b
+    ? { ...shop, address: b.address?.trim() || shop.address, phone: b.phone?.trim() || shop.phone }
+    : shop;
   const width = settings.paperWidthMm || (settings.paperSize === '58' ? 58 : 80);
   const narrow = width < 70;
   const bn = !!settings.printBangla;
@@ -318,6 +323,7 @@ export default function Receipt({
       <div className="center">
         <div className="name">{settings.shopName || 'Pharmacy'}</div>
         {settings.shopNameBn && <div className="bold">{settings.shopNameBn}</div>}
+        {b?.name && <div className="bold">{b.name}</div>}
         {settings.address && <div className="muted">{settings.address}</div>}
         {settings.phone && (
           <div className="muted">

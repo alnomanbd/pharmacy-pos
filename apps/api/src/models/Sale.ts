@@ -58,6 +58,13 @@ const schema = new Schema(
     organization: { type: Schema.Types.ObjectId, ref: 'Organization', required: true, index: true },
     /** Which branch of the shop this belongs to. Everything made before branches is in the Main branch. */
     branch: { type: Schema.Types.ObjectId, ref: 'Branch', default: null, index: true },
+    /* Which branch sold it, as the receipt prints it — kept on the bill so a
+       reprint next year still names the branch that sold it, under the
+       address it had then. Empty for a shop with one branch and no address of its own. */
+    branchInfo: {
+      type: new Schema({ name: String, address: String, phone: String }, { _id: false }),
+      default: undefined,
+    },
 
     /**
      * The number printed on the bill.

@@ -16,6 +16,7 @@ import { todayKey, calendarPartsInAppTz, parseDayKey, formatDayKey } from '../ut
 import type { Actor } from './shop.service.js';
 import { recordRefund } from './shopCash.service.js';
 import { branchMatch, writeBranchOf, inScope } from './branchScope.service.js';
+import { BranchModel } from '../models/index.js';
 import { bdMobile, BD_MOBILE_MESSAGE } from '../utils/phone.js';
 
 /**
@@ -572,6 +573,13 @@ export async function createSale(
   const shift = await openShift(actor);
   // A bill queued offline went through at its own counter; it lands there whatever is picked now.
   const branch = offline && shift?.branch ? (shift.branch as Types.ObjectId) : await sellingBranch(actor, shift, true);
+  /* The receipt names the branch when there is more than one, and prints a
+     branch's own address and phone where it has them. */
+  const here = await BranchModel.findById(branch).select('name address phone').lean();
+  const branchInfo =
+    here && ((actor.branch?.count ?? 1) > 1 || here.address || here.phone)
+      ? { name: (actor.branch?.count ?? 1) > 1 ? here.name : '', address: here.address ?? '', phone: here.phone ?? '' }
+      : undefined;
   const products = await ShopProductModel.find({
     _id: { $in: input.lines.map((l) => oid(l.productId)) },
     organization: actor.org,
@@ -718,6 +726,7 @@ export async function createSale(
       salesman: actor.id,
       salesmanName: actor.name,
       branch,
+      branchInfo,
       shift: shift?._id ?? null,
       counter: shift?.counter ?? null,
       terminal: shift?.terminal ?? '',

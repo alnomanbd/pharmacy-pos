@@ -890,6 +890,8 @@ export interface SaleHistory {
 export interface Sale {
   _id: string;
   billNo: string;
+  /** The branch that sold it, when the receipt should say so. */
+  branchInfo?: { name?: string; address?: string; phone?: string };
   soldAt: string;
   salesmanName: string;
   terminal?: string;
@@ -1283,6 +1285,25 @@ export const branchesApi = {
   create: (payload: { name: string; address?: string; phone?: string }) => getData<ShopBranch>(api.post('/shop/branches', payload)),
   update: (id: string, payload: Partial<{ name: string; address: string; phone: string; active: boolean }>) =>
     getData<ShopBranch>(api.patch(`/shop/branches/${id}`, payload)),
+};
+
+/* --------------------------------------------------------------- transfers -- */
+
+export interface StockTransfer {
+  _id: string;
+  fromName: string;
+  toName: string;
+  lines: { name: string; batchNo: string; expiry: string | null; pieces: number; costPerPiece: number }[];
+  value: number;
+  note?: string;
+  createdByName: string;
+  createdAt: string;
+}
+
+export const transfersApi = {
+  list: () => getData<StockTransfer[]>(api.get('/shop/transfers')),
+  create: (payload: { toBranchId: string; lines: { batchId: string; pieces: number }[]; note?: string }) =>
+    getData<StockTransfer>(api.post('/shop/transfers', payload)),
 };
 
 /* -------------------------------------------------------------------- help -- */
