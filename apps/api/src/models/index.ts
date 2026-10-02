@@ -37,6 +37,7 @@ export { ShopNoteModel, type ShopNote, type ShopNoteDoc } from './ShopNote.js';
 export { AnnouncementModel, type Announcement, type AnnouncementDoc } from './Announcement.js';
 export { CouponModel, type Coupon, type CouponDoc } from './Coupon.js';
 export { JobRunModel, type JobRun, type JobRunDoc } from './JobRun.js';
+export { AgentModel, AgentCommissionModel, type Agent, type AgentDoc, type AgentCommission } from './Agent.js';
 export {
   ImpersonationHandoffModel,
   type ImpersonationHandoff,

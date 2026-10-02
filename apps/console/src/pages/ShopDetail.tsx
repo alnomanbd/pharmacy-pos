@@ -25,6 +25,7 @@ import { openSupportView } from '../lib/supportView';
 import RecordPaymentDialog from '../components/RecordPaymentDialog';
 import ShopNotesCard from '../components/ShopNotesCard';
 import ShopSetupCard from '../components/ShopSetupCard';
+import ShopAgentCard from '../components/ShopAgentCard';
 import ShopLimitsCard, { signupSummary } from '../components/ShopLimitsCard';
 import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock, Spinner } from '@dawai/shared/components/Spinner';
@@ -181,6 +182,7 @@ export default function ShopDetail() {
   const canPlan = can(access, 'shops.plan');
   const canViewAs = can(access, 'shops.impersonate');
   const canRecordPayment = can(access, 'payments.verify');
+  const canAgents = can(access, 'agents.manage');
   /* The owner if they can sign in, or else the first account that can. */
   const viewTarget =
     users.find((u) => u.role === 'admin' && u.isActive !== false) ?? users.find((u) => u.isActive !== false);
@@ -294,6 +296,13 @@ export default function ShopDetail() {
 
       <ShopLimitsCard shopId={id} usage={plan} canEdit={canPlan} onSaved={load} />
       <ShopSetupCard shopId={id} />
+      {canAgents && (
+        <ShopAgentCard
+          shopId={id}
+          current={(org as { acquisition?: { agentCode?: string } }).acquisition?.agentCode ?? ''}
+          onChanged={() => void load()}
+        />
+      )}
       <ShopNotesCard shopId={id} isOwner={Boolean(access?.isOwner)} />
 
       <div className="card">

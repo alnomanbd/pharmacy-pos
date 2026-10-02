@@ -138,7 +138,8 @@ export async function registerShop(payload: {
     lead: converted?._id ?? null,
     channel: payload.attribution?.channel || (converted ? 'lead' : 'direct'),
     campaign: payload.attribution?.utm?.campaign || converted?.utm?.campaign || '',
-    agentCode: payload.attribution?.agentCode || '',
+    // Upper case, as agents' codes are stored: the link may have been typed by hand.
+    agentCode: (payload.attribution?.agentCode || '').trim().toUpperCase().slice(0, 24),
     fbclid: payload.attribution?.fbclid || converted?.fbclid || '',
     utm: {
       source: payload.attribution?.utm?.source || converted?.utm?.source || '',

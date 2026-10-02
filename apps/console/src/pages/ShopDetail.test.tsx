@@ -20,6 +20,7 @@ const mocks = vi.hoisted(() => ({
   updateLimits: vi.fn(),
   shopSetup: vi.fn(),
   shopNotes: vi.fn(),
+  agents: vi.fn(),
   navigate: vi.fn(),
 }));
 
@@ -74,6 +75,7 @@ beforeEach(() => {
   mocks.usage.mockResolvedValue([]);
   mocks.shopSetup.mockResolvedValue({ steps: [], done: 0, total: 6, dismissed: false });
   mocks.shopNotes.mockResolvedValue([]);
+  mocks.agents.mockResolvedValue([]);
   mocks.updateShopProfile.mockResolvedValue({});
   mocks.deleteOrganization.mockResolvedValue({ name: 'Shefa Pharmacy', deleted: {} });
 });

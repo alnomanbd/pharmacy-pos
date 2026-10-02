@@ -33,6 +33,7 @@ import {
   TicketPercent,
   LayoutDashboard,
   Activity,
+  UserRoundSearch,
 } from 'lucide-react';
 import { platformApi } from '../api';
 import { useAuthStore } from '@dawai/shared/store/auth.store';
@@ -140,6 +141,8 @@ const NAV_SECTIONS: { heading: string; links: ConsoleLink[] }[] = [
       { to: '/revenue', label: 'Sales', icon: TrendingUp, end: false, needs: ['revenue.view'] },
       /* Discount codes, and shops that brought in other shops. */
       { to: '/discounts', label: 'Discounts', icon: TicketPercent, end: false, needs: ['coupons.manage'] },
+      /* The people who sign shops up, and their commission. */
+      { to: '/agents', label: 'Agents', icon: UserRoundSearch, end: false, needs: ['agents.manage'] },
       {
         to: '/plans',
         label: 'Plans',

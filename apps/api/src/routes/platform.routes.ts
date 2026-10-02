@@ -22,6 +22,7 @@ import * as referrals from '../services/referral.service.js';
 import { overview } from '../services/overview.service.js';
 import { systemStatus } from '../services/system.service.js';
 import { setupOf } from '../services/onboarding.service.js';
+import * as agents from '../services/agent.service.js';
 import { requireAuth, requireRole, requirePermission } from '../middlewares/auth.js';
 import { PLATFORM_ROLES, PLATFORM_OWNER_ROLES } from '../types/roles.js';
 import * as team from '../services/platformTeam.service.js';
@@ -792,6 +793,67 @@ router.patch(
     await audit(req, 'coupon.change', { model: 'Coupon', id: req.params.id, label: c.code }, { after: { action: 'update', ...req.body } });
     return c;
   }, 'Code updated'),
+);
+
+/* --------------------------------- agents ---------------------------------- */
+
+const agentSchema = z.object({
+  name: z.string().trim().min(2).max(120),
+  code: z.string().trim().min(3).max(24),
+  phone: z.string().trim().max(40).optional(),
+  email: z.string().trim().max(200).optional(),
+  area: z.string().trim().max(120).optional(),
+  commissionPercent: z.number().min(0).max(50),
+  payoutNote: z.string().trim().max(200).optional(),
+  active: z.boolean().optional(),
+});
+
+router.get('/agents', requirePermission('agents.manage'), handle(() => agents.listAgents()));
+router.get('/agents/:id', requirePermission('agents.manage'), handle((req) => agents.agentDetail(req.params.id)));
+
+router.post(
+  '/agents',
+  requirePermission('agents.manage'),
+  validate(agentSchema),
+  handle(async (req) => {
+    const a = await agents.createAgent(req.body, req.user!.id);
+    await audit(req, 'agent.change', { model: 'Agent', id: String(a._id), label: `${a.name} (${a.code})` }, { after: { action: 'create', commissionPercent: a.commissionPercent } });
+    return a;
+  }, 'Agent added'),
+);
+
+router.patch(
+  '/agents/:id',
+  requirePermission('agents.manage'),
+  validate(agentSchema.omit({ code: true }).partial()),
+  handle(async (req) => {
+    const a = await agents.updateAgent(req.params.id, req.body);
+    await audit(req, 'agent.change', { model: 'Agent', id: req.params.id, label: `${a.name} (${a.code})` }, { after: { action: 'update', ...req.body } });
+    return a;
+  }, 'Agent updated'),
+);
+
+router.post(
+  '/agents/:id/payout',
+  requirePermission('agents.manage'),
+  validate(z.object({ commissionIds: z.array(z.string()).min(1).max(500), payoutRef: z.string().trim().min(2).max(120) })),
+  handle(async (req) => {
+    const r = await agents.markPaid(req.params.id, req.body.commissionIds, req.user!.id, req.body.payoutRef);
+    await audit(req, 'agent.payout', { model: 'Agent', id: req.params.id, label: `${r.marked} line(s)` }, { after: { payoutRef: req.body.payoutRef, total: r.total } });
+    return r;
+  }, 'Marked as paid'),
+);
+
+/** Puts a shop under an agent by hand — it signed up over the phone — or takes it out. */
+router.patch(
+  '/organizations/:id/agent',
+  requirePermission('agents.manage'),
+  validate(z.object({ code: z.string().trim().max(24).nullable() })),
+  handle(async (req) => {
+    const org = await agents.assignShop(req.params.id, req.body.code);
+    await audit(req, 'organization.platform_agent', { model: 'Organization', id: req.params.id, label: org.name }, { after: { agentCode: org.acquisition?.agentCode ?? '' } });
+    return org;
+  }, 'Agent updated'),
 );
 
 /* -------------------------------- referrals -------------------------------- */

@@ -6,6 +6,7 @@ import { logger } from '../utils/logger.js';
 import * as notify from './notification.service.js';
 import { purchasablePlans, planByKey } from './plan.service.js';
 import { quoteForShop, redeem } from './coupon.service.js';
+import { accrueCommission } from './agent.service.js';
 
 /**
  * Subscriptions, and the money that pays for them.
@@ -204,6 +205,8 @@ async function acceptPayment(payment: InstanceType<typeof PaymentModel>, reviewe
   await payment.save();
   // Counted now, not when it was typed: a rejected payment uses up nothing.
   if (payment.coupon?.code) await redeem(payment.coupon.code);
+  // The agent who brought the shop in earns their share of every accepted payment.
+  await accrueCommission({ _id: payment._id, amount: payment.amount, organization: payment.organization });
 
   // The receipt number is part of accepting the money, not an afterthought:
   // the shop's confirmation email quotes it.

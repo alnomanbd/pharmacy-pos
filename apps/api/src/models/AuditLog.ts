@@ -104,6 +104,12 @@ export const AUDIT_ACTIONS = [
   'coupon.change',
   /** An operator marked a referring shop's reward as given. */
   'referral.reward',
+  /** An operator added or changed a field agent. */
+  'agent.change',
+  /** An operator marked an agent's commission paid. */
+  'agent.payout',
+  /** An operator put a shop under an agent, or took it out. */
+  'organization.platform_agent',
   /** An operator corrected a shop user's details. */
   'user.platform_update',
   /**

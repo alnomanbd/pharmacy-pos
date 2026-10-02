@@ -9,5 +9,9 @@ export const BRAND = {
   shopUrl:
     import.meta.env.VITE_SHOP_URL ||
     (import.meta.env.DEV ? 'http://localhost:5175' : 'https://shop.dawai.com.bd'),
+  /** The marketing site, for agents' and shops' sign-up links. */
+  siteUrl:
+    import.meta.env.VITE_SITE_URL ||
+    (import.meta.env.DEV ? 'http://localhost:3100' : 'https://dawai.com.bd'),
   consoleHost: 'console.dawai.com.bd',
 } as const;

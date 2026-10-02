@@ -112,6 +112,12 @@ export const PERMISSIONS = [
   'coupons.manage',
 
   /**
+   * Add and change field agents, assign shops to them, and mark their
+   * commission paid. Money owed to people outside the company.
+   */
+  'agents.manage',
+
+  /**
    * Publish a message across the top of every shop's app. Reaches every
    * counter at once, so it is its own permission.
    */
@@ -169,6 +175,7 @@ export const PERMISSION_PRESETS: Record<string, { label: string; description: st
     description: 'Check payments, extend subscriptions, move shops between plans.',
     permissions: [
       'shops.view',
+      'agents.manage',
       'coupons.manage',
       'shops.plan',
       'payments.view',

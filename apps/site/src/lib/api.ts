@@ -66,12 +66,31 @@ const REF_RX = /^[A-HJ-NP-Z2-9]{6}$/;
  */
 export function rememberReferral() {
   if (typeof window === 'undefined') return;
-  const ref = new URLSearchParams(window.location.search).get('ref')?.trim().toUpperCase();
-  if (!ref || !REF_RX.test(ref)) return;
+  const q = new URLSearchParams(window.location.search);
+  const ref = q.get('ref')?.trim().toUpperCase();
+  const agent = q.get('agent')?.trim().toUpperCase();
   try {
-    sessionStorage.setItem(REF_KEY, ref);
+    if (ref && REF_RX.test(ref)) sessionStorage.setItem(REF_KEY, ref);
+    // A field agent's link: `?agent=RAHIM`. Same lifetime as a referral.
+    if (agent && AGENT_RX.test(agent)) sessionStorage.setItem(AGENT_KEY, agent);
   } catch {
     /* Without storage it still works when the link goes straight to the form. */
+  }
+}
+
+const AGENT_KEY = 'dawai.agent';
+const AGENT_RX = /^[A-Z0-9-]{3,24}$/;
+
+/** The field agent's code to send with a sign-up, from the address or from earlier in the visit. */
+export function agentCode(): string | undefined {
+  if (typeof window === 'undefined') return undefined;
+  const fromUrl = new URLSearchParams(window.location.search).get('agent')?.trim().toUpperCase();
+  if (fromUrl && AGENT_RX.test(fromUrl)) return fromUrl;
+  try {
+    const kept = sessionStorage.getItem(AGENT_KEY);
+    return kept && AGENT_RX.test(kept) ? kept : undefined;
+  } catch {
+    return undefined;
   }
 }
 

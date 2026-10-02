@@ -110,6 +110,41 @@ export interface ShopMonth {
   purchases: number;
 }
 
+/** A field agent, with their shops and what they are owed. */
+export interface AgentRow {
+  _id: string;
+  name: string;
+  code: string;
+  phone: string;
+  email: string;
+  area: string;
+  commissionPercent: number;
+  payoutNote: string;
+  active: boolean;
+  shops: number;
+  payingShops: number;
+  owed: number;
+  paid: number;
+}
+
+export interface AgentCommissionRow {
+  _id: string;
+  organization: string | { _id: string; name: string };
+  paymentAmount: number;
+  percent: number;
+  amount: number;
+  status: 'owed' | 'paid';
+  paidAt: string | null;
+  payoutRef: string;
+  createdAt: string;
+}
+
+export interface AgentDetail {
+  agent: AgentRow;
+  shops: { _id: string; name: string; status: OrgStatus; plan: string; createdAt: string }[];
+  commissions: AgentCommissionRow[];
+}
+
 /** The System page: an overall verdict, each check, and the numbers behind them. */
 export interface SystemStatus {
   verdict: 'ok' | 'warning' | 'critical';
@@ -440,6 +475,14 @@ export const platformApi = {
     getData<Paged<PlatformAuditEntry> & { actions: string[] }>(api.get('/platform/audit', { params })),
 
   overview: () => getData<PlatformOverview>(api.get('/platform/overview')),
+  agents: () => getData<AgentRow[]>(api.get('/platform/agents')),
+  agent: (id: string) => getData<AgentDetail>(api.get(`/platform/agents/${id}`)),
+  createAgent: (payload: Record<string, unknown>) => getData<AgentRow>(api.post('/platform/agents', payload)),
+  updateAgent: (id: string, payload: Record<string, unknown>) => getData<AgentRow>(api.patch(`/platform/agents/${id}`, payload)),
+  payAgent: (id: string, commissionIds: string[], payoutRef: string) =>
+    getData<{ marked: number; total: number }>(api.post(`/platform/agents/${id}/payout`, { commissionIds, payoutRef })),
+  assignAgent: (shopId: string, code: string | null) =>
+    getData<unknown>(api.patch(`/platform/organizations/${shopId}/agent`, { code })),
   system: () => getData<SystemStatus>(api.get('/platform/system')),
 
   coupons: () => getData<CouponRow[]>(api.get('/platform/coupons')),
