@@ -535,3 +535,87 @@ input[type='time']:hover::-webkit-calendar-picker-indicator {
 .nav-section:first-child .nav-section-rule {
   display: none;
 }
+
+/*
+ * Shared motion — see components/motion.tsx. Used by the shop app and the console.
+ *
+ * Bars grow from their floor, cards rise in, a line draws itself. Each runs
+ * once, when the thing comes on screen, and none of it runs for a person who
+ * has asked their system for less motion.
+ */
+.motion-rise {
+  animation: motion-rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes motion-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.motion-grow-y {
+  transform-origin: bottom;
+  animation: motion-grow-y 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes motion-grow-y {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+.motion-grow-x {
+  transform-origin: left;
+  animation: motion-grow-x 1s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+[dir='rtl'] .motion-grow-x {
+  transform-origin: right;
+}
+@keyframes motion-grow-x {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+.motion-draw {
+  stroke-dasharray: var(--len, 1000);
+  stroke-dashoffset: var(--len, 1000);
+  animation: motion-draw 1.6s cubic-bezier(0.22, 1, 0.36, 1) 0.2s forwards;
+}
+@keyframes motion-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-rise,
+  .motion-grow-y,
+  .motion-grow-x {
+    animation: none;
+  }
+  .motion-draw {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Split bars (how customers paid, shops by status): the four categorical slots, validated for the light
+   and the dark surface, and a grey for the methods folded into Other. */
+:root {
+  --mix-0: #2a78d6;
+  --mix-1: #eb6834;
+  --mix-2: #1baf7a;
+  --mix-3: #eda100;
+  --mix-other: #a3a3a0;
+}
+.dark {
+  --mix-0: #3987e5;
+  --mix-1: #d95926;
+  --mix-2: #199e70;
+  --mix-3: #c98500;
+  --mix-other: #6b6b68;
+}

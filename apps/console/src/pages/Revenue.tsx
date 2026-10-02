@@ -24,6 +24,7 @@ import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import { useToast } from '@dawai/shared/components/Toast';
 import { useTheme } from '@dawai/shared/hooks/useTheme';
 import type { PlatformRevenue, RevenueGranularity } from '@dawai/shared/types';
+import { CountUp, Rise, Sparkline, useSeen } from '@dawai/shared/components/motion';
 
 /**
  * What we sold.
@@ -124,7 +125,7 @@ function BarRow({
       </div>
       <div className="mt-1 h-2 overflow-hidden rounded-full bg-muted">
         <div
-          className="h-full rounded-full bg-primary"
+          className="motion-grow-x h-full rounded-full bg-gradient-to-r from-primary/70 to-primary"
           style={{ width: `${Math.max(2, Math.round(share * 100))}%` }}
         />
       </div>
@@ -195,6 +196,7 @@ export default function Revenue() {
   const planTop = Math.max(1, ...(data?.byPlan ?? []).map((r) => r.total));
   const methodTop = Math.max(1, ...(data?.byMethod ?? []).map((r) => r.total));
   const splitTotal = Math.max(1, (p?.newCustomers ?? 0) + (p?.renewals ?? 0));
+  const topPaid = Math.max(1, ...(data?.topShops ?? []).map((c) => c.total));
 
   const tiles = [
     { label: 'Today', figure: s?.today, icon: Wallet },
@@ -229,11 +231,45 @@ export default function Revenue() {
         the count as well as the amount: one ৳15,000 sale and five ৳3,000 ones
         are the same money and a very different day.
       */}
+      <Rise className="relative mt-4 overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/[0.14] via-primary/[0.05] to-transparent p-5 sm:p-6">
+        <Sparkline
+          values={(data?.series ?? []).map((x) => x.total)}
+          className="absolute bottom-0 right-0 h-2/5 w-full opacity-50 sm:h-3/5 sm:w-1/2"
+        />
+        <div className="relative flex flex-wrap items-end gap-x-10 gap-y-4">
+          <div>
+            {/* The range chosen below, not the fixed tiles: the band and its line move with the filters. */}
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <Wallet className="h-4 w-4 text-primary" /> {PRESETS.find((x) => x.key === preset)?.label ?? 'Chosen dates'}
+            </div>
+            <div className="mt-1 text-4xl font-bold tabular-nums text-primary">
+              <CountUp value={p?.total ?? 0} format={taka} duration={1200} />
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {p?.count ?? 0} verified sale{p?.count === 1 ? '' : 's'}
+            </div>
+          </div>
+          <div>
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <TrendingUp className="h-4 w-4 text-primary" /> Average sale
+            </div>
+            <div className="mt-1 text-2xl font-bold tabular-nums">
+              <CountUp value={p?.average ?? 0} format={taka} />
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {p?.newCustomers ?? 0} new · {p?.renewals ?? 0} renewals
+            </div>
+          </div>
+        </div>
+      </Rise>
+
       <div className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {tiles.map((t) => (
-          <div key={t.label} className="stat flex items-start justify-between">
+        {tiles.map((t, i) => (
+          <Rise key={t.label} delay={i * 70} className="stat flex items-start justify-between">
             <div>
-              <div className="value">{taka(t.figure?.total ?? 0)}</div>
+              <div className="value">
+                <CountUp value={t.figure?.total ?? 0} format={taka} />
+              </div>
               <div className="label">{t.label}</div>
               <div className="mt-0.5 text-[11px] text-muted-foreground">
                 {t.figure?.count ?? 0} sale{t.figure?.count === 1 ? '' : 's'}
@@ -242,13 +278,13 @@ export default function Revenue() {
             <span className="stat-icon">
               <t.icon className="h-4 w-4" />
             </span>
-          </div>
+          </Rise>
         ))}
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <div className="stat">
-          <div className="value">{taka(s?.allTime.total ?? 0)}</div>
+          <div className="value"><CountUp value={s?.allTime.total ?? 0} format={taka} /></div>
           <div className="label">All time</div>
           <div className="mt-0.5 text-[11px] text-muted-foreground">
             {s?.allTime.count ?? 0} verified payment{s?.allTime.count === 1 ? '' : 's'}
@@ -256,7 +292,7 @@ export default function Revenue() {
         </div>
         {/* Not revenue — a queue. It links to the queue so it can be cleared. */}
         <Link to="/payments?status=pending" className="stat block hover:bg-muted">
-          <div className="value">{taka(s?.pending.total ?? 0)}</div>
+          <div className="value"><CountUp value={s?.pending.total ?? 0} format={taka} /></div>
           <div className="label flex items-center gap-1">
             <Clock className="h-3.5 w-3.5" /> Awaiting verification
           </div>
@@ -265,7 +301,7 @@ export default function Revenue() {
           </div>
         </Link>
         <div className="stat">
-          <div className="value">{data?.subscribers.paying ?? 0}</div>
+          <div className="value"><CountUp value={data?.subscribers.paying ?? 0} format={String} /></div>
           <div className="label flex items-center gap-1">
             <Users className="h-3.5 w-3.5" /> Paying accounts
           </div>
@@ -274,7 +310,7 @@ export default function Revenue() {
           </div>
         </div>
         <div className="stat">
-          <div className="value">{data?.subscribers.expiringIn30Days ?? 0}</div>
+          <div className="value"><CountUp value={data?.subscribers.expiringIn30Days ?? 0} format={String} /></div>
           <div className="label">Expiring in 30 days</div>
           <div className="mt-0.5 text-[11px] text-muted-foreground">
             paid subscriptions to renew
@@ -350,6 +386,12 @@ export default function Revenue() {
           ) : (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chart} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="rev-bar" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0" stopColor="hsl(var(--primary))" stopOpacity={1} />
+                    <stop offset="1" stopColor="hsl(var(--primary))" stopOpacity={0.45} />
+                  </linearGradient>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                 <XAxis
                   dataKey="name"
@@ -377,7 +419,14 @@ export default function Revenue() {
                   }}
                 />
                 {/* One series, so no legend — the heading names it. */}
-                <Bar dataKey="total" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="Sold" />
+                <Bar
+                  dataKey="total"
+                  fill="url(#rev-bar)"
+                  radius={[4, 4, 0, 0]}
+                  name="Sold"
+                  animationDuration={900}
+                  animationEasing="ease-out"
+                />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -430,19 +479,19 @@ export default function Revenue() {
             <div className="empty">No sales in this period.</div>
           ) : (
             <>
-              <div className="flex h-3 gap-0.5 overflow-hidden rounded-full">
+              <SplitBar>
                 <div
-                  className="rounded-l-full"
+                  className="motion-grow-x rounded-l-full"
                   style={{
                     width: `${((p?.newCustomers ?? 0) / splitTotal) * 100}%`,
                     background: split.fresh,
                   }}
                 />
                 <div
-                  className="flex-1 rounded-r-full"
-                  style={{ background: split.renewal }}
+                  className="motion-grow-x flex-1 rounded-r-full"
+                  style={{ background: split.renewal, animationDelay: '150ms' }}
                 />
-              </div>
+              </SplitBar>
               <div className="mt-3 space-y-2 text-sm">
                 <div className="flex items-center gap-2">
                   <span
@@ -489,12 +538,29 @@ export default function Revenue() {
                 </tr>
               </thead>
               <tbody>
-                {data!.topShops.map((c) => (
+                {data!.topShops.map((c, idx) => (
                   <tr key={c.id} className="border-t border-border">
                     <td className="py-2 pr-3">
-                      <Link className="font-medium hover:underline" to={`/shops/${c.id}`}>
-                        {c.name}
-                      </Link>
+                      <span className="flex items-center gap-2.5">
+                        <span
+                          className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-[11px] font-bold tabular-nums ${
+                            idx < 3 ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400' : 'bg-muted text-muted-foreground'
+                          }`}
+                        >
+                          {idx + 1}
+                        </span>
+                        <span className="min-w-0">
+                          <Link className="font-medium hover:underline" to={`/shops/${c.id}`}>
+                            {c.name}
+                          </Link>
+                          <span className="mt-1 block h-1 w-40 max-w-full overflow-hidden rounded-full bg-muted">
+                            <span
+                              className="motion-grow-x block h-full rounded-full bg-primary"
+                              style={{ width: `${Math.max(3, (c.total / topPaid) * 100)}%`, animationDelay: `${idx * 60}ms` }}
+                            />
+                          </span>
+                        </span>
+                      </span>
                     </td>
                     <td className="py-2 pr-3 text-muted-foreground">{c.plan || '—'}</td>
                     <td className="py-2 pr-3 text-right tabular-nums">{c.count}</td>
@@ -517,6 +583,16 @@ export default function Revenue() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+/** The two-part split, grown in once it is on screen. */
+function SplitBar({ children }: { children: React.ReactNode }) {
+  const [ref, seen] = useSeen<HTMLDivElement>();
+  return (
+    <div ref={ref} className={`flex h-3 gap-0.5 overflow-hidden rounded-full ${seen ? '' : '[&>*]:scale-x-0'}`}>
+      {children}
     </div>
   );
 }

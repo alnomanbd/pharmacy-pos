@@ -16,7 +16,7 @@ import {
   Plus,
   Pencil,
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { platformApi, downloadBlob } from '../api';
 import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
@@ -61,8 +61,10 @@ export default function Shops() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
-  const [status, setStatus] = useState<OrgStatus | ''>('');
-  const [plan, setPlan] = useState('');
+  /* Opened from a link on the Overview ("?status=pending", "?plan=trial"), the list starts filtered. */
+  const [params] = useSearchParams();
+  const [status, setStatus] = useState<OrgStatus | ''>(() => (params.get('status') as OrgStatus | null) ?? '');
+  const [plan, setPlan] = useState(() => params.get('plan') ?? '');
   const [catalogue, setCatalogue] = useState<ShopPlan[]>([]);
   const [busyId, setBusyId] = useState('');
   const [suspendTarget, setSuspendTarget] = useState<Shop | null>(null);
