@@ -309,10 +309,31 @@ export function deliveryQrText(data: DeliverySheetData) {
   ].join('\n');
 }
 
+/** What the settings screen has typed and not saved yet, drawn over what is stored. */
+export interface LetterheadDraft {
+  shop?: Partial<Pick<LetterheadShop, 'name' | 'address' | 'phone' | 'drugLicenceNo' | 'vatBin'>>;
+  look?: Partial<LetterheadShop['look']>;
+}
+
 /** A sample sheet, for a shop deciding what its paper should look like. */
-export async function sampleDelivery(actor: Actor): Promise<DeliverySheetData> {
+export async function sampleDelivery(actor: Actor, draft: LetterheadDraft = {}): Promise<DeliverySheetData> {
+  const stored = await letterheadOf(actor.org);
+  const typed = Object.fromEntries(Object.entries(draft.shop ?? {}).filter(([, v]) => v !== undefined));
+  const shop: LetterheadShop = {
+    ...stored,
+    ...typed,
+    name: (typed.name as string | undefined)?.trim() || stored.name,
+    look: { ...stored.look, ...Object.fromEntries(Object.entries(draft.look ?? {}).filter(([, v]) => v !== undefined)) },
+  };
+  /* The logo is read only when it was stored on; switching it on in the draft
+     of a shop that has one has to show it too. */
+  if (draft.look?.showLogo && !stored.logo) {
+    const s = await ShopSettingsModel.findOne({ organization: actor.org }).select('logo').lean();
+    if (s?.logo) shop.logo = await storage.read(s.logo).catch(() => null);
+  }
+  if (draft.look?.showLogo === false) shop.logo = null;
   return {
-    shop: await letterheadOf(actor.org),
+    shop,
     number: 'SQ-88120',
     issuedAt: new Date(),
     party: { name: 'Square Depot, Mirpur', phone: '01555000111' },

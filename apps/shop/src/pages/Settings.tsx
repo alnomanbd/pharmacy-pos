@@ -12,7 +12,8 @@ import {
   Save,
   Check,
 } from 'lucide-react';
-import { settingsApi, openPdf, type ShopSettings, type Sale } from '../api';
+import { settingsApi, type ShopSettings, type Sale } from '../api';
+import SheetPreview from '../components/SheetPreview';
 import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import Receipt from '../components/Receipt';
@@ -105,7 +106,8 @@ export default function Settings() {
   const [saved, setSaved] = useState<ShopSettings | null>(null);
   const [busy, setBusy] = useState(false);
   const [printing, setPrinting] = useState(false);
-  const [previewing, setPreviewing] = useState(false);
+  /* Which paper the panel beside the form shows: it follows the card being edited. */
+  const [view, setView] = useState<'receipt' | 'sheet'>('receipt');
   const [justSaved, setJustSaved] = useState(false);
 
   const load = useCallback(async () => {
@@ -154,15 +156,10 @@ export default function Settings() {
     value: NonNullable<ShopSettings['invoice']>[K],
   ) => setForm((f) => (f ? { ...f, invoice: { ...invoice, [key]: value } } : f));
 
-  const preview = async () => {
-    setPreviewing(true);
-    try {
-      await openPdf('/shop/invoice/preview.pdf');
-    } catch {
-      toast('Could not draw the preview.', 'error');
-    } finally {
-      setPreviewing(false);
-    }
+  /* On a phone the panel is below the form, so asking for it goes there too. */
+  const showSheet = () => {
+    setView('sheet');
+    window.setTimeout(() => document.getElementById('paper-preview')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   };
 
   const save = async () => {
@@ -327,6 +324,7 @@ export default function Settings() {
           </Section>
 
           {/* ---- the roll ---- */}
+          <div className="contents" onFocusCapture={() => setView('receipt')} onPointerDownCapture={() => setView('receipt')}>
           <Section
             id="paper"
             icon={ReceiptText}
@@ -417,6 +415,7 @@ export default function Settings() {
               />
             </div>
           </Section>
+          </div>
 
           {/* ---- the POS ---- */}
           <Section
@@ -449,6 +448,8 @@ export default function Settings() {
             years has opinions about it. Everything has a default that produces
             a correct sheet, so this card can be ignored entirely.
           */}
+          {/* Working on this card turns the panel beside it to the sheet. */}
+          <div className="contents" onFocusCapture={() => setView('sheet')} onPointerDownCapture={() => setView('sheet')}>
           <Section
             id="sheet"
             icon={FileText}
@@ -533,23 +534,13 @@ export default function Settings() {
             {/* Made-up rows rather than the last delivery: the first thing a new
                 shop does is open this screen, and it has no deliveries yet. */}
             <div className="mt-3 flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                className="btn btn-ghost h-9"
-                disabled={previewing || dirty}
-                onClick={() => void preview()}
-                title={dirty ? t('Save first — the preview is drawn from what is stored.') : undefined}
-              >
-                {previewing ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
-                {t('Preview the sheet')}
+              <button type="button" className="btn btn-ghost h-9" onClick={showSheet}>
+                <FileText className="h-4 w-4" /> {t('Preview the sheet')}
               </button>
-              {dirty && (
-                <span className="text-[11px] text-muted-foreground">
-                  {t('Save first — the preview is drawn from what is stored.')}
-                </span>
-              )}
+              <span className="text-[11px] text-muted-foreground">{t('Changes show on it as you type — save to keep them.')}</span>
             </div>
           </Section>
+          </div>
 
           {/*
             VAT.
@@ -628,21 +619,61 @@ export default function Settings() {
         </div>
 
         {/* The real component at the real width — not a picture of one. */}
-        <div className="card mb-0 h-fit min-w-0 lg:sticky lg:top-0">
+        <div id="paper-preview" className="card mb-0 h-fit min-w-0 scroll-mt-4 lg:sticky lg:top-0">
           <div className="mb-3 flex items-center justify-between gap-2">
             <h3 className="mb-0">
-              <ReceiptText className="h-4 w-4" /> {t('How it will look')}
+              {view === 'sheet' ? <FileText className="h-4 w-4" /> : <ReceiptText className="h-4 w-4" />} {t('How it will look')}
             </h3>
-            <span className="pill neutral !py-0 tabular-nums">{form.paperWidthMm}mm</span>
+            <span className="pill neutral !py-0 tabular-nums">{view === 'sheet' ? invoice.paper : `${form.paperWidthMm}mm`}</span>
           </div>
-          <div className="max-w-full overflow-x-auto rounded-xl border border-border bg-muted/40 p-3">
-            <div className="mx-auto w-fit rounded-sm bg-white p-2 shadow-md">
-              <Receipt sale={SAMPLE} settings={form} auto={false} />
+          {/* The two papers the shop prints: the roll at the counter, and the A4 sheet. */}
+          <div role="tablist" className="mb-3 grid grid-cols-2 gap-1 rounded-lg bg-muted p-1 text-sm font-semibold">
+            {(
+              [
+                ['receipt', 'Receipt paper', ReceiptText],
+                ['sheet', 'The A4 sheet', FileText],
+              ] as const
+            ).map(([key, label, Icon]) => (
+              <button
+                key={key}
+                type="button"
+                role="tab"
+                aria-selected={view === key}
+                onClick={() => setView(key)}
+                className={`flex items-center justify-center gap-1.5 rounded-md px-2 py-1.5 transition-colors ${
+                  view === key ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Icon className="h-4 w-4" /> {t(label)}
+              </button>
+            ))}
+          </div>
+          {view === 'receipt' ? (
+            <>
+              <div className="max-w-full overflow-x-auto rounded-xl border border-border bg-muted/40 p-3">
+                <div className="mx-auto w-fit rounded-sm bg-white p-2 shadow-md">
+                  <Receipt sale={SAMPLE} settings={form} auto={false} />
+                </div>
+              </div>
+              <button type="button" className="btn btn-ghost mt-3 h-9 w-full" onClick={() => setPrinting(true)}>
+                <Printer className="h-4 w-4" /> {t('Test print')}
+              </button>
+            </>
+          ) : (
+            <div className="rounded-xl border border-border bg-muted/40 p-3">
+              <SheetPreview
+                draft={{
+                  shopName: form.shopName,
+                  address: form.address,
+                  phone: form.phone,
+                  drugLicenceNo: form.drugLicenceNo,
+                  vatBin: form.vatBin,
+                  printBangla: form.printBangla,
+                  invoice,
+                }}
+              />
             </div>
-          </div>
-          <button type="button" className="btn btn-ghost mt-3 h-9 w-full" onClick={() => setPrinting(true)}>
-            <Printer className="h-4 w-4" /> {t('Test print')}
-          </button>
+          )}
           <p className="mt-1 text-center text-[11px] text-muted-foreground">
             {t('Changes show here as you type — save to keep them.')}
           </p>

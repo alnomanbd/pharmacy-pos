@@ -1728,6 +1728,11 @@ const bn: Record<string, string> = {
   'Could not load that item’s lots.': 'আইটেমটির ব্যাচগুলো আনা যায়নি।',
   'Every line needs how many pieces are going.': 'প্রতিটি লাইনে কত পিস যাচ্ছে লিখুন।',
   'Sent across. The other branch has it on its shelf now.': 'পাঠানো হয়েছে। অন্য শাখার স্টকে এখন এটি আছে।',
+  /* ---- A4 sheet preview ---- */
+  'Open full size': 'বড় করে খুলুন',
+  'Could not draw the sheet just now.': 'এই মুহূর্তে শিটটি দেখানো যাচ্ছে না।',
+  'The A4 sheet, as it will print': 'A4 শিট, যেমন প্রিন্ট হবে',
+  'Changes show on it as you type — save to keep them.': 'লেখার সাথে সাথে পরিবর্তন দেখা যাবে — রাখতে সেভ করুন।',
 };
 
 export const useT = makeUseT(bn);

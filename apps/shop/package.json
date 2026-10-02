@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Dawai \u2014 the shop app: billing counter, stock, purchases, khata, reports",
+  "description": "Dawai — the shop app: billing counter, stock, purchases, khata, reports",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -17,6 +17,7 @@
     "autoprefixer": "^10.5.4",
     "axios": "^1.7.2",
     "lucide-react": "^1.37.0",
+    "pdfjs-dist": "^4.10.38",
     "postcss": "^8.5.26",
     "qrcode": "^1.5.4",
     "react": "^18.3.1",

@@ -449,6 +449,51 @@ router.get(
   sheet((req) => invoices.sampleDelivery(actorOf(req))),
 );
 
+/*
+ * The same, drawn from what the settings screen has typed and not saved yet —
+ * so the sheet beside the form changes as the colour or the small print does,
+ * the way the receipt beside it already did.
+ */
+router.post(
+  '/invoice/preview.pdf',
+  validate(
+    z.object({
+      shopName: settingsSchema.shape.shopName,
+      address: settingsSchema.shape.address,
+      phone: settingsSchema.shape.phone,
+      drugLicenceNo: settingsSchema.shape.drugLicenceNo,
+      vatBin: settingsSchema.shape.vatBin,
+      printBangla: z.boolean().optional(),
+      invoice: settingsSchema.shape.invoice,
+    }),
+  ),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const b = req.body as {
+        shopName?: string;
+        address?: string;
+        phone?: string;
+        drugLicenceNo?: string;
+        vatBin?: string;
+        printBangla?: boolean;
+        invoice?: invoices.LetterheadDraft['look'];
+      };
+      const data = await invoices.sampleDelivery(actorOf(req), {
+        shop: { name: b.shopName, address: b.address, phone: b.phone, drugLicenceNo: b.drugLicenceNo, vatBin: b.vatBin },
+        look: b.invoice,
+      });
+      const lang = b.printBangla ? 'bn' : pdfLang(req.query.lang);
+      const pdf = await invoices.buildDeliveryPdf({ ...data, lang });
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Length', String(pdf.length));
+      res.setHeader('Cache-Control', 'private, no-store');
+      res.end(pdf);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
 router.get(
   '/purchases/:id',
   handle((req) => shop.getPurchase(actorOf(req), req.params.id)),
