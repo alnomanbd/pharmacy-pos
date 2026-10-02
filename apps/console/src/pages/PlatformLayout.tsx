@@ -109,7 +109,7 @@ const NAV_SECTIONS: { heading: string; links: ConsoleLink[] }[] = [
       {
         /* People who are not customers yet: the marketing site's enquiries. */
         to: '/leads',
-        label: 'Enquiries',
+        label: 'Demo requests',
         icon: Inbox,
         end: false,
         needs: ['leads.view', 'leads.manage'],
@@ -311,7 +311,7 @@ export default function PlatformLayout() {
           title: l.name,
           /* The shop and the topic, because "who is this and what do they
              want" is the whole triage question on an enquiry. */
-          detail: [l.shop, l.topic].filter(Boolean).join(' · ') || 'New enquiry',
+          detail: [l.shop, l.topic].filter(Boolean).join(' · ') || 'New demo request',
           tag: 'unanswered',
           href: '/leads',
         });
@@ -480,7 +480,7 @@ export default function PlatformLayout() {
 
                     {waitingTotal === 0 && (
                       <div className="tb-dd-empty">
-                        Nothing waiting — payments, sign-ups, support, enquiries and medicine
+                        Nothing waiting — payments, sign-ups, support, demo requests and medicine
                         requests are all clear.
                       </div>
                     )}
@@ -517,7 +517,7 @@ export default function PlatformLayout() {
                         ['payment', 'payments', counts.payments, 'to verify', '/payments?status=pending', <Receipt key="i" className="h-4 w-4" />],
                         ['sign-up', 'sign-ups', counts.shops, 'awaiting approval', '/?status=pending', <Building2 key="i" className="h-4 w-4" />],
                         ['support conversation', 'support conversations', counts.support, 'waiting on a reply', '/support', <Headset key="i" className="h-4 w-4" />],
-                        ['enquiry', 'enquiries', counts.leads, 'unanswered', '/leads', <Inbox key="i" className="h-4 w-4" />],
+                        ['demo request', 'demo requests', counts.leads, 'unanswered', '/leads', <Inbox key="i" className="h-4 w-4" />],
                         ['medicine request', 'medicine requests', counts.requests, 'waiting', '/requests', <ClipboardList key="i" className="h-4 w-4" />],
                       ] as [string, string, number, string, string, JSX.Element][]
                     )

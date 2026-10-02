@@ -133,7 +133,7 @@ export default function Leads() {
       setRows(res.data);
       setWaiting(res.waiting);
     } catch (e: any) {
-      toast(e?.response?.data?.message || 'Could not load enquiries.', 'error');
+      toast(e?.response?.data?.message || 'Could not load demo requests.', 'error');
     } finally {
       setLoading(false);
     }
@@ -209,7 +209,7 @@ export default function Leads() {
     <div className="page">
       <div className="topbar flex-wrap">
         <div>
-          <h1>Enquiries</h1>
+          <h1>Demo requests</h1>
           <p className="text-sm text-muted-foreground">
             {waiting > 0
               ? `${waiting} nobody has looked at yet`
@@ -546,7 +546,7 @@ export default function Leads() {
           </div>
         ) : (
           <div className="card hidden lg:flex lg:items-center lg:justify-center">
-            <p className="text-sm text-muted-foreground">Pick an enquiry to work it.</p>
+            <p className="text-sm text-muted-foreground">Pick a request to work it.</p>
           </div>
         )}
       </div>
