@@ -15,7 +15,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { translate, tItems, tList, type Lang } from '@/i18n/dictionary';
+import { translate, tItems, type Lang } from '@/i18n/dictionary';
 import { Section, SectionHead, FeatureGrid } from '@/components/section';
 import { Reveal, Spotlight, Tilt, StaggerItem } from '@/components/motion/primitives';
 import { Badge } from '@/components/ui/badge';
@@ -54,7 +54,6 @@ export function CounterSection({ lang }: { lang: Lang }) {
 
   const words = tItems<{ what: string; body: string }>(lang, 'counter.keymap');
   const card = tItems<{ title: string; body: string }>(lang, 'counter.points');
-  const receipt = tItems<{ points: string[] }>(lang, 'counter.receipt')[0];
   const activeIndex = Math.max(
     0,
     KEYS.findIndex((k) => k.k === active),
@@ -175,14 +174,6 @@ export function CounterSection({ lang }: { lang: Lang }) {
                   >
                     <Receipt />
                   </motion.div>
-                  <ul className="grid w-full gap-2 text-xs text-muted-foreground">
-                    {tList(lang, 'counter.receipt.points').map((line) => (
-                      <li key={line} className="flex items-start gap-2">
-                        <span className="mt-1.5 size-1 shrink-0 rounded-full bg-primary" />
-                        {line}
-                      </li>
-                    ))}
-                  </ul>
                 </div>
               </div>
             </Tilt>
@@ -194,7 +185,7 @@ export function CounterSection({ lang }: { lang: Lang }) {
           {card.slice(1, 6).map((f, i) => (
             <Spotlight key={f.title} className="h-full rounded-3xl">
               <StaggerItem variant="up" className="h-full">
-                <article className="glass panel-lift flex h-full flex-col gap-3.5 p-6">
+                <article className="glass panel-lift flex h-full flex-col gap-4 p-5 sm:p-6">
                   <div className="flex items-start justify-between gap-3">
                     <span className="grid size-10 place-items-center rounded-2xl bg-primary/10 text-primary transition-colors duration-500 group-hover/spot:bg-primary group-hover/spot:text-primary-foreground">
                       {[
@@ -209,8 +200,8 @@ export function CounterSection({ lang }: { lang: Lang }) {
                       {String(i + 2).padStart(2, '0')}
                     </span>
                   </div>
-                  <h3 className="h-card text-base">{f.title}</h3>
-                  <p className="text-sm leading-relaxed text-muted-foreground">{f.body}</p>
+                  {/* The title says it; a sentence under it was the same thing again. */}
+                  <h3 className="h-card text-base leading-snug">{f.title}</h3>
                 </article>
               </StaggerItem>
             </Spotlight>

@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { WifiOff, CloudUpload, ShieldCheck, RefreshCw } from 'lucide-react';
+import { WifiOff, CloudUpload, ShieldCheck, RefreshCw, Check } from 'lucide-react';
 import { translate, tItems, type Lang } from '@/i18n/dictionary';
 import { cn } from '@/lib/utils';
 import { Section, SectionHead } from '@/components/section';
@@ -44,15 +44,14 @@ export function OfflineSection({ lang }: { lang: Lang }) {
               lede={t('offline.lede')}
             />
 
-            <Stagger className="mt-9 grid gap-3" step={0.08}>
+            <Stagger className="mt-9 grid gap-3 sm:grid-cols-2" step={0.08}>
               {points.map((p) => (
                 <StaggerItem key={p.title} variant="up">
-                  <div className="flex gap-3.5 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                    <span className="mt-0.5 size-1.5 shrink-0 rounded-full bg-primary" />
-                    <div>
-                      <h3 className="text-sm font-bold text-white">{p.title}</h3>
-                      <p className="mt-1 text-xs leading-relaxed text-white/55">{p.body}</p>
-                    </div>
+                  <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                    <span className="grid size-7 shrink-0 place-items-center rounded-full bg-primary/15 text-primary">
+                      <Check className="size-4" />
+                    </span>
+                    <h3 className="text-sm font-bold text-white">{p.title}</h3>
                   </div>
                 </StaggerItem>
               ))}

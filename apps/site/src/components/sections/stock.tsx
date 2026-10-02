@@ -57,14 +57,13 @@ export function StockSection({ lang }: { lang: Lang }) {
               {points.slice(0, 4).map((p, i) => (
                 <Spotlight key={p.title} className="h-full rounded-3xl">
                   <StaggerItem variant="up" className="h-full">
-                    <article className="glass panel-lift flex h-full flex-col gap-3 p-5">
-                      <div className="flex items-center gap-2.5">
+                    <article className="glass panel-lift flex h-full items-center p-4">
+                      <div className="flex items-center gap-3">
                         <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary transition-colors duration-500 group-hover/spot:bg-primary group-hover/spot:text-primary-foreground">
                           {icons[i]}
                         </span>
                         <h3 className="h-card text-base font-semibold leading-snug">{p.title}</h3>
                       </div>
-                      <p className="text-sm leading-relaxed text-muted-foreground">{p.body}</p>
                     </article>
                   </StaggerItem>
                 </Spotlight>

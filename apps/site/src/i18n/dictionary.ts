@@ -61,8 +61,7 @@ const en = {
     titleA: 'One screen runs',
     titleEm: 'the whole counter',
     titleB: '— the bill, the stock, the baki',
-    lede:
-      'Sell by the piece, watch every batch, keep the baki — and print on the printer you already own. It speaks বাংলা too, and it keeps selling when the line drops.',
+    lede: 'Sell by the piece, track every batch, keep the baki — in বাংলা, on your own printer, even when the internet drops.',
     ctaPrimary: 'Start your 14-day trial',
     ctaSecondary: 'Book a live demo',
     ctaNote: 'No card. We switch it on the same day.',
@@ -107,15 +106,15 @@ const en = {
         body: 'Park a bill with F6, serve the next customer, bring it back with F7.',
       },
       {
-        title: 'Split the payment',
+        title: 'Cash, bKash, Nagad — or split',
         body: 'Cash, bKash, Nagad, card — or split across them.',
       },
       {
-        title: 'Quick keys that learn',
+        title: 'Best-sellers float to the top',
         body: 'Your best-sellers float to the top on their own.',
       },
       {
-        title: 'Sales-only, on purpose',
+        title: 'Salesmen never see your margin',
         body: 'Salesmen never see trade price or margin.',
       },
     ],
@@ -176,22 +175,22 @@ const en = {
   stock: {
     kicker: 'The shelves',
     title: 'Stock counted the way a shop actually counts it',
-    lede: 'Every batch, every expiry — the one expiring first sells first.',
+    lede: 'Every batch and every expiry, on the shelf it sits on.',
     points: [
       {
-        title: 'The ledger is the truth',
+        title: 'Worked out, never typed in',
         body: 'Worked out from every sale and purchase — never typed in.',
       },
       {
-        title: 'FEFO, not FIFO',
+        title: 'Expiring first sells first',
         body: 'Each sale takes the batch that expires first.',
       },
       {
-        title: 'Bonus is a field, not a note',
+        title: '10+1 bonus goes into the cost',
         body: '10+1 and 20+3 bonuses go into the real cost.',
       },
       {
-        title: 'A blank is not a zero',
+        title: 'Count one shelf at a time',
         body: 'Only what you count changes. Blanks are left alone.',
       },
       {
@@ -240,10 +239,10 @@ const en = {
     title: 'The one screen that must not close',
     lede: 'Internet gone? Keep billing. It syncs when the line is back.',
     points: [
-      { title: 'The bill is written down before it prints', body: 'Saved on the device first — survives a reload or a power cut.' },
-      { title: 'The same bill posted twice does nothing', body: 'No double bills, however many times it retries.' },
-      { title: 'The slip prints without a number', body: 'The slip says the serial number will follow.' },
-      { title: 'A shelf that is empty still sells', body: 'Sell now, count later — the sale is never blocked.' },
+      { title: 'Saved before it prints', body: 'Saved on the device first — survives a reload or a power cut.' },
+      { title: 'No double bills, ever', body: 'No double bills, however many times it retries.' },
+      { title: 'The slip still prints', body: 'The slip says the serial number will follow.' },
+      { title: 'An empty shelf still sells', body: 'Sell now, count later — the sale is never blocked.' },
     ],
   },
 
@@ -338,23 +337,23 @@ const en = {
   how: {
     kicker: 'How it works',
     title: 'Selling on {brand} by this evening',
-    lede: 'No installer and no new hardware. Three steps — and we do the middle one for you.',
+    lede: 'No installer, no new hardware. We do the middle step for you.',
     cta: 'Start the free trial',
     steps: [
       {
         tag: '2 minutes',
         title: 'Tell us about the shop',
-        body: 'Sign up, or book a call. The shop name, the drug licence number and how many counters you run.',
+        body: 'Sign up or book a call.',
       },
       {
         tag: 'Same day',
         title: 'We set the counter up',
-        body: 'Your medicine list from the national catalogue, your opening stock and your printer width — done with you on a call.',
+        body: 'Medicines, opening stock and printer — with you, on a call.',
       },
       {
         tag: '14 days free',
         title: 'Start billing',
-        body: 'Open the billing screen on the computer you already have. Pay only if you keep it after the trial.',
+        body: 'On the computer you already have. Pay only if you stay.',
       },
     ],
   },
@@ -424,7 +423,7 @@ const en = {
       },
     ],
     footnote:
-      'Prices are in BDT and exclude VAT. Pay monthly by bKash, Nagad or bank transfer, and leave whenever you like — your data comes with you.',
+      'Prices in BDT, VAT included. Pay monthly online, by bKash, Nagad or bank — and leave whenever you like, with your data.',
   },
 
   faq: {
@@ -937,8 +936,7 @@ const bn: DeepPartial<Dictionary> = {
     titleA: 'একটা স্ক্রিনে',
     titleEm: 'পুরো কাউন্টার',
     titleB: '— বিল, স্টক, আর বাকি',
-    lede:
-      'পিসে পিসে বিক্রি, প্রতিটি ব্যাচের হিসাব, বাকি খাতা গোছানো — আর বিল ছাপে আপনার নিজের প্রিন্টারেই। বাংলাতেও কথা বলে, আর লাইন চলে গেলেও বিক্রি চলতে থাকে।',
+    lede: 'পিসে বিক্রি, প্রতিটি ব্যাচের হিসাব, বাকি খাতা — বাংলায়, নিজের প্রিন্টারে, ইন্টারনেট না থাকলেও।',
     ctaPrimary: '১৪ দিনের ট্রায়াল শুরু করুন',
     ctaSecondary: 'লাইভ ডেমো বুক করুন',
     ctaNote: 'কার্ড লাগে না। আমরা সেদিনই চালু করে দিই।',
@@ -975,15 +973,15 @@ const bn: DeepPartial<Dictionary> = {
         body: 'F6-এ বিল সরিয়ে রাখুন, পরের কাস্টমার সারুন, F7-এ ফিরিয়ে আনুন।',
       },
       {
-        title: 'টাকা ভাগ করে নেওয়া',
+        title: 'ক্যাশ, বিকাশ, নগদ — বা ভাগ করে',
         body: 'ক্যাশ, বিকাশ, নগদ, কার্ড — বা ভাগ করে।',
       },
       {
-        title: 'কোন দোকানের কাছে যায়, সেটা শিখে নেয়',
+        title: 'বেশি বিক্রির ঔষধ নিজেই ওপরে',
         body: 'বেশি বিক্রির ঔষধ নিজে থেকেই উপরে আসে।',
       },
       {
-        title: 'শুধু বিক্রি — এটাই ইচ্ছাকৃত',
+        title: 'সেলসম্যান আপনার লাভ দেখে না',
         body: 'সেলসম্যান কেনা দাম বা লাভ দেখতে পায় না।',
       },
     ],
@@ -1018,22 +1016,22 @@ const bn: DeepPartial<Dictionary> = {
   stock: {
     kicker: 'তাক',
     title: 'দোকান যেভাবে গোনে, ঠিক সেভাবেই স্টক হিসাব',
-    lede: 'প্রতিটি ব্যাচ, প্রতিটি মেয়াদ — যার মেয়াদ আগে শেষ, সেটাই আগে বিক্রি।',
+    lede: 'প্রতিটি ব্যাচ, প্রতিটি মেয়াদ — যে তাকে আছে, সেখানেই।',
     points: [
       {
-        title: 'খতা-ই আসল সত্য',
+        title: 'নিজেই হিসাব হয়, হাতে লেখা নয়',
         body: 'প্রতিটি বিক্রি আর কেনা থেকে হিসাব — হাতে লিখতে হয় না।',
       },
       {
-        title: 'যার মেয়াদ আগে, সেটাই আগে',
+        title: 'যার মেয়াদ আগে, সেটাই আগে বিক্রি',
         body: 'প্রতিটি বিক্রি আগে-মেয়াদ-শেষ ব্যাচ থেকে যায়।',
       },
       {
-        title: 'বোনাস একটি ঘর, নোট নয়',
+        title: '১০+১ বোনাস খরচে ধরা হয়',
         body: '১০+১, ২০+৩ বোনাস আসল খরচে ধরা হয়।',
       },
       {
-        title: 'ফাঁকা জায়গা আর শূন্য এক জিনিস নয়',
+        title: 'এক তাক করে গুনুন',
         body: 'শুধু যা গুনলেন তা বদলায়, ফাঁকা ঘর যেমন ছিল থাকে।',
       },
       {
@@ -1082,10 +1080,10 @@ const bn: DeepPartial<Dictionary> = {
     title: 'একমাত্র স্ক্রিন যেটা বন্ধ হওয়া উচিত নয়',
     lede: 'ইন্টারনেট নেই? বিল কাটা চলবে। লাইন এলে সব চলে যাবে।',
     points: [
-      { title: 'বিল ছাপার আগেই কম্পিউটারে লেখা হয়', body: 'আগে ডিভাইসে সেভ হয় — রিলোড বা বিদ্যুৎ গেলেও থাকে।' },
-      { title: 'একই বিল দুবার গেলে কিছু হয় না', body: 'বারবার পাঠালেও একই বিল দুবার হয় না।' },
-      { title: 'স্লিপ ছাপে নম্বর ছাড়াই', body: 'স্লিপে লেখা থাকে, সিরিয়াল নম্বর পরে আসবে।' },
-      { title: 'তাক খালি হলেও বিক্রি হয়', body: 'এখন বিক্রি, পরে গোনা — বিক্রি আটকায় না।' },
+      { title: 'ছাপার আগেই সেভ', body: 'আগে ডিভাইসে সেভ হয় — রিলোড বা বিদ্যুৎ গেলেও থাকে।' },
+      { title: 'কখনো ডাবল বিল নয়', body: 'বারবার পাঠালেও একই বিল দুবার হয় না।' },
+      { title: 'স্লিপ তবুও ছাপে', body: 'স্লিপে লেখা থাকে, সিরিয়াল নম্বর পরে আসবে।' },
+      { title: 'খালি তাকেও বিক্রি', body: 'এখন বিক্রি, পরে গোনা — বিক্রি আটকায় না।' },
     ],
   },
 
@@ -1176,23 +1174,23 @@ const bn: DeepPartial<Dictionary> = {
   how: {
     kicker: 'কীভাবে কাজ করে',
     title: 'আজ সন্ধ্যার মধ্যেই {brand}-এ বিক্রি',
-    lede: 'কিছু ইনস্টল করতে হয় না, নতুন হার্ডওয়্যারও লাগে না। তিনটি ধাপ — মাঝেরটা আমরাই করে দিই।',
+    lede: 'ইনস্টল নেই, নতুন হার্ডওয়্যার নেই। মাঝের ধাপটা আমরাই করি।',
     cta: 'ফ্রি ট্রায়াল শুরু করুন',
     steps: [
       {
         tag: '২ মিনিট',
         title: 'দোকানের তথ্য দিন',
-        body: 'সাইন আপ করুন, অথবা কল বুক করুন। দোকানের নাম, ড্রাগ লাইসেন্স নম্বর আর কয়টি কাউন্টার।',
+        body: 'সাইন আপ করুন বা কল বুক করুন।',
       },
       {
         tag: 'সেদিনই',
         title: 'কাউন্টার আমরা সাজিয়ে দিই',
-        body: 'জাতীয় তালিকা থেকে আপনার ঔষধের লিস্ট, শুরুর স্টক আর প্রিন্টারের মাপ — আপনার সাথে কলে বসেই।',
+        body: 'ঔষধের তালিকা, শুরুর স্টক আর প্রিন্টার — আপনার সাথে, কলে।',
       },
       {
         tag: '১৪ দিন ফ্রি',
         title: 'বিল কাটা শুরু করুন',
-        body: 'যে কম্পিউটার আছে তাতেই বিলিং স্ক্রিন খুলুন। ট্রায়ালের পরে রাখলে তবেই টাকা দেবেন।',
+        body: 'যে কম্পিউটার আছে তাতেই। রাখলে তবেই টাকা।',
       },
     ],
   },
@@ -1262,7 +1260,7 @@ const bn: DeepPartial<Dictionary> = {
       },
     ],
     footnote:
-      'দাম টাকায়, ভ্যাট বাদে। প্রতি মাসে বিকাশ, নগদ বা ব্যাংকে দিন, যখন খুশি ছেড়ে দিন — আপনার তথ্য আপনার সাথেই যাবে।',
+      'দাম টাকায়, ভ্যাটসহ। প্রতি মাসে অনলাইনে, বিকাশ, নগদ বা ব্যাংকে দিন — যখন খুশি ছেড়ে দিন, তথ্য আপনার সাথেই।',
   },
 
   faq: {

@@ -62,10 +62,10 @@ export function Hero({ lang }: { lang: Lang }) {
   /* The billing screen recedes as the page scrolls past it — 90px over the first screen.
      Any more and the mock detaches from the copy that is describing it. */
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] });
-  const mockY = useTransform(scrollYProgress, [0, 1], [0, 92]);
+  const mockY = useTransform(scrollYProgress, [0, 1], [0, 60]);
   const mockScale = useTransform(scrollYProgress, [0, 1], [1, 0.95]);
-  const copyY = useTransform(scrollYProgress, [0, 1], [0, -40]);
-  const fade = useTransform(scrollYProgress, [0, 0.75], [1, 0]);
+  const copyY = useTransform(scrollYProgress, [0, 1], [0, -24]);
+  const fade = useTransform(scrollYProgress, [0.35, 0.95], [1, 0]);
 
   return (
     <div ref={ref} className="relative isolate overflow-hidden">
@@ -79,175 +79,142 @@ export function Hero({ lang }: { lang: Lang }) {
       </div>
       <div aria-hidden className="dot-grid pointer-events-none absolute inset-0 -z-10 opacity-[0.55]" />
 
-      <div className="shell-wide pt-36 sm:pt-40 lg:pt-44">
-        {/* ---------------------------------------------------------- copy */}
-        <motion.div style={{ y: copyY, opacity: fade }} className="relative z-10">
-          <div className="grid items-center gap-12 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] xl:gap-10">
-            <div className="flex flex-col items-start gap-7">
-              <motion.span
-                initial={{ opacity: 0, y: 14 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                className="eyebrow"
-              >
-                <span className="relative grid size-1.5 place-items-center">
-                  <span className="absolute size-1.5 animate-pulse-ring rounded-full bg-current" />
-                  <span className="size-1.5 rounded-full bg-current" />
-                </span>
-                {t('hero.eyebrow')}
-              </motion.span>
+      <div className="shell-wide pt-32 sm:pt-36 lg:pt-40">
+        {/* ---------------------------------------------------- the proof, first
+            The billing screen itself, across the full width — a shop owner
+            believes a screen before a sentence, so the screen comes first and
+            the words underneath only name what they have just seen. */}
+        <div className="perspective relative mx-auto w-full max-w-[1240px]">
+          {/* A pool of light under the screen, so it sits on the page rather than on top of it. */}
+          <div aria-hidden className="absolute inset-x-[8%] -bottom-10 top-1/3 -z-10 rounded-[3rem] bg-primary/25 blur-3xl" />
+          <motion.div style={{ y: mockY, scale: mockScale }} className="relative">
+            <motion.div
+              initial={{ opacity: 0, y: 44, rotateX: 14 }}
+              animate={{ opacity: 1, y: 0, rotateX: 0 }}
+              transition={{ duration: 1.05, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <PosScreen className="w-full" lang={lang} />
+            </motion.div>
 
-              <h1 className="h-display">
-                <motion.span
-                  className="block"
-                  initial={{ opacity: 0, y: 26 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.75, delay: 0.06, ease: [0.22, 1, 0.36, 1] }}
-                >
-                  {t('hero.titleA')}
-                </motion.span>
-                <motion.span
-                  className="text-ramp block"
-                  initial={{ opacity: 0, y: 26 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.75, delay: 0.14, ease: [0.22, 1, 0.36, 1] }}
-                >
-                  {t('hero.titleEm')}
-                </motion.span>
-                <motion.span
-                  className="block"
-                  initial={{ opacity: 0, y: 26 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.75, delay: 0.22, ease: [0.22, 1, 0.36, 1] }}
-                >
-                  {t('hero.titleB')}
-                </motion.span>
-              </h1>
-
-              <motion.p
-                className="measure text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.75, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-              >
-                {t('hero.lede')}
-              </motion.p>
-
-              {/* The two buttons, split by intent: a trial for the visitor who
-                  has decided, a call for the visitor who has not. The second is
-                  deliberately not styled as a primary — a shop owner who is
-                  unsure does not want the loud button, and putting the demo
-                  second is what gets it clicked. */}
-              <motion.div
-                className="flex flex-col gap-3 sm:flex-row sm:items-center"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.75, delay: 0.38, ease: [0.22, 1, 0.36, 1] }}
-              >
-                <Magnetic strength={5}>
-                  <Button asChild size="lg" className="group w-full sm:w-auto">
-                    <Link href={`/${lang}/register`}>
-                      {t('hero.ctaPrimary')}
-                      <ArrowRight className="size-5 transition-transform duration-300 group-hover:translate-x-1" />
-                    </Link>
-                  </Button>
-                </Magnetic>
-
-                <Magnetic strength={4}>
-                  <Button asChild size="lg" variant="outline" className="group w-full sm:w-auto">
-                    <Link href={`/${lang}/demo`}>
-                      <PlayCircle className="size-5 text-primary" />
-                      {t('hero.ctaSecondary')}
-                    </Link>
-                  </Button>
-                </Magnetic>
-              </motion.div>
-
-              <motion.div
-                className="flex flex-col gap-2.5"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.8, delay: 0.5 }}
-              >
-                <p className="text-xs text-muted-foreground">{t('hero.ctaNote')}</p>
-                <ul className="flex flex-wrap items-center gap-x-5 gap-y-2">
-                  {proof.map((p) => (
-                    <li key={p} className="inline-flex items-center gap-1.5 text-xs font-medium">
-                      <Check className="size-3.5 text-emerald-500" />
-                      {p}
-                    </li>
-                  ))}
-                </ul>
-              </motion.div>
-            </div>
-
-            {/* ---------------------------------------------------- the proof */}
-            <div className="perspective relative mx-auto w-full max-w-3xl xl:max-w-none">
-              <motion.div style={{ y: mockY, scale: mockScale }} className="relative">
+            {/* Two facts, hung off the screen's corners rather than laid over a
+                line of it — the screen is the proof and nothing may cover it. */}
+            {ORBIT_SLOTS.map((o, i) =>
+              i === 1 ? null : (
                 <motion.div
-                  initial={{ opacity: 0, y: 44, rotateX: 12 }}
-                  animate={{ opacity: 1, y: 0, rotateX: 0 }}
-                  transition={{ duration: 1.05, delay: 0.24, ease: [0.22, 1, 0.36, 1] }}
+                  key={o.stat.en}
+                  initial={{ opacity: 0, y: 22, scale: 0.94 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ duration: 0.8, delay: 0.7 + i * 0.14, ease: [0.22, 1, 0.36, 1] }}
+                  className={cn(
+                    'glass absolute z-20 w-[12.5rem] animate-float p-3.5 shadow-lift max-lg:hidden',
+                    /* Hung off the bottom edge, over the screen's status strip
+                       rather than any line of the bill. */
+                    i === 0 ? '-bottom-16 start-10' : '-bottom-16 end-10',
+                  )}
+                  style={{ animationDuration: i === 0 ? '7s' : '8.5s' }}
                 >
-                  <PosScreen className="w-full" lang={lang} />
+                  <div className="flex items-center gap-2">
+                    <span className={cn('grid size-7 place-items-center rounded-lg border bg-gradient-to-br', o.ring, o.tone)}>
+                      <o.icon className="size-3.5 text-foreground" />
+                    </span>
+                    <span className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      {orbit[i]?.label}
+                    </span>
+                  </div>
+                  <p className="mt-2 font-mono text-lg font-bold tabular-nums tracking-tight">{o.stat[lang]}</p>
+                  <p className="mt-0.5 text-[0.65rem] leading-tight text-muted-foreground">{orbit[i]?.note}</p>
                 </motion.div>
+              ),
+            )}
+          </motion.div>
+        </div>
 
-                {/* The three facts, floating. They enter on a long stagger so
-                    they arrive as the eye has already settled on the billing screen —
-                    late enough to be a detail, early enough to be noticed. */}
-                {/* One fact, hung off the screen's top edge rather than laid
-                    over it — the billing screen is the proof and nothing may
-                    cover a line of it. The stock and offline facts are on the
-                    screen's own foot and in their own sections. */}
-                {ORBIT_SLOTS.map((o, i) =>
-                  i !== 0 ? null : (
-                    <motion.div
-                      key={o.stat.en}
-                      initial={{ opacity: 0, y: 22, scale: 0.94 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      transition={{
-                        duration: 0.8,
-                        delay: 0.75 + i * 0.16,
-                        ease: [0.22, 1, 0.36, 1],
-                      }}
-                      className={cn(
-                        'glass absolute z-20 w-[12.5rem] animate-float p-3.5 shadow-lift',
-                        'bottom-full -mb-5 end-[34%]',
-                        'max-xl:hidden',
-                      )}
-                      style={{ animationDuration: '7s' }}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className={cn('grid size-7 place-items-center rounded-lg border bg-gradient-to-br', o.ring, o.tone)}>
-                          <o.icon className="size-3.5 text-foreground" />
-                        </span>
-                        <span className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
-                          {orbit[i]?.label}
-                        </span>
-                      </div>
-                      <p className="mt-2 font-mono text-lg font-bold tabular-nums tracking-tight">
-                        {o.stat[lang]}
-                      </p>
-                      <p className="mt-0.5 text-[0.65rem] leading-tight text-muted-foreground">
-                        {orbit[i]?.note}
-                      </p>
-                    </motion.div>
-                  ),
-                )}
-              </motion.div>
-            </div>
-          </div>
+        {/* ------------------------------------------------------- the words */}
+        <motion.div style={{ y: copyY, opacity: fade }} className="relative z-10 mx-auto mt-14 flex max-w-3xl flex-col items-center gap-6 text-center sm:mt-20">
+          <motion.span
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            className="eyebrow"
+          >
+            <span className="relative grid size-1.5 place-items-center">
+              <span className="absolute size-1.5 animate-pulse-ring rounded-full bg-current" />
+              <span className="size-1.5 rounded-full bg-current" />
+            </span>
+            {t('hero.eyebrow')}
+          </motion.span>
+
+          <h1 className="h-display">
+            <motion.span
+              className="block"
+              initial={{ opacity: 0, y: 26 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.75, delay: 0.36, ease: [0.22, 1, 0.36, 1] }}
+            >
+              {t('hero.titleA')}{' '}
+              <span className="text-ramp">{t('hero.titleEm')}</span>
+            </motion.span>
+          </h1>
+
+          <motion.p
+            className="max-w-2xl text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.75, delay: 0.44, ease: [0.22, 1, 0.36, 1] }}
+          >
+            {t('hero.lede')}
+          </motion.p>
+
+          {/* The two buttons, split by intent: a trial for the visitor who has
+              decided, a call for the visitor who has not. */}
+          <motion.div
+            className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.75, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <Magnetic strength={5}>
+              <Button asChild size="lg" className="group w-full sm:w-auto">
+                <Link href={`/${lang}/register`}>
+                  {t('hero.ctaPrimary')}
+                  <ArrowRight className="size-5 transition-transform duration-300 group-hover:translate-x-1" />
+                </Link>
+              </Button>
+            </Magnetic>
+            <Magnetic strength={4}>
+              <Button asChild size="lg" variant="outline" className="group w-full sm:w-auto">
+                <Link href={`/${lang}/demo`}>
+                  <PlayCircle className="size-5 text-primary" />
+                  {t('hero.ctaSecondary')}
+                </Link>
+              </Button>
+            </Magnetic>
+          </motion.div>
+
+          <motion.ul
+            className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.6 }}
+          >
+            {proof.map((p) => (
+              <li key={p} className="inline-flex items-center gap-1.5 text-xs font-medium">
+                <Check className="size-3.5 text-emerald-500" />
+                {p}
+              </li>
+            ))}
+          </motion.ul>
         </motion.div>
 
         {/* -------------------------------------------------- the four stats */}
         <Reveal
           variant="up"
           delay={0.15}
-          className="mt-24 border-t border-border/60 pt-10 sm:mt-28"
+          className="mt-16 border-t border-border/60 pt-10 sm:mt-20"
         >
-          <div className="grid grid-cols-2 gap-x-6 gap-y-9 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-x-6 gap-y-9 text-center lg:grid-cols-4">
             {stats.map((s, i) => (
-              <div key={s.label} className="flex flex-col gap-1">
+              <div key={s.label} className="flex flex-col items-center gap-1">
                 <span className="text-2xl font-bold tabular-nums tracking-tight sm:text-3xl">
                   {STAT_TARGETS[i] === 0 ? (lang === 'bn' ? '৳০' : '৳0') : <CountUp to={STAT_TARGETS[i]} bangla={lang === 'bn'} />}
                   <span className="text-primary">{s.suffix}</span>
