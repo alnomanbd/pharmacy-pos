@@ -6,6 +6,8 @@ import { restoreSession } from '@dawai/shared/api/client';
 import { useAuthStore } from '@dawai/shared/store/auth.store';
 import ErrorBoundary from '@dawai/shared/components/ErrorBoundary';
 import App from './App';
+// Loaded first: it scopes the till's browser storage to whoever signs in.
+import './branch';
 import './styles/index.css';
 // After the app's own sheet: where both define a selector, the system wins.
 import '@dawai/shared/styles/theme.css';

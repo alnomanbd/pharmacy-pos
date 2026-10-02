@@ -19,7 +19,12 @@ import type { SellableProduct } from '../api';
  * tile grid that is empty when the line drops.
  */
 
-const KEY = 'dawai.shop.quickpicks';
+import { branchKey } from '../scope';
+import { useBranchStore } from '../branch';
+
+const BASE = 'dawai.shop.quickpicks';
+/** This shop's, this branch's — a tile for a medicine another shop sells is a leak. See scope.ts. */
+const KEY = () => branchKey(BASE, useBranchStore.getState().branch);
 /**
  * How many tiles the strip holds.
  *
@@ -42,7 +47,7 @@ const HALF_LIFE = 14 * 86_400_000;
 
 function read(): Tally[] {
   try {
-    const raw = localStorage.getItem(KEY);
+    const raw = localStorage.getItem(KEY());
     return raw ? (JSON.parse(raw) as Tally[]) : [];
   } catch {
     return [];
@@ -75,7 +80,7 @@ export function remember(products: SellableProduct[]) {
     const kept = [...byId.values()]
       .sort((a, b) => decayed(b, now) - decayed(a, now))
       .slice(0, 40);
-    localStorage.setItem(KEY, JSON.stringify(kept));
+    localStorage.setItem(KEY(), JSON.stringify(kept));
   } catch {
     /* Not worth failing a sale over. */
   }

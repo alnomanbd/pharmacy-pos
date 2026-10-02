@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import api from '@dawai/shared/api/client';
+import { useAuthStore } from '@dawai/shared/store/auth.store';
+import { shopKey, migrateLegacyKeys } from './scope';
 
 /**
  * Which branch this screen is working in.
@@ -11,11 +13,12 @@ import api from '@dawai/shared/api/client';
  * it, and never sees any of this.
  */
 
-const KEY = 'dawai.branch';
+/* Per shop: a branch id from one shop means nothing to the next one signed in here. */
+const KEY = () => shopKey('dawai.branch');
 
 const read = () => {
   try {
-    return window.localStorage.getItem(KEY) ?? '';
+    return window.localStorage.getItem(KEY()) ?? '';
   } catch {
     return '';
   }
@@ -28,6 +31,8 @@ interface BranchState {
   version: number;
   pick: (id: string) => void;
   changed: () => void;
+  /** Re-read for whoever is signed in now. */
+  reload: () => void;
 }
 
 export const useBranchStore = create<BranchState>((set) => ({
@@ -35,14 +40,15 @@ export const useBranchStore = create<BranchState>((set) => ({
   version: 0,
   pick: (id) => {
     try {
-      if (id) window.localStorage.setItem(KEY, id);
-      else window.localStorage.removeItem(KEY);
+      if (id) window.localStorage.setItem(KEY(), id);
+      else window.localStorage.removeItem(KEY());
     } catch {
       /* private window: it lasts until the tab closes, which is fine */
     }
     set({ branch: id });
   },
   changed: () => set((s) => ({ version: s.version + 1 })),
+  reload: () => set({ branch: read() }),
 }));
 
 api.interceptors.request.use((config) => {
@@ -59,3 +65,19 @@ export interface BranchSwitcherInfo {
 }
 
 export const fetchBranchSwitcher = () => api.get<{ data: BranchSwitcherInfo }>('/till/branches').then((r) => r.data.data);
+
+/*
+ * When the signed-in shop changes — a sign-out and somebody else's sign-in on
+ * the same machine — everything kept per shop is read again for the new one,
+ * and anything written before keys were scoped is cleared (see scope.ts).
+ */
+let lastShop = '';
+const onAuth = (org: string | null | undefined) => {
+  const now = org || '';
+  if (now === lastShop) return;
+  lastShop = now;
+  migrateLegacyKeys();
+  useBranchStore.getState().reload();
+};
+onAuth(useAuthStore.getState().user?.organizationId);
+useAuthStore.subscribe((s) => onAuth(s.user?.organizationId));

@@ -1,4 +1,6 @@
 import { tillApi, type SellableProduct, type Sale } from './api';
+import { shopKey, branchKey } from './scope';
+import { useBranchStore } from './branch';
 
 /**
  * Selling with the line down.
@@ -25,8 +27,13 @@ import { tillApi, type SellableProduct, type Sale } from './api';
  * server is shown as waiting, with a count, until it has.
  */
 
-const OUTBOX = 'dawai.shop.outbox';
-const SHELF = 'dawai.shop.shelf';
+/* Both belong to the signed-in shop (see scope.ts). The queue is the shop's —
+   each bill carries its own shift, and so its own branch. The shelf is the
+   branch's, because the stock and so what can be sold are. */
+const OUTBOX_BASE = 'dawai.shop.outbox';
+const SHELF_BASE = 'dawai.shop.shelf';
+const OUTBOX = () => shopKey(OUTBOX_BASE);
+const SHELF = () => branchKey(SHELF_BASE, useBranchStore.getState().branch);
 /** The catalogue is stale after this, and a stale price is worse than none. */
 const SHELF_TTL = 3 * 86_400_000;
 
@@ -70,7 +77,7 @@ export function onOutboxChange(fn: Listener) {
 }
 
 export function pendingSales(): PendingSale[] {
-  return read<PendingSale[]>(OUTBOX, []);
+  return read<PendingSale[]>(OUTBOX(), []);
 }
 
 /**
@@ -88,12 +95,12 @@ export function newRef(): string {
 
 /** Puts a bill on the queue. Written synchronously, before anything is printed. */
 export function queueSale(entry: PendingSale) {
-  write(OUTBOX, [...pendingSales(), entry]);
+  write(OUTBOX(), [...pendingSales(), entry]);
 }
 
 export function dropSale(clientRef: string) {
   write(
-    OUTBOX,
+    OUTBOX(),
     pendingSales().filter((s) => s.clientRef !== clientRef),
   );
 }
@@ -135,7 +142,7 @@ export async function flushOutbox(): Promise<{
       }
       /* The server answered and said no. Retrying that gets the same no. */
       write(
-        OUTBOX,
+        OUTBOX(),
         pendingSales().map((s) =>
           s.clientRef === entry.clientRef ? { ...s, error: messageOf(err) } : s,
         ),
@@ -180,14 +187,14 @@ interface Shelf {
  */
 export function rememberShelf(items: SellableProduct[]) {
   if (items.length === 0) return;
-  const shelf = read<Shelf>(SHELF, { at: 0, items: [] });
+  const shelf = read<Shelf>(SHELF(), { at: 0, items: [] });
   const byId = new Map(shelf.items.map((p) => [p._id, p]));
   for (const p of items) byId.set(p._id, p);
-  write(SHELF, { at: Date.now(), items: [...byId.values()].slice(-2000) });
+  write(SHELF(), { at: Date.now(), items: [...byId.values()].slice(-2000) });
 }
 
 export function shelfSearch(q: string): SellableProduct[] {
-  const shelf = read<Shelf>(SHELF, { at: 0, items: [] });
+  const shelf = read<Shelf>(SHELF(), { at: 0, items: [] });
   if (!shelf.at || Date.now() - shelf.at > SHELF_TTL) return [];
   const text = q.trim().toLowerCase();
   if (text.length < 2) return [];

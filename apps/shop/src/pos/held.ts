@@ -16,7 +16,12 @@ import type { SellableProduct } from '../api';
  * thing it has to survive.
  */
 
-const KEY = 'dawai.shop.held';
+import { branchKey } from '../scope';
+import { useBranchStore } from '../branch';
+
+const BASE = 'dawai.shop.held';
+/** This shop's, this branch's — see scope.ts. */
+const KEY = () => branchKey(BASE, useBranchStore.getState().branch);
 /** Long enough for an evening, short enough that yesterday does not haunt. */
 const TTL = 12 * 60 * 60 * 1000;
 
@@ -43,7 +48,7 @@ const listeners = new Set<Listener>();
 
 function read(): HeldBill[] {
   try {
-    const raw = localStorage.getItem(KEY);
+    const raw = localStorage.getItem(KEY());
     const all = raw ? (JSON.parse(raw) as HeldBill[]) : [];
     return all.filter((b) => Date.now() - b.at < TTL);
   } catch {
@@ -53,7 +58,7 @@ function read(): HeldBill[] {
 
 function write(bills: HeldBill[]) {
   try {
-    localStorage.setItem(KEY, JSON.stringify(bills));
+    localStorage.setItem(KEY(), JSON.stringify(bills));
   } catch {
     /* A full store must not take the counter down. */
   }
