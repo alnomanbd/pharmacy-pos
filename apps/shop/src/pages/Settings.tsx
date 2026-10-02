@@ -475,12 +475,12 @@ export default function Settings() {
           >
             {/* ---- whose letterhead ---- */}
             <span className="mb-1.5 block text-xs font-semibold text-muted-foreground">{t('Printed on')}</span>
-            <div className="mb-4 grid gap-2 sm:grid-cols-3">
+            <div className="mb-4 grid grid-cols-3 gap-2">
               {(
                 [
-                  ['dawai', Palette, 'Our letterhead', 'A band in your colour, with your name, logo and licence'],
-                  ['image', ImageIcon, 'Your letterhead, on plain paper', 'Upload your header and footer; they print on every page'],
-                  ['pad', StickyNote, 'Your printed pad', 'Nothing is printed where your pad’s header and footer are'],
+                  ['dawai', Palette, 'Our letterhead', 'Coloured band, your logo'],
+                  ['image', ImageIcon, 'Your letterhead', 'Your header and footer pictures'],
+                  ['pad', StickyNote, 'Your printed pad', 'Leaves the pad’s print blank'],
                 ] as const
               ).map(([key, Icon, label, hint]) => {
                 const on = (invoice.style ?? 'dawai') === key;
@@ -490,17 +490,16 @@ export default function Settings() {
                     type="button"
                     aria-pressed={on}
                     onClick={() => setInvoice('style', key)}
-                    className={`flex items-start gap-2.5 rounded-xl border px-3 py-2.5 text-left text-sm transition-colors ${
+                    className={`flex flex-col items-center gap-1.5 rounded-xl border px-2 py-3 text-center text-sm transition-colors ${
                       on ? 'border-primary bg-primary/5 font-semibold ring-2 ring-primary/15' : 'border-border hover:bg-secondary'
                     }`}
                   >
-                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+                    <span className={`grid h-9 w-9 place-items-center rounded-lg ${on ? 'bg-primary text-primary-foreground' : 'bg-primary/10 text-primary'}`}>
                       <Icon className="h-4 w-4" />
                     </span>
-                    <span>
-                      {t(label)}
-                      <span className="block text-[11px] font-normal text-muted-foreground">{t(hint)}</span>
-                    </span>
+                    <span className="leading-tight">{t(label)}</span>
+                    {/* On a phone the chosen card's own section says the rest. */}
+                    <span className="hidden text-[11px] font-normal leading-snug text-muted-foreground sm:block">{t(hint)}</span>
                   </button>
                 );
               })}
@@ -511,14 +510,14 @@ export default function Settings() {
                 <LetterheadPicture
                   slot="header"
                   label={t('Header')}
-                  hint={t('Your letterhead’s top, scanned or photographed straight — full width.')}
+                  hint={t('Scanned straight, full width')}
                   present={pics.header}
                   onChanged={(v) => picChanged('header', v)}
                 />
                 <LetterheadPicture
                   slot="footer"
                   label={t('Footer')}
-                  hint={t('Its bottom strip, if it has one. Leave empty for none.')}
+                  hint={t('Optional')}
                   present={pics.footer}
                   onChanged={(v) => picChanged('footer', v)}
                 />
@@ -574,21 +573,12 @@ export default function Settings() {
                 <p className="mt-1 text-[11px] text-muted-foreground">
                   {t('Print it on plain paper, hold it over your pad against the light, and change the numbers until the dashed box sits in the blank part.')}
                 </p>
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <LetterheadPicture
-                    slot="header"
-                    label={t('Photo of your pad’s header (optional)')}
-                    hint={t('Only to line things up on screen — never printed on a pad.')}
-                    present={pics.header}
-                    onChanged={(v) => picChanged('header', v)}
-                  />
-                  <LetterheadPicture
-                    slot="footer"
-                    label={t('Photo of its footer (optional)')}
-                    hint={t('Only to line things up on screen — never printed on a pad.')}
-                    present={pics.footer}
-                    onChanged={(v) => picChanged('footer', v)}
-                  />
+                <p className="mb-2 mt-4 text-[11px] text-muted-foreground">
+                  <strong className="font-semibold text-foreground">{t('Photos of your pad')}</strong> · {t('optional — to line it up on screen, never printed')}
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <LetterheadPicture slot="header" label={t('Header')} present={pics.header} onChanged={(v) => picChanged('header', v)} />
+                  <LetterheadPicture slot="footer" label={t('Footer')} present={pics.footer} onChanged={(v) => picChanged('footer', v)} />
                 </div>
               </div>
             )}
