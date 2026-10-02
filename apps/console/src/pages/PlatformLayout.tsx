@@ -28,6 +28,7 @@ import {
   Headset,
   CalendarClock,
   NotebookPen,
+  Send,
 } from 'lucide-react';
 import { platformApi } from '../api';
 import { useAuthStore } from '@dawai/shared/store/auth.store';
@@ -158,6 +159,8 @@ const NAV_SECTIONS: { heading: string; links: ConsoleLink[] }[] = [
     heading: 'Platform',
     links: [
       { to: '/team', label: 'Team', icon: Users, end: false, needs: ['team.manage'] },
+      /* Every email and SMS sent, for "I never got the email". */
+      { to: '/messages', label: 'Messages', icon: Send, end: false, needs: ['shops.view', 'support.view'] },
       {
         /* Read after the fact rather than worked from, so it sits last. */
         to: '/audit',

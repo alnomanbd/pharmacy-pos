@@ -1,6 +1,7 @@
 import nodemailer, { type Transporter } from 'nodemailer';
 import { env } from '../config/env.js';
 import { logger } from '../utils/logger.js';
+import { recordMessage } from '../services/messageLog.service.js';
 
 /**
  * Sending email.
@@ -23,6 +24,9 @@ export interface EmailMessage {
   html?: string;
   /** The display name to send as, e.g. the product the account bought. The address stays the configured one. */
   fromName?: string;
+  /** For the message log: what this is (`passwordReset`, `paymentVerified`…) and which shop it is about. */
+  kind?: string;
+  organization?: string | null;
 }
 
 export interface EmailResult {
@@ -153,10 +157,23 @@ export const emailProvider: EmailProvider = createProvider();
 
 /** Fire-and-forget: a notification must never fail the thing it announces. */
 export async function sendEmail(message: EmailMessage): Promise<EmailResult> {
+  let result: EmailResult;
   try {
-    return await emailProvider.send(message);
+    result = await emailProvider.send(message);
   } catch (err) {
     logger.error({ err, to: message.to }, 'Email provider threw');
-    return { success: false, provider: emailProvider.provider };
+    result = { success: false, provider: emailProvider.provider };
   }
+  // The subject only: a body can hold a live reset or verify link.
+  recordMessage({
+    channel: 'email',
+    to: message.to,
+    subject: message.subject,
+    success: result.success,
+    provider: result.provider,
+    kind: message.kind,
+    organization: message.organization,
+    providerId: result.messageId,
+  });
+  return result;
 }

@@ -1,6 +1,7 @@
 import { env, isProduction } from '../config/env.js';
 import { logger } from '../utils/logger.js';
 import { maskPhone, maskSmsBody } from '../utils/redact.js';
+import { recordMessage } from '../services/messageLog.service.js';
 
 export interface SmsResult {
   success: boolean;
@@ -114,11 +115,14 @@ export interface SmsMeta {
  * Never throws at the caller — a reminder that fails must not fail the thing
  * that sent it — and reports what happened instead.
  */
-export async function sendSms(to: string, body: string, _meta: SmsMeta = {}): Promise<SmsResult> {
+export async function sendSms(to: string, body: string, meta: SmsMeta = {}): Promise<SmsResult> {
+  let result: SmsResult;
   try {
-    return await smsProvider.send(to, body);
+    result = await smsProvider.send(to, body);
   } catch (err) {
     logger.error({ err, to: maskPhone(to) }, 'SMS provider threw');
-    return { success: false, provider: smsProvider.provider };
+    result = { success: false, provider: smsProvider.provider };
   }
+  recordMessage({ channel: 'sms', to, body, success: result.success, provider: result.provider, ...meta });
+  return result;
 }

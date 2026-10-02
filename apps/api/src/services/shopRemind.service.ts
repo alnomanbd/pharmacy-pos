@@ -1,6 +1,6 @@
 import { Types } from 'mongoose';
 import { ShopCustomerModel, ShopSettingsModel } from '../models/index.js';
-import { smsProvider } from '../integrations/sms.js';
+import { sendSms } from '../integrations/sms.js';
 import { badRequest, notFound } from '../utils/AppError.js';
 import { logger } from '../utils/logger.js';
 import type { Actor } from './shop.service.js';
@@ -64,7 +64,7 @@ async function shopIdentity(org: string) {
   const settings = await ShopSettingsModel.findOne({ organization: org })
     .select('shopName phone')
     .lean();
-  return { name: settings?.shopName ?? '', phone: settings?.phone ?? '' };
+  return { name: settings?.shopName ?? '', phone: settings?.phone ?? '', org };
 }
 
 /**
@@ -77,7 +77,7 @@ async function shopIdentity(org: string) {
  */
 async function chase(
   customer: Chaseable,
-  shop: { name: string; phone: string },
+  shop: { name: string; phone: string; org?: string },
   now: Date,
 ): Promise<{ ok: boolean; why?: string }> {
   if (!(customer.balance > 0)) return { ok: false, why: 'nothing owing' };
@@ -87,7 +87,11 @@ async function chase(
   if (now.getTime() - last < REMIND_COOLDOWN_MS) return { ok: false, why: 'reminded in the last three days' };
 
   try {
-    await smsProvider.send(customer.phone.trim(), reminderText(shop.name, customer.balance, shop.phone));
+    const sent = await sendSms(customer.phone.trim(), reminderText(shop.name, customer.balance, shop.phone), {
+      kind: 'shop.bakiReminder',
+      organization: shop.org,
+    });
+    if (!sent.success) throw new Error('SMS provider did not accept the message');
   } catch (err) {
     logger.error({ err, customer: String(customer._id) }, 'Baki reminder failed');
     return { ok: false, why: 'the message did not go' };

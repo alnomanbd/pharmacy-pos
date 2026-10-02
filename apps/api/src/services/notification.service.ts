@@ -1,5 +1,5 @@
 import { sendEmail } from '../integrations/email.js';
-import { smsProvider } from '../integrations/sms.js';
+import { sendSms } from '../integrations/sms.js';
 import { env } from '../config/env.js';
 import { logger } from '../utils/logger.js';
 import { OrganizationModel } from '../models/index.js';
@@ -86,6 +86,7 @@ export async function newDeviceSignIn(to: {
   const when = new Date(to.at).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
   const where = [to.ip && `IP ${to.ip}`, to.userAgent].filter(Boolean).join(' · ') || 'unknown device';
   await sendEmail({
+    kind: 'newDeviceSignIn',
     fromName: b.name,
     to: to.email,
     subject: `New sign-in to your ${b.name} account`,
@@ -130,6 +131,7 @@ export async function passwordChangedBySupport(to: {
 }) {
   const b = BRAND;
   await sendEmail({
+    kind: 'passwordChangedBySupport',
     fromName: b.name,
     to: to.email,
     subject: `Your ${b.name} password was changed by support`,
@@ -167,6 +169,7 @@ export async function accountOpenedByOperator(to: {
 }) {
   const b = BRAND;
   await sendEmail({
+    kind: 'accountOpenedByOperator',
     fromName: b.name,
     to: to.email,
     subject: `${to.shop} is ready on ${b.name}`,
@@ -193,6 +196,7 @@ export async function shopRegistered(to: {
 }) {
   const b = BRAND;
   await sendEmail({
+    kind: 'shopRegistered',
     fromName: b.name,
     to: to.email,
     subject: `${to.shop} — your account is being reviewed`,
@@ -211,6 +215,7 @@ export async function shopAwaitingApproval(shop: string) {
   const to = env.mail.user;
   if (!to) return;
   await sendEmail({
+    kind: 'shopAwaitingApproval',
     to,
     subject: `New shop awaiting approval: ${shop}`,
     text: `${shop} has registered and is waiting for approval.\n\n${env.consoleUrl}/shops`,
@@ -237,6 +242,7 @@ export async function shopApproved(to: {
     html: 'set your shop name and printer width, add your opening stock, add your salesman. Then ring up one bill — that is the whole loop.',
   };
   await sendEmail({
+    kind: 'shopApproved',
     fromName: b.name,
     to: to.email,
     subject: `${to.shop} is ready — you can sign in`,
@@ -254,6 +260,7 @@ export async function shopApproved(to: {
 export async function shopSuspended(to: { email: string; name: string; shop: string; reason: string }) {
   const b = BRAND;
   await sendEmail({
+    kind: 'shopSuspended',
     fromName: b.name,
     to: to.email,
     subject: `${to.shop} — account suspended`,
@@ -281,6 +288,7 @@ export async function paymentReceived(to: {
 }) {
   const b = BRAND;
   await sendEmail({
+    kind: 'paymentReceived',
     fromName: b.name,
     to: to.email,
     subject: `We have your payment details — ${taka(to.amount)}`,
@@ -299,6 +307,7 @@ export async function paymentAwaitingReview(shop: string, amount: number, method
   const to = env.mail.user;
   if (!to) return;
   await sendEmail({
+    kind: 'paymentAwaitingReview',
     to,
     subject: `Payment to check: ${taka(amount)} from ${shop}`,
     text: `${shop} submitted ${taka(amount)} by ${method}.\n\n${env.consoleUrl}/payments`,
@@ -323,6 +332,7 @@ export async function paymentVerified(to: {
   const b = BRAND;
   const line = to.invoiceNo ? `Invoice: ${to.invoiceNo}\n` : '';
   await sendEmail({
+    kind: 'paymentVerified',
     fromName: b.name,
     to: to.email,
     subject: `Payment confirmed — ${to.shop} is paid to ${on(to.coversUntil)}`,
@@ -348,6 +358,7 @@ export async function paymentRejected(to: {
 }) {
   const b = BRAND;
   await sendEmail({
+    kind: 'paymentRejected',
     fromName: b.name,
     to: to.email,
     subject: `We could not confirm your payment of ${taka(to.amount)}`,
@@ -373,6 +384,7 @@ export async function subscriptionEnding(to: {
   const b = BRAND;
   const when = to.daysLeft <= 0 ? 'today' : to.daysLeft === 1 ? 'tomorrow' : `in ${to.daysLeft} days`;
   await sendEmail({
+    kind: 'subscriptionEnding',
     fromName: b.name,
     to: to.email,
     subject: `${to.shop} — subscription ends ${when}`,
@@ -395,6 +407,7 @@ const esc = (v: string) =>
 export async function subscriptionLapsed(to: { email: string; name: string; shop: string; endedAt: Date }) {
   const b = BRAND;
   await sendEmail({
+    kind: 'subscriptionLapsed',
     fromName: b.name,
     to: to.email,
     subject: `${to.shop} — your subscription has ended`,
@@ -421,6 +434,7 @@ If something stopped you from renewing, just reply — we will help.
 export async function shopInactive(to: { email: string; name: string; shop: string }) {
   const b = BRAND;
   await sendEmail({
+    kind: 'shopInactive',
     fromName: b.name,
     to: to.email,
     subject: `${to.shop} — is everything all right with ${b.name}?`,
@@ -454,6 +468,7 @@ Open ${b.name}: ${b.url}
 export async function passwordReset(to: { email: string; phone?: string; name: string; url: string }) {
   const b = BRAND;
   await sendEmail({
+    kind: 'passwordReset',
     fromName: b.name,
     to: to.email,
     subject: `Reset your ${b.name} password`,
@@ -469,7 +484,7 @@ export async function passwordReset(to: { email: string; phone?: string; name: s
 
   if (to.phone) {
     try {
-      await smsProvider.send(to.phone, `${b.name}: reset your password — ${to.url}`);
+      await sendSms(to.phone, `${b.name}: reset your password — ${to.url}`, { kind: 'passwordReset' });
     } catch (err) {
       logger.warn({ err }, 'Password reset SMS failed; the email was still sent');
     }
@@ -487,6 +502,7 @@ export async function passwordReset(to: { email: string; phone?: string; name: s
 export async function verifyEmail(to: { email: string; name: string; url: string }) {
   const b = BRAND;
   await sendEmail({
+    kind: 'verifyEmail',
     fromName: b.name,
     to: to.email,
     subject: `Confirm your email address`,
@@ -527,6 +543,7 @@ export async function medicineRequestDecided(to: {
     ? `${to.brandName} is now in the ${b.name} catalogue. Search for it on the Products page to add it to your shop.`
     : `We could not add ${to.brandName} to the catalogue.${to.reason ? ` Reason: ${to.reason}` : ''}`;
   await sendEmail({
+    kind: 'medicineRequestDecided',
     fromName: b.name,
     to: to.email,
     subject: to.added ? `${to.brandName} has been added to ${b.name}` : `Your request for ${to.brandName}`,

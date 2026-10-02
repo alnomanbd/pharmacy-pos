@@ -374,7 +374,11 @@ export default function ShopDetail() {
                 <tr key={u._id}>
                   <td className="font-medium">{u.name}</td>
                   <td className="text-sm">{u.role === 'admin' ? 'owner' : u.role}</td>
-                  <td className="text-sm text-muted-foreground">{u.email}</td>
+                  <td className="text-sm text-muted-foreground">
+                    <Link to={`/messages?q=${encodeURIComponent(u.email)}`} className="hover:underline" title="Emails sent to this address">
+                      {u.email}
+                    </Link>
+                  </td>
                   <td className="text-sm text-muted-foreground">{u.phone}</td>
                   <td className="text-sm text-muted-foreground">
                     {lastSeen(u.lastLoginAt) ?? 'never'}

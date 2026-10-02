@@ -110,6 +110,22 @@ export interface ShopMonth {
   purchases: number;
 }
 
+/** One email or SMS from the message log. */
+export interface MessageLogRow {
+  _id: string;
+  channel: 'email' | 'sms';
+  to: string;
+  subject: string;
+  /** SMS only, masked. */
+  body: string;
+  status: 'sent' | 'failed' | 'pending';
+  /** `log` means nothing is configured and it was only written to the log. */
+  provider: string;
+  kind: string;
+  organization: string | { _id: string; name: string } | null;
+  createdAt: string;
+}
+
 /** The team's own note on a shop. */
 export interface ShopNote {
   _id: string;
@@ -324,6 +340,10 @@ export const platformApi = {
 
   audit: (params?: { action?: string; actor?: string; page?: number; limit?: number }) =>
     getData<Paged<PlatformAuditEntry> & { actions: string[] }>(api.get('/platform/audit', { params })),
+
+  /** The email and SMS log. `failed24h` is what failed in the last day. */
+  messages: (params?: { q?: string; channel?: string; status?: string; organization?: string; page?: number; limit?: number }) =>
+    getData<Paged<MessageLogRow> & { failed24h: number }>(api.get('/platform/messages', { params })),
 
   shopNotes: (shopId: string) => getData<ShopNote[]>(api.get(`/platform/organizations/${shopId}/notes`)),
   addShopNote: (shopId: string, payload: { body: string; followUpAt?: string | null; pinned?: boolean }) =>

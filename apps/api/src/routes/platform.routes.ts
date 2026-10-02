@@ -13,6 +13,7 @@ import * as support from '../services/support.service.js';
 import { impersonate } from '../services/impersonation.service.js';
 import * as retention from '../services/retention.service.js';
 import * as notes from '../services/shopNote.service.js';
+import { listMessages } from '../services/messageLog.service.js';
 import { requireAuth, requireRole, requirePermission } from '../middlewares/auth.js';
 import { PLATFORM_ROLES, PLATFORM_OWNER_ROLES } from '../types/roles.js';
 import * as team from '../services/platformTeam.service.js';
@@ -727,6 +728,28 @@ router.get(
       from: str(req.query.from),
       to: str(req.query.to),
       granularity: str(req.query.granularity) as revenue.Granularity | undefined,
+    }),
+  ),
+);
+
+/* -------------------------------- messages -------------------------------- */
+
+/**
+ * Every email and SMS the platform tried to send — "I never got the reset
+ * email" answered with the address, the time and what the provider said.
+ * Email bodies are never stored, and SMS bodies only masked.
+ */
+router.get(
+  '/messages',
+  requirePermission('shops.view', 'support.view'),
+  handle((req) =>
+    listMessages({
+      channel: str(req.query.channel),
+      status: str(req.query.status),
+      q: str(req.query.q),
+      organization: str(req.query.organization),
+      page: num(req.query.page),
+      limit: num(req.query.limit),
     }),
   ),
 );
