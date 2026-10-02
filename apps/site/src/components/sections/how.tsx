@@ -7,6 +7,7 @@ import { num } from '@/i18n/mock';
 import { Section, SectionHead } from '@/components/section';
 import { Reveal } from '@/components/motion/primitives';
 import { Button } from '@/components/ui/button';
+import { HardwareStrip } from '@/components/sections/visuals';
 
 /*
  * How it works — three steps, the target of the header's first link.
@@ -57,6 +58,8 @@ export function HowSection({ lang }: { lang: Lang }) {
             );
           })}
         </ol>
+
+        <HardwareStrip lang={lang} />
 
         <Reveal variant="fade" delay={0.2} className="mt-10 flex justify-center">
           <Button asChild size="lg" className="group w-full sm:w-auto">

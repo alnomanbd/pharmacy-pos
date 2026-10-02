@@ -13,6 +13,7 @@ import { HowSection } from '@/components/sections/how';
 import { PricingPreview } from '@/components/sections/pricing-preview';
 import { FaqPreview } from '@/components/sections/faq-preview';
 import { CtaSection } from '@/components/sections/cta';
+import { KhataSection, ReportsSection, BranchesSection } from '@/components/sections/visuals';
 
 export function generateStaticParams() {
   return LANGS.map((lang) => ({ lang }));
@@ -83,9 +84,12 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
       <BrandBand lang={lang} />
       <CounterSection lang={lang} />
       <StockSection lang={lang} />
+      <KhataSection lang={lang} />
       <ScreensSection lang={lang} />
+      <ReportsSection lang={lang} />
       <OfflineSection lang={lang} />
       <VoicesSection lang={lang} />
+      <BranchesSection lang={lang} />
       <HowSection lang={lang} />
       <PricingPreview lang={lang} />
       <FaqPreview lang={lang} />
