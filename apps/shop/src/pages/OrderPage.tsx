@@ -1,15 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Bike, Camera, CheckCircle2, Loader2, MapPin, Phone, Pill, Store, Trash2, X } from 'lucide-react';
+import { Bike, Camera, CheckCircle2, Loader2, MapPin, Minus, Phone, Pill, Plus, Search, Store, Trash2, X } from 'lucide-react';
 import { useLangStore } from '../i18n/ui';
 
 /**
  * A shop's own order page — the link it shares on WhatsApp and Facebook.
  *
  * For a customer on a phone, with no account and no app: their name and
- * number, what they need (typed, or a photo of the prescription), pickup or
- * delivery. Nothing is charged here; the shop confirms and bills it at the
+ * number, what they need — picked from the shop's own list, typed out, or a
+ * photo of the prescription, any or all of them — pickup or delivery. Nothing is charged here; the shop confirms and bills it at the
  * counter, and an SMS says when it is confirmed, ready and on its way.
  */
 
@@ -26,6 +26,10 @@ type Shop = {
   branches: { id: string; name: string; address: string }[];
 };
 
+type Unit = 'piece' | 'strip' | 'box';
+type Hit = { id: string; name: string; strength: string; form: string; unit: 'piece' | 'strip'; price: number; inStock: boolean };
+type Line = { key: string; productId?: string; name: string; qty: number; unit: Unit; price: number };
+
 const T = {
   en: {
     order: 'Order medicines',
@@ -33,6 +37,14 @@ const T = {
     name: 'Your name',
     phone: 'Mobile number',
     what: 'What do you need?',
+    search: 'Search a medicine — e.g. Napa',
+    inStock: 'In stock',
+    ask: 'We will check',
+    addTyped: (s: string) => `Add “${s}”`,
+    none: 'Not on our list — add it as you typed it, and we will check.',
+    units: { piece: 'pc', strip: 'strip', box: 'box' } as Record<Unit, string>,
+    about: (s: string) => `About ৳${s} — the shop confirms the price`,
+    orWrite: 'Or write it out',
     whatHint: 'e.g. Napa Extra — 2 strips, Seclo 20 — 1 box',
     photo: 'Add a photo of the prescription',
     photoMore: 'Add another photo',
@@ -59,6 +71,14 @@ const T = {
     name: 'আপনার নাম',
     phone: 'মোবাইল নম্বর',
     what: 'কী কী লাগবে?',
+    search: 'ঔষধ খুঁজুন — যেমন নাপা',
+    inStock: 'স্টকে আছে',
+    ask: 'দেখে জানাব',
+    addTyped: (s: string) => `“${s}” যোগ করুন`,
+    none: 'আমাদের তালিকায় নেই — যেভাবে লিখেছেন সেভাবেই যোগ করুন, আমরা দেখে জানাব।',
+    units: { piece: 'পিস', strip: 'পাতা', box: 'বক্স' } as Record<Unit, string>,
+    about: (s: string) => `আনুমানিক ৳${s} — দাম দোকান নিশ্চিত করবে`,
+    orWrite: 'অথবা লিখে দিন',
     whatHint: 'যেমন: নাপা এক্সট্রা — ২ পাতা, সেকলো ২০ — ১ বক্স',
     photo: 'প্রেসক্রিপশনের ছবি দিন',
     photoMore: 'আরেকটি ছবি দিন',
@@ -93,6 +113,7 @@ export default function OrderPage() {
   const [missing, setMissing] = useState(false);
   const [form, setForm] = useState({ name: '', phone: '', items: '', address: '', note: '', mode: 'pickup' as 'pickup' | 'delivery', branchId: '' });
   const [photos, setPhotos] = useState<{ file: File; url: string }[]>([]);
+  const [lines, setLines] = useState<Line[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [placed, setPlaced] = useState<{ number: string; phone: string } | null>(null);
@@ -126,6 +147,9 @@ export default function OrderPage() {
       fd.set('phone', form.phone);
       fd.set('mode', form.mode);
       fd.set('items', form.items);
+      if (lines.length) {
+        fd.set('lines', JSON.stringify(lines.map((l) => ({ productId: l.productId, name: l.name, qty: l.qty, unit: l.unit }))));
+      }
       if (form.mode === 'delivery') fd.set('address', form.address);
       if (form.note) fd.set('note', form.note);
       if (form.branchId) fd.set('branchId', form.branchId);
@@ -144,6 +168,7 @@ export default function OrderPage() {
   const reset = () => {
     setPlaced(null);
     setPhotos([]);
+    setLines([]);
     setForm((f) => ({ ...f, items: '', note: '' }));
   };
 
@@ -235,10 +260,14 @@ export default function OrderPage() {
                     </label>
                   </div>
 
-                  <label className="block text-sm font-semibold">
-                    {t.what}
-                    <textarea className="input mt-1 min-h-[96px] py-2.5" maxLength={2000} placeholder={t.whatHint} value={form.items} onChange={(e) => setForm({ ...form, items: e.target.value })} />
-                  </label>
+                  <div>
+                    <p className="text-sm font-semibold">{t.what}</p>
+                    <MedicinePicker code={code} t={t} n={n} lines={lines} onChange={setLines} />
+                    <label className="mt-3 block text-xs font-semibold text-muted-foreground">
+                      {t.orWrite}
+                      <textarea className="input mt-1 min-h-[72px] py-2.5 text-sm font-normal text-foreground" maxLength={2000} placeholder={t.whatHint} value={form.items} onChange={(e) => setForm({ ...form, items: e.target.value })} />
+                    </label>
+                  </div>
 
                   {/* ---- the prescription ---- */}
                   <div>
@@ -344,6 +373,146 @@ export default function OrderPage() {
           </AnimatePresence>
         )}
       </div>
+    </div>
+  );
+}
+
+/**
+ * Search the shop's own list, tap to add, set how many. What is not on the
+ * list can still be added as typed — the shop checks it either way.
+ */
+function MedicinePicker({
+  code,
+  t,
+  n,
+  lines,
+  onChange,
+}: {
+  code: string;
+  t: (typeof T)['en'];
+  n: (v: number | string) => string;
+  lines: Line[];
+  onChange: (l: Line[]) => void;
+}) {
+  const [q, setQ] = useState('');
+  const [hits, setHits] = useState<Hit[]>([]);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    const term = q.trim();
+    if (term.length < 2) {
+      setHits([]);
+      return;
+    }
+    let live = true;
+    setBusy(true);
+    const timer = window.setTimeout(() => {
+      fetch(`/api/public/order/${encodeURIComponent(code)}/medicines?q=${encodeURIComponent(term)}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((j: { data?: Hit[] } | null) => live && setHits(j?.data ?? []))
+        .catch(() => live && setHits([]))
+        .finally(() => live && setBusy(false));
+    }, 250);
+    return () => {
+      live = false;
+      window.clearTimeout(timer);
+    };
+  }, [q, code]);
+
+  const add = (line: Omit<Line, 'key'>) => {
+    const same = lines.find((l) => (line.productId ? l.productId === line.productId : !l.productId && l.name.toLowerCase() === line.name.toLowerCase()));
+    if (same) onChange(lines.map((l) => (l === same ? { ...l, qty: Math.min(1000, l.qty + 1) } : l)));
+    else onChange([...lines, { ...line, key: `${Date.now()}-${Math.random()}` }]);
+    setQ('');
+    setHits([]);
+  };
+  const set = (key: string, patch: Partial<Line>) => onChange(lines.map((l) => (l.key === key ? { ...l, ...patch } : l)));
+  const typed = q.trim();
+  const total = lines.reduce((sum, l) => sum + (l.unit === 'box' ? 0 : l.price * l.qty), 0);
+
+  return (
+    <div className="mt-1">
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <input
+          className="input h-11 pl-9 pr-9"
+          placeholder={t.search}
+          value={q}
+          maxLength={40}
+          autoComplete="off"
+          onChange={(e) => setQ(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              if (hits[0]) add({ productId: hits[0].id, name: [hits[0].name, hits[0].strength].filter(Boolean).join(' '), qty: 1, unit: hits[0].unit, price: hits[0].price });
+              else if (typed.length >= 2) add({ name: typed, qty: 1, unit: 'strip', price: 0 });
+            }
+          }}
+        />
+        {busy && <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />}
+      </div>
+
+      {typed.length >= 2 && !busy && (
+        <div className="mt-1.5 overflow-hidden rounded-2xl border border-border bg-card shadow-lg">
+          {hits.map((h) => (
+            <button
+              key={h.id}
+              type="button"
+              onClick={() => add({ productId: h.id, name: [h.name, h.strength].filter(Boolean).join(' '), qty: 1, unit: h.unit, price: h.price })}
+              className="flex w-full items-center gap-3 border-b border-border px-3 py-2.5 text-left last:border-0 hover:bg-muted"
+            >
+              <Pill className="h-4 w-4 shrink-0 text-primary" />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-semibold">
+                  {h.name} <span className="font-normal text-muted-foreground">{h.strength}</span>
+                </span>
+                <span className="block text-[11px] text-muted-foreground">
+                  {h.form}
+                  {h.price > 0 ? `${h.form ? ' · ' : ''}৳${n(h.price)} / ${t.units[h.unit]}` : ''}
+                </span>
+              </span>
+              <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${h.inStock ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400' : 'bg-muted text-muted-foreground'}`}>
+                {h.inStock ? t.inStock : t.ask}
+              </span>
+              <Plus className="h-4 w-4 shrink-0 text-primary" />
+            </button>
+          ))}
+          {hits.length === 0 && <p className="px-3 pt-2.5 text-xs text-muted-foreground">{t.none}</p>}
+          <button type="button" onClick={() => add({ name: typed, qty: 1, unit: 'strip', price: 0 })} className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm font-semibold text-primary hover:bg-muted">
+            <Plus className="h-4 w-4" /> {t.addTyped(typed)}
+          </button>
+        </div>
+      )}
+
+      {lines.length > 0 && (
+        <ul className="mt-2.5 grid gap-2">
+          {lines.map((l) => (
+            <li key={l.key} className="flex items-center gap-2 rounded-2xl border border-primary/25 bg-primary/[0.04] px-3 py-2">
+              <span className="min-w-0 flex-1 truncate text-sm font-semibold">{l.name}</span>
+              <span className="flex items-center rounded-full border border-border bg-card">
+                <button type="button" aria-label="−" onClick={() => (l.qty <= 1 ? onChange(lines.filter((x) => x.key !== l.key)) : set(l.key, { qty: l.qty - 1 }))} className="grid h-8 w-8 place-items-center">
+                  <Minus className="h-3.5 w-3.5" />
+                </button>
+                <span className="w-6 text-center text-sm font-bold tabular-nums">{n(l.qty)}</span>
+                <button type="button" aria-label="+" onClick={() => set(l.key, { qty: Math.min(1000, l.qty + 1) })} className="grid h-8 w-8 place-items-center">
+                  <Plus className="h-3.5 w-3.5" />
+                </button>
+              </span>
+              <select className="h-8 rounded-lg border border-border bg-card px-1.5 text-xs" value={l.unit} onChange={(e) => set(l.key, { unit: e.target.value as Unit })} aria-label="unit">
+                {(['strip', 'piece', 'box'] as Unit[]).map((u) => (
+                  <option key={u} value={u}>
+                    {t.units[u]}
+                  </option>
+                ))}
+              </select>
+              <button type="button" aria-label="Remove" onClick={() => onChange(lines.filter((x) => x.key !== l.key))} className="grid h-8 w-8 place-items-center text-muted-foreground hover:text-destructive">
+                <X className="h-4 w-4" />
+              </button>
+            </li>
+          ))}
+          {total > 0 && <li className="px-1 text-xs text-muted-foreground">{t.about(n(Math.round(total)))}</li>}
+        </ul>
+      )}
     </div>
   );
 }

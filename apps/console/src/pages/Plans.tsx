@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Tags, Plus, Save, Archive, Users, Monitor, Store, X } from 'lucide-react';
-import { platformApi, type ShopPlan as Plan } from '../api';
+import { platformApi, PLAN_FEATURES, type ShopPlan as Plan, type PlanFeatures } from '../api';
 import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
 
@@ -35,6 +35,7 @@ const EMPTY = {
     shopUsers: null as number | null,
     outlets: null as number | null,
   },
+  features: { onlineOrders: false } as PlanFeatures,
 };
 
 export default function Plans() {
@@ -215,6 +216,19 @@ export default function Plans() {
               </label>
             ))}
           </div>
+          {/* What the plan switches on, beyond the counter itself. */}
+          <div className="mt-3 flex flex-wrap gap-4">
+            {PLAN_FEATURES.map((f) => (
+              <label key={f.key} className="flex items-center gap-2 text-sm" title={f.description}>
+                <input
+                  type="checkbox"
+                  checked={draft.features[f.key]}
+                  onChange={(e) => setDraft({ ...draft, features: { ...draft.features, [f.key]: e.target.checked } })}
+                />
+                {f.label}
+              </label>
+            ))}
+          </div>
           <button className="btn mt-3" onClick={() => void create()} disabled={busy === 'new'}>
             <Save className="h-4 w-4" /> Create
           </button>
@@ -244,6 +258,11 @@ export default function Plans() {
                       <th title="Branches the price covers, and each one beyond at the extra price">Branches incl. · per extra</th>
                       {LIMITS.map((l) => (
                         <th key={l.key}>{l.label}</th>
+                      ))}
+                      {PLAN_FEATURES.map((f) => (
+                        <th key={f.key} title={f.description}>
+                          {f.label}
+                        </th>
                       ))}
                       <th />
                     </tr>
@@ -336,6 +355,19 @@ export default function Plans() {
                                 }
                               }}
                             />
+                          </td>
+                        ))}
+                        {PLAN_FEATURES.map((f) => (
+                          <td key={f.key}>
+                            <label className="inline-flex items-center gap-1.5 text-sm">
+                              <input
+                                type="checkbox"
+                                checked={!!p.features?.[f.key]}
+                                disabled={busy === p.id}
+                                onChange={(e) => save(p.id, { features: { [f.key]: e.target.checked } })}
+                              />
+                              <span className="text-xs text-muted-foreground">{p.features?.[f.key] ? 'included' : 'not included'}</span>
+                            </label>
                           </td>
                         ))}
                         <td>

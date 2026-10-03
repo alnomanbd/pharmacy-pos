@@ -1962,6 +1962,12 @@ const bn: Record<string, string> = {
   'Set it up': 'চালু করুন',
   'Not now': 'এখন না',
   'Phone & alerts': 'ফোন ও অ্যালার্ট',
+  /* ---- online orders by plan ---- */
+  'Customers order from your own link — typed, picked from your list, or a photo of the prescription — for pickup or delivery. Not included in your plan.': 'কাস্টমাররা আপনার নিজের লিংক থেকে অর্ডার করেন — লিখে, তালিকা থেকে বেছে, বা প্রেসক্রিপশনের ছবি দিয়ে — দোকান থেকে নেওয়া বা হোম ডেলিভারি। আপনার প্ল্যানে এটি নেই।',
+  'See the plans': 'প্ল্যানগুলো দেখুন',
+  'Their list': 'তাদের তালিকা',
+  'typed': 'লিখে দেওয়া',
+  'box': 'বক্স',
 };
 
 export const useT = makeUseT(bn);

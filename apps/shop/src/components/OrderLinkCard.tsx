@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import QRCode from 'qrcode';
-import { Copy, Download, Loader2, MessageCircle, RefreshCw, ShoppingBag } from 'lucide-react';
+import { Copy, Download, Loader2, Lock, MessageCircle, RefreshCw, ShoppingBag } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { onlineOrdersApi, type OnlineOrderSettings } from '../api';
 import { useToast } from '@dawai/shared/components/Toast';
 import { useT, useUiLang, bnNumerals } from '../i18n/ui';
@@ -48,7 +49,30 @@ export default function OrderLinkCard() {
   };
 
   if (!s) return null;
-  const share = `https://wa.me/?text=${encodeURIComponent(
+
+  /* Not on this shop's plan: say so, and where it can be had — rather than a switch that refuses. */
+  if (s.allowed === false) {
+    return (
+      <section id="set-orders" ref={box} className="card mb-0 scroll-mt-4">
+        <div className="flex items-start gap-3">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-muted text-muted-foreground">
+            <Lock className="h-5 w-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h3 className="mb-0">{t('Online orders')}</h3>
+            <p className="text-sm text-muted-foreground">
+              {t('Customers order from your own link — typed, picked from your list, or a photo of the prescription — for pickup or delivery. Not included in your plan.')}
+            </p>
+            <Link to="/subscription" className="btn mt-3 h-9">
+              {t('See the plans')}
+            </Link>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  const share =`https://wa.me/?text=${encodeURIComponent(
     lang === 'bn' ? `এখন থেকে ঘরে বসেই ঔষধ অর্ডার করুন: ${url}` : `Order your medicines from us online: ${url}`,
   )}`;
 

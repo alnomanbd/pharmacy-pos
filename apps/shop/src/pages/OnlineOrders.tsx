@@ -183,7 +183,9 @@ function OrderCard({
           </span>
         </div>
         <p className="mt-1 truncate text-sm font-semibold">{o.customerName}</p>
-        <p className="line-clamp-2 text-xs text-muted-foreground">{o.items || t('Prescription photo')}</p>
+        <p className="line-clamp-2 text-xs text-muted-foreground">
+          {o.lines?.length ? o.lines.map((l) => `${l.name} ×${l.qty}`).join(', ') : o.items || t('Prescription photo')}
+        </p>
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
           {o.photos.length > 0 && (
             <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold">
@@ -244,6 +246,8 @@ function OrderDetail({
   onSaved: (o: OnlineOrder) => void;
 }) {
   const t = useT();
+  const lang = useUiLang();
+  const num = (v: number) => (lang === 'bn' ? bnNumerals(String(v)) : String(v));
   const { toast } = useToast();
   const [billNo, setBillNo] = useState(o.billNo);
   const [busy, setBusy] = useState(false);
@@ -301,7 +305,28 @@ function OrderDetail({
         )}
       </div>
 
-      {/* ---- what ---- */}
+      {/* ---- what they picked from the list ---- */}
+      {(o.lines?.length ?? 0) > 0 && (
+        <div className="mt-3">
+          <p className="text-xs font-semibold text-muted-foreground">{t('Their list')}</p>
+          <ul className="mt-1 divide-y divide-border rounded-xl border border-border">
+            {o.lines!.map((l, i) => (
+              <li key={i} className="flex items-center gap-3 px-3 py-2 text-sm">
+                <span className="min-w-0 flex-1 truncate font-medium">
+                  {l.name}
+                  {!l.product && <span className="ml-1.5 text-[11px] font-normal text-amber-600">{t('typed')}</span>}
+                </span>
+                <span className="shrink-0 font-semibold tabular-nums">
+                  {num(l.qty)} {t(l.unit === 'piece' ? 'pc' : l.unit)}
+                </span>
+                {l.price > 0 && <span className="w-16 shrink-0 text-right text-xs tabular-nums text-muted-foreground">৳{num(Math.round(l.price * l.qty))}</span>}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* ---- what they wrote ---- */}
       {o.items && (
         <div className="mt-3">
           <div className="flex items-center justify-between">

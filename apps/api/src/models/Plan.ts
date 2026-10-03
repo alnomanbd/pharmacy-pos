@@ -40,6 +40,10 @@ const schema = new Schema(
     extraBranchPrice: { type: Number, default: 0, min: 0 },
     currency: { type: String, default: 'BDT' },
     limits: { type: limitSchema, default: () => ({}) },
+    /** What the plan switches on beyond the counter itself — see plan.service#FEATURES. */
+    features: {
+      onlineOrders: { type: Boolean, default: false },
+    },
     /** The plan a new shop starts on; there is exactly one. */
     isTrial: { type: Boolean, default: false },
     trialDays: { type: Number, default: 14 },

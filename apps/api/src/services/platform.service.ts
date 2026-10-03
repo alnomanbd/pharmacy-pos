@@ -19,6 +19,9 @@ import {
   assertPlanExists,
   OVERRIDABLE_AXES,
   type LimitOverrides,
+  orgFeatures,
+  FEATURE_KEYS,
+  type FeatureOverrides,
 } from './plan.service.js';
 import { branchCount } from './branch.service.js';
 import { containsRegex } from '../utils/search.js';
@@ -464,6 +467,7 @@ export interface PlanUsage {
   outlets: SeatUsage;
   terminals: SeatUsage;
   shopUsers: SeatUsage;
+  features: Awaited<ReturnType<typeof orgFeatures>>;
 }
 
 /**
@@ -488,6 +492,7 @@ export async function planUsage(orgId: string): Promise<PlanUsage> {
     outlets: seatUsage(limits.outlets, branches, limits.overridden.outlets, planLimits.outlets),
     terminals: seatUsage(limits.terminals, counters, limits.overridden.terminals, planLimits.terminals),
     shopUsers: seatUsage(limits.shopUsers, users, limits.overridden.shopUsers, planLimits.shopUsers),
+    features: await orgFeatures(orgId),
   };
 }
 
@@ -498,6 +503,17 @@ export async function planUsage(orgId: string): Promise<PlanUsage> {
  * Nothing already in use is switched off when a ceiling is lowered below it —
  * the shop simply cannot add another until it is back under.
  */
+/** Gives a plan feature to one shop, takes it away, or (`null`) puts it back on the plan. */
+export async function updateFeatureOverrides(orgId: string, overrides: FeatureOverrides) {
+  const org = await OrganizationModel.findById(orgId);
+  if (!org) throw notFound('Shop');
+  const read = () => Object.fromEntries(FEATURE_KEYS.map((k) => [k, (org.get(`featureOverrides.${k}`) as boolean | null) ?? null]));
+  const before = read();
+  for (const k of FEATURE_KEYS) if (overrides[k] !== undefined) org.set(`featureOverrides.${k}`, overrides[k]);
+  await org.save();
+  return { organization: org.toObject(), before, after: read(), features: await orgFeatures(orgId) };
+}
+
 export async function updateLimitOverrides(orgId: string, overrides: LimitOverrides) {
   const org = await OrganizationModel.findById(orgId);
   if (!org) throw notFound('Shop');

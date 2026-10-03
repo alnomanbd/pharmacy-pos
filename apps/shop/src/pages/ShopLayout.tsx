@@ -265,12 +265,18 @@ export default function ShopLayout() {
   }, [pathname]);
   /* New online orders, asked every half minute: a customer is waiting on each. */
   const [newOrders, setNewOrders] = useState(0);
+  /* Online orders come with some plans only; off the plan, the menu does not offer them. */
+  const [ordersAllowed, setOrdersAllowed] = useState(true);
   useEffect(() => {
     let live = true;
     const ask = () =>
       onlineOrdersApi
         .count()
-        .then((d) => live && setNewOrders(d.count))
+        .then((d) => {
+          if (!live) return;
+          setNewOrders(d.count);
+          setOrdersAllowed(d.allowed !== false);
+        })
         .catch(() => undefined);
     void ask();
     const tick = window.setInterval(() => document.visibilityState === 'visible' && void ask(), 30_000);
@@ -288,7 +294,9 @@ export default function ShopLayout() {
   const owns = user?.role === 'admin';
   const groups = GROUPS.map((g) => ({
     ...g,
-    links: g.links.filter((l) => (!l.adminOnly || runsTheShop) && (!l.ownerOnly || owns)),
+    links: g.links.filter(
+      (l) => (!l.adminOnly || runsTheShop) && (!l.ownerOnly || owns) && (l.to !== '/online-orders' || ordersAllowed),
+    ),
   })).filter((g) => g.links.length > 0);
 
   /* The phone bar is flat: four tabs and a More sheet. Groups are a shape for a

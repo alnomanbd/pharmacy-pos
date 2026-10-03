@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Check, Sparkles, ArrowRight, Minus, MonitorSmartphone, Users, MapPin } from 'lucide-react';
+import { Check, Sparkles, ArrowRight, Minus, MonitorSmartphone, Users, MapPin, ShoppingBag } from 'lucide-react';
 import { siteConfig } from '@/lib/site';
 import { chargedMonths, useSiteSettings } from '@/lib/live';
 import { translate, tItems, type Lang } from '@/i18n/dictionary';
@@ -47,6 +47,8 @@ export type Live = {
   includedBranches?: number;
   extraBranchPrice?: number;
   limits: { outlets: number | null; terminals: number | null; shopUsers: number | null };
+  /** What the plan switches on beyond the counter, as set in the console's Plans page. */
+  features?: { onlineOrders?: boolean };
 };
 
 /*
@@ -56,9 +58,9 @@ export type Live = {
  * changed here too, without a rebuild.
  */
 const FALLBACK: Live[] = [
-  { key: 'trial', price: 0, includedBranches: 1, extraBranchPrice: 0, limits: { outlets: 1, terminals: 1, shopUsers: 2 } },
-  { key: 'basic', price: 1500, includedBranches: 1, extraBranchPrice: 0, limits: { outlets: 1, terminals: 1, shopUsers: 2 } },
-  { key: 'plus', price: 3000, includedBranches: 1, extraBranchPrice: 0, limits: { outlets: 1, terminals: 5, shopUsers: 10 } },
+  { key: 'trial', price: 0, includedBranches: 1, extraBranchPrice: 0, limits: { outlets: 1, terminals: 1, shopUsers: 2 }, features: { onlineOrders: true } },
+  { key: 'basic', price: 1500, includedBranches: 1, extraBranchPrice: 0, limits: { outlets: 1, terminals: 1, shopUsers: 2 }, features: { onlineOrders: false } },
+  { key: 'plus', price: 3000, includedBranches: 1, extraBranchPrice: 0, limits: { outlets: 1, terminals: 5, shopUsers: 10 }, features: { onlineOrders: true } },
 ];
 
 let cache: Live[] | null = null;
@@ -118,6 +120,10 @@ function limitLines(lang: Lang, p: Live): { icon: typeof Users; text: string }[]
     { icon: MonitorSmartphone, text: counters },
     { icon: Users, text: users },
     { icon: MapPin, text: branches },
+    /* Only where the plan includes it: a card should say what you get, not list what you do not. */
+    ...(p.features?.onlineOrders
+      ? [{ icon: ShoppingBag, text: bn ? 'অনলাইন অর্ডার ও হোম ডেলিভারি' : 'Online orders and home delivery' }]
+      : []),
   ];
 }
 

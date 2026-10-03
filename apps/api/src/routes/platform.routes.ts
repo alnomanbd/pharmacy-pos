@@ -212,6 +212,7 @@ const planSchema = z.object({
   extraBranchPrice: z.number().min(0).max(10_000_000).optional(),
   currency: z.string().trim().max(8).optional(),
   limits: limitsSchema.optional(),
+  features: z.object({ onlineOrders: z.boolean().optional() }).strict().optional(),
   isTrial: z.boolean().optional(),
   trialDays: z.number().int().min(1).max(365).optional(),
   isActive: z.boolean().optional(),
@@ -363,6 +364,26 @@ router.patch(
     );
     return { limitOverrides: result.after, usage: result.usage };
   }, 'Limits updated'),
+);
+
+/**
+ * A plan feature given to or taken from one shop — `true` or `false` — or put
+ * back on its plan (`null`). Money, like a plan change, so behind `shops.plan`.
+ */
+router.patch(
+  '/organizations/:id/features',
+  requirePermission('shops.plan'),
+  validate(z.object({ featureOverrides: z.object({ onlineOrders: z.boolean().nullable().optional() }).strict() }).strict()),
+  handle(async (req) => {
+    const result = await platform.updateFeatureOverrides(req.params.id, req.body.featureOverrides);
+    await audit(
+      req,
+      'organization.platform_features',
+      { model: 'Organization', id: req.params.id, label: result.organization.name },
+      { before: { featureOverrides: result.before }, after: { featureOverrides: result.after } },
+    );
+    return { features: result.features };
+  }, 'Features updated'),
 );
 
 /**

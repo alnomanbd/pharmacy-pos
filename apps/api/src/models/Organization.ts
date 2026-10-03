@@ -83,6 +83,13 @@ const schema = new Schema(
      * and how an operator sells a Plus shop its sixth till. Read through
      * `plan.service#effectiveLimits`, never directly.
      */
+    /**
+     * A plan feature given to or taken from this one shop, whatever its plan
+     * says. `null` follows the plan. Read through plan.service#orgFeatures.
+     */
+    featureOverrides: {
+      onlineOrders: { type: Boolean, default: null },
+    },
     limitOverrides: {
       outlets: { type: Number, default: null },
       terminals: { type: Number, default: null },

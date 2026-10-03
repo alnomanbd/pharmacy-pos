@@ -147,6 +147,7 @@ const PLATFORM_ACTIONS: readonly string[] = [
   'organization.platform_create',
   'organization.platform_update',
   'organization.platform_profile',
+  'organization.platform_features',
   'user.platform_update',
   'user.platform_password',
 

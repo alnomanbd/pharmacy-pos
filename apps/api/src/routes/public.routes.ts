@@ -13,7 +13,7 @@ import { publicSiteSettings, liveStats, getSiteSettings } from '../services/site
 import { publishedList, publishedOne } from '../services/help.service.js';
 import { startDemo } from '../services/impersonation.service.js';
 import multer from 'multer';
-import { publicShop, placeOrder } from '../services/onlineOrder.service.js';
+import { publicShop, placeOrder, publicMedicines } from '../services/onlineOrder.service.js';
 import { bkashCallback } from '../services/wallet.service.js';
 import { recordClientError } from '../services/clientError.service.js';
 import { assertAllowed } from '../services/storage.service.js';
@@ -229,6 +229,16 @@ router.get('/order/:code', async (req, res, next) => {
   }
 });
 
+/* The shop's list, searched as the customer types. Quick, so held per minute rather than per hour. */
+const medicineSearchLimiter = rateLimit({ windowMs: 60 * 1000, max: isProduction ? 60 : 600, standardHeaders: true, legacyHeaders: false });
+router.get('/order/:code/medicines', medicineSearchLimiter, async (req, res, next) => {
+  try {
+    ok(res, await publicMedicines(String(req.params.code), String(req.query.q ?? '')));
+  } catch (err) {
+    next(err);
+  }
+});
+
 /*
  * A crash in the shop app or the console, reported by the browser — see
  * clientError.service. No sign-in needed (a crash can happen before one), so
@@ -267,6 +277,30 @@ const orderSchema = z.object({
   items: z.string().trim().max(2000).optional(),
   note: z.string().trim().max(500).optional(),
   branchId: z.string().trim().max(40).optional(),
+  /* Picked lines arrive as JSON in one form field, beside the photos. */
+  lines: z
+    .string()
+    .max(20_000)
+    .optional()
+    .transform((v, ctx) => {
+      if (!v) return undefined;
+      try {
+        return z
+          .array(
+            z.object({
+              productId: z.string().max(40).optional(),
+              name: z.string().trim().max(160),
+              qty: z.number().int().min(1).max(1000),
+              unit: z.enum(['piece', 'strip', 'box']).optional(),
+            }),
+          )
+          .max(30)
+          .parse(JSON.parse(v));
+      } catch {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'The list of medicines could not be read' });
+        return z.NEVER;
+      }
+    }),
 });
 
 /** A customer's order, with up to three photos of the prescription. */

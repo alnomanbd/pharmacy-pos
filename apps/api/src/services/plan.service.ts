@@ -21,6 +21,21 @@ export interface PlanLimits {
 
 const AXES = ['outlets', 'terminals', 'shopUsers'] as const;
 
+/**
+ * What a plan switches on beyond the counter itself. Not every shop wants
+ * each of these, so each is sold with a plan — set on the plan in the
+ * console's Plans page — and can be given to or taken from one shop on its
+ * page there. Add one here and it appears in both places.
+ */
+export const FEATURES = [
+  { key: 'onlineOrders', label: 'Online orders', description: 'A link and QR for customers to order for pickup or home delivery' },
+] as const;
+export type FeatureKey = (typeof FEATURES)[number]['key'];
+export const FEATURE_KEYS = FEATURES.map((f) => f.key) as FeatureKey[];
+export type PlanFeatures = Record<FeatureKey, boolean>;
+/** One shop's own answer per feature; `null` (or absent) follows its plan. */
+export type FeatureOverrides = Partial<Record<FeatureKey, boolean | null>>;
+
 export interface PlanShape {
   id: string;
   key: string;
@@ -33,11 +48,17 @@ export interface PlanShape {
   extraBranchPrice: number;
   currency: string;
   limits: PlanLimits;
+  features: PlanFeatures;
   isTrial: boolean;
   trialDays: number;
   isActive: boolean;
   sortOrder: number;
 }
+
+const featuresOf = (f: unknown): PlanFeatures => {
+  const v = (f ?? {}) as Partial<PlanFeatures>;
+  return Object.fromEntries(FEATURE_KEYS.map((k) => [k, v[k] === true])) as PlanFeatures;
+};
 
 const shape = (p: Record<string, unknown>): PlanShape => {
   const limits = (p.limits ?? {}) as Partial<PlanLimits>;
@@ -55,6 +76,7 @@ const shape = (p: Record<string, unknown>): PlanShape => {
       terminals: limits.terminals ?? null,
       shopUsers: limits.shopUsers ?? null,
     },
+    features: featuresOf(p.features),
     isTrial: Boolean(p.isTrial),
     trialDays: Number(p.trialDays ?? 14),
     isActive: p.isActive !== false,
@@ -149,6 +171,41 @@ export function limitMessage(axis: keyof PlanLimits, limit: number, planName: st
           ? 'one branch'
           : `${limit} branches`;
   return `${planName} includes ${what}. Upgrade the plan to add more.`;
+}
+
+/**
+ * The features in force for one shop: its plan's, with the shop's own answer
+ * replacing the plan's where one is set. Pure, so the precedence is tested.
+ */
+export function effectiveFeatures(plan: PlanFeatures, overrides?: FeatureOverrides | null) {
+  const on = { ...plan };
+  const overridden = Object.fromEntries(FEATURE_KEYS.map((k) => [k, false])) as Record<FeatureKey, boolean>;
+  for (const k of FEATURE_KEYS) {
+    const v = overrides?.[k];
+    if (typeof v === 'boolean') {
+      on[k] = v;
+      overridden[k] = true;
+    }
+  }
+  return { on, overridden, plan };
+}
+
+/** One shop's features, its plan and its overrides loaded. A plan that no longer resolves falls back to the trial's. */
+export async function orgFeatures(orgId: unknown) {
+  const org = await OrganizationModel.findById(orgId).select('plan featureOverrides').lean();
+  const plan = (await planByKey(org?.plan || 'trial')) ?? (await trialPlan());
+  return effectiveFeatures(plan?.features ?? featuresOf({}), (org?.featureOverrides ?? null) as FeatureOverrides | null);
+}
+
+export async function orgHasFeature(orgId: unknown, key: FeatureKey) {
+  return (await orgFeatures(orgId)).on[key];
+}
+
+/** The refusal for a shop whose plan does not include a feature. */
+export async function assertOrgFeature(orgId: unknown, key: FeatureKey) {
+  if (await orgHasFeature(orgId, key)) return;
+  const label = FEATURES.find((f) => f.key === key)?.label ?? key;
+  throw badRequest(`${label} are not on your plan. Upgrade from Subscription, or ask Dawai support to switch them on.`);
 }
 
 /** The axes a single shop may be given its own ceiling on — branches included, for a negotiated chain. */
@@ -266,6 +323,7 @@ export interface PublicPlan {
   price: number;
   currency: string;
   limits: PlanLimits;
+  features: PlanFeatures;
   isTrial: boolean;
   trialDays: number;
   sortOrder: number;
@@ -295,6 +353,7 @@ export interface PlanInput {
   extraBranchPrice?: number;
   currency?: string;
   limits?: Partial<PlanLimits>;
+  features?: Partial<PlanFeatures>;
   isTrial?: boolean;
   trialDays?: number;
   isActive?: boolean;
@@ -335,6 +394,11 @@ export async function updatePlan(id: string, input: PlanInput) {
   if (input.limits) {
     for (const axis of AXES) {
       if (input.limits[axis] !== undefined) plan.set(`limits.${axis}`, input.limits[axis]);
+    }
+  }
+  if (input.features) {
+    for (const k of FEATURE_KEYS) {
+      if (input.features[k] !== undefined) plan.set(`features.${k}`, input.features[k]);
     }
   }
 

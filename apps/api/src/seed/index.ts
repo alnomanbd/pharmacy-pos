@@ -90,6 +90,8 @@ export async function seedPlans() {
       trialDays: 14,
       sortOrder: 0,
       limits: { outlets: 1, terminals: 1, shopUsers: 2 },
+      // The trial shows the whole product, online orders included.
+      features: { onlineOrders: true },
     },
     {
       key: 'basic',
@@ -98,6 +100,7 @@ export async function seedPlans() {
       price: 1500,
       sortOrder: 1,
       limits: { outlets: 1, terminals: 1, shopUsers: 2 },
+      features: { onlineOrders: false },
     },
     {
       key: 'plus',
@@ -106,6 +109,7 @@ export async function seedPlans() {
       price: 3000,
       sortOrder: 2,
       limits: { outlets: 1, terminals: 5, shopUsers: 10 },
+      features: { onlineOrders: true },
     },
   ];
 

@@ -394,6 +394,14 @@ const taka = (v: number) => `৳ ${n(v.toLocaleString('en-IN'))}`;
                     {p.limits.terminals !== null && `${n(p.limits.terminals)} ${t('counter(s)')}`}
                     {p.limits.shopUsers !== null && ` · ${n(p.limits.shopUsers)} ${t('staff')}`}
                   </span>
+                  <span
+                    className={`mt-1 block text-[11px] font-medium ${
+                      p.features?.onlineOrders ? 'text-emerald-700 dark:text-emerald-400' : 'text-muted-foreground line-through'
+                    }`}
+                  >
+                    {p.features?.onlineOrders ? '✓ ' : ''}
+                    {t('Online orders')}
+                  </span>
                 </button>
               );
             })}

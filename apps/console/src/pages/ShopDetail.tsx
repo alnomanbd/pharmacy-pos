@@ -27,6 +27,7 @@ import ShopNotesCard from '../components/ShopNotesCard';
 import ShopSetupCard from '../components/ShopSetupCard';
 import ShopBranchesCard from '../components/ShopBranchesCard';
 import ShopAgentCard from '../components/ShopAgentCard';
+import ShopFeaturesCard from '../components/ShopFeaturesCard';
 import ShopLimitsCard, { signupSummary } from '../components/ShopLimitsCard';
 import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock, Spinner } from '@dawai/shared/components/Spinner';
@@ -296,6 +297,7 @@ export default function ShopDetail() {
       )}
 
       <ShopLimitsCard shopId={id} usage={plan} canEdit={canPlan} onSaved={load} />
+      <ShopFeaturesCard shopId={id} usage={plan} canEdit={canPlan} onSaved={load} />
       <ShopBranchesCard shopId={id} />
       <ShopSetupCard shopId={id} />
       {canAgents && (

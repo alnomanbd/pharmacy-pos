@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import { Schema, model, Types } from 'mongoose';
-import { BranchModel, SaleModel, ShopSettingsModel } from '../models/index.js';
+import { BranchModel, SaleModel, ShopSettingsModel, ShopProductModel, StockBatchModel } from '../models/index.js';
+import { assertOrgFeature, orgHasFeature } from './plan.service.js';
 import { badRequest, notFound } from '../utils/AppError.js';
 import { storage } from './storage.service.js';
 import { sendSms } from '../integrations/sms.js';
@@ -17,6 +18,10 @@ import type { Actor } from './shop.service.js';
  * the shop's app with a count on the menu; the counter confirms it, bills it
  * in the POS as usual, and moves it along. The customer gets an SMS at each
  * step, so nobody has to ring to ask "is it ready?".
+ *
+ * Sold with a plan: a shop whose plan (or its own setting in the console)
+ * does not include online orders cannot switch them on, and its link answers
+ * "not found".
  *
  * Nothing about an order touches stock or money — the bill does that, rung up
  * at the counter like any other. The order only says what was asked for, and
@@ -46,6 +51,22 @@ const schema = new Schema(
     customerPhone: { type: String, required: true, trim: true, maxlength: 20 },
     address: { type: String, default: '', trim: true, maxlength: 300 },
     mode: { type: String, enum: ['pickup', 'delivery'], default: 'pickup' },
+    /** What they picked from the shop's list, with how many. */
+    lines: {
+      type: [
+        new Schema(
+          {
+            product: { type: Schema.Types.ObjectId, ref: 'ShopProduct', default: null },
+            name: { type: String, required: true, trim: true, maxlength: 160 },
+            qty: { type: Number, required: true, min: 1, max: 1000 },
+            unit: { type: String, default: 'strip', enum: ['piece', 'strip', 'box'] },
+            price: { type: Number, default: 0 },
+          },
+          { _id: false },
+        ),
+      ],
+      default: [],
+    },
     /** What they asked for, in their own words. */
     items: { type: String, default: '', trim: true, maxlength: 2000 },
     note: { type: String, default: '', trim: true, maxlength: 500 },
@@ -75,6 +96,8 @@ export const OnlineOrderModel = model('OnlineOrder', schema);
 /* ------------------------------------------------------------------ */
 
 export interface OrderSettings {
+  /** Whether the shop's plan (or its own setting in the console) includes online orders. */
+  allowed?: boolean;
   enabled: boolean;
   code: string;
   pickup: boolean;
@@ -103,18 +126,20 @@ export async function orderSettings(org: string): Promise<OrderSettings> {
     code = newCode();
     await ShopSettingsModel.updateOne({ organization: org }, { $set: { 'onlineOrders.code': code } }, { upsert: true });
   }
-  return { ...DEFAULTS, ...(s?.onlineOrders ?? {}), code };
+  return { ...DEFAULTS, ...(s?.onlineOrders ?? {}), code, allowed: await orgHasFeature(org, 'onlineOrders') };
 }
 
-export async function saveOrderSettings(org: string, input: Partial<Omit<OrderSettings, 'code'>>) {
+export async function saveOrderSettings(org: string, input: Partial<Omit<OrderSettings, 'code' | 'allowed'>>) {
+  if (input.enabled) await assertOrgFeature(org, 'onlineOrders');
   const set: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(input)) if (v !== undefined) set[`onlineOrders.${k}`] = v;
+  for (const [k, v] of Object.entries(input)) if (v !== undefined && k !== 'allowed') set[`onlineOrders.${k}`] = v;
   await ShopSettingsModel.updateOne({ organization: org }, { $set: set }, { upsert: true });
   return orderSettings(org);
 }
 
 /** A fresh link: the old one stops working at once. */
 export async function newOrderLink(org: string) {
+  await assertOrgFeature(org, 'onlineOrders');
   await ShopSettingsModel.updateOne({ organization: org }, { $set: { 'onlineOrders.code': newCode() } }, { upsert: true });
   return orderSettings(org);
 }
@@ -128,7 +153,59 @@ async function shopByCode(code: string) {
     .select('organization shopName shopNameBn address phone onlineOrders')
     .lean<{ organization: Types.ObjectId; shopName?: string; shopNameBn?: string; address?: string; phone?: string; onlineOrders?: Partial<OrderSettings> }>();
   if (!s || !s.onlineOrders?.enabled) throw notFound('Shop');
+  /* Off the plan: the link goes dead, whatever the shop's own switch says. */
+  if (!(await orgHasFeature(s.organization, 'onlineOrders'))) throw notFound('Shop');
   return s;
+}
+
+const escapeRx = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/**
+ * The shop's own list, searched from the order page.
+ *
+ * Only what the shop sells, by name, with its price per strip (or per piece
+ * for something sold singly) and whether any is on the shelf — never the
+ * quantity, the cost, or anything else a competitor would like to know.
+ */
+export async function publicMedicines(code: string, q: string) {
+  const s = await shopByCode(code);
+  const term = q.trim().slice(0, 40);
+  if (term.length < 2) return [];
+  const products = await ShopProductModel.find({
+    organization: s.organization,
+    isActive: { $ne: false },
+    deletedAt: null,
+    name: new RegExp(`^${escapeRx(term)}|\\b${escapeRx(term)}`, 'i'),
+  })
+    .select('name strength dosageForm piecesPerStrip mrpPerPiece')
+    .sort({ name: 1 })
+    .limit(12)
+    .lean();
+  const now = new Date();
+  const stock = await StockBatchModel.aggregate<{ _id: Types.ObjectId; qty: number }>([
+    {
+      $match: {
+        organization: s.organization,
+        product: { $in: products.map((p) => p._id) },
+        qtyOnHand: { $gt: 0 },
+        $or: [{ expiry: null }, { expiry: { $gte: now } }],
+      },
+    },
+    { $group: { _id: '$product', qty: { $sum: '$qtyOnHand' } } },
+  ]);
+  const onShelf = new Set(stock.filter((x) => x.qty > 0).map((x) => String(x._id)));
+  return products.map((p) => {
+    const perStrip = (p.piecesPerStrip ?? 1) > 1;
+    return {
+      id: String(p._id),
+      name: p.name,
+      strength: p.strength ?? '',
+      form: p.dosageForm ?? '',
+      unit: perStrip ? ('strip' as const) : ('piece' as const),
+      price: Math.round((p.mrpPerPiece ?? 0) * (perStrip ? p.piecesPerStrip ?? 1 : 1) * 100) / 100,
+      inStock: onShelf.has(String(p._id)),
+    };
+  });
 }
 
 /** What the order page shows before anybody types: the shop, and how it delivers. */
@@ -159,8 +236,42 @@ export interface PlaceOrder {
   address?: string;
   mode: 'pickup' | 'delivery';
   items?: string;
+  /** Picked from the shop's list (or typed and added as a line). */
+  lines?: { productId?: string; name: string; qty: number; unit?: 'piece' | 'strip' | 'box' }[];
   note?: string;
   branchId?: string;
+}
+
+/**
+ * The lines as the shop will read them. A picked product's name and price
+ * come from the shop's own list, not from what the browser sent.
+ */
+async function linesFor(org: Types.ObjectId, given: PlaceOrder['lines']) {
+  const list = (given ?? []).slice(0, 30);
+  const ids = list.map((l) => l.productId).filter((id): id is string => !!id && Types.ObjectId.isValid(id));
+  const products = await ShopProductModel.find({ _id: { $in: ids }, organization: org, deletedAt: null })
+    .select('name strength piecesPerStrip mrpPerPiece')
+    .lean();
+  const byId = new Map(products.map((p) => [String(p._id), p]));
+  return list
+    .map((l) => {
+      const p = l.productId ? byId.get(l.productId) : undefined;
+      const unit = l.unit ?? 'strip';
+      const qty = Math.max(1, Math.min(1000, Math.round(l.qty || 1)));
+      if (p) {
+        const pieces = unit === 'piece' ? 1 : p.piecesPerStrip ?? 1;
+        return {
+          product: p._id,
+          name: [p.name, p.strength].filter(Boolean).join(' ').slice(0, 160),
+          qty,
+          unit,
+          price: Math.round((p.mrpPerPiece ?? 0) * (unit === 'box' ? 0 : pieces) * 100) / 100,
+        };
+      }
+      const name = (l.name ?? '').trim().slice(0, 160);
+      return name ? { product: null, name, qty, unit, price: 0 } : null;
+    })
+    .filter((x): x is NonNullable<typeof x> => !!x);
 }
 
 async function nextNumber(org: Types.ObjectId) {
@@ -175,7 +286,10 @@ export async function placeOrder(code: string, input: PlaceOrder, files: { buffe
   if (input.mode === 'delivery' && !o.delivery) throw badRequest('This shop does not deliver — choose pickup.');
   if (input.mode === 'pickup' && !o.pickup) throw badRequest('This shop only delivers — add your address.');
   if (input.mode === 'delivery' && !input.address?.trim()) throw badRequest('Where should it be delivered?');
-  if (!input.items?.trim() && files.length === 0) throw badRequest('Type what you need, or add a photo of the prescription.');
+  const lines = await linesFor(s.organization, input.lines);
+  if (!input.items?.trim() && files.length === 0 && lines.length === 0) {
+    throw badRequest('Pick or type what you need, or add a photo of the prescription.');
+  }
 
   let branch: Types.ObjectId | null = null;
   if (input.branchId && Types.ObjectId.isValid(input.branchId)) {
@@ -206,6 +320,7 @@ export async function placeOrder(code: string, input: PlaceOrder, files: { buffe
         address: input.address?.trim() ?? '',
         mode: input.mode,
         items: input.items?.trim() ?? '',
+        lines,
         note: input.note?.trim() ?? '',
         photos,
         deliveryCharge: input.mode === 'delivery' ? o.deliveryCharge : 0,
@@ -218,7 +333,9 @@ export async function placeOrder(code: string, input: PlaceOrder, files: { buffe
       );
       void pushToShop(s.organization, 'orders', {
         title: `New order ${made.number}`,
-        body: `${made.customerName} · ${made.mode === 'delivery' ? 'delivery' : 'pickup'}${made.items ? ` — ${made.items.split(/\r?\n/)[0].slice(0, 80)}` : ''}`,
+        body: `${made.customerName} · ${made.mode === 'delivery' ? 'delivery' : 'pickup'}${
+          lines.length ? ` — ${lines.map((l) => `${l.name} ×${l.qty}`).join(', ').slice(0, 90)}` : made.items ? ` — ${made.items.split(/\r?\n/)[0].slice(0, 80)}` : ''
+        }`,
         url: '/online-orders',
         tag: `order-${made.number}`,
       });
@@ -248,7 +365,8 @@ export async function listOrders(actor: Actor, opts: { status?: string } = {}) {
 
 /** How many are waiting for somebody to look — the badge on the menu. */
 export async function newCount(actor: Actor) {
-  return { count: await OnlineOrderModel.countDocuments({ organization: actor.org, status: 'new', ...branchMatch(actor.branch) }) };
+  if (!(await orgHasFeature(actor.org, 'onlineOrders'))) return { count: 0, allowed: false };
+  return { allowed: true, count: await OnlineOrderModel.countDocuments({ organization: actor.org, status: 'new', ...branchMatch(actor.branch) }) };
 }
 
 const SMS: Partial<Record<OrderStatus, (shop: string, n: string, extra: string) => string>> = {

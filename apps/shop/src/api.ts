@@ -1317,6 +1317,8 @@ export interface OnlineOrder {
   address: string;
   mode: 'pickup' | 'delivery';
   items: string;
+  /** What they picked from the shop's list. */
+  lines?: { product?: string | null; name: string; qty: number; unit: 'piece' | 'strip' | 'box'; price: number }[];
   note: string;
   photos: string[];
   status: OnlineOrderStatus;
@@ -1329,6 +1331,8 @@ export interface OnlineOrder {
 }
 
 export interface OnlineOrderSettings {
+  /** Whether the shop's plan includes online orders; off, the switch cannot be turned on. */
+  allowed?: boolean;
   enabled: boolean;
   code: string;
   pickup: boolean;
@@ -1355,7 +1359,8 @@ export const walletApi = {
 
 export const onlineOrdersApi = {
   list: (status = 'open') => getData<OnlineOrder[]>(api.get('/till/online-orders', { params: { status } })),
-  count: () => getData<{ count: number }>(api.get('/till/online-orders/count')),
+  /** `allowed: false` when the shop's plan does not include online orders. */
+  count: () => getData<{ count: number; allowed?: boolean }>(api.get('/till/online-orders/count')),
   update: (id: string, payload: { status?: OnlineOrderStatus; billNo?: string; reason?: string }) =>
     getData<OnlineOrder>(api.patch(`/till/online-orders/${id}`, payload)),
   photo: async (key: string) => (await api.get('/till/online-orders/photo', { params: { key }, responseType: 'blob' })).data as Blob,
@@ -1591,6 +1596,8 @@ export interface SubscriptionPlan {
   price: number;
   currency: string;
   limits: { outlets: number | null; terminals: number | null; shopUsers: number | null };
+  /** What the plan switches on beyond the counter. */
+  features?: { onlineOrders?: boolean };
   /** What one month costs this shop on this plan, its extra branches included. */
   monthly?: { base: number; extraBranches: number; extraBranchPrice: number; extras: number; total: number };
 }

@@ -32,6 +32,20 @@ export interface ShopPlanLimits {
   shopUsers: number | null;
 }
 
+/** What a plan switches on beyond the counter. Mirrors the API's plan.service#FEATURES. */
+export type PlanFeatureKey = 'onlineOrders';
+export type PlanFeatures = Record<PlanFeatureKey, boolean>;
+export const PLAN_FEATURES: { key: PlanFeatureKey; label: string; description: string }[] = [
+  { key: 'onlineOrders', label: 'Online orders', description: 'A link and QR for customers to order for pickup or home delivery' },
+];
+
+/** One shop's features: what is on, which are its own setting, and what its plan says. */
+export interface ShopFeatures {
+  on: PlanFeatures;
+  overridden: Record<PlanFeatureKey, boolean>;
+  plan: PlanFeatures;
+}
+
 /** A plan in the catalogue — Trial, Basic, Plus. */
 export interface ShopPlan {
   id: string;
@@ -44,6 +58,7 @@ export interface ShopPlan {
   extraBranchPrice?: number;
   currency: string;
   limits: ShopPlanLimits;
+  features?: PlanFeatures;
   isTrial: boolean;
   trialDays: number;
   isActive: boolean;
@@ -106,6 +121,7 @@ export interface ShopPlanUsage {
   outlets?: SeatUsage;
   terminals: SeatUsage;
   shopUsers: SeatUsage;
+  features?: ShopFeatures;
 }
 
 /** A month of a shop's activity, counted from its sales. */
@@ -480,6 +496,9 @@ export const platformApi = {
     getData<{ limitOverrides: { terminals: number | null; shopUsers: number | null }; usage: ShopPlanUsage }>(
       api.patch(`/platform/organizations/${id}/limits`, { limitOverrides }),
     ),
+  /** Gives a plan feature to one shop (`true`), takes it away (`false`), or puts it back on the plan (`null`). Needs `shops.plan`. */
+  updateFeatures: (id: string, featureOverrides: Partial<Record<PlanFeatureKey, boolean | null>>) =>
+    getData<{ features: ShopFeatures }>(api.patch(`/platform/organizations/${id}/features`, { featureOverrides })),
   updateOrganization: (
     id: string,
     payload: { status?: OrgStatus; plan?: string; suspendedReason?: string; trialDays?: number },
