@@ -1,7 +1,7 @@
 # The Dawai API.
 #
 #   docker build -t dawai-api apps/api
-FROM node:22-alpine AS builder
+FROM node:26-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
@@ -9,7 +9,7 @@ COPY tsconfig.json ./
 COPY src ./src
 RUN npm run build
 
-FROM node:22-alpine
+FROM node:26-alpine
 WORKDIR /app
 ENV NODE_ENV=production
 # The build being run, for the System page and crash reports. Set by the Deploy workflow.
