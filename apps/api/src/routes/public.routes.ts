@@ -5,12 +5,16 @@ import * as plans from '../services/plan.service.js';
 import * as leads from '../services/lead.service.js';
 import { validate } from '../middlewares/validate.js';
 import { ok, created } from '../utils/response.js';
+import { badRequest } from '../utils/AppError.js';
 import { isProduction } from '../config/env.js';
 import * as online from '../services/onlinePayment.service.js';
 import { publicStatus } from '../services/status.service.js';
 import { publicSiteSettings, liveStats, getSiteSettings } from '../services/siteSettings.service.js';
 import { publishedList, publishedOne } from '../services/help.service.js';
 import { startDemo } from '../services/impersonation.service.js';
+import multer from 'multer';
+import { publicShop, placeOrder } from '../services/onlineOrder.service.js';
+import { assertAllowed } from '../services/storage.service.js';
 
 /**
  * The marketing site's endpoints.
@@ -207,6 +211,47 @@ router.get('/guides/:slug', async (req, res, next) => {
     }
     res.setHeader('Cache-Control', 'public, max-age=120');
     ok(res, await publishedOne(String(req.params.slug)));
+  } catch (err) {
+    next(err);
+  }
+});
+
+/* --------------------------- orders from customers --------------------------- */
+
+/** A shop's order page: its name, address and how it delivers. */
+router.get('/order/:code', async (req, res, next) => {
+  try {
+    ok(res, await publicShop(String(req.params.code)));
+  } catch (err) {
+    next(err);
+  }
+});
+
+const orderUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024, files: 3 } });
+const orderLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: isProduction ? 10 : 200, standardHeaders: true, legacyHeaders: false });
+const orderSchema = z.object({
+  name: z.string().trim().min(2).max(80),
+  phone: z
+    .string()
+    .trim()
+    .transform((v) => v.replace(/[\s-]/g, ''))
+    .refine((v) => /^(\+?88)?01[3-9]\d{8}$/.test(v), 'A Bangladeshi mobile number, like 01712345678'),
+  address: z.string().trim().max(300).optional(),
+  mode: z.enum(['pickup', 'delivery']),
+  items: z.string().trim().max(2000).optional(),
+  note: z.string().trim().max(500).optional(),
+  branchId: z.string().trim().max(40).optional(),
+});
+
+/** A customer's order, with up to three photos of the prescription. */
+router.post('/order/:code', orderLimiter, orderUpload.array('photos', 3), async (req, res, next) => {
+  try {
+    const parsed = orderSchema.safeParse(req.body);
+    if (!parsed.success) throw badRequest(parsed.error.issues[0]?.message ?? 'Check the form');
+    const body = parsed.data;
+    const files = (req.files as Express.Multer.File[] | undefined) ?? [];
+    for (const f of files) assertAllowed('image', f);
+    created(res, await placeOrder(String(req.params.code), body, files), 'Order received');
   } catch (err) {
     next(err);
   }

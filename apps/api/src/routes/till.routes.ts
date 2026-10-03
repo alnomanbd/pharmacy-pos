@@ -5,6 +5,9 @@ import { z } from 'zod';
 import * as till from '../services/till.service.js';
 import * as shop from '../services/shop.service.js';
 import * as counters from '../services/counters.service.js';
+import * as online from '../services/onlineOrder.service.js';
+import { storage } from '../services/storage.service.js';
+import { forbidden } from '../utils/AppError.js';
 import * as saleAdmin from '../services/saleAdmin.service.js';
 import { searchEverything } from '../services/shopSearch.service.js';
 import type { Actor } from '../services/shop.service.js';
@@ -80,6 +83,37 @@ const str = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : unde
  * Read-only here: a salesman prints bills all evening and never edits the
  * header. The write is in the admin router.
  */
+/* ------------------------------------------------------------------ */
+/* Orders from customers — every role: the counter is who answers them */
+/* ------------------------------------------------------------------ */
+
+router.get('/online-orders', handle((req) => online.listOrders(actorOf(req), { status: String(req.query.status ?? 'open') })));
+router.get('/online-orders/count', handle((req) => online.newCount(actorOf(req))));
+router.patch(
+  '/online-orders/:id',
+  validate(
+    z.object({
+      status: z.enum(online.ORDER_STATUSES).optional(),
+      billNo: z.string().trim().max(40).optional(),
+      reason: z.string().trim().max(200).optional(),
+    }),
+  ),
+  handle((req) => online.updateOrder(actorOf(req), req.params.id, req.body), 'Saved'),
+);
+/* A prescription photo — only the shop's own, by its key. */
+router.get('/online-orders/photo', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const key = String(req.query.key ?? '');
+    if (!key.startsWith(`org/${req.user!.org}/orders/`)) throw forbidden('Not found');
+    const buf = await storage.read(key);
+    res.setHeader('Content-Type', key.endsWith('.png') ? 'image/png' : key.endsWith('.webp') ? 'image/webp' : 'image/jpeg');
+    res.setHeader('Cache-Control', 'private, max-age=600');
+    res.end(buf);
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get(
   '/settings',
   handle((req) => shop.getSettings(actorOf(req))),

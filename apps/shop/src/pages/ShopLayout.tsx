@@ -30,6 +30,7 @@ import {
   LifeBuoy,
   MapPin,
   LayoutDashboard,
+  ShoppingBag,
   X,
 } from 'lucide-react';
 import { useAuthStore } from '@dawai/shared/store/auth.store';
@@ -41,7 +42,7 @@ import AlertBell from '../alerts/AlertBell';
 import AlertTicker from '../alerts/AlertTicker';
 import { useStockAlertsPoll } from '../alerts/useStockAlerts';
 import { BRAND } from '../brand';
-import { supportApi } from '../api';
+import { supportApi, onlineOrdersApi } from '../api';
 import SetupChecklist from '../components/SetupChecklist';
 import BranchSwitcher from '../components/BranchSwitcher';
 import { useBranchStore } from '../branch';
@@ -100,6 +101,8 @@ const GROUPS: ShopGroup[] = [
          the owner's: somebody comes back holding a slip, and that is where the
          bill is found. A salesman sees their own bills there and no margin. */
       { to: '/sales', label: 'Sales', icon: ReceiptText, end: false },
+      /* Orders customers send through the shop's link — badged with the new ones. */
+      { to: '/online-orders', label: 'Online orders', icon: ShoppingBag, end: false },
     ],
   },
   {
@@ -260,7 +263,23 @@ export default function ShopLayout() {
       window.clearInterval(tick);
     };
   }, [pathname]);
-  const badgeOf = (to: string) => (to === '/support' ? supportUnread : 0);
+  /* New online orders, asked every half minute: a customer is waiting on each. */
+  const [newOrders, setNewOrders] = useState(0);
+  useEffect(() => {
+    let live = true;
+    const ask = () =>
+      onlineOrdersApi
+        .count()
+        .then((d) => live && setNewOrders(d.count))
+        .catch(() => undefined);
+    void ask();
+    const tick = window.setInterval(() => document.visibilityState === 'visible' && void ask(), 30_000);
+    return () => {
+      live = false;
+      window.clearInterval(tick);
+    };
+  }, [pathname]);
+  const badgeOf = (to: string) => (to === '/support' ? supportUnread : to === '/online-orders' ? newOrders : 0);
   const count = (v: number) => (lang === 'bn' ? bnNumerals(String(v)) : String(v));
 
   /* A salesman sees the counter and nothing that carries a purchase price. */

@@ -114,6 +114,16 @@ const schema = new Schema(
      * Everything has a default that produces a correct document, so a shop that
      * never opens this screen still gets a sheet it can hand over.
      */
+    /** Orders from customers through the shop's own link — see onlineOrder.service. */
+    onlineOrders: {
+      enabled: { type: Boolean, default: false },
+      code: { type: String, default: '', index: true },
+      pickup: { type: Boolean, default: true },
+      delivery: { type: Boolean, default: true },
+      deliveryCharge: { type: Number, default: 40, min: 0 },
+      freeDeliveryOver: { type: Number, default: 0, min: 0 },
+      note: { type: String, default: '', trim: true, maxlength: 300 },
+    },
     invoice: {
       /** A4 is the filing standard here; A5 suits a shop that prints halves. */
       paper: { type: String, enum: ['A4', 'A5'], default: 'A4' },

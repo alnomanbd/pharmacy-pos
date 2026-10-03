@@ -18,6 +18,7 @@ import * as invoices from '../services/shopInvoicePdf.service.js';
 import * as counts from '../services/stockCount.service.js';
 import * as counters from '../services/counters.service.js';
 import * as transfers from '../services/stockTransfer.service.js';
+import * as online from '../services/onlineOrder.service.js';
 import * as saleAdmin from '../services/saleAdmin.service.js';
 import * as bin from '../services/shopTrash.service.js';
 import * as expenses from '../services/shopExpense.service.js';
@@ -1184,6 +1185,26 @@ router.get('/settings/letterhead/:slot', async (req: Request, res: Response, nex
     next(err);
   }
 });
+
+/* -------------------------------------------------------- online orders -- */
+
+/* The shop's order link and how it delivers: the owner's and the pharmacist's to set. */
+router.get('/online-orders/settings', handle((req) => online.orderSettings(actorOf(req).org)));
+router.patch(
+  '/online-orders/settings',
+  validate(
+    z.object({
+      enabled: z.boolean().optional(),
+      pickup: z.boolean().optional(),
+      delivery: z.boolean().optional(),
+      deliveryCharge: z.number().min(0).max(5000).optional(),
+      freeDeliveryOver: z.number().min(0).max(1_000_000).optional(),
+      note: z.string().trim().max(300).optional(),
+    }),
+  ),
+  handle((req) => online.saveOrderSettings(actorOf(req).org, req.body), 'Saved'),
+);
+router.post('/online-orders/new-link', handle((req) => online.newOrderLink(actorOf(req).org), 'A new link — the old one no longer works'));
 
 /* ------------------------------------------------------------- transfers -- */
 

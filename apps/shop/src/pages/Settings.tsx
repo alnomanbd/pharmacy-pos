@@ -15,10 +15,12 @@ import {
   Image as ImageIcon,
   StickyNote,
   Ruler,
+  ShoppingBag,
 } from 'lucide-react';
 import { settingsApi, type ShopSettings, type Sale } from '../api';
 import SheetPreview, { openAlignmentPage } from '../components/SheetPreview';
 import LetterheadPicture from '../components/LetterheadPicture';
+import OrderLinkCard from '../components/OrderLinkCard';
 import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import Receipt from '../components/Receipt';
@@ -76,6 +78,7 @@ const SECTIONS = [
   { id: 'paper', label: 'Receipt paper', icon: ReceiptText },
   { id: 'counter', label: 'At the counter', icon: ScanLine },
   { id: 'sheet', label: 'The A4 sheet', icon: FileText },
+  { id: 'orders', label: 'Online orders', icon: ShoppingBag },
   { id: 'vat', label: 'VAT', icon: Percent },
 ] as const;
 
@@ -689,6 +692,9 @@ export default function Settings() {
             those are is already decided by whether the item was added as a
             medicine, so nobody has to tag two thousand products.
           */}
+          {/* Orders from customers: the link, the QR, delivery. */}
+          <OrderLinkCard />
+
           <Section
             id="vat"
             icon={Percent}

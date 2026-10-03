@@ -1291,6 +1291,52 @@ export const branchesApi = {
     getData<ShopBranch>(api.patch(`/shop/branches/${id}`, payload)),
 };
 
+/* ----------------------------------------------------------- online orders -- */
+
+export type OnlineOrderStatus = 'new' | 'confirmed' | 'ready' | 'out' | 'delivered' | 'cancelled';
+
+/** An order a customer sent through the shop's link. */
+export interface OnlineOrder {
+  _id: string;
+  number: string;
+  customerName: string;
+  customerPhone: string;
+  address: string;
+  mode: 'pickup' | 'delivery';
+  items: string;
+  note: string;
+  photos: string[];
+  status: OnlineOrderStatus;
+  deliveryCharge: number;
+  billNo: string;
+  total: number;
+  cancelReason: string;
+  history: { status: string; at: string; by: string }[];
+  createdAt: string;
+}
+
+export interface OnlineOrderSettings {
+  enabled: boolean;
+  code: string;
+  pickup: boolean;
+  delivery: boolean;
+  deliveryCharge: number;
+  freeDeliveryOver: number;
+  note: string;
+}
+
+export const onlineOrdersApi = {
+  list: (status = 'open') => getData<OnlineOrder[]>(api.get('/till/online-orders', { params: { status } })),
+  count: () => getData<{ count: number }>(api.get('/till/online-orders/count')),
+  update: (id: string, payload: { status?: OnlineOrderStatus; billNo?: string; reason?: string }) =>
+    getData<OnlineOrder>(api.patch(`/till/online-orders/${id}`, payload)),
+  photo: async (key: string) => (await api.get('/till/online-orders/photo', { params: { key }, responseType: 'blob' })).data as Blob,
+  settings: () => getData<OnlineOrderSettings>(api.get('/shop/online-orders/settings')),
+  saveSettings: (payload: Partial<Omit<OnlineOrderSettings, 'code'>>) =>
+    getData<OnlineOrderSettings>(api.patch('/shop/online-orders/settings', payload)),
+  newLink: () => getData<OnlineOrderSettings>(api.post('/shop/online-orders/new-link')),
+};
+
 /* --------------------------------------------------------------- transfers -- */
 
 export interface StockTransfer {

@@ -15,6 +15,8 @@ import Help from './pages/Help';
 import Branches from './pages/Branches';
 import Transfers from './pages/Transfers';
 import Dashboard from './pages/Dashboard';
+import OnlineOrders from './pages/OnlineOrders';
+import OrderPage from './pages/OrderPage';
 import Trash from './pages/Trash';
 import Stock from './pages/Stock';
 import CountStock from './pages/CountStock';
@@ -87,6 +89,8 @@ export default function App() {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/verify-email" element={<VerifyEmail />} />
+      {/* A shop's public order page — the link it shares. No sign-in. */}
+      <Route path="/o/:code" element={<OrderPage />} />
 
       {/*
         The counter has no shell.
@@ -114,6 +118,7 @@ export default function App() {
       >
         <Route path="dashboard" element={<BackRoom><Dashboard /></BackRoom>} />
         <Route path="sales" element={<Sales />} />
+        <Route path="online-orders" element={<OnlineOrders />} />
         <Route path="customers" element={<Customers />} />
         <Route path="counters" element={<BackRoom><Counters /></BackRoom>} />
         {/* Reached from the profile menu in the bar, not from the rail: it is
