@@ -100,7 +100,7 @@ jobs:
         run: echo "ready=$([ -n "$HOST" ] && echo yes || echo no)" >> "$GITHUB_OUTPUT"
       - name: Pull and restart
         if: steps.check.outputs.ready == 'yes'
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
