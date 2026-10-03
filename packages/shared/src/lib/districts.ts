@@ -105,8 +105,10 @@ export const DISTRICTS: District[] = [
   { name: 'Sylhet', bn: 'সিলেট', division: 'Sylhet' },
 ];
 
+// NFC: one Bangla letter can be typed two ways (ড় as one character or two).
 const key = (s: string) =>
   s
+    .normalize('NFC')
     .toLowerCase()
     .replace(/\b(district|zila|zilla|sadar)\b/g, '')
     .replace(/জেলা|সদর/g, '')

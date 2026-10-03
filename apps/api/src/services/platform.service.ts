@@ -387,6 +387,8 @@ export async function createOrganizationForCustomer(
     password: string;
     plan?: string;
     trialDays?: number;
+    /** Already checked and made official by the validator. */
+    address?: Record<string, string>;
   },
   operatorId: string,
 ) {
@@ -409,6 +411,7 @@ export async function createOrganizationForCustomer(
     approvedAt: new Date(),
     approvedBy: operatorId,
     trialEndsAt: new Date(Date.now() + days * DAY_MS),
+    ...(input.address ? { address: input.address } : {}),
   });
 
   const owner = await UserModel.create({

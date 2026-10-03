@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { DISTRICTS, canonicalDistrict } from '../src/utils/districts.js';
+import { UPAZILAS, canonicalUpazila } from '../src/utils/upazilas.js';
 import { districtOf } from '../src/services/medicineDemand.service.js';
 
 const here = (p: string) => fileURLToPath(new URL(p, import.meta.url));
@@ -38,5 +39,13 @@ describe('districts', () => {
     expect(listOf('../../../packages/shared/src/lib/districts.ts')).toBe(api);
     expect(listOf('../../site/src/lib/districts.ts')).toBe(api);
     expect(listOf('../../data-api/src/lib/districts.ts')).toBe(api);
+  });
+
+  it('every district has its upazilas, and the shop app and console carry the same', () => {
+    expect(Object.keys(UPAZILAS).sort()).toEqual(DISTRICTS.map((d) => d.name).sort());
+    for (const d of DISTRICTS) expect(UPAZILAS[d.name].length).toBeGreaterThan(0);
+    expect(canonicalUpazila('Bogura', 'বগুড়া সদর')).toBe('Bogura Sadar');
+    expect(canonicalUpazila('Bogura', 'Savar')).toBeNull();
+    expect(listOf('../../../packages/shared/src/lib/upazilas.ts')).toBe(listOf('../src/utils/upazilas.ts'));
   });
 });

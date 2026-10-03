@@ -2,7 +2,7 @@ import { Schema, model, Types } from 'mongoose';
 import { MedicineModel, OrganizationModel, SaleModel, ShopProductModel } from '../models/index.js';
 import { formatDayKey, todayKey } from '../utils/date.js';
 import { logger } from '../utils/logger.js';
-import { canonicalDistrict } from '../utils/districts.js';
+import { canonicalDistrict, findDistrict } from '../utils/districts.js';
 
 /**
  * How much of each medicine sells, and where — the medicine picture, counted
@@ -209,18 +209,19 @@ export async function rollupCoverage(month: string) {
 
 /**
  * Old spellings made the official one — "Bogra" to "Bogura", "চট্টগ্রাম" to
- * "Chattogram" — on every shop whose district names one. Text that names no
+ * "Chattogram" — and the division filled in, on every shop whose district
+ * names one. Text that names no
  * district is left as typed for someone to fix from the console. Run at start;
  * a shop already tidy is not touched.
  */
 export async function tidyDistricts() {
-  const orgs = await OrganizationModel.find({ 'address.district': { $nin: ['', null] } }).select('address.district').lean();
+  const orgs = await OrganizationModel.find({ 'address.district': { $nin: ['', null] } }).select('address.district address.division').lean();
   let fixed = 0;
   for (const o of orgs) {
     const was = o.address?.district ?? '';
-    const now = canonicalDistrict(was);
-    if (now && now !== was) {
-      await OrganizationModel.updateOne({ _id: o._id }, { $set: { 'address.district': now } });
+    const now = findDistrict(was);
+    if (now && (now.name !== was || o.address?.division !== now.division)) {
+      await OrganizationModel.updateOne({ _id: o._id }, { $set: { 'address.district': now.name, 'address.division': now.division } });
       fixed++;
     }
   }

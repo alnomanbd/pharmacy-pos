@@ -20,6 +20,7 @@ import {
   type TokenPayload,
 } from '../utils/tokens.js';
 import type { Role } from '../types/enums.js';
+import { findDistrict } from '../utils/districts.js';
 
 export interface LoginResult {
   user: {
@@ -116,7 +117,7 @@ export async function registerShop(payload: {
       licence: payload.licence?.trim() ?? '',
     },
     limitOverrides: overrides,
-    ...(payload.district ? { address: { district: payload.district } } : {}),
+    ...(payload.district ? { address: { district: payload.district, division: findDistrict(payload.district)?.division ?? '' } } : {}),
   });
 
   const owner = await UserModel.create({

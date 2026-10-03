@@ -88,7 +88,7 @@ describe('the shop detail page', () => {
     await renderPage();
     await user.click(await screen.findByRole('button', { name: /Edit shop details/ }));
     const dialog = screen.getByRole('dialog', { name: 'Edit shop details' });
-    const area = within(dialog).getByLabelText('Area');
+    const area = within(dialog).getByLabelText('Area or market');
     await user.type(area, 'Dhanmondi');
     await user.click(within(dialog).getByRole('button', { name: /Save/ }));
     await waitFor(() =>
@@ -96,7 +96,7 @@ describe('the shop detail page', () => {
         name: 'Shefa Pharmacy',
         contactPhone: '01700000000',
         contactEmail: 'shefa@example.com',
-        address: { street: '12 Lake Road', area: 'Dhanmondi', city: 'Dhaka', district: '', postalCode: '' },
+        address: { street: '12 Lake Road', area: 'Dhanmondi', city: 'Dhaka', upazila: '', district: '', postalCode: '' },
       }),
     );
   });

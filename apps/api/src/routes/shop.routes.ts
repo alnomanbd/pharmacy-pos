@@ -23,6 +23,7 @@ import * as push from '../services/push.service.js';
 import * as roles from '../services/accessRole.service.js';
 import { trending as trendingReport } from '../services/shopTrending.service.js';
 import { district as districtField } from '../validators/auth.validator.js';
+import { findDistrict } from '../utils/districts.js';
 import type { ShopPermission } from '../types/shopPermissions.js';
 import * as online from '../services/onlineOrder.service.js';
 import * as wallet from '../services/wallet.service.js';
@@ -382,7 +383,13 @@ router.patch(
     if (req.body.counted !== undefined) {
       Object.assign(set, { 'dataSharing.optedOut': !req.body.counted, 'dataSharing.changedAt': new Date(), 'dataSharing.changedByName': a.name });
     }
-    if (req.body.district !== undefined) set['address.district'] = req.body.district;
+    if (req.body.district !== undefined) {
+      const was = await OrganizationModel.findById(a.org).select('address.district').lean();
+      set['address.district'] = req.body.district;
+      set['address.division'] = findDistrict(req.body.district)?.division ?? '';
+      // An upazila belongs to its district; moving district drops it.
+      if (was?.address?.district !== req.body.district) set['address.upazila'] = '';
+    }
     if (Object.keys(set).length) await OrganizationModel.updateOne({ _id: a.org }, { $set: set });
     return { counted: req.body.counted, district: req.body.district };
   }, 'Saved'),

@@ -34,7 +34,7 @@ import { LoadingBlock, Spinner } from '@dawai/shared/components/Spinner';
 import Modal from '../components/Modal';
 import { BTN_DANGER, BTN_OUTLINE, BTN_OUTLINE_DANGER, BTN_SECONDARY, can, errorMessage, useAccess } from '../lib/ui';
 import type { User } from '@dawai/shared/types';
-import DistrictSelect from '@dawai/shared/components/DistrictSelect';
+import AddressFields from '@dawai/shared/components/AddressFields';
 import { findDistrict } from '@dawai/shared/lib/districts';
 import { lastSeen } from '../lib/lastSeen';
 
@@ -49,20 +49,14 @@ const monthLabel = (m: string) =>
   new Date(`${m}-01T00:00:00Z`).toLocaleDateString('en-GB', { month: 'short', year: '2-digit' });
 const seat = (s?: SeatUsage) => (s ? `${s.used} / ${s.limit ?? '∞'}` : '—');
 
-/** The address as the profile endpoint takes it. */
-const ADDRESS_FIELDS: { key: string; label: string }[] = [
-  { key: 'street', label: 'Street' },
-  { key: 'area', label: 'Area' },
-  { key: 'city', label: 'City' },
-  { key: 'district', label: 'District' },
-  { key: 'postalCode', label: 'Postcode' },
-];
+/** The address as the profile endpoint takes it, in the order it is written out. */
+const ADDRESS_KEYS = ['street', 'area', 'city', 'upazila', 'district', 'postalCode'];
 
 const EMPTY_PROFILE = {
   name: '',
   contactPhone: '',
   contactEmail: '',
-  address: { street: '', area: '', city: '', district: '', postalCode: '' } as Record<string, string>,
+  address: { street: '', area: '', city: '', upazila: '', district: '', postalCode: '' } as Record<string, string>,
 };
 
 export default function ShopDetail() {
@@ -112,7 +106,7 @@ export default function ShopDetail() {
       name: org.name ?? '',
       contactPhone: org.contactPhone ?? '',
       contactEmail: org.contactEmail ?? '',
-      address: Object.fromEntries(ADDRESS_FIELDS.map((f) => [f.key, org.address?.[f.key] ?? ''])),
+      address: Object.fromEntries(ADDRESS_KEYS.map((k) => [k, org.address?.[k] ?? ''])),
     });
     setProfileOpen(true);
   };
@@ -128,10 +122,10 @@ export default function ShopDetail() {
         name: profile.name.trim(),
         contactPhone: profile.contactPhone.trim(),
         contactEmail: profile.contactEmail.trim(),
-        // A district typed before the list, and left as it was, is not sent back to be refused.
+        // A district typed before the list, and left as it was, is not sent back to be refused — nor its upazila.
         address: Object.fromEntries(
           Object.entries(profile.address)
-            .filter(([k, v]) => k !== 'district' || !v.trim() || findDistrict(v))
+            .filter(([k]) => (k !== 'district' && k !== 'upazila') || !profile.address.district?.trim() || findDistrict(profile.address.district))
             .map(([k, v]) => [k, v.trim()]),
         ),
       });
@@ -435,7 +429,7 @@ export default function ShopDetail() {
           <div className="min-w-0">
             <dt className="text-xs text-muted-foreground">Address</dt>
             <dd className="break-words">
-              {ADDRESS_FIELDS.map((f) => org.address?.[f.key])
+              {ADDRESS_KEYS.map((k) => org.address?.[k])
                 .filter(Boolean)
                 .join(', ') || '—'}
             </dd>
@@ -575,27 +569,14 @@ export default function ShopDetail() {
             />
             {emailBad && <span className="mt-0.5 block text-[11px] text-destructive">Not an email.</span>}
           </label>
-          {ADDRESS_FIELDS.map((f) => (
-            <label key={f.key} className={`label ${f.key === 'street' ? 'sm:col-span-2' : ''}`}>
-              {f.label}
-              {f.key === 'district' ? (
-                /* From the list, so the medicine figures count every shop in its one district. */
-                <DistrictSelect
-                  className="input mt-1"
-                  value={profile.address.district ?? ''}
-                  onChange={(v) => setProfile({ ...profile, address: { ...profile.address, district: v } })}
-                />
-              ) : (
-                <input
-                  className="input mt-1"
-                  value={profile.address[f.key] ?? ''}
-                  onChange={(e) =>
-                    setProfile({ ...profile, address: { ...profile.address, [f.key]: e.target.value } })
-                  }
-                />
-              )}
-            </label>
-          ))}
+          {/* District and upazila from the lists, so the medicine figures count every shop in its one place. */}
+          <div className="sm:col-span-2">
+            <AddressFields
+              idPrefix="sd-addr"
+              value={profile.address}
+              onChange={(a) => setProfile({ ...profile, address: a as Record<string, string> })}
+            />
+          </div>
           <button type="submit" className="hidden" aria-hidden="true" tabIndex={-1} />
         </form>
       </Modal>

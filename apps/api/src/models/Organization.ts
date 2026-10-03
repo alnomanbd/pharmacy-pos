@@ -22,6 +22,9 @@ const schema = new Schema(
       area: { type: String, default: '' },
       city: { type: String, default: '' },
       district: { type: String, default: '' },
+      /** From the district; kept so lists can be read by division without the table. */
+      division: { type: String, default: '' },
+      upazila: { type: String, default: '' },
       postalCode: { type: String, default: '' },
     },
     contactPhone: { type: String, default: '' },

@@ -2,12 +2,15 @@ import { useState } from 'react';
 import { Building2, Loader2, X } from 'lucide-react';
 import { platformApi } from '../api';
 import { useToast } from '@dawai/shared/components/Toast';
+import AddressFields, { type Address } from '@dawai/shared/components/AddressFields';
 
 /**
  * Opening a shop for an owner who rang the office — the commonest way this is
  * sold: "bhai, open one for me", or an agent sitting in the shop. Four fields
- * and a password; plan, trial and counters are set afterwards from the shop's
- * own page, because the person on the phone wants to hear "it is open".
+ * and a password, then where the shop is — district and upazila from the
+ * lists, which is what the medicine figures count it by. Plan, trial and
+ * counters are set afterwards from the shop's own page, because the person on
+ * the phone wants to hear "it is open".
  */
 export default function NewAccountDialog({
   open,
@@ -27,6 +30,7 @@ export default function NewAccountDialog({
     phone: '',
     password: '',
   });
+  const [address, setAddress] = useState<Address>({});
 
   if (!open) return null;
 
@@ -37,7 +41,8 @@ export default function NewAccountDialog({
     e.preventDefault();
     setBusy(true);
     try {
-      const created = await platformApi.createShop(form);
+      const filled = Object.fromEntries(Object.entries(address).filter(([, v]) => v?.trim())) as Record<string, string>;
+      const created = await platformApi.createShop({ ...form, ...(Object.keys(filled).length ? { address: filled } : {}) });
       toast(`${created.name} is open. Give them the password you set.`);
       onCreated();
       onClose();
@@ -48,6 +53,7 @@ export default function NewAccountDialog({
         phone: '',
         password: '',
       });
+      setAddress({});
     } catch (err: unknown) {
       const res = (err as { response?: { data?: { message?: string } } }).response;
       toast(res?.data?.message || 'Could not open that shop.', 'error');
@@ -58,7 +64,7 @@ export default function NewAccountDialog({
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-lg rounded-xl border border-border bg-card p-5 shadow-lg">
+      <div className="max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-xl border border-border bg-card p-5 shadow-lg">
         <div className="mb-4 flex items-start gap-3">
           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-secondary text-secondary-foreground">
             <Building2 className="h-4 w-4" />
@@ -159,6 +165,11 @@ export default function NewAccountDialog({
               </p>
             </div>
           </div>
+
+          <fieldset className="mt-1 border-t border-border pt-3">
+            <legend className="pr-2 text-xs font-semibold text-foreground">Where the shop is</legend>
+            <AddressFields idPrefix="np-addr" value={address} onChange={setAddress} />
+          </fieldset>
 
           <div className="mt-1 flex items-center justify-end gap-2">
             <button type="button" className="btn btn-ghost" onClick={onClose}>

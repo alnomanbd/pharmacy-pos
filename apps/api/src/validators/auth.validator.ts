@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { canonicalDistrict } from '../utils/districts.js';
+import { canonicalDistrict, findDistrict } from '../utils/districts.js';
+import { canonicalUpazila } from '../utils/upazilas.js';
 
 /** A district from the list — any spelling, stored as the official one. Empty clears it. */
 export const district = z
@@ -8,6 +9,36 @@ export const district = z
   .max(120)
   .refine((v) => !v || !!canonicalDistrict(v), { message: 'Pick a district from the list' })
   .transform((v) => (v ? canonicalDistrict(v)! : ''));
+
+/**
+ * A shop's address: district and upazila from the lists, then the street as
+ * typed. The division is never asked for on its own — it follows from the
+ * district — and an upazila has to be one of that district's. A district
+ * left out leaves the stored one (and its upazila) alone.
+ */
+export const address = z
+  .object({
+    district: district.optional(),
+    upazila: z.string().trim().max(80).optional(),
+    street: z.string().trim().max(160).optional(),
+    area: z.string().trim().max(120).optional(),
+    city: z.string().trim().max(120).optional(),
+    postalCode: z.string().trim().max(20).optional(),
+  })
+  .superRefine((a, ctx) => {
+    if (a.upazila && !a.district) ctx.addIssue({ code: 'custom', path: ['upazila'], message: 'Pick the district first' });
+    else if (a.upazila && a.district && !canonicalUpazila(a.district, a.upazila)) {
+      ctx.addIssue({ code: 'custom', path: ['upazila'], message: `Pick an upazila of ${a.district}` });
+    }
+  })
+  .transform((a) => {
+    if (a.district === undefined) return a;
+    return {
+      ...a,
+      division: a.district ? findDistrict(a.district)!.division : '',
+      upazila: a.district && a.upazila ? canonicalUpazila(a.district, a.upazila)! : '',
+    };
+  });
 
 /**
  * What a password has to be.
@@ -161,6 +192,7 @@ export const createOrganizationSchema = z.object({
   password,
   plan: z.string().trim().max(40).optional(),
   trialDays: z.number().int().min(0).max(365).optional(),
+  address: address.optional(),
 });
 
 /** Correcting a shop's own details, on the shop's behalf. */
@@ -168,15 +200,7 @@ export const shopProfileSchema = z.object({
   name: z.string().trim().min(2).max(160).optional(),
   contactPhone: z.string().trim().max(40).optional(),
   contactEmail: z.string().trim().email().or(z.literal('')).optional(),
-  address: z
-    .object({
-      street: z.string().max(160).optional(),
-      area: z.string().max(120).optional(),
-      city: z.string().max(120).optional(),
-      district: district.optional(),
-      postalCode: z.string().max(20).optional(),
-    })
-    .optional(),
+  address: address.optional(),
 });
 
 /** Correcting a shop user's details. Not their role, and not their password. */

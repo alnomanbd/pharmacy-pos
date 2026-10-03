@@ -613,6 +613,7 @@ export const platformApi = {
     password: string;
     plan?: string;
     trialDays?: number;
+    address?: Record<string, string>;
   }) =>
     getData<{ id: string; name: string; owner: { id: string; name: string; email: string }; trialEndsAt: string | null }>(
       api.post('/platform/organizations', payload),
