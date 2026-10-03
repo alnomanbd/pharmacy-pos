@@ -1,0 +1,125 @@
+name: Deploy
+
+# Builds the four images, pushes them to GitHub's container registry, and —
+# when a server is configured — rolls them out over SSH.
+#
+#   Actions → Deploy → Run workflow       a deploy of main, by hand
+#   git tag v1.4.0 && git push --tags     a release
+#
+# Nothing here runs on an ordinary push: CI checks every push, a person
+# decides when one goes to the shops.
+#
+# Repository settings it reads (Settings → Secrets and variables → Actions):
+#
+#   variables  PUBLIC_API_URL   https://shop.dawai.com.bd/api   (baked into the site)
+#              SHOP_URL         https://shop.dawai.com.bd
+#              SITE_URL         https://dawai.com.bd
+#   secrets    DEPLOY_HOST      the server's address            (optional: without
+#              DEPLOY_USER      an SSH user in the docker group  these four the
+#              DEPLOY_KEY       that user's private key          images are built
+#              DEPLOY_PATH      the folder with docker-compose   and pushed only)
+#
+# On the server, `.env` sets DAWAI_REGISTRY=ghcr.io/<owner>/<repo> so compose
+# pulls these images instead of building, and the registry login needs a
+# token with read:packages once (`docker login ghcr.io`). See docs/OPERATIONS.md.
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io/${{ github.repository }}
+
+jobs:
+  images:
+    name: Build ${{ matrix.app }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - app: api
+            context: apps/api
+            file: apps/api/Dockerfile
+          - app: shop
+            context: .
+            file: apps/shop/Dockerfile
+          - app: console
+            context: .
+            file: apps/console/Dockerfile
+          - app: site
+            context: apps/site
+            file: apps/site/Dockerfile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Image name
+        id: name
+        # Registry paths must be lower case; a GitHub owner name need not be.
+        run: echo "image=$(echo '${{ env.REGISTRY }}/${{ matrix.app }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+      - uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.file }}
+          push: true
+          tags: |
+            ${{ steps.name.outputs.image }}:${{ github.sha }}
+            ${{ steps.name.outputs.image }}:latest
+            ${{ startsWith(github.ref, 'refs/tags/') && format('{0}:{1}', steps.name.outputs.image, github.ref_name) || '' }}
+          build-args: |
+            APP_VERSION=${{ github.ref_name }}-${{ github.sha }}
+            NEXT_PUBLIC_API_URL=${{ vars.PUBLIC_API_URL }}
+            NEXT_PUBLIC_APP_URL=${{ vars.SHOP_URL }}
+            NEXT_PUBLIC_SITE_URL=${{ vars.SITE_URL }}
+          cache-from: type=gha,scope=${{ matrix.app }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.app }}
+
+  rollout:
+    name: Roll out
+    needs: images
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Server configured?
+        id: check
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+        run: echo "ready=$([ -n "$HOST" ] && echo yes || echo no)" >> "$GITHUB_OUTPUT"
+      - name: Pull and restart
+        if: steps.check.outputs.ready == 'yes'
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          script: |
+            set -e
+            cd "${{ secrets.DEPLOY_PATH }}"
+            export DAWAI_TAG=${{ github.sha }}
+            sed -i '/^DAWAI_TAG=/d' .env && echo "DAWAI_TAG=$DAWAI_TAG" >> .env
+            docker compose pull api shop console site
+            docker compose up -d --no-build --remove-orphans
+            # The API answers its health check within a minute, or this fails.
+            for i in $(seq 1 30); do
+              docker compose exec -T api node -e "fetch('http://127.0.0.1:5100/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))" && exit 0
+              sleep 2
+            done
+            echo "The API did not come back healthy" >&2
+            docker compose logs --tail=80 api >&2
+            exit 1
+      - name: Images only
+        if: steps.check.outputs.ready != 'yes'
+        run: echo "No DEPLOY_HOST set — images are pushed as ${{ github.sha }} and latest; nothing rolled out."

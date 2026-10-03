@@ -5,6 +5,7 @@ import ToastProvider from '@dawai/shared/components/Toast';
 import { restoreSession } from '@dawai/shared/api/client';
 import ErrorBoundary from '@dawai/shared/components/ErrorBoundary';
 import App from './App';
+import { installErrorReporting } from '@dawai/shared/lib/errorReporting';
 import './styles/index.css';
 // After the app's own sheet: where both define a selector, the system wins.
 import '@dawai/shared/styles/theme.css';
@@ -15,6 +16,9 @@ import '@dawai/shared/styles/theme.css';
  * ordinary case, not an error — and flips `hydrated` when it is done.
  */
 void restoreSession();
+
+/* Crashes in this browser go to the server — see shared/lib/errorReporting. */
+installErrorReporting('console');
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

@@ -1,0 +1,14 @@
+# Secret scanning (see .github/workflows/security.yml).
+#
+# The default rules, plus one allowance: the test suites are full of strings
+# that look like passwords and keys because they are testing passwords and
+# keys. A real secret has no business in a test, and review catches that.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Test fixtures"
+paths = [
+  '''(^|/)tests?/''',
+  '''\.test\.tsx?$''',
+]

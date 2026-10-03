@@ -29,6 +29,9 @@ services:
   # their own origins, and the marketing site posts to the shop app's /api.
   api:
     build: ./apps/api
+    # Built here by default; with DAWAI_REGISTRY set (.env on a server the
+    # Deploy workflow rolls out to), pulled from the registry instead.
+    image: ${DAWAI_REGISTRY:-dawai}/api:${DAWAI_TAG:-latest}
     restart: unless-stopped
     environment:
       NODE_ENV: production
@@ -63,6 +66,12 @@ services:
       PLATFORM_ADMIN_EMAIL: ${PLATFORM_ADMIN_EMAIL:-}
       PLATFORM_ADMIN_PASSWORD: ${PLATFORM_ADMIN_PASSWORD:-}
       SENTRY_DSN: ${SENTRY_DSN:-}
+      # Seals shop secrets at rest (bKash keys, the push key pair). Set it once and keep it.
+      DATA_ENCRYPTION_KEY: ${DATA_ENCRYPTION_KEY:-}
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-}
+      BKASH_CALLBACK_BASE: ${BKASH_CALLBACK_BASE:-}
     volumes:
       # Shop logos and payment screenshots. Not regenerable; back them up.
       - uploads:/app/uploads
@@ -81,6 +90,7 @@ services:
     build:
       context: .
       dockerfile: apps/shop/Dockerfile
+    image: ${DAWAI_REGISTRY:-dawai}/shop:${DAWAI_TAG:-latest}
     restart: unless-stopped
     ports:
       - "8082:80"
@@ -93,6 +103,7 @@ services:
     build:
       context: .
       dockerfile: apps/console/Dockerfile
+    image: ${DAWAI_REGISTRY:-dawai}/console:${DAWAI_TAG:-latest}
     restart: unless-stopped
     ports:
       - "8083:80"
@@ -108,6 +119,7 @@ services:
         NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:8082/api}
         NEXT_PUBLIC_APP_URL: ${SHOP_URL:-http://localhost:8082}
         NEXT_PUBLIC_SITE_URL: ${SITE_URL:-http://localhost:8084}
+    image: ${DAWAI_REGISTRY:-dawai}/site:${DAWAI_TAG:-latest}
     restart: unless-stopped
     ports:
       - "8084:80"

@@ -26,6 +26,44 @@ with the public API address baked in (`PUBLIC_API_URL`, usually
 Before exposing the console, restrict it to the office and VPN addresses in the
 `allow`/`deny` block in `apps/console/nginx.conf`.
 
+## Releasing from GitHub
+
+Three workflows in `.github/workflows`:
+
+| Workflow | Runs | Does |
+|---|---|---|
+| **CI** | every push and pull request | typecheck, tests and builds for the API, the shop app, the console and the site |
+| **Security** | every push, and Mondays at 09:00 Dhaka | `npm audit` of what ships (high fails the API and the apps; critical fails the static site) and a `gitleaks` scan of the whole history for committed secrets |
+| **Deploy** | by hand (Actions → Deploy), or on a `v*` tag | builds the four images, pushes them to `ghcr.io/<owner>/<repo>/{api,shop,console,site}`, and rolls them out over SSH when a server is configured |
+
+Dependabot (`.github/dependabot.yml`) opens a grouped pull request a week for
+minor and patch updates; majors come one at a time.
+
+To have Deploy roll out by itself, once:
+
+1. In the repository, **Settings → Secrets and variables → Actions**:
+   - variables `PUBLIC_API_URL`, `SHOP_URL`, `SITE_URL` (baked into the site image);
+   - secrets `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_KEY` (an SSH private key for a
+     user in the `docker` group) and `DEPLOY_PATH` (the folder holding
+     `docker-compose.yml` and `.env`).
+2. On the server, add `DAWAI_REGISTRY=ghcr.io/<owner>/<repo>` (lower case) to
+   `.env`, and log the server in to the registry once with a token that has
+   `read:packages`: `docker login ghcr.io -u <user>`.
+
+Each deploy then writes `DAWAI_TAG=<commit>` to `.env`, pulls the four images,
+restarts them, and fails the run if the API does not answer `/health` within a
+minute. To roll back, run `DAWAI_TAG=<an earlier commit> docker compose up -d
+--no-build` on the server. Without the secrets, Deploy only builds and pushes.
+
+## Errors in the browser
+
+The shop app and the console report their own crashes (a page that fails to
+draw, an uncaught error) to `POST /api/public/client-error`. The same fault from
+many browsers is one entry with a count. They are listed on the console's
+**System** page for 30 days, and passed to Sentry too when `SENTRY_DSN` is set.
+What is sent is the message, the stack, the page without its query string and
+the build — never what was on the screen.
+
 ## Configuration
 
 The API reads its settings from the environment. `apps/api/.env.example` has

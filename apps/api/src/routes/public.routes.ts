@@ -15,6 +15,7 @@ import { startDemo } from '../services/impersonation.service.js';
 import multer from 'multer';
 import { publicShop, placeOrder } from '../services/onlineOrder.service.js';
 import { bkashCallback } from '../services/wallet.service.js';
+import { recordClientError } from '../services/clientError.service.js';
 import { assertAllowed } from '../services/storage.service.js';
 
 /**
@@ -223,6 +224,30 @@ router.get('/guides/:slug', async (req, res, next) => {
 router.get('/order/:code', async (req, res, next) => {
   try {
     ok(res, await publicShop(String(req.params.code)));
+  } catch (err) {
+    next(err);
+  }
+});
+
+/*
+ * A crash in the shop app or the console, reported by the browser — see
+ * clientError.service. No sign-in needed (a crash can happen before one), so
+ * held to a few a minute per connection and to a small, fixed shape.
+ */
+const clientErrorLimiter = rateLimit({ windowMs: 60 * 1000, max: 20, standardHeaders: true, legacyHeaders: false });
+const clientErrorSchema = z.object({
+  app: z.enum(['shop', 'console', 'site']),
+  message: z.string().max(2000),
+  stack: z.string().max(8000).optional(),
+  path: z.string().max(1000).optional(),
+  release: z.string().max(80).optional(),
+});
+
+router.post('/client-error', clientErrorLimiter, async (req, res, next) => {
+  try {
+    const parsed = clientErrorSchema.safeParse(req.body);
+    if (!parsed.success) return ok(res, { ok: false });
+    ok(res, await recordClientError(parsed.data, String(req.headers['user-agent'] ?? '')));
   } catch (err) {
     next(err);
   }

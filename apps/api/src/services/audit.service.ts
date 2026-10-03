@@ -167,6 +167,7 @@ const PLATFORM_ACTIONS: readonly string[] = [
   'team.member_2fa_reset',
   'user.platform_2fa_reset',
   'platform.site_settings',
+  'platform.client_errors_cleared',
 ];
 
 export async function listPlatformAuditLogs(

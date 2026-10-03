@@ -12,6 +12,9 @@ RUN npm run build
 FROM node:22-alpine
 WORKDIR /app
 ENV NODE_ENV=production
+# The build being run, for the System page and crash reports. Set by the Deploy workflow.
+ARG APP_VERSION=""
+ENV APP_VERSION=$APP_VERSION
 COPY package*.json ./
 RUN npm ci --omit=dev
 COPY --from=builder /app/dist ./dist

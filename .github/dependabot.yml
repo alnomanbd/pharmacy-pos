@@ -1,0 +1,36 @@
+# Weekly pull requests for outdated and vulnerable packages. Minor and patch
+# updates are grouped into one PR per app so the list stays readable; majors
+# come one at a time, because those are the ones that need a person.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule: { interval: weekly, day: monday }
+    open-pull-requests-limit: 5
+    groups:
+      apps-minor:
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /apps/api
+    schedule: { interval: weekly, day: monday }
+    open-pull-requests-limit: 5
+    groups:
+      api-minor:
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /apps/site
+    schedule: { interval: weekly, day: monday }
+    open-pull-requests-limit: 5
+    groups:
+      site-minor:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: monthly }
+
+  - package-ecosystem: docker
+    directory: /apps/api
+    schedule: { interval: monthly }

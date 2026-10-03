@@ -21,6 +21,7 @@ import { COUPON_KINDS } from '../models/Coupon.js';
 import * as referrals from '../services/referral.service.js';
 import { overview } from '../services/overview.service.js';
 import { systemStatus } from '../services/system.service.js';
+import { recentClientErrors, clearClientError } from '../services/clientError.service.js';
 import { setupOf } from '../services/onboarding.service.js';
 import { branchesPage as branchesPageFor } from '../services/branch.service.js';
 import * as agents from '../services/agent.service.js';
@@ -174,6 +175,18 @@ router.get('/stats', requirePermission('shops.view'), handle(() => platform.plat
  */
 /** The platform's own health — see the service. Owner-only by default. */
 router.get('/system', requirePermission('system.view'), handle(() => systemStatus()));
+
+/** What has broken in browsers lately — see clientError.service. */
+router.get('/client-errors', requirePermission('system.view'), handle(() => recentClientErrors()));
+router.delete(
+  '/client-errors/:id?',
+  requirePermission('system.view'),
+  handle(async (req) => {
+    const r = await clearClientError(req.params.id);
+    await audit(req, 'platform.client_errors_cleared', { model: 'ClientError', id: req.params.id ?? 'all', label: req.params.id ? 'One browser error' : 'All browser errors' });
+    return r;
+  }),
+);
 
 router.get(
   '/overview',

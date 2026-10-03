@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import { stat } from 'node:fs/promises';
+import { ClientErrorModel } from './clientError.service.js';
 import { createRequire } from 'node:module';
 import { JobRunModel, NotificationLogModel } from '../models/index.js';
 import { env, isProduction } from '../config/env.js';
@@ -183,6 +184,18 @@ export async function systemStatus() {
     detail: errorReportingActive()
       ? 'Sent to the error tracker'
       : 'Not sent anywhere (SENTRY_DSN is not set) — errors are only in the server log',
+  });
+  /* Crashes in the shop app and the console, reported by the browsers themselves. */
+  const browserErrors = db.up
+    ? await ClientErrorModel.countDocuments({ lastAt: { $gte: new Date(now.getTime() - DAY_MS) } })
+    : 0;
+  checks.push({
+    key: 'browser',
+    label: 'Browser errors',
+    verdict: browserErrors > 10 ? 'warning' : 'ok',
+    detail: browserErrors
+      ? `${browserErrors} different ${browserErrors === 1 ? 'fault' : 'faults'} in shops' and the console's browsers in the last day — listed below`
+      : 'None in the last day',
   });
   const bv = backupVerdict(lastBackupAt, now);
   checks.push({

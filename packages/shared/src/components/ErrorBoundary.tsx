@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { AlertTriangle, RotateCcw } from 'lucide-react';
+import { reportClientError } from '../lib/errorReporting';
 
 interface Props {
   children: ReactNode;
@@ -25,9 +26,9 @@ export default class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    // No error-reporting service is wired up yet; the console is what a
-    // developer or a support call actually has access to.
     console.error('Unhandled render error', error, info.componentStack);
+    /* To the server, so a crash on a shop's laptop is known before the phone rings. */
+    reportClientError(error, info.componentStack ?? '');
   }
 
   reset = () => this.setState({ error: null });

@@ -190,6 +190,20 @@ export interface AgentDetail {
 }
 
 /** The System page: an overall verdict, each check, and the numbers behind them. */
+/** A fault in a browser, grouped — see the API's clientError.service. */
+export interface ClientErrorRow {
+  id: string;
+  app: 'shop' | 'console' | 'site';
+  message: string;
+  stack: string;
+  path: string;
+  release: string;
+  browser: string;
+  count: number;
+  firstAt: string;
+  lastAt: string;
+}
+
 export interface SystemStatus {
   verdict: 'ok' | 'warning' | 'critical';
   checks: { key: string; label: string; verdict: 'ok' | 'warning' | 'critical'; detail: string }[];
@@ -562,6 +576,8 @@ export const platformApi = {
   assignAgent: (shopId: string, code: string | null) =>
     getData<unknown>(api.patch(`/platform/organizations/${shopId}/agent`, { code })),
   system: () => getData<SystemStatus>(api.get('/platform/system')),
+  clientErrors: () => getData<{ last24h: number; rows: ClientErrorRow[] }>(api.get('/platform/client-errors')),
+  clearClientError: (id?: string) => getData<{ ok: boolean }>(api.delete(`/platform/client-errors${id ? `/${id}` : ''}`)),
 
   coupons: () => getData<CouponRow[]>(api.get('/platform/coupons')),
   createCoupon: (payload: Record<string, unknown>) => getData<CouponRow>(api.post('/platform/coupons', payload)),

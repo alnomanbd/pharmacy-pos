@@ -7,6 +7,7 @@ import { useAuthStore } from '@dawai/shared/store/auth.store';
 import ErrorBoundary from '@dawai/shared/components/ErrorBoundary';
 import App from './App';
 import { registerServiceWorker } from './pwa';
+import { installErrorReporting } from '@dawai/shared/lib/errorReporting';
 // Loaded first: it scopes the till's browser storage to whoever signs in.
 import './branch';
 import './styles/index.css';
@@ -33,6 +34,8 @@ if (window.location.pathname.startsWith('/support/claim')) {
 
 /* Installable on a phone, and alerts on it — see pwa.ts. */
 registerServiceWorker();
+/* Crashes in this browser go to the server — see shared/lib/errorReporting. */
+installErrorReporting('shop');
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

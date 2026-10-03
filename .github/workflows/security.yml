@@ -1,0 +1,60 @@
+name: Security
+
+# Two questions, asked on every push and every Monday morning whether or not
+# anything was pushed — because a dependency can turn vulnerable without a
+# line of ours changing:
+#
+#   1. Do we ship a package with a known hole in it?
+#   2. Has a key, a password or a token been committed?
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: '0 3 * * 1' # Mondays, 09:00 in Dhaka
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: Dependencies
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # The API runs on a server with the shops' books in reach: anything
+          # rated high fails the build.
+          - dir: apps/api
+            level: high
+          # The shop app, console and shared code ship as static files; their
+          # packages run in the build, not in production.
+          - dir: .
+            level: high
+          # The marketing site is a static export, and its one open advisory is
+          # in the build tooling Next.js bundles (fixed only in a major upgrade).
+          # Critical still fails it.
+          - dir: apps/site
+            level: critical
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: npm audit (production dependencies)
+        working-directory: ${{ matrix.dir }}
+        run: npm audit --omit=dev --audit-level=${{ matrix.level }}
+
+  secrets:
+    name: Committed secrets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: gitleaks
+        run: |
+          docker run --rm -v "$PWD:/repo" -w /repo zricethezav/gitleaks:v8.30.1 \
+            git . --config .gitleaks.toml --redact --no-banner --exit-code 1
