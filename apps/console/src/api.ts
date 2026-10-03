@@ -327,6 +327,42 @@ export interface PlatformStretch {
   };
 }
 
+/** One medicine in the picture, with what it rests on. */
+export interface InsightMedicine {
+  id: string;
+  brand: string;
+  strength: string;
+  form: string;
+  generic: string;
+  genericId: string | null;
+  company: string;
+  companyId: string | null;
+  pieces: number;
+  piecesBefore: number;
+  value: number;
+  change: number | null;
+  shops: number;
+  shareable: boolean;
+}
+type InsightGroup = { id: string; name: string; pieces: number; value: number; medicines: number; shops: number; share: number; change: number | null; shareable: boolean };
+
+/** Which medicines sell, where — /platform/medicines/insights. */
+export interface MedicineInsights {
+  range: { from: string; to: string; days: number; prevFrom: string; prevTo: string };
+  filter: { district?: string; generic?: string };
+  minShops: number;
+  totals: { pieces: { now: number; before: number }; value: { now: number; before: number }; medicines: { now: number; before: number }; districts: number };
+  series: StretchPoint[];
+  top: InsightMedicine[];
+  rising: InsightMedicine[];
+  falling: InsightMedicine[];
+  byGeneric: InsightGroup[];
+  byCompany: InsightGroup[];
+  brands: { id: string; brand: string; strength: string; company: string; pieces: number; share: number; shareable: boolean }[];
+  districts: { district: string; pieces: number; value: number; medicines: number }[];
+  quality: { matchedPieces: number; unmatchedPieces: number; lastBuilt: string | null; daysBuilt: number; shopsCounted: number };
+}
+
 /** A discount code shops type in when they pay. */
 export interface CouponRow {
   _id: string;
@@ -625,6 +661,12 @@ export const platformApi = {
 
   overview: () => getData<PlatformOverview>(api.get('/platform/overview')),
   stretch: (range: { from: string; to: string }) => getData<PlatformStretch>(api.get('/platform/stretch', { params: range })),
+  /* ---------- the medicine picture ---------- */
+  medicineInsights: (params: { from: string; to: string; district?: string; generic?: string }) =>
+    getData<MedicineInsights>(api.get('/platform/medicines/insights', { params })),
+  medicineInsightFilters: () =>
+    getData<{ districts: string[]; generics: { id: string; name: string }[] }>(api.get('/platform/medicines/insights/filters')),
+  rebuildMedicineInsights: () => getData<unknown>(api.post('/platform/medicines/insights/rebuild')),
   siteSettings: () => getData<SiteSettings>(api.get('/platform/site-settings')),
   saveSiteSettings: (payload: Partial<SiteSettings>) => getData<SiteSettings>(api.patch('/platform/site-settings', payload)),
   incidents: () => getData<IncidentRow[]>(api.get('/platform/incidents')),

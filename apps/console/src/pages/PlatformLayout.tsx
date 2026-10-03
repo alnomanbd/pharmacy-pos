@@ -8,6 +8,7 @@ import {
   Receipt,
   TrendingUp,
   FileBarChart,
+  LineChart,
   Tags,
   Users,
   Bell,
@@ -161,6 +162,8 @@ const NAV_SECTIONS: { heading: string; links: ConsoleLink[] }[] = [
     heading: 'Catalogue',
     links: [
       { to: '/medicines', label: 'Medicines', icon: Pill, end: false, needs: ['catalogue.view'] },
+      /* Which medicines people buy, and where — every counted shop together, none named. */
+      { to: '/medicine-insights', label: 'Medicine insights', icon: LineChart, end: false, needs: ['catalogue.view', 'shops.view'] },
       {
         /* What shops asked to have added; badged with the pending count. */
         to: '/requests',

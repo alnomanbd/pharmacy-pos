@@ -34,6 +34,8 @@ import catalogueRoutes from './catalogue.routes.js';
 import { PERMISSIONS } from '../types/permissions.js';
 import * as accessRoles from '../services/accessRole.service.js';
 import { platformStretch } from '../services/platformReport.service.js';
+import { medicineInsights, insightFilters } from '../services/medicineInsights.service.js';
+import { rollupRecent } from '../services/medicineDemand.service.js';
 import { PAYMENT_METHODS } from '../models/Payment.js';
 import { validate } from '../middlewares/validate.js';
 import {
@@ -206,6 +208,25 @@ router.get(
   handle((req) =>
     platformStretch({ from: str(req.query.from), to: str(req.query.to) }, { money: (req.user!.permissions ?? []).includes('revenue.view') }),
   ),
+);
+
+/**
+ * The medicine picture: which medicines sell, where, rising or falling — read
+ * from the nightly demand tables, never naming a shop. Rebuilding the last
+ * days is for after a fix; the scheduler does it every night anyway.
+ */
+router.get(
+  '/medicines/insights',
+  requirePermission('catalogue.view', 'shops.view'),
+  handle((req) =>
+    medicineInsights({ from: str(req.query.from), to: str(req.query.to), district: str(req.query.district), generic: str(req.query.generic) }),
+  ),
+);
+router.get('/medicines/insights/filters', requirePermission('catalogue.view', 'shops.view'), handle(() => insightFilters()));
+router.post(
+  '/medicines/insights/rebuild',
+  requirePermission('system.view'),
+  handle(() => rollupRecent({ days: 7 }), 'Rebuilt'),
 );
 
 /* ---------------------------------- plans ---------------------------------- */
