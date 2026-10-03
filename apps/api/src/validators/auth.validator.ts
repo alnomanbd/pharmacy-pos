@@ -39,7 +39,7 @@ const phone = z
  * It is the "last updated" date the site prints on its legal pages
  * (`apps/site/src/components/legal-doc.tsx`); a test holds the two together.
  */
-export const TERMS_VERSION = '2026-09-26';
+export const TERMS_VERSION = '2026-10-03';
 
 export const registerSchema = z.object({
   /*
