@@ -13,6 +13,7 @@ import Team from './Team';
 const mocks = vi.hoisted(() => ({
   team: vi.fn(),
   teamPermissions: vi.fn(),
+  teamRoles: vi.fn(),
   updateTeamMember: vi.fn(),
   updateMe: vi.fn(),
   setTeamMemberPassword: vi.fn(),
@@ -48,6 +49,7 @@ beforeEach(() => {
     member({ _id: 's1', name: 'Sadia', email: 'sadia@dawai.com.bd', permissions: ['shops.view'] }),
   ]);
   mocks.teamPermissions.mockResolvedValue({ permissions: ['shops.view', 'catalogue.view'], presets: [] });
+  mocks.teamRoles.mockResolvedValue([]);
   mocks.updateTeamMember.mockResolvedValue({});
   mocks.updateMe.mockResolvedValue({});
   mocks.setTeamMemberPassword.mockResolvedValue({ id: 's1' });

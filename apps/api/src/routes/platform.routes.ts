@@ -32,6 +32,7 @@ import { PLATFORM_ROLES, PLATFORM_OWNER_ROLES } from '../types/roles.js';
 import * as team from '../services/platformTeam.service.js';
 import catalogueRoutes from './catalogue.routes.js';
 import { PERMISSIONS } from '../types/permissions.js';
+import * as accessRoles from '../services/accessRole.service.js';
 import { PAYMENT_METHODS } from '../models/Payment.js';
 import { validate } from '../middlewares/validate.js';
 import {
@@ -627,6 +628,7 @@ const teamCreateSchema = z.object({
   password: z.string().min(10).max(128),
   permissions: z.array(z.enum(PERMISSIONS)).optional(),
   preset: z.string().trim().max(30).optional(),
+  roleId: z.string().trim().max(40).nullable().optional(),
 });
 
 const teamUpdateSchema = z.object({
@@ -635,8 +637,48 @@ const teamUpdateSchema = z.object({
   phone: z.string().trim().max(20).optional(),
   permissions: z.array(z.enum(PERMISSIONS)).optional(),
   preset: z.string().trim().max(30).optional(),
+  roleId: z.string().trim().max(40).nullable().optional(),
   isActive: z.boolean().optional(),
 });
+
+/* ---- the console's roles: a named set of permissions, given to members ---- */
+const platformRoleSchema = z.object({
+  name: z.string().trim().min(1).max(60).optional(),
+  description: z.string().trim().max(240).optional(),
+  permissions: z.array(z.enum(PERMISSIONS)).optional(),
+});
+const roleActor = (req: Request) => ({ id: req.user!.id, name: req.user!.name, permissions: req.user!.permissions ?? [] });
+
+router.get('/team/roles', requirePermission('team.manage'), handle(() => accessRoles.listPlatformRoles()));
+router.post(
+  '/team/roles',
+  requirePermission('team.manage'),
+  validate(platformRoleSchema),
+  handle(async (req) => {
+    const id = await accessRoles.savePlatformRole(roleActor(req), null, req.body);
+    await audit(req, 'team.member_update', { model: 'AccessRole', id, label: `role made: ${req.body.name ?? ''}` }, { after: req.body });
+    return { id };
+  }, 'Role made'),
+);
+router.patch(
+  '/team/roles/:id',
+  requirePermission('team.manage'),
+  validate(platformRoleSchema),
+  handle(async (req) => {
+    const id = await accessRoles.savePlatformRole(roleActor(req), req.params.id, req.body);
+    await audit(req, 'team.member_update', { model: 'AccessRole', id, label: `role changed: ${req.body.name ?? id}` }, { after: req.body });
+    return { id };
+  }, 'Role saved'),
+);
+router.delete(
+  '/team/roles/:id',
+  requirePermission('team.manage'),
+  handle(async (req) => {
+    const r = await accessRoles.deletePlatformRole(req.params.id);
+    await audit(req, 'team.member_update', { model: 'AccessRole', id: req.params.id, label: 'role deleted' });
+    return r;
+  }, 'Role deleted'),
+);
 
 /** The permission catalogue and the ready-made sets, for the console's form. */
 router.get(
@@ -652,7 +694,7 @@ router.post(
   requirePermission('team.manage'),
   validate(teamCreateSchema),
   handle(async (req) => {
-    const member = await team.inviteMember(req.body);
+    const member = await team.inviteMember(req.body, { id: req.user!.id, name: req.user!.name, permissions: req.user!.permissions ?? [] });
     // Granting somebody access to every shop on the deployment is worth a
     // line in the trail, under the name of whoever granted it.
     await audit(
@@ -672,7 +714,7 @@ router.patch(
   handle(async (req) => {
     const member = await team.updateMember(
       req.params.id,
-      { id: req.user!.id, role: req.user!.role },
+      { id: req.user!.id, role: req.user!.role, permissions: req.user!.permissions ?? [], name: req.user!.name },
       req.body,
     );
     await audit(

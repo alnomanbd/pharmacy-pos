@@ -1,5 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { Types } from 'mongoose';
+import { assignmentFor, listShopRoles } from './accessRole.service.js';
+import type { ShopPermission } from '../types/shopPermissions.js';
 import { UserModel, SaleModel, ShiftModel, BranchModel } from '../models/index.js';
 import { assertOrgWithinLimit } from './plan.service.js';
 import { badRequest, conflict, notFound } from '../utils/AppError.js';
@@ -41,7 +43,7 @@ export async function listStaff(actor: Actor) {
     organization: actor.org,
     role: { $in: ['admin', ...SHOP_STAFF_ROLES] },
   })
-    .select('name email phone role isActive lastLoginAt createdAt branches')
+    .select('name email phone role accessRole isActive lastLoginAt createdAt branches')
     .sort({ createdAt: 1 })
     .lean();
 
@@ -80,9 +82,13 @@ export async function listStaff(actor: Actor) {
   const shiftOf = new Map(openShifts.map((s) => [String(s.user), s]));
   const soldBy = new Map(today.map((t) => [String(t._id), t]));
 
+  /* Each person's role by id and name: a shop role of their own, or the built-in one their role names. */
+  const roleNames = new Map((await listShopRoles(actor.org)).map((r) => [r.id, r.name]));
   return users.map((u) => ({
     ...u,
     _id: String(u._id),
+    roleId: u.role === 'admin' ? 'owner' : u.accessRole ? String(u.accessRole) : u.role,
+    roleName: u.role === 'admin' ? 'Owner' : roleNames.get(u.accessRole ? String(u.accessRole) : u.role) ?? u.role,
     openShift: shiftOf.get(String(u._id))
       ? {
           terminal: shiftOf.get(String(u._id))!.terminal,
@@ -113,14 +119,14 @@ export async function listStaff(actor: Actor) {
  */
 export async function createStaff(
   actor: Actor,
-  input: { name: string; email: string; phone: string; role: ShopStaffRole; password: string },
+  input: { name: string; email: string; phone: string; role?: ShopStaffRole; roleId?: string; password: string },
+  held: ShopPermission[] = [],
 ) {
   const email = input.email.trim().toLowerCase();
   const phone = input.phone.trim();
 
-  if (!SHOP_STAFF_ROLES.includes(input.role)) {
-    throw badRequest('A shop account is a pharmacist or a salesman');
-  }
+  /* The role: one of the shop's roles by id, or a built-in one by name. Never more than the person giving it holds. */
+  const given = await assignmentFor({ ...actor, shopPermissions: held }, input.roleId ?? input.role ?? 'salesman');
   if (await UserModel.findOne({ email }).lean()) {
     throw conflict('Somebody already signs in with that email');
   }
@@ -134,7 +140,8 @@ export async function createStaff(
 
   const user = await UserModel.create({
     organization: actor.org,
-    role: input.role,
+    role: given.role,
+    accessRole: given.accessRole,
     name: input.name.trim(),
     email,
     phone,
@@ -162,10 +169,15 @@ export async function createStaff(
 export async function updateStaff(
   actor: Actor,
   id: string,
-  input: { name?: string; phone?: string; role?: ShopStaffRole; isActive?: boolean; branchIds?: string[] },
+  input: { name?: string; phone?: string; role?: ShopStaffRole; roleId?: string; isActive?: boolean; branchIds?: string[] },
+  held: ShopPermission[] = [],
 ) {
   const user = await UserModel.findOne({ _id: oid(id), organization: actor.org });
   if (!user) throw notFound('That person');
+  const roleAsked = input.roleId ?? input.role;
+  if (roleAsked !== undefined && String(user._id) === actor.id) {
+    throw badRequest('You cannot change your own role — another person who manages staff can');
+  }
 
   /* Which branches somebody works in. None picked: all of them, which is what
      a one-branch shop is anyway. The owner always sees every branch. */
@@ -180,12 +192,10 @@ export async function updateStaff(
   if (String(user._id) === actor.id && input.isActive === false) {
     throw badRequest('You cannot switch off your own account');
   }
-  if (user.role === 'admin' && input.role) {
+  if (user.role === 'admin' && roleAsked) {
     throw badRequest('The account owner’s own role is not changed from here');
   }
-  if (input.role && !SHOP_STAFF_ROLES.includes(input.role)) {
-    throw badRequest('A shop account is a pharmacist or a salesman');
-  }
+  const given = roleAsked ? await assignmentFor({ ...actor, shopPermissions: held }, roleAsked) : null;
 
   // Switching somebody back on takes a login again, so it is held to the plan.
   if (input.isActive === true && !user.isActive) {
@@ -195,7 +205,10 @@ export async function updateStaff(
 
   if (input.name !== undefined) user.name = input.name.trim();
   if (input.phone !== undefined) user.phone = input.phone.trim();
-  if (input.role !== undefined) user.set('role', input.role);
+  if (given) {
+    user.set('role', given.role);
+    user.set('accessRole', given.accessRole);
+  }
   if (input.isActive !== undefined) {
     user.isActive = input.isActive;
     /* Switching somebody off ends their sessions with it. Otherwise the

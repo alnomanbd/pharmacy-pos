@@ -2,7 +2,7 @@ import { Router } from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import * as requests from '../services/medicineRequest.service.js';
 import { requireAuth, requireRole, requireWritableTenant } from '../middlewares/auth.js';
-import { SHOP_ADMIN_ROLES, SHOP_ROLES } from '../types/roles.js';
+import { SHOP_ROLES } from '../types/roles.js';
 import { validate } from '../middlewares/validate.js';
 import { medicineRequestSchema } from '../validators/catalogue.validator.js';
 import { ok, created } from '../utils/response.js';
@@ -65,7 +65,7 @@ router.delete(
         {
           org: req.user!.org!,
           id: req.user!.id,
-          canManage: SHOP_ADMIN_ROLES.includes(req.user!.role),
+          canManage: (req.user!.shopPermissions ?? []).includes('stock.manage'),
         },
         req.params.id,
       ),

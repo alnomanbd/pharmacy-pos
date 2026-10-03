@@ -15,6 +15,7 @@ import {
   Globe,
   ShieldCheck,
 } from 'lucide-react';
+import { useCan } from '../access';
 import { shopApi, type ActivityGroup, type ActivityPage, type ActivityRow } from '../api';
 import { useAuthStore } from '@dawai/shared/store/auth.store';
 import { useToast } from '@dawai/shared/components/Toast';
@@ -147,7 +148,8 @@ export default function Activity() {
   /* The account's owner alone — the server refuses anybody else, so nobody
      else asks it. */
   const role = useAuthStore((st) => st.user?.role);
-  const [denied, setDenied] = useState(() => !!role && role !== 'admin');
+  const allowed = useCan()('audit.view');
+  const [denied, setDenied] = useState(() => !!role && !allowed);
 
   const n = useCallback((v: number | string) => (lang === 'bn' ? bnNumerals(String(v)) : String(v)), [lang]);
 

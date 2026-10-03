@@ -10,11 +10,15 @@ import * as wallet from '../services/wallet.service.js';
 import { storage } from '../services/storage.service.js';
 import { forbidden } from '../utils/AppError.js';
 import * as saleAdmin from '../services/saleAdmin.service.js';
+import { roleNameOf } from '../services/accessRole.service.js';
+import { UserModel } from '../models/index.js';
 import { searchEverything } from '../services/shopSearch.service.js';
 import type { Actor } from '../services/shop.service.js';
 import {
   requireAuth,
   requireRole,
+  requireShopPermission,
+  shopPathGate,
   requireWritableTenant,
 } from '../middlewares/auth.js';
 import { SHOP_ROLES, SHOP_ADMIN_ROLES } from '../types/roles.js';
@@ -34,6 +38,23 @@ import { shopActivity } from '../middlewares/shopActivity.js';
 const router = Router();
 
 router.use(requireAuth, requireWritableTenant, requireRole(...SHOP_ROLES), attachBranch);
+
+/*
+ * The counter is open to every role that sells; what follows is what a role
+ * has to allow besides (types/shopPermissions.ts). Reading the till's own
+ * things — the shift, the search, the receipt settings — needs nothing more.
+ */
+router.use(
+  shopPathGate(
+    [
+      { path: '/online-orders', read: 'online_orders.manage', write: 'online_orders.manage' },
+      { path: '/customers', read: null, write: 'customers.manage' },
+      { path: '/shift', read: null, write: 'pos.sell' },
+      { path: '/wallets', read: null, write: 'pos.sell' },
+    ],
+    null,
+  ),
+);
 
 /* Every change that succeeds goes on the owner's Activity page. */
 router.use(shopActivity('till'));
@@ -121,6 +142,20 @@ router.get('/online-orders/photo', async (req: Request, res: Response, next: Nex
     next(err);
   }
 });
+
+/** What the signed-in person may do in the shop, so the app shows only that. */
+router.get(
+  '/access',
+  handle(async (req) => {
+    const u = await UserModel.findById(req.user!.id).select('role accessRole organization').lean();
+    return {
+      role: req.user!.role,
+      roleName: await roleNameOf(u ?? { role: req.user!.role }),
+      isOwner: req.user!.role === 'admin',
+      permissions: req.user!.shopPermissions ?? [],
+    };
+  }),
+);
 
 router.get(
   '/settings',
@@ -232,7 +267,17 @@ const saleSchema = z.object({
 
 router.post(
   '/sales',
+  requireShopPermission('pos.sell'),
   validate(saleSchema),
+  (req, _res, next) => {
+    /* Money off is its own permission: on the bill, or on a line. */
+    const b = req.body as { discount?: number; lines?: { discount?: number }[] };
+    const discounted = (b.discount ?? 0) > 0 || (b.lines ?? []).some((l) => (l.discount ?? 0) > 0);
+    if (discounted && !(req.user!.shopPermissions ?? []).includes('pos.discount')) {
+      return next(forbidden('Your role does not allow discounts — ask the shop owner'));
+    }
+    next();
+  },
   make((req) => till.createSale(actorOf(req), req.body), 'Sold'),
 );
 
@@ -259,14 +304,15 @@ router.get(
 router.get(
   '/bills',
   handle((req) => {
-    const boss = SHOP_ADMIN_ROLES.includes(req.user!.role);
+    const held = req.user!.shopPermissions ?? [];
+    const boss = held.includes('sales.view_all');
     return till.listSales(actorOf(req), {
       from: str(req.query.from),
       to: str(req.query.to),
       q: str(req.query.q),
       mine: boss ? req.query.mine === 'true' : true,
       only: req.query.only === 'due' || req.query.only === 'returned' ? req.query.only : undefined,
-      withMargin: boss,
+      withMargin: held.includes('reports.view'),
       page: Number(req.query.page) || 1,
       limit: Number(req.query.limit) || 50,
     });
@@ -284,7 +330,7 @@ router.get(
   '/search-all',
   handle((req) =>
     searchEverything(actorOf(req), String(req.query.q ?? ''), {
-      backRoom: SHOP_ADMIN_ROLES.includes(req.user!.role),
+      backRoom: (req.user!.shopPermissions ?? []).includes('stock.view'),
     }),
   ),
 );
@@ -299,6 +345,7 @@ router.get(
  */
 router.post(
   '/sales/:id/void',
+  requireShopPermission('pos.sell', 'sales.cancel'),
   validate(z.object({ reason: z.string().trim().min(3).max(300) })),
   handle(async (req) => {
     const open = await till.openShift(actorOf(req));
@@ -307,7 +354,7 @@ router.post(
       req.params.id,
       req.body,
       {
-        runsTheShop: SHOP_ADMIN_ROLES.includes(req.user!.role),
+        runsTheShop: (req.user!.shopPermissions ?? []).includes('sales.cancel'),
         openShiftId: open ? String(open._id) : null,
       },
     );
@@ -316,6 +363,7 @@ router.post(
 
 router.post(
   '/sales/:id/return',
+  requireShopPermission('sales.return'),
   validate(
     z.object({
       lines: z
@@ -345,7 +393,7 @@ router.get(
   '/day',
   handle(async (req) => {
     const all = req.query.all === 'true';
-    if (all && !SHOP_ADMIN_ROLES.includes(req.user!.role)) {
+    if (all && !(req.user!.shopPermissions ?? []).includes('sales.view_all')) {
       // Not an error the salesman needs to see: they get their own day.
       return till.daySummary(actorOf(req), { dayKey: str(req.query.dayKey) });
     }

@@ -117,11 +117,11 @@ export default function App() {
           </Protected>
         }
       >
-        <Route path="dashboard" element={<BackRoom><Dashboard /></BackRoom>} />
+        <Route path="dashboard" element={<BackRoom perm="reports.view"><Dashboard /></BackRoom>} />
         <Route path="sales" element={<Sales />} />
-        <Route path="online-orders" element={<OnlineOrders />} />
+        <Route path="online-orders" element={<BackRoom perm="online_orders.manage"><OnlineOrders /></BackRoom>} />
         <Route path="customers" element={<Customers />} />
-        <Route path="counters" element={<BackRoom><Counters /></BackRoom>} />
+        <Route path="counters" element={<BackRoom perm="settings.manage"><Counters /></BackRoom>} />
         {/* Reached from the profile menu in the bar, not from the rail: it is
             about the person, and everybody has one. */}
         <Route path="profile" element={<Profile />} />
@@ -129,28 +129,28 @@ export default function App() {
         <Route path="support" element={<Support />} />
         <Route path="help" element={<Help />} />
         <Route path="help/:slug" element={<Help />} />
-        <Route path="trash" element={<BackRoom><Trash /></BackRoom>} />
-        <Route path="stock" element={<BackRoom><Stock /></BackRoom>} />
-        <Route path="import" element={<BackRoom><Import /></BackRoom>} />
-        <Route path="count" element={<BackRoom><CountStock /></BackRoom>} />
-        <Route path="transfers" element={<BackRoom><Transfers /></BackRoom>} />
-        <Route path="racks" element={<BackRoom><Racks /></BackRoom>} />
-        <Route path="labels" element={<BackRoom><Labels /></BackRoom>} />
-        <Route path="expiry" element={<BackRoom><Expiry /></BackRoom>} />
-        <Route path="purchases" element={<BackRoom><Purchases /></BackRoom>} />
-        <Route path="orders" element={<BackRoom><Orders /></BackRoom>} />
-        <Route path="suppliers" element={<BackRoom><Suppliers /></BackRoom>} />
+        <Route path="trash" element={<BackRoom perm="audit.view"><Trash /></BackRoom>} />
+        <Route path="stock" element={<BackRoom perm="stock.view"><Stock /></BackRoom>} />
+        <Route path="import" element={<BackRoom perm={['stock.manage', 'customers.manage']}><Import /></BackRoom>} />
+        <Route path="count" element={<BackRoom perm="stock.manage"><CountStock /></BackRoom>} />
+        <Route path="transfers" element={<BackRoom perm="transfers.manage"><Transfers /></BackRoom>} />
+        <Route path="racks" element={<BackRoom perm="stock.view"><Racks /></BackRoom>} />
+        <Route path="labels" element={<BackRoom perm="stock.view"><Labels /></BackRoom>} />
+        <Route path="expiry" element={<BackRoom perm="stock.view"><Expiry /></BackRoom>} />
+        <Route path="purchases" element={<BackRoom perm="purchases.manage"><Purchases /></BackRoom>} />
+        <Route path="orders" element={<BackRoom perm="purchases.manage"><Orders /></BackRoom>} />
+        <Route path="suppliers" element={<BackRoom perm="purchases.manage"><Suppliers /></BackRoom>} />
         <Route path="reports" element={<ShopReports />} />
         {/* The expenses are a tab of Accounts now; the old address still lands there. */}
         <Route path="expenses" element={<Navigate to="/accounts?tab=expenses" replace />} />
-        <Route path="activity" element={<Activity />} />
-        <Route path="accounts" element={<BackRoom><Accounts /></BackRoom>} />
+        <Route path="activity" element={<BackRoom perm="audit.view"><Activity /></BackRoom>} />
+        <Route path="accounts" element={<BackRoom perm="accounts.view"><Accounts /></BackRoom>} />
         {/* Hiring, switching somebody off and setting a password are the
             owner's; the server refuses a salesman anyway. */}
-        <Route path="staff" element={<BackRoom><Staff /></BackRoom>} />
-        <Route path="settings" element={<BackRoom><Settings /></BackRoom>} />
-        <Route path="subscription" element={<BackRoom><Subscription /></BackRoom>} />
-        <Route path="branches" element={<BackRoom><Branches /></BackRoom>} />
+        <Route path="staff" element={<BackRoom perm="staff.manage"><Staff /></BackRoom>} />
+        <Route path="settings" element={<BackRoom perm="settings.manage"><Settings /></BackRoom>} />
+        <Route path="subscription" element={<BackRoom ownerOnly><Subscription /></BackRoom>} />
+        <Route path="branches" element={<BackRoom perm="branches.manage"><Branches /></BackRoom>} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

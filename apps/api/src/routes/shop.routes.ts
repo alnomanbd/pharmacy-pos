@@ -5,7 +5,7 @@ import { z } from 'zod';
 import multer from 'multer';
 import { storage, keys, assertAllowed } from '../services/storage.service.js';
 import { ShopSettingsModel } from '../models/index.js';
-import { badRequest } from '../utils/AppError.js';
+import { badRequest, forbidden } from '../utils/AppError.js';
 import * as shop from '../services/shop.service.js';
 import * as staff from '../services/shopStaff.service.js';
 import * as reports from '../services/shopReport.service.js';
@@ -20,6 +20,8 @@ import * as counters from '../services/counters.service.js';
 import * as transfers from '../services/stockTransfer.service.js';
 import * as dataImport from '../services/dataImport.service.js';
 import * as push from '../services/push.service.js';
+import * as roles from '../services/accessRole.service.js';
+import type { ShopPermission } from '../types/shopPermissions.js';
 import * as online from '../services/onlineOrder.service.js';
 import * as wallet from '../services/wallet.service.js';
 import * as saleAdmin from '../services/saleAdmin.service.js';
@@ -32,8 +34,8 @@ import { listShopActivity } from '../services/shopActivity.service.js';
 import { shopActivity } from '../middlewares/shopActivity.js';
 import * as control from '../services/shopControl.service.js';
 import * as controlPdf from '../services/shopControlPdf.service.js';
-import { requireAuth, requireRole, requireWritableTenant } from '../middlewares/auth.js';
-import { SHOP_ADMIN_ROLES } from '../types/roles.js';
+import { requireAuth, requireRole, requireWritableTenant, requireShopPermission, shopPathGate } from '../middlewares/auth.js';
+import { SHOP_ROLES } from '../types/roles.js';
 import {
   ORDER_STATUS,
   EXPENSE_CATEGORIES,
@@ -75,7 +77,49 @@ router.use('/announcements', announcementRoutes);
 router.use('/help', helpRoutes);
 router.use('/branches', branchRoutes);
 
-router.use(requireAuth, requireWritableTenant, requireRole(...SHOP_ADMIN_ROLES), attachBranch);
+router.use(requireAuth, requireWritableTenant, requireRole(...SHOP_ROLES), attachBranch);
+
+/*
+ * Who may do what in the back room, by path — the shop's roles decide
+ * (types/shopPermissions.ts). Each path: what reading it takes, and what
+ * changing it takes. A path not listed needs `settings.manage`.
+ */
+router.use(
+  shopPathGate([
+    { path: '/onboarding', read: null, write: null },
+    { path: '/roles', read: 'staff.manage', write: 'staff.manage' },
+    { path: '/staff', read: 'staff.manage', write: 'staff.manage' },
+    { path: '/suppliers', read: 'purchases.manage', write: 'purchases.manage' },
+    { path: '/purchases', read: 'purchases.manage', write: 'purchases.manage' },
+    { path: '/orders', read: 'purchases.manage', write: 'purchases.manage' },
+    { path: '/products', read: 'stock.view', write: 'stock.manage' },
+    { path: '/racks', read: 'stock.view', write: 'stock.manage' },
+    { path: '/stock', read: 'stock.view', write: 'stock.manage' },
+    { path: '/counts', read: 'stock.view', write: 'stock.manage' },
+    { path: '/transfers', read: 'stock.view', write: 'transfers.manage' },
+    { path: '/import/stock', read: 'stock.manage', write: 'stock.manage' },
+    { path: '/import/customers', read: 'customers.manage', write: 'customers.manage' },
+    { path: '/customers', read: 'customers.manage', write: 'customers.manage' },
+    { path: '/reports', read: 'reports.view', write: 'reports.view' },
+    { path: '/control', read: 'reports.view', write: 'reports.view' },
+    { path: '/push', read: 'reports.view', write: 'reports.view' },
+    { path: '/accounts', read: 'accounts.view', write: 'accounts.manage' },
+    { path: '/expenses', read: 'accounts.view', write: 'accounts.manage' },
+    { path: '/incomes', read: 'accounts.view', write: 'accounts.manage' },
+    { path: '/cash-moves', read: 'accounts.view', write: 'accounts.manage' },
+    { path: '/months', read: 'accounts.view', write: 'accounts.close' },
+    { path: '/export', read: 'data.export', write: 'data.export' },
+    { path: '/sales', read: 'sales.view_all', write: 'sales.edit' },
+    { path: '/activity', read: 'audit.view', write: 'audit.view' },
+    /* Binning and restoring are checked by what is binned (below); reading the bin is the trail's. */
+    { path: '/trash', read: 'audit.view', write: null },
+    { path: '/settings', read: 'settings.manage', write: 'settings.manage' },
+    { path: '/invoice', read: 'settings.manage', write: 'settings.manage' },
+    { path: '/counters', read: 'settings.manage', write: 'settings.manage' },
+    { path: '/wallets', read: 'settings.manage', write: 'settings.manage' },
+    { path: '/online-orders', read: 'settings.manage', write: 'settings.manage' },
+  ]),
+);
 
 /* Every change that succeeds goes on the owner's Activity page. */
 router.use(shopActivity('shop'));
@@ -797,7 +841,8 @@ router.patch(
  * Closing and reopening a month is the owner's alone: it locks what everybody
  * else has typed, and a pharmacist who could reopen one could move a number.
  */
-const ownerOnly = requireRole('admin');
+/* Closing and reopening a month are their own permission, the owner's by default. */
+const ownerOnly = requireShopPermission('accounts.close');
 
 router.get(
   '/months',
@@ -838,7 +883,6 @@ router.post(
 /** Who did what, and when — the owner's page, nobody else's. */
 router.get(
   '/activity',
-  ownerOnly,
   handle((req) =>
     listShopActivity(actorOf(req), {
       from: str(req.query.from),
@@ -1052,7 +1096,9 @@ const staffSchema = z.object({
   name: z.string().trim().min(2).max(120),
   email: z.string().trim().email(),
   phone: z.string().trim().min(6).max(40),
-  role: z.enum(['pharmacist', 'salesman']),
+  /* A built-in role by name, or one of the shop's roles by id. */
+  role: z.enum(['pharmacist', 'salesman']).optional(),
+  roleId: z.string().trim().max(40).optional(),
   password: z.string().min(8).max(128),
 });
 
@@ -1064,7 +1110,7 @@ router.get(
 router.post(
   '/staff',
   validate(staffSchema),
-  make((req) => staff.createStaff(actorOf(req), req.body), 'Account created'),
+  make((req) => staff.createStaff(actorOf(req), req.body, req.user!.shopPermissions ?? []), 'Account created'),
 );
 
 router.patch(
@@ -1074,11 +1120,44 @@ router.patch(
       name: z.string().trim().min(2).max(120).optional(),
       phone: z.string().trim().max(40).optional(),
       role: z.enum(['pharmacist', 'salesman']).optional(),
+      roleId: z.string().trim().max(40).optional(),
       isActive: z.boolean().optional(),
       branchIds: z.array(z.string()).max(100).optional(),
     }),
   ),
-  handle((req) => staff.updateStaff(actorOf(req), req.params.id, req.body), 'Saved'),
+  handle((req) => staff.updateStaff(actorOf(req), req.params.id, req.body, req.user!.shopPermissions ?? []), 'Saved'),
+);
+
+/* ----------------------------------------------------------------- roles -- */
+
+/**
+ * The shop's roles — Owner, the two built in, and its own — with the
+ * permission catalogue the Roles screen draws its checkboxes from.
+ */
+const roleSchema = z.object({
+  name: z.string().trim().min(1).max(60).optional(),
+  description: z.string().trim().max(240).optional(),
+  permissions: z.array(z.string().max(40)).max(60).optional(),
+});
+const roleActor = (req: Request) => ({ ...actorOf(req), shopPermissions: req.user!.shopPermissions ?? [] });
+
+router.get(
+  '/roles',
+  handle(async (req) => ({ roles: await roles.listShopRoles(actorOf(req).org), catalogue: roles.shopPermissionCatalogue() })),
+);
+router.post(
+  '/roles',
+  validate(roleSchema),
+  make(async (req) => ({ id: await roles.saveShopRole(roleActor(req), null, req.body) }), 'Role made'),
+);
+router.patch(
+  '/roles/:id',
+  validate(roleSchema),
+  handle(async (req) => ({ id: await roles.saveShopRole(roleActor(req), req.params.id, req.body) }), 'Role saved'),
+);
+router.delete(
+  '/roles/:id',
+  handle((req) => roles.deleteShopRole(roleActor(req), req.params.id), 'Role deleted'),
 );
 
 router.post(
@@ -1485,8 +1564,27 @@ router.get(
   handle((req) => bin.listShopTrash(actorOf(req), str(req.query.kind))),
 );
 
+/* What binning (or restoring) each kind of thing takes: the permission that manages it. */
+const BIN_NEEDS: Record<string, ShopPermission> = {
+  product: 'stock.manage',
+  rack: 'stock.manage',
+  customer: 'customers.delete',
+  supplier: 'purchases.manage',
+  counter: 'settings.manage',
+  expense: 'accounts.manage',
+  income: 'accounts.manage',
+  cashmove: 'accounts.manage',
+  sale: 'sales.edit',
+};
+const binGate = (req: Request, _res: Response, next: NextFunction) => {
+  const needed = BIN_NEEDS[req.params.kind] ?? 'audit.view';
+  if (!(req.user!.shopPermissions ?? []).includes(needed)) return next(forbidden('Your role does not allow this — ask the shop owner'));
+  next();
+};
+
 router.delete(
   '/trash/:kind/:id',
+  binGate,
   validate(reasonOnly),
   handle(
     (req) =>
@@ -1502,6 +1600,7 @@ router.delete(
 
 router.post(
   '/trash/:kind/:id/restore',
+  binGate,
   handle(
     (req) => bin.restore({ ...actorOf(req), role: req.user!.role }, req.params.kind, req.params.id),
     'Taken out of the bin',

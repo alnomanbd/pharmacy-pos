@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import { useAuthStore } from '@dawai/shared/store/auth.store';
+import { useCan } from '../access';
 import { useToast } from '@dawai/shared/components/Toast';
 import { tillApi, type ShopCustomer } from '../api';
 import { bdMobile, BD_MOBILE_MESSAGE } from '@dawai/shared/lib/phone';
@@ -41,7 +41,9 @@ export default function CustomerForm({
 }) {
   const t = useT();
   const { toast } = useToast();
-  const runsTheShop = useAuthStore((s) => s.user?.role) !== 'salesman';
+  /* A credit limit and an opening balance are money policy, not a counter's call. */
+  const can = useCan();
+  const runsTheShop = can('accounts.manage');
   const [name, setName] = useState(customer?.name ?? initial?.name ?? '');
   const [phone, setPhone] = useState(customer?.phone ?? initial?.phone ?? '');
   const [address, setAddress] = useState(customer?.address ?? '');

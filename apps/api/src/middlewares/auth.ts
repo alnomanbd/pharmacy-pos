@@ -7,7 +7,8 @@ import { OrganizationModel } from '../models/Organization.js';
 import type { Role } from '../types/enums.js';
 import { PLATFORM_ROLES } from '../types/roles.js';
 import type { Permission } from '../types/permissions.js';
-import { permissionsOf } from '../services/platformTeam.service.js';
+import { platformPermissionsOf, shopPermissionsOf } from '../services/accessRole.service.js';
+import type { ShopPermission } from '../types/shopPermissions.js';
 
 export interface AuthUser {
   id: string;
@@ -17,6 +18,8 @@ export interface AuthUser {
   email: string;
   /** Platform staff only. The owner's set is filled in, not stored. */
   permissions?: Permission[];
+  /** Shop staff only: what their role lets them do in the shop. The owner holds all of it. */
+  shopPermissions?: ShopPermission[];
   /** An operator looking through the shop's own app, read-only. */
   impersonated?: boolean;
   /** Which operator, when `impersonated`. */
@@ -107,7 +110,10 @@ export async function requireAuth(req: Request, _res: Response, next: NextFuncti
       role: user.role,
       name: user.name,
       email: user.email,
-      permissions: permissionsOf(user as { role?: string; permissions?: string[] }),
+      permissions: await platformPermissionsOf(user as { role?: string; permissions?: string[]; accessRole?: unknown }),
+      shopPermissions: user.organization
+        ? await shopPermissionsOf(user as { role?: string; accessRole?: unknown; organization?: unknown })
+        : [],
       impersonated: Boolean(payload.imp),
       impersonatedBy: payload.by,
     };
@@ -251,6 +257,44 @@ export function requireWritableTenant(req: Request, _res: Response, next: NextFu
  * which of these they pass. The owner (`platformAdmin`) holds every permission
  * implicitly and passes them all.
  */
+/**
+ * A shop route for whoever's role allows any of these — the shop's own
+ * roles, the way `requirePermission` is the console's.
+ */
+export function requireShopPermission(...permissions: ShopPermission[]) {
+  return (req: Request, _res: Response, next: NextFunction) => {
+    if (!req.user) return next(forbidden('Not authenticated'));
+    const held = req.user.shopPermissions ?? [];
+    if (!permissions.some((p) => held.includes(p))) {
+      return next(forbidden('Your role does not allow this — ask the shop owner'));
+    }
+    next();
+  };
+}
+
+/**
+ * The shop's back-room routes, by path: each path names what reading it and
+ * changing it take. A path nobody named needs `settings.manage` — a new
+ * route is closed until somebody says who it is for, never open by accident.
+ */
+export function shopPathGate(
+  rules: { path: string; read: ShopPermission | null; write: ShopPermission | null }[],
+  fallback: ShopPermission | null = 'settings.manage',
+) {
+  const sorted = [...rules].sort((a, b) => b.path.length - a.path.length);
+  return (req: Request, _res: Response, next: NextFunction) => {
+    if (!req.user) return next(forbidden('Not authenticated'));
+    const rule = sorted.find((r) => req.path === r.path || req.path.startsWith(`${r.path}/`) || (r.path.endsWith('/') && req.path.startsWith(r.path)));
+    const reading = req.method === 'GET' || req.method === 'HEAD';
+    const needed = rule ? (reading ? rule.read : rule.write) : fallback;
+    if (needed === null) return next();
+    if (!(req.user.shopPermissions ?? []).includes(needed)) {
+      return next(forbidden('Your role does not allow this — ask the shop owner'));
+    }
+    next();
+  };
+}
+
 export function requirePermission(...permissions: Permission[]) {
   return (req: Request, _res: Response, next: NextFunction) => {
     if (!req.user) return next(forbidden('Not authenticated'));

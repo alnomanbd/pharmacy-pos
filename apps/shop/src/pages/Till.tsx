@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useCan } from '../access';
 import {
   ScanLine,
   Loader2,
@@ -74,7 +75,6 @@ import RecentBills from '../pos/RecentBills';
 import AlertBell from '../alerts/AlertBell';
 import AlertTicker from '../alerts/AlertTicker';
 import { useAlertStore, useStockAlertsPoll } from '../alerts/useStockAlerts';
-import { useAuthStore } from '@dawai/shared/store/auth.store';
 import { WalletPanel, type WalletMethod } from '../pos/WalletPanel';
 
 /**
@@ -165,7 +165,8 @@ export default function Till() {
     return () => document.body.classList.remove('toasts-bottom-left');
   }, []);
   const refreshAlerts = useAlertStore((s) => s.refresh);
-  const runsTheShop = useAuthStore((s) => s.user?.role) !== 'salesman';
+  /* The bell's stock alerts are for whoever looks after the shelves. */
+  const runsTheShop = useCan()('stock.view');
   const t = useT();
   const { toast } = useToast();
   const navigate = useNavigate();

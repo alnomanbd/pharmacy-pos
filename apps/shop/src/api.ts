@@ -1216,7 +1216,34 @@ export interface StaffMember {
   createdAt?: string;
   /** The branches they work in; empty is all of them. */
   branches?: string[];
+  /** Their role: `owner`, `pharmacist`, `salesman`, or one of the shop's own by id — and its name. */
+  roleId?: string;
+  roleName?: string;
 }
+
+/** One of the shop's roles — Owner and the two built in, or one the shop made. */
+export interface ShopRole {
+  id: string;
+  name: string;
+  description: string;
+  permissions: string[];
+  builtIn: boolean;
+  people: number;
+}
+
+/** The permission catalogue, grouped the way the Roles screen shows it. */
+export interface PermissionGroup {
+  key: string;
+  label: string;
+  permissions: { key: string; label: string; description: string }[];
+}
+
+export const rolesApi = {
+  list: () => getData<{ roles: ShopRole[]; catalogue: PermissionGroup[] }>(api.get('/shop/roles')),
+  create: (payload: { name: string; description?: string; permissions: string[] }) => getData<{ id: string }>(api.post('/shop/roles', payload)),
+  update: (id: string, payload: { name?: string; description?: string; permissions?: string[] }) => getData<{ id: string }>(api.patch(`/shop/roles/${id}`, payload)),
+  remove: (id: string) => getData<{ ok: boolean }>(api.delete(`/shop/roles/${id}`)),
+};
 
 export const staffApi = {
   list: () => getData<StaffMember[]>(api.get('/shop/staff')),
@@ -1224,12 +1251,12 @@ export const staffApi = {
     name: string;
     email: string;
     phone: string;
-    role: 'pharmacist' | 'salesman';
+    roleId: string;
     password: string;
   }) => getData<StaffMember>(api.post('/shop/staff', payload)),
   update: (
     id: string,
-    payload: { name?: string; phone?: string; role?: 'pharmacist' | 'salesman'; isActive?: boolean; branchIds?: string[] },
+    payload: { name?: string; phone?: string; roleId?: string; isActive?: boolean; branchIds?: string[] },
   ) => getData<StaffMember>(api.patch(`/shop/staff/${id}`, payload)),
   setPassword: (id: string, password: string) =>
     getData<{ _id: string; name: string }>(api.post(`/shop/staff/${id}/password`, { password })),

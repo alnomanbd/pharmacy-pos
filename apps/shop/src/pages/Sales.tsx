@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useCan } from '../access';
 import { useLinkedSearch } from '../components/useLinkedSearch';
 import {
   ReceiptText,
@@ -22,7 +23,6 @@ import {
   type Sale,
   type ShopSettings,
 } from '../api';
-import { useAuthStore } from '@dawai/shared/store/auth.store';
 import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import { toLocalDate } from '@dawai/shared/lib/date';
@@ -86,8 +86,11 @@ export default function Sales() {
   const t = useT();
   const lang = useUiLang();
   const { toast } = useToast();
-  const role = useAuthStore((s) => s.user?.role);
-  const runsTheShop = role !== 'salesman';
+  const can = useCan();
+  /* Everybody's bills, the export and the margin: three permissions, not one role. */
+  const runsTheShop = can('sales.view_all');
+  const canExport = can('data.export');
+  const canSeeCost = can('reports.view');
 
   /* A bill can be linked to from anywhere — the baki khata does it — and a
      number arriving that way is looked for across a month rather than today,
@@ -202,7 +205,7 @@ export default function Sales() {
               <UserRound className="h-3.5 w-3.5" /> {t('Only mine')}
             </button>
           )}
-          {runsTheShop && (
+          {canExport && (
             <ExportCsv what="sales" params={{ from, to }} label="Export the register" />
           )}
         </div>
@@ -521,7 +524,7 @@ export default function Sales() {
       {open && (
         <BillDetail
           sale={open}
-          canSeeCost={runsTheShop}
+          canSeeCost={canSeeCost}
           onClose={() => setOpen(null)}
           onPrint={() => setPrinting(open)}
           /* Correcting and cancelling live on the register, where somebody is

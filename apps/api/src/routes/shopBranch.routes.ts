@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import * as branches from '../services/branch.service.js';
-import { requireAuth, requireRole, requireWritableTenant } from '../middlewares/auth.js';
+import { requireAuth, requireRole, requireWritableTenant, requireShopPermission } from '../middlewares/auth.js';
 import { SHOP_ROLES } from '../types/roles.js';
 import { validate } from '../middlewares/validate.js';
 import { ok, created } from '../utils/response.js';
@@ -29,7 +29,7 @@ const branchSchema = z.object({
   phone: z.string().trim().max(60).optional(),
 });
 
-router.post('/', requireWritableTenant, requireRole('admin'), validate(branchSchema), async (req, res, next) => {
+router.post('/', requireWritableTenant, requireShopPermission('branches.manage'), validate(branchSchema), async (req, res, next) => {
   try {
     const b = await branches.createBranch(req.user!.org!, req.body);
     await audit(req, 'organization.update', { model: 'Branch', id: String(b._id), label: b.name }, { after: { action: 'branch.create' } });
@@ -42,7 +42,7 @@ router.post('/', requireWritableTenant, requireRole('admin'), validate(branchSch
 router.patch(
   '/:id',
   requireWritableTenant,
-  requireRole('admin'),
+  requireShopPermission('branches.manage'),
   validate(branchSchema.partial().extend({ active: z.boolean().optional() })),
   async (req, res, next) => {
     try {

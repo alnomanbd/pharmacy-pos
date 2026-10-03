@@ -46,6 +46,16 @@ export interface ShopFeatures {
   plan: PlanFeatures;
 }
 
+/** A console role: a named set of permissions given to members of the team. */
+export interface PlatformRole {
+  id: string;
+  name: string;
+  description: string;
+  permissions: string[];
+  people: number;
+  preset: string;
+}
+
 /** A plan in the catalogue — Trial, Basic, Plus. */
 export interface ShopPlan {
   id: string;
@@ -683,6 +693,13 @@ export const platformApi = {
   updateTeamMember: (id: string, payload: Record<string, unknown>) =>
     getData<unknown>(api.patch(`/platform/team/${id}`, payload)),
   removeTeamMember: (id: string) => getData<unknown>(api.delete(`/platform/team/${id}`)),
+  /* ---------- the console's roles ---------- */
+  teamRoles: () => getData<PlatformRole[]>(api.get('/platform/team/roles')),
+  createTeamRole: (payload: { name: string; description?: string; permissions: string[] }) =>
+    getData<{ id: string }>(api.post('/platform/team/roles', payload)),
+  updateTeamRole: (id: string, payload: { name?: string; description?: string; permissions?: string[] }) =>
+    getData<{ id: string }>(api.patch(`/platform/team/roles/${id}`, payload)),
+  deleteTeamRole: (id: string) => getData<{ ok: boolean }>(api.delete(`/platform/team/roles/${id}`)),
 
   /* ---------- the shared medicine catalogue ---------- */
   catalogueStats: () => getData<CatalogueStats>(api.get('/platform/catalogue/stats')),

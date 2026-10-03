@@ -19,7 +19,8 @@ import {
   Pencil,
   Power,
 } from 'lucide-react';
-import { staffApi, taka, type StaffMember } from '../api';
+import { staffApi, rolesApi, taka, type StaffMember, type ShopRole } from '../api';
+import ShopRoles from '../components/ShopRoles';
 import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import { useT, useUiLang, bnNumerals } from '../i18n/ui';
@@ -92,6 +93,18 @@ export default function Staff() {
   const [busyId, setBusyId] = useState('');
   const [show, setShow] = useState<Show>('all');
   const [q, setQ] = useState('');
+  /* People, or the roles they are given. */
+  const [view, setView] = useState<'people' | 'roles'>('people');
+  const [roles, setRoles] = useState<ShopRole[]>([]);
+  const loadRoles = useCallback(() => {
+    rolesApi
+      .list()
+      .then((r) => setRoles(r.roles))
+      .catch(() => undefined);
+  }, []);
+  useEffect(() => {
+    loadRoles();
+  }, [loadRoles]);
 
   const n = useCallback((v: number | string) => (lang === 'bn' ? bnNumerals(String(v)) : String(v)), [lang]);
   const money = useCallback((v: number) => n(taka(v)), [n]);
@@ -159,12 +172,42 @@ export default function Staff() {
             {t('Who works here — each with their own sign-in, so every bill carries a name.')}
           </p>
         </div>
-        <button type="button" className="btn h-9" onClick={() => setAdding(true)}>
-          <UserPlus className="h-4 w-4" /> {t('Add someone')}
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex rounded-xl bg-muted p-1" role="tablist">
+            {(
+              [
+                ['people', 'People', Users],
+                ['roles', 'Roles', ShieldCheck],
+              ] as const
+            ).map(([k, label, Icon]) => (
+              <button
+                key={k}
+                type="button"
+                role="tab"
+                aria-selected={view === k}
+                onClick={() => setView(k)}
+                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold ${view === k ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                <Icon className="h-3.5 w-3.5" /> {t(label)}
+              </button>
+            ))}
+          </div>
+          {view === 'people' && (
+            <button type="button" className="btn h-9" onClick={() => setAdding(true)}>
+              <UserPlus className="h-4 w-4" /> {t('Add someone')}
+            </button>
+          )}
+        </div>
       </div>
 
-      {loading ? (
+      {view === 'roles' ? (
+        <ShopRoles
+          onChanged={() => {
+            loadRoles();
+            void load();
+          }}
+        />
+      ) : loading ? (
         <LoadingBlock />
       ) : (
         <>
@@ -256,6 +299,7 @@ export default function Staff() {
 
       {adding && (
         <AddStaff
+          roles={roles}
           onClose={() => setAdding(false)}
           onAdded={() => {
             setAdding(false);
@@ -266,6 +310,7 @@ export default function Staff() {
       {editing && (
         <EditStaff
           member={editing}
+          roles={roles}
           onClose={() => setEditing(null)}
           onSaved={() => {
             setEditing(null);
@@ -357,14 +402,14 @@ function StaffCard({
             </h3>
             <span className="mt-0.5 flex flex-wrap items-center gap-1.5">
               <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${look.tone}`}>
-                <look.icon className="h-3 w-3" /> {t(ROLE_LABEL[m.role])}
+                <look.icon className="h-3 w-3" /> {t(m.roleName || ROLE_LABEL[m.role])}
               </span>
               {!m.isActive && <span className="pill danger !py-0 text-[10.5px]">{t('Switched off')}</span>}
             </span>
           </div>
         </div>
 
-        <p className="mt-2 line-clamp-1 text-[11px] text-muted-foreground">{t(ROLE_HINT[m.role])}</p>
+        <p className="mt-2 line-clamp-1 text-[11px] text-muted-foreground">{m.roleId && !['owner', 'pharmacist', 'salesman'].includes(m.roleId) ? t('A role of this shop’s own') : t(ROLE_HINT[m.role])}</p>
 
         <div className="mt-3 space-y-1 text-[11.5px] text-muted-foreground">
           <p className="flex items-center gap-1.5 truncate">
@@ -458,10 +503,12 @@ function StaffCard({
  */
 function EditStaff({
   member,
+  roles,
   onClose,
   onSaved,
 }: {
   member: StaffMember;
+  roles: ShopRole[];
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -469,7 +516,7 @@ function EditStaff({
   const { toast } = useToast();
   const [name, setName] = useState(member.name);
   const [phone, setPhone] = useState(member.phone ?? '');
-  const [role, setRole] = useState(member.role);
+  const [role, setRole] = useState(member.roleId ?? member.role);
   const [busy, setBusy] = useState(false);
   /* Which branches they work in — asked only of a shop with more than one. None ticked: all. */
   const [branches, setBranches] = useState<BranchSwitcherInfo['branches']>([]);
@@ -488,7 +535,7 @@ function EditStaff({
       await staffApi.update(member._id, {
         name: name.trim(),
         phone: phone.trim(),
-        ...(member.role !== 'admin' && role !== 'admin' ? { role } : {}),
+        ...(member.role !== 'admin' && role !== (member.roleId ?? member.role) ? { roleId: role } : {}),
         ...(askBranches ? { branchIds: worksIn.filter((id) => branches.some((b) => b._id === id)) } : {}),
       });
       toast(`${name.trim()} ${t('saved')}.`);
@@ -513,7 +560,7 @@ function EditStaff({
         {member.role !== 'admin' && (
           <div>
             <span className="mb-1 block text-xs font-semibold text-muted-foreground">{t('What can they do?')}</span>
-            <RolePicker value={role as 'salesman' | 'pharmacist'} onChange={setRole} />
+            <RolePicker roles={roles} value={role} onChange={setRole} />
           </div>
         )}
         <div className="grid gap-3 sm:grid-cols-2">
@@ -565,35 +612,34 @@ function EditStaff({
   );
 }
 
-/** The two roles a shop hires for, as cards rather than a dropdown. */
-function RolePicker({
-  value,
-  onChange,
-}: {
-  value: 'salesman' | 'pharmacist';
-  onChange: (r: 'salesman' | 'pharmacist') => void;
-}) {
+/** The roles a person can be given — the two built in and the shop's own — as cards rather than a dropdown. */
+function RolePicker({ roles, value, onChange }: { roles: ShopRole[]; value: string; onChange: (r: string) => void }) {
   const t = useT();
+  const options = roles.length
+    ? roles.filter((r) => r.id !== 'owner')
+    : (['salesman', 'pharmacist'] as const).map((k) => ({ id: k, name: ROLE_LABEL[k], description: ROLE_HINT[k], builtIn: true }) as ShopRole);
   return (
-    <div className="grid gap-2 sm:grid-cols-2">
-      {(['salesman', 'pharmacist'] as const).map((r) => {
-        const look = ROLE_LOOK[r];
+    <div className="grid max-h-64 gap-2 overflow-y-auto sm:grid-cols-2">
+      {options.map((r) => {
+        const look = r.id === 'pharmacist' || r.id === 'salesman' ? ROLE_LOOK[r.id] : { icon: ShieldCheck, tone: 'bg-violet-500/10 text-violet-600 dark:text-violet-400' };
         return (
           <button
-            key={r}
+            key={r.id}
             type="button"
-            aria-pressed={value === r}
-            onClick={() => onChange(r)}
+            aria-pressed={value === r.id}
+            onClick={() => onChange(r.id)}
             className={`flex items-start gap-2.5 rounded-xl border px-3 py-2.5 text-left text-sm transition-colors ${
-              value === r ? 'border-primary bg-primary/5 font-semibold ring-2 ring-primary/15' : 'border-border hover:bg-secondary'
+              value === r.id ? 'border-primary bg-primary/5 font-semibold ring-2 ring-primary/15' : 'border-border hover:bg-secondary'
             }`}
           >
             <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${look.tone}`}>
               <look.icon className="h-4 w-4" />
             </span>
-            <span>
-              {t(ROLE_LABEL[r])}
-              <span className="block text-[11px] font-normal text-muted-foreground">{t(ROLE_HINT[r])}</span>
+            <span className="min-w-0">
+              {t(r.name)}
+              <span className="block line-clamp-2 text-[11px] font-normal text-muted-foreground">
+                {r.id === 'pharmacist' || r.id === 'salesman' ? t(ROLE_HINT[r.id]) : r.description || `${r.permissions.length} ${t('permissions')}`}
+              </span>
             </span>
           </button>
         );
@@ -602,7 +648,7 @@ function RolePicker({
   );
 }
 
-function AddStaff({ onClose, onAdded }: { onClose: () => void; onAdded: () => void }) {
+function AddStaff({ roles, onClose, onAdded }: { roles: ShopRole[]; onClose: () => void; onAdded: () => void }) {
   const t = useT();
   const { toast } = useToast();
   const [busy, setBusy] = useState(false);
@@ -610,7 +656,7 @@ function AddStaff({ onClose, onAdded }: { onClose: () => void; onAdded: () => vo
     name: '',
     email: '',
     phone: '',
-    role: 'salesman' as 'salesman' | 'pharmacist',
+    role: 'salesman',
     password: '',
   });
 
@@ -625,7 +671,7 @@ function AddStaff({ onClose, onAdded }: { onClose: () => void; onAdded: () => vo
         name: form.name.trim(),
         email: form.email.trim(),
         phone: form.phone.trim(),
-        role: form.role,
+        roleId: form.role,
         password: form.password,
       });
       toast(`${form.name.trim()} can sign in now. Tell them the password.`);
@@ -654,7 +700,7 @@ function AddStaff({ onClose, onAdded }: { onClose: () => void; onAdded: () => vo
             <label className="mb-1 block text-xs font-semibold text-muted-foreground">
               {t('What can they do?')}
             </label>
-            <RolePicker value={form.role} onChange={(role) => setForm({ ...form, role })} />
+            <RolePicker roles={roles} value={form.role} onChange={(role) => setForm({ ...form, role })} />
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">

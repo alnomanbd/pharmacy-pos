@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useCan } from '../access';
 import {
   Bike,
   CheckCircle2,
@@ -22,7 +23,6 @@ import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import Modal from '../components/Modal';
 import { useT, useUiLang, bnNumerals } from '../i18n/ui';
-import { useAuthStore } from '@dawai/shared/store/auth.store';
 
 /**
  * Orders from customers, through the shop's own link.
@@ -61,7 +61,7 @@ export default function OnlineOrders() {
   const [rows, setRows] = useState<OnlineOrder[] | null>(null);
   const [view, setView] = useState<'open' | 'delivered' | 'cancelled'>('open');
   const [open, setOpen] = useState<OnlineOrder | null>(null);
-  const runsTheShop = useAuthStore((s) => s.user?.role) !== 'salesman';
+  const runsTheShop = useCan()('settings.manage');
 
   const load = useCallback(async () => {
     try {

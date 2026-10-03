@@ -288,6 +288,9 @@ export interface PlatformMember {
   role: Role;
   /** The owner's set is implicit rather than stored, and filled in on read. */
   permissions: string[];
+  /** Their console role, when they have one; `null` means permissions given one by one. */
+  roleId?: string | null;
+  roleName?: string;
   isOwner: boolean;
   twoFactorEnabled?: boolean;
   isActive?: boolean;

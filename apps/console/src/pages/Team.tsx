@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { UserPlus, Shield, ShieldOff, X, Save, Trash2, KeyRound, Check, Pencil, Lock, Power } from 'lucide-react';
-import { platformApi } from '../api';
+import { platformApi, type PlatformRole } from '../api';
 import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock, Spinner } from '@dawai/shared/components/Spinner';
 import ConfirmDialog from '@dawai/shared/components/ConfirmDialog';
@@ -24,7 +24,8 @@ import { lastSeen } from '../lib/lastSeen';
  * underneath for when a preset is not quite right.
  */
 
-const EMPTY = { name: '', email: '', phone: '', password: '', preset: 'support' };
+/* A new member gets a role (by id), or `custom` with permissions picked by hand. */
+const EMPTY = { name: '', email: '', phone: '', password: '', roleId: '', permissions: [] as string[] };
 
 /** Grouped by what they are about, so the list reads rather than scans. */
 const GROUPS: { title: string; prefix: string }[] = [
@@ -47,7 +48,12 @@ export default function Team() {
   const { toast } = useToast();
   const [members, setMembers] = useState<PlatformMember[]>([]);
   const [permissions, setPermissions] = useState<string[]>([]);
-  const [presets, setPresets] = useState<PermissionPreset[]>([]);
+  const [, setPresets] = useState<PermissionPreset[]>([]);
+  const [roles, setRoles] = useState<PlatformRole[]>([]);
+  /* The role being edited in the Roles card: an id, `new`, or nothing. */
+  const [roleEdit, setRoleEdit] = useState<{ id: string; name: string; description: string; permissions: string[] } | null>(null);
+  /* Changing a member's access: a role id, or `custom`. */
+  const [editRole, setEditRole] = useState<string>('custom');
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState('');
   const [adding, setAdding] = useState(false);
@@ -67,11 +73,13 @@ export default function Team() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [team, catalogue] = await Promise.all([
+      const [team, catalogue, roleList] = await Promise.all([
         platformApi.team(),
         platformApi.teamPermissions(),
+        platformApi.teamRoles(),
       ]);
       setMembers(team);
+      setRoles(roleList);
       setPermissions(catalogue.permissions);
       setPresets(catalogue.presets);
     } catch (e: any) {
@@ -92,7 +100,8 @@ export default function Team() {
     }
     setBusy('new');
     try {
-      await platformApi.addTeamMember(draft);
+      const { roleId, permissions: perms, ...who } = draft;
+      await platformApi.addTeamMember(roleId && roleId !== 'custom' ? { ...who, roleId } : { ...who, permissions: perms });
       toast(`${draft.name} added. Give them the password you set — they can change it after.`);
       setAdding(false);
       setDraft(EMPTY);
@@ -107,7 +116,10 @@ export default function Team() {
   const savePerms = async (m: PlatformMember) => {
     setBusy(m._id);
     try {
-      await platformApi.updateTeamMember(m._id, { permissions: editPerms });
+      await platformApi.updateTeamMember(
+        m._id,
+        editRole === 'custom' ? { roleId: null, permissions: editPerms } : { roleId: editRole },
+      );
       toast('Access updated.');
       setEditing('');
       await load();
@@ -252,6 +264,33 @@ export default function Team() {
     </div>
   );
 
+  const saveRole = async () => {
+    if (!roleEdit) return;
+    setBusy('role');
+    try {
+      const body = { name: roleEdit.name.trim(), description: roleEdit.description.trim(), permissions: roleEdit.permissions };
+      if (roleEdit.id === 'new') await platformApi.createTeamRole(body);
+      else await platformApi.updateTeamRole(roleEdit.id, body);
+      toast('Role saved — everybody with it has the change now.');
+      setRoleEdit(null);
+      await load();
+    } catch (e) {
+      toast(errorMessage(e, 'Could not save the role.'), 'error');
+    } finally {
+      setBusy('');
+    }
+  };
+  const deleteRole = async (r: PlatformRole) => {
+    if (!window.confirm(`Delete the role “${r.name}”?`)) return;
+    try {
+      await platformApi.deleteTeamRole(r.id);
+      toast('Role deleted.');
+      await load();
+    } catch (e) {
+      toast(errorMessage(e, 'Could not delete the role.'), 'error');
+    }
+  };
+
   return (
     <div className="page">
       <div className="topbar flex-wrap gap-2">
@@ -319,27 +358,29 @@ export default function Team() {
           </div>
 
           <div className="mt-3">
-            <div className="label">What they will do</div>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {presets.map((p) => (
+            <div className="label">Their role</div>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {[...roles.map((r) => ({ key: r.id, label: r.name, description: r.description || `${r.permissions.length} permissions` })), { key: 'custom', label: 'Custom', description: 'Pick the permissions one by one' }].map((p) => (
                 <button
                   key={p.key}
                   type="button"
                   className={`rounded-lg border p-3 text-left transition-colors ${
-                    draft.preset === p.key
-                      ? 'border-primary bg-secondary'
-                      : 'border-border hover:bg-muted'
+                    draft.roleId === p.key ? 'border-primary bg-secondary' : 'border-border hover:bg-muted'
                   }`}
-                  onClick={() => setDraft({ ...draft, preset: p.key })}
+                  onClick={() => setDraft({ ...draft, roleId: p.key })}
                 >
                   <span className="block text-sm font-semibold">{p.label}</span>
                   <span className="block text-xs text-muted-foreground">{p.description}</span>
                 </button>
               ))}
             </div>
+            {draft.roleId === 'custom' && (
+              <div className="mt-3">
+                <PermissionGrid value={draft.permissions} onChange={(v) => setDraft({ ...draft, permissions: v })} />
+              </div>
+            )}
             <p className="mt-2 text-xs text-muted-foreground">
-              No preset grants deleting an account, changing prices, or adding to this team — those
-              stay with you. Adjust anyone's access after they are added.
+              A role keeps a member's access in step with everybody else who does the same job. You can only give what you hold yourself.
             </p>
           </div>
 
@@ -348,6 +389,74 @@ export default function Team() {
           </button>
         </div>
       )}
+
+      {/* ---- roles: a named set of permissions, given to members ---- */}
+      <div className="card">
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 className="mb-0">Roles</h3>
+            <p className="text-xs text-muted-foreground">Change a role and it changes for every member who has it.</p>
+          </div>
+          <button className={BTN_OUTLINE} onClick={() => setRoleEdit({ id: 'new', name: '', description: '', permissions: [] })}>
+            <UserPlus className="h-3.5 w-3.5" /> New role
+          </button>
+        </div>
+        {roleEdit && (
+          <div className="mb-3 rounded-lg border border-primary/40 p-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_2fr]">
+              <label className="label">
+                Name
+                <input className="input mt-1" value={roleEdit.name} onChange={(e) => setRoleEdit({ ...roleEdit, name: e.target.value })} />
+              </label>
+              <label className="label">
+                What it is for
+                <input className="input mt-1" value={roleEdit.description} onChange={(e) => setRoleEdit({ ...roleEdit, description: e.target.value })} />
+              </label>
+            </div>
+            <div className="mt-3">
+              <PermissionGrid value={roleEdit.permissions} onChange={(v) => setRoleEdit({ ...roleEdit, permissions: v })} />
+            </div>
+            <div className="mt-3 flex gap-2">
+              <button className="btn btn-sm" disabled={busy === 'role' || !roleEdit.name.trim()} onClick={() => void saveRole()}>
+                <Check className="h-3.5 w-3.5" /> Save role
+              </button>
+              <button className={BTN_OUTLINE} onClick={() => setRoleEdit(null)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {roles.map((r) => (
+            <div key={r.id} className="rounded-lg border border-border p-3">
+              <div className="flex items-center gap-2">
+                <Shield className="h-4 w-4 text-primary" />
+                <strong className="text-sm">{r.name}</strong>
+                <span className="ml-auto text-xs text-muted-foreground">
+                  {r.people} {r.people === 1 ? 'member' : 'members'}
+                </span>
+              </div>
+              <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{r.description || '—'}</p>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                {r.permissions.length} of {permissions.length} permissions
+              </p>
+              <div className="mt-2 flex gap-2">
+                <button className={BTN_OUTLINE} onClick={() => setRoleEdit({ id: r.id, name: r.name, description: r.description, permissions: r.permissions })}>
+                  <Pencil className="h-3.5 w-3.5" /> Edit
+                </button>
+                <button
+                  className={BTN_OUTLINE_DANGER}
+                  disabled={r.people > 0}
+                  title={r.people > 0 ? 'Give these members another role first' : 'Delete'}
+                  onClick={() => void deleteRole(r)}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
 
       <div className="card">
         {loading ? (
@@ -362,6 +471,7 @@ export default function Team() {
                   <strong>{m.name}</strong>
                   {self && <span className="pill called">you</span>}
                   {m.isOwner && <span className="pill booked">owner</span>}
+                  {!m.isOwner && <span className="pill called">{m.roleName || 'Custom'}</span>}
                   {m.isActive === false && <span className="pill cancelled">disabled</span>}
                   {m.twoFactorEnabled && (
                     <span className="pill completed inline-flex items-center gap-1">
@@ -381,7 +491,22 @@ export default function Team() {
 
                 {editing === m._id ? (
                   <div className="mt-3 border-t border-border pt-3">
-                    <PermissionGrid value={editPerms} onChange={setEditPerms} />
+                    <div className="label">Role</div>
+                    <select className="input mb-3 max-w-xs" value={editRole} onChange={(e) => setEditRole(e.target.value)}>
+                      {roles.map((r) => (
+                        <option key={r.id} value={r.id}>
+                          {r.name}
+                        </option>
+                      ))}
+                      <option value="custom">Custom — pick permissions</option>
+                    </select>
+                    {editRole === 'custom' ? (
+                      <PermissionGrid value={editPerms} onChange={setEditPerms} />
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        {roles.find((r) => r.id === editRole)?.permissions.join(' · ')}
+                      </p>
+                    )}
                     <div className="mt-3 flex gap-2">
                       <button
                         className="btn btn-sm"
@@ -458,6 +583,7 @@ export default function Team() {
                             onClick={() => {
                               setEditing(m._id);
                               setEditPerms(m.permissions);
+                              setEditRole(m.roleId ?? 'custom');
                             }}
                           >
                             <Shield className="h-3.5 w-3.5" /> Change access

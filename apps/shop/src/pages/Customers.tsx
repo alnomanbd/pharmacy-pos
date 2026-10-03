@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useCan } from '../access';
 import {
   Users,
   Search,
@@ -28,7 +29,6 @@ import {
   type ShopSettings,
   type BookRow,
 } from '../api';
-import { useAuthStore } from '@dawai/shared/store/auth.store';
 import ConfirmWithReason from '../components/ConfirmWithReason';
 import CustomerForm from '../components/CustomerForm';
 import BillDetail from '../components/BillDetail';
@@ -114,7 +114,7 @@ const ago = (iso: string | undefined, n: (v: number | string) => string, t: (k: 
 };
 
 export default function Customers() {
-  const role = useAuthStore((s) => s.user?.role);
+  const canImport = useCan()('customers.manage');
   const t = useT();
   const lang = useUiLang();
   const { toast } = useToast();
@@ -230,7 +230,7 @@ export default function Customers() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <ExportCsv what="customers" label="Export the khata" />
-          {role !== 'salesman' && (
+          {canImport && (
             <Link to="/import?what=customers" className="btn btn-ghost h-9">
               <FileSpreadsheet className="h-4 w-4" /> {t('Import')}
             </Link>
@@ -565,7 +565,8 @@ function CustomerSheet({
   const { toast } = useToast();
   /* Deleting is the back room's (the bin is an admin route); correcting a
      phone number is anybody's who stands at the counter. */
-  const runsTheShop = useAuthStore((s) => s.user?.role) !== 'salesman';
+  const can = useCan();
+  const runsTheShop = can('customers.delete');
   const [editing, setEditing] = useState(false);
   const [binning, setBinning] = useState(false);
   const [binBusy, setBinBusy] = useState(false);

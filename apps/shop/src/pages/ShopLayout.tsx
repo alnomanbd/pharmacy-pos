@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { useCan, useLoadAccess, type ShopPermission } from '../access';
 import {
   Store,
   ScanLine,
@@ -66,9 +67,9 @@ interface ShopLink {
   label: string;
   icon: typeof Store;
   end: boolean;
-  /** Hidden from a salesman, who may sell and see no purchase price. */
-  adminOnly?: boolean;
-  /** The owner's alone — not even a pharmacist. */
+  /** What the person's role must allow for the link to show (types in access.ts). */
+  perm?: ShopPermission;
+  /** The account owner's alone. */
   ownerOnly?: boolean;
 }
 
@@ -95,14 +96,14 @@ const GROUPS: ShopGroup[] = [
       /* Back to the counter. It has no rail of its own — a till is full bleed —
          so this is the only way back into it from the shop. */
       /* The owner's first screen: the shop at a glance. */
-      { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, end: false, adminOnly: true },
-      { to: '/', label: 'POS', icon: ScanLine, end: true },
+      { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, end: false, perm: 'reports.view' },
+      { to: '/', label: 'POS', icon: ScanLine, end: true, perm: 'pos.sell' },
       /* Beside the counter, because it is the counter's own screen as much as
          the owner's: somebody comes back holding a slip, and that is where the
          bill is found. A salesman sees their own bills there and no margin. */
       { to: '/sales', label: 'Sales', icon: ReceiptText, end: false },
       /* Orders customers send through the shop's link — badged with the new ones. */
-      { to: '/online-orders', label: 'Online orders', icon: ShoppingBag, end: false },
+      { to: '/online-orders', label: 'Online orders', icon: ShoppingBag, end: false, perm: 'online_orders.manage' },
     ],
   },
   {
@@ -114,7 +115,7 @@ const GROUPS: ShopGroup[] = [
          somebody comes to settle, and has to be able to show them what it is
          for. */
       { to: '/customers', label: 'Customers', icon: Users, end: false },
-      { to: '/suppliers', label: 'Suppliers', icon: Building2, end: false, adminOnly: true },
+      { to: '/suppliers', label: 'Suppliers', icon: Building2, end: false, perm: 'purchases.manage' },
     ],
   },
   {
@@ -123,12 +124,12 @@ const GROUPS: ShopGroup[] = [
       /* The stock list carries what the shop paid and what it is worth, so it
          belongs with the back room. A salesman sees what is left on the shelf
          in the POS search, beside the name, which is what they need. */
-      { to: '/stock', label: 'Stock', icon: Boxes, end: false, adminOnly: true },
-      { to: '/purchases', label: 'Purchases', icon: Truck, end: false, adminOnly: true },
+      { to: '/stock', label: 'Stock', icon: Boxes, end: false, perm: 'stock.view' },
+      { to: '/purchases', label: 'Purchases', icon: Truck, end: false, perm: 'purchases.manage' },
       /* Beside the deliveries, because it is the half that comes before one. */
-      { to: '/orders', label: 'Orders', icon: ClipboardList, end: false, adminOnly: true },
-      { to: '/racks', label: 'Racks', icon: LayoutGrid, end: false, adminOnly: true },
-      { to: '/expiry', label: 'Expiry', icon: CalendarX2, end: false, adminOnly: true },
+      { to: '/orders', label: 'Orders', icon: ClipboardList, end: false, perm: 'purchases.manage' },
+      { to: '/racks', label: 'Racks', icon: LayoutGrid, end: false, perm: 'stock.view' },
+      { to: '/expiry', label: 'Expiry', icon: CalendarX2, end: false, perm: 'stock.view' },
     ],
   },
   {
@@ -137,7 +138,7 @@ const GROUPS: ShopGroup[] = [
       { to: '/reports', label: 'Reports', icon: BarChart3, end: false },
       /* Every taka in and out in one place — profit and loss, the cash book,
          the expenses and the money that comes in without a bill. */
-      { to: '/accounts', label: 'Accounts', icon: Landmark, end: false, adminOnly: true },
+      { to: '/accounts', label: 'Accounts', icon: Landmark, end: false, perm: 'accounts.view' },
     ],
   },
   {
@@ -146,18 +147,18 @@ const GROUPS: ShopGroup[] = [
     links: [
       /* Where people stand. With the shop's own settings rather than with the
          shelves: it is set up once and then only looked at. */
-      { to: '/counters', label: 'Counters', icon: Monitor, end: false, adminOnly: true },
-      { to: '/staff', label: 'Staff', icon: UserCog, end: false, adminOnly: true },
-      { to: '/settings', label: 'Settings', icon: SettingsIcon, end: false, adminOnly: true },
+      { to: '/counters', label: 'Counters', icon: Monitor, end: false, perm: 'settings.manage' },
+      { to: '/staff', label: 'Staff', icon: UserCog, end: false, perm: 'staff.manage' },
+      { to: '/settings', label: 'Settings', icon: SettingsIcon, end: false, perm: 'settings.manage' },
       /* The plan and paying for it — the owner's alone, like the trail below. */
-      { to: '/subscription', label: 'Subscription', icon: CreditCard, end: false, adminOnly: true, ownerOnly: true },
+      { to: '/subscription', label: 'Subscription', icon: CreditCard, end: false, ownerOnly: true },
       /* The shop's locations — part of what it pays for, so the owner's. */
-      { to: '/branches', label: 'Branches', icon: MapPin, end: false, adminOnly: true, ownerOnly: true },
+      { to: '/branches', label: 'Branches', icon: MapPin, end: false, perm: 'branches.manage' },
       /* Who did what and when — the owner's own trail of the shop. */
-      { to: '/activity', label: 'Activity', icon: History, end: false, adminOnly: true, ownerOnly: true },
+      { to: '/activity', label: 'Activity', icon: History, end: false, perm: 'audit.view' },
       /* Nothing deleted is destroyed, and this is where it went. With the
          shop's own things rather than the shelves: it holds all of them. */
-      { to: '/trash', label: 'Recycle Bin', icon: Trash2, end: false, adminOnly: true },
+      { to: '/trash', label: 'Recycle Bin', icon: Trash2, end: false, perm: 'audit.view' },
       /* Every role: the person who notices something wrong is usually the one
          at the counter. Badged with the replies nobody here has read yet. */
       { to: '/support', label: 'Support', icon: Headset, end: false },
@@ -289,13 +290,16 @@ export default function ShopLayout() {
   const count = (v: number) => (lang === 'bn' ? bnNumerals(String(v)) : String(v));
 
   /* A salesman sees the counter and nothing that carries a purchase price. */
-  const runsTheShop = user?.role !== 'salesman';
+  const can = useCan();
+  useLoadAccess();
+  /* The bell's stock alerts are for whoever looks after the shelves. */
+  const runsTheShop = can('stock.view');
   /* The account's owner — the server refuses the Activity trail to anybody else. */
   const owns = user?.role === 'admin';
   const groups = GROUPS.map((g) => ({
     ...g,
     links: g.links.filter(
-      (l) => (!l.adminOnly || runsTheShop) && (!l.ownerOnly || owns) && (l.to !== '/online-orders' || ordersAllowed),
+      (l) => can(l.perm) && (!l.ownerOnly || owns) && (l.to !== '/online-orders' || ordersAllowed),
     ),
   })).filter((g) => g.links.length > 0);
 

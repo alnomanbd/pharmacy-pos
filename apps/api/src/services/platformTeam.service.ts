@@ -2,6 +2,8 @@ import { resetTwoFactor } from './twoFactor.service.js';
 import bcrypt from 'bcryptjs';
 import { Types } from 'mongoose';
 import { UserModel } from '../models/index.js';
+import { AccessRoleModel } from '../models/AccessRole.js';
+import { platformRoleFor } from './accessRole.service.js';
 import { badRequest, conflict, notFound } from '../utils/AppError.js';
 import { logger } from '../utils/logger.js';
 import {
@@ -39,7 +41,13 @@ export function hasPermission(
   return permissionsOf(user).includes(permission);
 }
 
-const MEMBER_FIELDS = 'name email phone role permissions isActive lastLoginAt twoFactorEnabled createdAt';
+const MEMBER_FIELDS = 'name email phone role permissions accessRole isActive lastLoginAt twoFactorEnabled createdAt';
+
+/** The console's roles by id, for showing each member's. */
+async function roleMap() {
+  const roles = await AccessRoleModel.find({ scope: 'platform' }).select('name permissions').lean();
+  return new Map(roles.map((r) => [String(r._id), { name: r.name, permissions: r.permissions ?? [] }]));
+}
 
 /*
  * The schema needs a phone, and an operator invited without one is given a
@@ -57,12 +65,17 @@ export function memberView(m: {
   phone?: string | null;
   role?: string;
   permissions?: string[];
+  accessRole?: unknown;
   isActive?: boolean | null;
   lastLoginAt?: Date | null;
   twoFactorEnabled?: boolean | null;
   createdAt?: Date | null;
-}) {
+}, roles?: Map<string, { name: string; permissions: string[] }>) {
+  /* A member with a role holds what the role holds; one without, what they were given one by one. */
+  const role = m.accessRole && m.role === 'platformStaff' ? roles?.get(String(m.accessRole)) : undefined;
   return {
+    roleId: role ? String(m.accessRole) : null,
+    roleName: m.role === 'platformAdmin' ? 'Owner' : role ? role.name : 'Custom',
     _id: String(m._id),
     id: String(m._id),
     name: m.name ?? '',
@@ -72,7 +85,9 @@ export function memberView(m: {
     // The owner's set is implicit, so it is filled in here rather than stored —
     // otherwise a permission added in a later version would silently not apply
     // to the one account that should always have everything.
-    permissions: permissionsOf(m),
+    permissions: role
+      ? role.permissions.filter((p): p is Permission => (PERMISSIONS as readonly string[]).includes(p))
+      : permissionsOf(m),
     isActive: m.isActive !== false,
     lastLoginAt: m.lastLoginAt ?? null,
     twoFactorEnabled: Boolean(m.twoFactorEnabled),
@@ -88,7 +103,8 @@ export async function listTeam() {
     .select(MEMBER_FIELDS)
     .sort({ createdAt: 1 })
     .lean();
-  return members.map((m) => memberView(m as Parameters<typeof memberView>[0]));
+  const roles = await roleMap();
+  return members.map((m) => memberView(m as Parameters<typeof memberView>[0], roles));
 }
 
 export async function inviteMember(payload: {
@@ -98,12 +114,15 @@ export async function inviteMember(payload: {
   password: string;
   permissions?: Permission[];
   preset?: string;
-}) {
+  roleId?: string | null;
+}, actor?: { id: string; name?: string; permissions: string[] }) {
   const email = payload.email.toLowerCase().trim();
   if (await UserModel.findOne({ email })) throw conflict('That email already has an account');
 
-  const permissions = resolvePermissions(payload);
-  if (permissions.length === 0) {
+  /* A role, when one is given: the member holds what it holds, and nobody hands out more than they have. */
+  const role = payload.roleId && actor ? await platformRoleFor(actor, payload.roleId) : null;
+  const permissions = role ? [] : resolvePermissions(payload);
+  if (!role && permissions.length === 0) {
     // An account with nothing granted can sign in and see an empty console,
     // which reads as a broken product rather than as a locked door.
     throw badRequest('Give them at least one permission, or choose a preset');
@@ -119,11 +138,12 @@ export async function inviteMember(payload: {
     phone: payload.phone?.trim() || `platform-${Date.now()}`,
     passwordHash: await bcrypt.hash(payload.password, 12),
     permissions,
+    accessRole: role?._id ?? null,
     isEmailVerified: true,
   });
 
   logger.info({ email, permissions }, 'Platform team member added');
-  return { id: member.id, email, permissions };
+  return { id: member.id, email, permissions: role ? (role.permissions as Permission[]) : permissions, roleId: role ? String(role._id) : null };
 }
 
 type Who = { id: string; role?: string };
@@ -134,6 +154,8 @@ export interface MemberPatch {
   phone?: string;
   permissions?: Permission[];
   preset?: string;
+  /** A console role by id; `null` takes the role away and leaves the permissions given one by one. */
+  roleId?: string | null;
   isActive?: boolean;
 }
 
@@ -211,10 +233,20 @@ async function applyDetails(
   if (patch.name !== undefined) member.set('name', patch.name.trim());
 }
 
-export async function updateMember(id: string, actor: Who, payload: MemberPatch) {
+export async function updateMember(id: string, actor: Who & { permissions?: string[]; name?: string }, payload: MemberPatch) {
   const member = await teamMember(id);
   const block = memberEditBlock(actor, { id: String(member._id), role: member.role }, payload);
   if (block) throw badRequest(block);
+  if (payload.roleId !== undefined) {
+    if (member.role === 'platformAdmin') throw badRequest('The owner holds everything — there is no role to give');
+    if (String(member._id) === actor.id) throw badRequest('Your own role is changed by somebody else who manages the team');
+    if (payload.roleId) {
+      const role = await platformRoleFor({ id: actor.id, permissions: actor.permissions ?? [] }, payload.roleId);
+      member.set('accessRole', role._id);
+    } else {
+      member.set('accessRole', null);
+    }
+  }
 
   await applyDetails(member, payload);
   if (payload.isActive !== undefined) member.set('isActive', payload.isActive);
@@ -225,7 +257,7 @@ export async function updateMember(id: string, actor: Who, payload: MemberPatch)
   }
 
   await member.save();
-  return memberView(member.toObject());
+  return memberView(member.toObject(), await roleMap());
 }
 
 /**

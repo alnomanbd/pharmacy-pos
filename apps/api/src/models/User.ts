@@ -59,6 +59,13 @@ const schema = new Schema(
      * `platformAdmin` holds everything implicitly.
      */
     permissions: { type: [String], default: [] },
+    /**
+     * The role this person holds (models/AccessRole): a console role for the
+     * platform team, one of the shop's own roles for shop staff. Null means
+     * the built-in role their `role` names — and, for the console, the
+     * permissions given one by one above.
+     */
+    accessRole: { type: Schema.Types.ObjectId, ref: 'AccessRole', default: null },
     twoFactorEnabled: { type: Boolean, default: false },
     twoFactorSecret: { type: String, default: '', select: false },
     /** bcrypt hashes. Each is usable once and is deleted when it is used. */
