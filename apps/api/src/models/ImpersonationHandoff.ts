@@ -23,6 +23,8 @@ const schema = new Schema(
     expiresAt: { type: Date, required: true },
     /** Set by the claim, which is a compare-and-set: a second claim finds it taken. */
     usedAt: { type: Date, default: null },
+    /** The website's "Try the demo": the same read-only door, opened by a visitor rather than an operator. */
+    demo: { type: Boolean, default: false },
   },
   { timestamps: true },
 );

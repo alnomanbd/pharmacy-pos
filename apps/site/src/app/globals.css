@@ -523,3 +523,33 @@
     --dot: 190 42% 80%;
   }
 }
+
+/* The savings calculator's sliders: a track filled in the brand ramp up to the thumb. */
+.savings-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 8px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #10b981, #06b6d4) 0 0 / var(--pct, 50%) 100% no-repeat, hsl(var(--muted));
+  cursor: pointer;
+}
+.savings-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid #0d9488;
+  box-shadow: 0 4px 12px -2px rgb(13 148 136 / 0.5);
+  transition: transform 0.15s;
+}
+.savings-range::-webkit-slider-thumb:hover {
+  transform: scale(1.12);
+}
+.savings-range::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid #0d9488;
+}

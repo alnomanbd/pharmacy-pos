@@ -139,7 +139,7 @@ export default function Website() {
             <Radio className="h-4 w-4" /> Live numbers
           </h3>
           <p className="mb-3 text-sm text-muted-foreground">
-            A band on the home page: shops on Dawai, bills rung up today, medicines in the list. Totals only — never one shop’s figures.
+            A band on the home page: shops on Dawai, bills rung up on it, medicines in the list. Totals only — never one shop’s figures.
           </p>
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={form.showLiveStats} onChange={(e) => set('showLiveStats', e.target.checked)} />

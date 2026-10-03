@@ -8,7 +8,8 @@ import { ok, created } from '../utils/response.js';
 import { isProduction } from '../config/env.js';
 import * as online from '../services/onlinePayment.service.js';
 import { publicStatus } from '../services/status.service.js';
-import { publicSiteSettings } from '../services/siteSettings.service.js';
+import { publicSiteSettings, liveStats } from '../services/siteSettings.service.js';
+import { startDemo } from '../services/impersonation.service.js';
 
 /**
  * The marketing site's endpoints.
@@ -156,6 +157,30 @@ router.get('/site', async (_req, res, next) => {
   try {
     res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
     ok(res, await publicSiteSettings());
+  } catch (err) {
+    next(err);
+  }
+});
+
+/** The home page's live band — totals across every shop, or null when it is switched off. */
+router.get('/stats', async (_req, res, next) => {
+  try {
+    res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
+    ok(res, await liveStats());
+  } catch (err) {
+    next(err);
+  }
+});
+
+/*
+ * "Try the demo": a one-time code for a read-only look at the demo shop.
+ * Limited per address — each code is a session, and a script asking for
+ * thousands is not a visitor.
+ */
+const demoLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: isProduction ? 20 : 500, standardHeaders: true, legacyHeaders: false });
+router.post('/demo', demoLimiter, async (_req, res, next) => {
+  try {
+    ok(res, await startDemo());
   } catch (err) {
     next(err);
   }

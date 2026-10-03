@@ -10,7 +10,7 @@ interface ClaimedView {
   accessToken: string;
   expiresAt: string;
   user: AuthUser;
-  viewing: { shop: { id: string; name: string; status: string }; operator: string };
+  viewing: { shop: { id: string; name: string; status: string }; operator: string; demo?: boolean };
 }
 
 /**
@@ -50,6 +50,7 @@ export default function SupportClaim() {
             userName: view.user.name,
             operator: view.viewing.operator,
             expiresAt: view.expiresAt,
+            demo: view.viewing.demo,
           },
         });
         /*
@@ -58,7 +59,8 @@ export default function SupportClaim() {
          * leave by; Sales has the shell, and every role may open it.
          * Replace, so the spent code is not left in the history entry behind us.
          */
-        navigate('/sales', { replace: true });
+        /* A demo visitor lands on the owner's dashboard — the shop at a glance. */
+        navigate(view.viewing.demo ? '/dashboard' : '/sales', { replace: true });
       } catch (err: unknown) {
         const res = (err as { response?: { data?: { message?: string } } }).response;
         setError(res?.data?.message || t('That support link is no longer valid.'));

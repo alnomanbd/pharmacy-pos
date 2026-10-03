@@ -8,6 +8,7 @@ import { CounterSection } from '@/components/sections/counter';
 import { StockSection } from '@/components/sections/stock';
 import { OfflineSection } from '@/components/sections/offline';
 import { CompareSection } from '@/components/sections/compare';
+import { SavingsSection } from '@/components/sections/savings';
 import { HowSection } from '@/components/sections/how';
 import { PricingPreview } from '@/components/sections/pricing-preview';
 import { FaqPreview } from '@/components/sections/faq-preview';
@@ -89,6 +90,7 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
       <ReportsSection lang={lang} />
       <OfflineSection lang={lang} />
       <CompareSection lang={lang} />
+      <SavingsSection lang={lang} />
       <BranchesSection lang={lang} />
       <HowSection lang={lang} />
       <PricingPreview lang={lang} />

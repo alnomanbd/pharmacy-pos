@@ -84,6 +84,35 @@ export async function impersonate(operatorId: string, targetUserId: string, shop
 }
 
 /**
+ * The website's "Try the demo".
+ *
+ * The same read-only door as a support view — a one-time code the shop app
+ * trades for a thirty-minute session that cannot write — opened onto the one
+ * shop the console has named as the demo. Off, or pointed at an account that
+ * cannot be viewed, it says so and opens nothing.
+ */
+export async function startDemo() {
+  const { getSiteSettings } = await import('./siteSettings.service.js');
+  const s = await getSiteSettings();
+  if (!s.demo.enabled) throw badRequest('The demo is not open right now.');
+  const target = await UserModel.findOne({ email: s.demo.email, deletedAt: null })
+    .select('role organization isActive')
+    .lean();
+  if (!target || cannotViewAs(target)) throw badRequest('The demo is not open right now.');
+
+  const code = crypto.randomBytes(32).toString('hex');
+  await ImpersonationHandoffModel.create({
+    codeHash: hashToken(code),
+    targetUser: target._id,
+    operator: target._id,
+    organization: target.organization,
+    expiresAt: new Date(Date.now() + HANDOFF_TTL_MS),
+    demo: true,
+  });
+  return { code };
+}
+
+/**
  * Trades a handoff code for the read-only session it stands for.
  *
  * Unauthenticated on purpose: the caller is the shop app, which has no session
@@ -122,10 +151,12 @@ export async function claimImpersonation(code: string) {
     IMPERSONATION_TTL,
   );
 
-  logger.warn(
-    { operator: String(claimed.operator), target: String(target._id), shop: org.name },
-    'Support view opened',
-  );
+  if (claimed.demo) logger.info({ shop: org.name }, 'Demo opened from the website');
+  else
+    logger.warn(
+      { operator: String(claimed.operator), target: String(target._id), shop: org.name },
+      'Support view opened',
+    );
 
   return {
     accessToken,
@@ -143,7 +174,8 @@ export async function claimImpersonation(code: string) {
     },
     viewing: {
       shop: { id: String(target.organization), name: org.name, status: org.status },
-      operator: operator?.name ?? '',
+      operator: claimed.demo ? '' : (operator?.name ?? ''),
+      demo: Boolean(claimed.demo),
     },
   };
 }

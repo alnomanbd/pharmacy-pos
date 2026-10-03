@@ -14,6 +14,8 @@ export interface Impersonation {
   operator: string;
   /** ISO time the read-only token dies. There is no refresh behind it. */
   expiresAt: string;
+  /** Opened from the website's "Try the demo", not by an operator. */
+  demo?: boolean;
 }
 
 interface AuthState {

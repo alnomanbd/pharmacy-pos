@@ -9,6 +9,8 @@ import { translate, tList, tItems, type Lang } from '@/i18n/dictionary';
 import { Button } from '@/components/ui/button';
 import { Magnetic, Orb, CountUp, Reveal } from '@/components/motion/primitives';
 import { PosScreen } from '@/components/pos-screen';
+import { TryDemoButton } from '@/components/try-demo';
+import { LiveStats } from '@/components/sections/live-stats';
 
 /**
  * The first screen.
@@ -168,7 +170,7 @@ export function Hero({ lang }: { lang: Lang }) {
           {/* The two buttons, split by intent: a trial for the visitor who has
               decided, a call for the visitor who has not. */}
           <motion.div
-            className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center"
+            className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-start"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.75, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
@@ -181,15 +183,17 @@ export function Hero({ lang }: { lang: Lang }) {
                 </Link>
               </Button>
             </Magnetic>
-            <Magnetic strength={4}>
-              <Button asChild size="lg" variant="outline" className="group w-full sm:w-auto">
-                <Link href={`/${lang}/demo`}>
-                  <PlayCircle className="size-5 text-primary" />
-                  {t('hero.ctaSecondary')}
-                </Link>
-              </Button>
-            </Magnetic>
+            {/* A real shop, read-only, one click away — the fastest way from looking to believing. */}
+            <TryDemoButton lang={lang} className="w-full sm:w-auto" />
           </motion.div>
+
+          <Link
+            href={`/${lang}/demo`}
+            className="-mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground transition-colors hover:text-primary"
+          >
+            <PlayCircle className="size-4 text-primary" />
+            {t('hero.ctaSecondary')}
+          </Link>
 
           <motion.ul
             className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2"
@@ -204,6 +208,9 @@ export function Hero({ lang }: { lang: Lang }) {
               </li>
             ))}
           </motion.ul>
+
+          {/* Live totals across every shop — shown only while the console has them on. */}
+          <LiveStats lang={lang} />
         </motion.div>
 
         {/* -------------------------------------------------- the four stats */}

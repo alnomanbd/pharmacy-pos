@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Check, Sparkles, ArrowRight, Minus, MonitorSmartphone, Users, MapPin } from 'lucide-react';
 import { siteConfig } from '@/lib/site';
+import { chargedMonths, useSiteSettings } from '@/lib/live';
 import { translate, tItems, type Lang } from '@/i18n/dictionary';
 import { cn } from '@/lib/utils';
 import { Reveal } from '@/components/motion/primitives';
@@ -130,12 +131,46 @@ export function PlanCards({
   const t = (p: string) => translate(lang, p);
   const plans = tItems<Plan>(lang, 'pricing.plans');
   const live = useLivePlans();
+  /* Monthly, or a year at once with the console's free months off (Website → Pay for a year). */
+  const free = useSiteSettings().yearlyFreeMonths;
+  const [yearly, setYearly] = React.useState(false);
+  const bn = lang === 'bn';
 
   return (
+    <div>
+      {free > 0 && (
+        <div className="mb-10 flex justify-center">
+          <div role="tablist" className="relative inline-flex rounded-full border border-border bg-card/70 p-1 shadow-glass backdrop-blur">
+            {[false, true].map((y) => (
+              <button
+                key={String(y)}
+                type="button"
+                role="tab"
+                aria-selected={yearly === y}
+                onClick={() => setYearly(y)}
+                className={cn('relative z-10 rounded-full px-5 py-2 text-sm font-semibold transition-colors', yearly === y ? 'text-primary-foreground' : 'text-muted-foreground hover:text-foreground')}
+              >
+                {yearly === y && (
+                  <motion.span layoutId="billing-pill" className="absolute inset-0 -z-10 rounded-full bg-ramp shadow-glow" transition={{ type: 'spring', stiffness: 400, damping: 32 }} />
+                )}
+                {y ? (bn ? 'বছরে' : 'Yearly') : bn ? 'মাসে' : 'Monthly'}
+                {y && (
+                  <span className={cn('ms-2 rounded-full px-2 py-0.5 text-[10px] font-bold', yearly ? 'bg-white/25' : 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400')}>
+                    {bn ? `${digits(lang, String(free))} মাস ফ্রি` : `${free} months free`}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     <div className="grid items-start gap-5 lg:grid-cols-3">
       {plans.map((plan, i) => {
         const lp = live.find((x) => x.key === plan.key);
-        const price = lp ? (lp.price === 0 ? plan.price : tk(lang, lp.price)) : plan.price;
+        const paid = lp && lp.price > 0;
+        /* A year shown as what each month comes to, with the year's total beside it. */
+        const perMonth = paid ? (yearly ? (lp.price * chargedMonths(12, free)) / 12 : lp.price) : 0;
+        const price = lp ? (lp.price === 0 ? plan.price : tk(lang, Math.round(perMonth))) : plan.price;
         return (
         <Reveal key={plan.name} variant="up" delay={i * 0.08} className="h-full">
           <motion.article
@@ -167,9 +202,16 @@ export function PlanCards({
                   lp?.price === 0 && 'text-primary',
                 )}
               >
-                {price}
+                <motion.span key={price} initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="inline-block">
+                  {price}
+                </motion.span>
               </span>
               <span className="text-xs text-muted-foreground">{plan.period}</span>
+              {paid && yearly && (
+                <span className="ms-auto rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary line-through decoration-primary/40">
+                  {tk(lang, lp.price)}
+                </span>
+              )}
             </div>
 
             <p className="mt-3.5 text-sm leading-relaxed text-muted-foreground">
@@ -224,6 +266,14 @@ export function PlanCards({
         </Reveal>
         );
       })}
+    </div>
+    {free > 0 && yearly && (
+      <p className="mt-6 text-center text-xs text-muted-foreground">
+        {bn
+          ? `বছরে একবারে দিলে ১২ মাসের জন্য ${digits(lang, String(chargedMonths(12, free)))} মাসের দাম — ${digits(lang, String(free))} মাস ফ্রি।`
+          : `Paid for a year at once: twelve months for the price of ${chargedMonths(12, free)} — ${free} months free.`}
+      </p>
+    )}
     </div>
   );
 }

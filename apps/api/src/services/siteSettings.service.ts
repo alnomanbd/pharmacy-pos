@@ -131,3 +131,39 @@ export function chargedMonths(months: number, free: number): number {
   if (months < 12 || free <= 0) return months;
   return Math.max(1, months - Math.floor(months / 12) * free);
 }
+
+/* ------------------------------------------------------------------ */
+/* Live numbers                                                        */
+/* ------------------------------------------------------------------ */
+
+let statsCache: { at: number; value: LiveStats | null } | null = null;
+
+export interface LiveStats {
+  shops: number;
+  /** Every bill ever rung up on Dawai — a figure that only grows, unlike today's, which is 0 at dawn. */
+  bills: number;
+  medicines: number;
+}
+
+/**
+ * The home page's live band: shops on Dawai, bills rung up across all of
+ * them, medicines in the shared list. Totals only — never a shop's own figure —
+ * and nothing at all when the console has turned it off or there are fewer
+ * shops than it asked for. Counted once a minute at most.
+ */
+export async function liveStats(): Promise<LiveStats | null> {
+  if (statsCache && Date.now() - statsCache.at < 60_000) return statsCache.value;
+  const s = await getSiteSettings();
+  let value: LiveStats | null = null;
+  if (s.showLiveStats) {
+    const { OrganizationModel, SaleModel, MedicineModel } = await import('../models/index.js');
+    const [shops, bills, medicines] = await Promise.all([
+      OrganizationModel.countDocuments({ status: 'active' }),
+      SaleModel.countDocuments({ deletedAt: null, status: { $ne: 'void' } }),
+      MedicineModel.estimatedDocumentCount(),
+    ]);
+    if (shops >= s.liveStatsMinShops) value = { shops, bills, medicines };
+  }
+  statsCache = { at: Date.now(), value };
+  return value;
+}

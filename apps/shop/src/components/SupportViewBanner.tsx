@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Eye, LogOut } from 'lucide-react';
+import { ArrowRight, Eye, LogOut, Sparkles } from 'lucide-react';
+import { BRAND } from '../brand';
 import { useAuthStore } from '@dawai/shared/store/auth.store';
 import { useT, useUiLang, bnNumerals } from '../i18n/ui';
 
@@ -55,6 +56,40 @@ export default function SupportViewBanner() {
   const minutes = Math.min(30, Math.max(0, Math.ceil((new Date(view.expiresAt).getTime() - now) / 60_000)));
   const n = (v: number) => (lang === 'bn' ? bnNumerals(String(v)) : String(v));
 
+  /* The website's demo: a friendly strip, the way to start for real, and the way out. */
+  if (view.demo) {
+    return (
+      <div
+        ref={box}
+        role="status"
+        className="relative z-[60] flex items-center gap-x-3 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 px-4 py-2 text-sm font-semibold text-white"
+      >
+        <Sparkles className="h-4 w-4 shrink-0" />
+        <span className="min-w-0 flex-1 leading-snug">
+          <span className="block truncate sm:inline">{t('Demo shop')} — <bdi>{view.shop}</bdi></span>
+          <span className="block text-xs font-normal opacity-90 sm:ml-2 sm:inline sm:text-sm">
+            {t('Look around: nothing you do here is saved.')} · {n(minutes)} {t('min left')}
+          </span>
+        </span>
+        <a
+          href={`${BRAND.siteUrl}/${lang}/register`}
+          className="hidden shrink-0 items-center gap-1.5 rounded-md bg-white px-3 py-1.5 text-xs font-bold text-emerald-700 hover:bg-white/90 sm:inline-flex"
+        >
+          {t('Start free')} <ArrowRight className="h-3.5 w-3.5" />
+        </a>
+        <button
+          type="button"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-black/20 px-2.5 py-1.5 text-xs font-semibold hover:bg-black/30"
+          onClick={leaveDemo}
+          aria-label={t('Leave the demo')}
+        >
+          <LogOut className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">{t('Leave the demo')}</span>
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div
       ref={box}
@@ -97,4 +132,10 @@ function leave() {
   useAuthStore.getState().endImpersonation();
   window.close();
   window.location.assign('/login');
+}
+
+/** Ends the demo and goes back to the website it came from. */
+function leaveDemo() {
+  useAuthStore.getState().endImpersonation();
+  window.location.assign(BRAND.siteUrl);
 }
