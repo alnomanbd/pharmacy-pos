@@ -16,11 +16,13 @@ import {
   StickyNote,
   Ruler,
   ShoppingBag,
+  Smartphone,
 } from 'lucide-react';
 import { settingsApi, type ShopSettings, type Sale } from '../api';
 import SheetPreview, { openAlignmentPage } from '../components/SheetPreview';
 import LetterheadPicture from '../components/LetterheadPicture';
 import OrderLinkCard from '../components/OrderLinkCard';
+import WalletCard from '../components/WalletCard';
 import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import Receipt from '../components/Receipt';
@@ -79,6 +81,7 @@ const SECTIONS = [
   { id: 'counter', label: 'At the counter', icon: ScanLine },
   { id: 'sheet', label: 'The A4 sheet', icon: FileText },
   { id: 'orders', label: 'Online orders', icon: ShoppingBag },
+  { id: 'wallets', label: 'bKash & Nagad', icon: Smartphone },
   { id: 'vat', label: 'VAT', icon: Percent },
 ] as const;
 
@@ -694,6 +697,9 @@ export default function Settings() {
           */}
           {/* Orders from customers: the link, the QR, delivery. */}
           <OrderLinkCard />
+
+          {/* bKash and Nagad at the counter. */}
+          <WalletCard />
 
           <Section
             id="vat"

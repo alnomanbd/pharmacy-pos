@@ -114,6 +114,19 @@ const schema = new Schema(
      * Everything has a default that produces a correct document, so a shop that
      * never opens this screen still gets a sheet it can hand over.
      */
+    /** bKash and Nagad at the counter — see wallet.service. Secrets are sealed (utils/secretBox). */
+    wallets: {
+      bkashNumber: { type: String, default: '', trim: true, maxlength: 20 },
+      nagadNumber: { type: String, default: '', trim: true, maxlength: 20 },
+      bkashApi: {
+        enabled: { type: Boolean, default: false },
+        sandbox: { type: Boolean, default: false },
+        appKey: { type: String, default: '', trim: true },
+        username: { type: String, default: '', trim: true },
+        appSecret: { type: String, default: '', select: false },
+        password: { type: String, default: '', select: false },
+      },
+    },
     /** Orders from customers through the shop's own link — see onlineOrder.service. */
     onlineOrders: {
       enabled: { type: Boolean, default: false },

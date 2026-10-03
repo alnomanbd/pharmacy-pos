@@ -19,6 +19,7 @@ import * as counts from '../services/stockCount.service.js';
 import * as counters from '../services/counters.service.js';
 import * as transfers from '../services/stockTransfer.service.js';
 import * as online from '../services/onlineOrder.service.js';
+import * as wallet from '../services/wallet.service.js';
 import * as saleAdmin from '../services/saleAdmin.service.js';
 import * as bin from '../services/shopTrash.service.js';
 import * as expenses from '../services/shopExpense.service.js';
@@ -1185,6 +1186,30 @@ router.get('/settings/letterhead/:slot', async (req: Request, res: Response, nex
     next(err);
   }
 });
+
+/* --------------------------------------------------------------- wallets -- */
+
+router.get('/wallets', handle((req) => wallet.walletSettings(actorOf(req).org)));
+router.patch(
+  '/wallets',
+  validate(
+    z.object({
+      bkashNumber: z.string().trim().max(20).optional(),
+      nagadNumber: z.string().trim().max(20).optional(),
+      bkashApi: z
+        .object({
+          enabled: z.boolean().optional(),
+          sandbox: z.boolean().optional(),
+          appKey: z.string().trim().max(120).optional(),
+          username: z.string().trim().max(120).optional(),
+          appSecret: z.string().trim().max(200).optional(),
+          password: z.string().trim().max(200).optional(),
+        })
+        .optional(),
+    }),
+  ),
+  handle((req) => wallet.saveWalletSettings(actorOf(req).org, req.body), 'Saved'),
+);
 
 /* -------------------------------------------------------- online orders -- */
 

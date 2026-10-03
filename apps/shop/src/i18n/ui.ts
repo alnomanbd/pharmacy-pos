@@ -1842,6 +1842,27 @@ const bn: Record<string, string> = {
   'Make a new link? The old link and its QR stop working.': 'নতুন লিংক বানাবেন? পুরোনো লিংক আর QR আর কাজ করবে না।',
   'Scan to order medicines': 'স্ক্যান করে ঔষধ অর্ডার করুন',
   'Download the QR': 'QR ডাউনলোড',
+  /* ---- bKash & Nagad ---- */
+  'automatic': 'স্বয়ংক্রিয়',
+  'Show the customer a QR': 'কাস্টমারকে QR দেখান',
+  'Waiting for the customer to pay…': 'কাস্টমারের পেমেন্টের অপেক্ষায়…',
+  'They scan it, pay with their PIN, and it fills in here.': 'তারা স্ক্যান করে PIN দিয়ে দিলেই এখানে চলে আসবে।',
+  'Send money to': 'সেন্ড মানি করুন',
+  'Add your bKash and Nagad numbers in Settings to show them here.': 'এখানে দেখাতে সেটিংসে বিকাশ আর নগদ নম্বর দিন।',
+  'Transaction ID (from the SMS)': 'ট্রানজেকশন আইডি (SMS থেকে)',
+  'The customer’s payment did not go through. Try again, or take it another way.': 'কাস্টমারের পেমেন্ট হয়নি। আবার চেষ্টা করুন, বা অন্যভাবে নিন।',
+  'Could not start the payment.': 'পেমেন্ট শুরু করা যায়নি।',
+  'bKash & Nagad': 'বিকাশ ও নগদ',
+  'The POS shows these with a QR and the amount, for the customer to send money to.': 'POS এগুলো QR আর টাকার পরিমাণসহ দেখায়, যাতে কাস্টমার সেন্ড মানি করতে পারেন।',
+  'bKash number': 'বিকাশ নম্বর',
+  'Nagad number': 'নগদ নম্বর',
+  'Automatic bKash (merchant account)': 'স্বয়ংক্রিয় বিকাশ (মার্চেন্ট অ্যাকাউন্ট)',
+  'With your bKash merchant API keys, the customer pays by scanning the POS screen and the bill fills itself in — no transaction id to type.': 'বিকাশ মার্চেন্ট API কী দিলে কাস্টমার POS স্ক্রিন স্ক্যান করে পেমেন্ট করেন আর বিল নিজেই পূরণ হয় — ট্রানজেকশন আইডি লিখতে হয় না।',
+  'App key': 'অ্যাপ কী',
+  'App secret': 'অ্যাপ সিক্রেট',
+  'Username': 'ইউজারনেম',
+  'Saved — leave empty to keep': 'সেভ আছে — রাখতে খালি রাখুন',
+  'Sandbox (bKash’s test system — no real money)': 'স্যান্ডবক্স (বিকাশের টেস্ট সিস্টেম — আসল টাকা নয়)',
 };
 
 export const useT = makeUseT(bn);

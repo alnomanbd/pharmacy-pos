@@ -1092,6 +1092,12 @@ export interface StockAlerts {
 }
 
 export const tillApi = {
+  /** The shop's bKash/Nagad numbers, and whether bKash confirms itself. */
+  wallets: () => getData<{ bkashNumber: string; nagadNumber: string; bkashAuto: boolean }>(api.get('/till/wallets')),
+  startBkash: (amount: number) => getData<{ id: string; payURL: string; amount: number }>(api.post('/till/wallets/bkash', { amount })),
+  walletStatus: (id: string) =>
+    getData<{ status: 'pending' | 'completed' | 'failed' | 'cancelled'; trxID: string; amount: number; payer: string; message: string }>(api.get(`/till/wallets/${id}`)),
+  cancelWallet: (id: string) => getData<{ ok: boolean }>(api.post(`/till/wallets/${id}/cancel`)),
   alerts: () => getData<StockAlerts>(api.get('/till/alerts')),
   shift: () => getData<{ shift: Shift | null }>(api.get('/till/shift')),
   counters: () => getData<ShopCounter[]>(api.get('/till/counters')),
@@ -1324,6 +1330,21 @@ export interface OnlineOrderSettings {
   freeDeliveryOver: number;
   note: string;
 }
+
+/** bKash and Nagad at the counter — Settings. */
+export interface WalletSettings {
+  bkashNumber: string;
+  nagadNumber: string;
+  bkashApi: { enabled: boolean; sandbox: boolean; appKey: string; username: string; hasSecret: boolean; hasPassword: boolean };
+}
+export const walletApi = {
+  get: () => getData<WalletSettings>(api.get('/shop/wallets')),
+  save: (payload: {
+    bkashNumber?: string;
+    nagadNumber?: string;
+    bkashApi?: { enabled?: boolean; sandbox?: boolean; appKey?: string; username?: string; appSecret?: string; password?: string };
+  }) => getData<WalletSettings>(api.patch('/shop/wallets', payload)),
+};
 
 export const onlineOrdersApi = {
   list: (status = 'open') => getData<OnlineOrder[]>(api.get('/till/online-orders', { params: { status } })),

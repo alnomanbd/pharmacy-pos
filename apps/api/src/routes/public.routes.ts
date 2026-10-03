@@ -14,6 +14,7 @@ import { publishedList, publishedOne } from '../services/help.service.js';
 import { startDemo } from '../services/impersonation.service.js';
 import multer from 'multer';
 import { publicShop, placeOrder } from '../services/onlineOrder.service.js';
+import { bkashCallback } from '../services/wallet.service.js';
 import { assertAllowed } from '../services/storage.service.js';
 
 /**
@@ -255,6 +256,23 @@ router.post('/order/:code', orderLimiter, orderUpload.array('photos', 3), async 
   } catch (err) {
     next(err);
   }
+});
+
+/* ------------------------------ bKash, at the till --------------------------- */
+
+/*
+ * Where bKash sends the customer's phone after they pay at a shop's counter.
+ * The payment is executed here; the page only says how it went.
+ */
+router.get('/bkash/callback', async (req, res) => {
+  const r = await bkashCallback(String(req.query.paymentID ?? ''), String(req.query.status ?? '')).catch(() => ({ ok: false, message: 'error' }));
+  const ok = r.ok;
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.end(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${ok ? 'Paid' : 'Not paid'}</title></head>
+<body style="margin:0;min-height:100vh;display:grid;place-items:center;font-family:system-ui,sans-serif;background:${ok ? '#ecfdf5' : '#fef2f2'}">
+<div style="text-align:center;padding:24px"><div style="font-size:56px">${ok ? '✅' : '⚠️'}</div>
+<h1 style="margin:8px 0;font-size:22px;color:${ok ? '#065f46' : '#991b1b'}">${ok ? 'Payment received — ধন্যবাদ!' : 'The payment did not go through'}</h1>
+<p style="color:#555">${ok ? 'You can close this page. The shop has it.' : 'Nothing was taken. Please try again at the counter.'}</p></div></body></html>`);
 });
 
 /* --------------------------------- status ---------------------------------- */

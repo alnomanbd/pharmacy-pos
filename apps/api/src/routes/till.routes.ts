@@ -6,6 +6,7 @@ import * as till from '../services/till.service.js';
 import * as shop from '../services/shop.service.js';
 import * as counters from '../services/counters.service.js';
 import * as online from '../services/onlineOrder.service.js';
+import * as wallet from '../services/wallet.service.js';
 import { storage } from '../services/storage.service.js';
 import { forbidden } from '../utils/AppError.js';
 import * as saleAdmin from '../services/saleAdmin.service.js';
@@ -86,6 +87,12 @@ const str = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : unde
 /* ------------------------------------------------------------------ */
 /* Orders from customers — every role: the counter is who answers them */
 /* ------------------------------------------------------------------ */
+
+/* bKash and Nagad at the counter: the shop's numbers, and the merchant flow when it has one. */
+router.get('/wallets', handle((req) => wallet.counterWallets(actorOf(req).org)));
+router.post('/wallets/bkash', validate(z.object({ amount: z.number().positive().max(1_000_000) })), handle((req) => wallet.startBkash(actorOf(req), req.body.amount)));
+router.get('/wallets/:id', handle((req) => wallet.walletStatus(actorOf(req), req.params.id)));
+router.post('/wallets/:id/cancel', handle((req) => wallet.cancelWallet(actorOf(req), req.params.id)));
 
 router.get('/online-orders', handle((req) => online.listOrders(actorOf(req), { status: String(req.query.status ?? 'open') })));
 router.get('/online-orders/count', handle((req) => online.newCount(actorOf(req))));

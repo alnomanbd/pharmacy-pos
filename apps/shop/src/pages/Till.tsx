@@ -30,6 +30,8 @@ import {
   CalendarClock,
   CornerDownLeft,
   Banknote,
+  QrCode,
+  Zap,
 } from 'lucide-react';
 import {
   tillApi,
@@ -71,6 +73,7 @@ import AlertBell from '../alerts/AlertBell';
 import AlertTicker from '../alerts/AlertTicker';
 import { useAlertStore, useStockAlertsPoll } from '../alerts/useStockAlerts';
 import { useAuthStore } from '@dawai/shared/store/auth.store';
+import { WalletPanel, type WalletMethod } from '../pos/WalletPanel';
 
 /**
  * The counter.
@@ -181,6 +184,14 @@ export default function Till() {
   const [lineAt, setLineAt] = useState(0);
   const [discount, setDiscount] = useState('');
   const [paid, setPaid] = useState<Record<string, string>>({ cash: '' });
+  /* The transaction id for a bKash or Nagad payment, kept on the bill as its reference. */
+  const [refs, setRefs] = useState<Record<string, string>>({});
+  /* The shop's numbers, and whether bKash confirms itself — asked once. */
+  const [wallets, setWallets] = useState<{ bkashNumber: string; nagadNumber: string; bkashAuto: boolean } | null>(null);
+  const [walletOpen, setWalletOpen] = useState<WalletMethod | null>(null);
+  useEffect(() => {
+    tillApi.wallets().then(setWallets).catch(() => undefined);
+  }, []);
   /* Walk-in is the default and stays the default: almost every bill belongs to
      nobody, and a name field on every sale is a name field typed into badly. */
   const [customer, setCustomer] = useState<ShopCustomer | null>(null);
@@ -438,6 +449,7 @@ export default function Till() {
     setLineAt(0);
     setDiscount('');
     setPaid({ cash: '' });
+    setRefs({});
     setCustomer(null);
     setCustomerName('');
     setCustomerPhone('');
@@ -470,6 +482,7 @@ export default function Till() {
     setCustomerPhone(bill.customerPhone);
     setDiscount(bill.discount);
     setPaid({ cash: '' });
+    setRefs({});
     drop(bill.id);
     setHeldOpen(false);
     searchRef.current?.focus();
@@ -492,7 +505,7 @@ export default function Till() {
   const plan = useMemo(() => {
     const payments = Object.entries(paid)
       .filter(([, v]) => Number(v) > 0)
-      .map(([method, v]) => ({ method, amount: Number(v) }));
+      .map(([method, v]) => ({ method, amount: Number(v), ...(refs[method] ? { reference: refs[method] } : {}) }));
     const taken = payments.reduce((n, p) => n + p.amount, 0);
     return {
       payments,
@@ -517,7 +530,7 @@ export default function Till() {
         ) / 100,
       ),
     };
-  }, [paid, customerName, total]);
+  }, [paid, refs, customerName, total]);
 
   const sell = useCallback(async () => {
     if (lines.length === 0) return;
@@ -1383,6 +1396,17 @@ export default function Till() {
                     <span className={`h-2 w-2 rounded-full ${m.dot}`} aria-hidden="true" />
                     {t(m.label)}
                   </label>
+                  {(m.key === 'bkash' || m.key === 'nagad') && (
+                    <button
+                      type="button"
+                      onClick={() => setWalletOpen(m.key)}
+                      title={t('Show the customer a QR')}
+                      aria-label={`${t(m.label)} QR`}
+                      className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-border text-muted-foreground hover:border-primary hover:text-primary"
+                    >
+                      {m.key === 'bkash' && wallets?.bkashAuto ? <Zap className="h-4 w-4" /> : <QrCode className="h-4 w-4" />}
+                    </button>
+                  )}
                   <input
                     id={`pay-${m.key}`}
                     ref={m.key === 'cash' ? cashRef : undefined}
@@ -1396,6 +1420,26 @@ export default function Till() {
               ))}
             </div>
 
+            {walletOpen && (
+              <WalletPanel
+                method={walletOpen}
+                amount={Math.max(0, total - plan.payments.filter((p) => p.method !== walletOpen).reduce((x, p) => x + p.amount, 0))}
+                number={(walletOpen === 'bkash' ? wallets?.bkashNumber : wallets?.nagadNumber) ?? ''}
+                auto={!!wallets?.bkashAuto}
+                onClose={() => setWalletOpen(null)}
+                onDone={(amount, reference) => {
+                  setPaid((p) => ({ ...p, [walletOpen]: String(amount) }));
+                  if (reference) setRefs((r) => ({ ...r, [walletOpen]: reference }));
+                  setWalletOpen(null);
+                }}
+              />
+            )}
+            {(refs.bkash || refs.nagad) && (
+              <p className="mt-1.5 text-[11px] text-muted-foreground">
+                {refs.bkash && <>bKash TrxID <span className="font-mono font-semibold text-foreground">{refs.bkash}</span> </>}
+                {refs.nagad && <>Nagad TrxID <span className="font-mono font-semibold text-foreground">{refs.nagad}</span></>}
+              </p>
+            )}
             {/* The notes somebody actually hands over, so nobody types 500. */}
             <div className="mt-2 flex flex-wrap gap-1.5">
               {NOTES.map((n) => (
