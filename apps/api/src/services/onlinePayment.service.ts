@@ -7,6 +7,7 @@ import { quoteForShop } from './coupon.service.js';
 import { acceptPayment } from './payment.service.js';
 import { env } from '../config/env.js';
 import { badRequest, notFound } from '../utils/AppError.js';
+import { getSiteSettings, chargedMonths } from './siteSettings.service.js';
 import { logger } from '../utils/logger.js';
 
 /**
@@ -77,7 +78,8 @@ export async function startCheckout(
     code = q.code;
   }
   const month = monthlyPrice(plan, await branchCount(orgId));
-  const amount = month.total * input.months - discount;
+  /* A year earns its free months here too: the same rule as the site and the shop's page. */
+  const amount = month.total * chargedMonths(input.months, (await getSiteSettings()).yearlyFreeMonths) - discount;
   if (amount <= 0) throw badRequest('Nothing to pay — talk to us and we will apply it for you.');
 
   const [org, user] = await Promise.all([

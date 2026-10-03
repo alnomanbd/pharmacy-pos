@@ -48,6 +48,20 @@ const METHODS: { v: string; label: string; icon: typeof Smartphone }[] = [
 
 const MONTH_OPTIONS = [1, 3, 6, 12];
 
+/*
+ * Months free for a year paid at once — set in the console, read from the
+ * same public settings the website uses, so the page, the site and the
+ * checkout all charge the same. Twelve or more months earn them per full year.
+ */
+let yearlyFree = 0;
+const yearlyReady = fetch('/api/public/site')
+  .then((r) => (r.ok ? r.json() : null))
+  .then((j: { data?: { yearlyFreeMonths?: number } } | null) => {
+    yearlyFree = j?.data?.yearlyFreeMonths ?? 0;
+  })
+  .catch(() => undefined);
+const charged = (months: number) => (months < 12 || yearlyFree <= 0 ? months : Math.max(1, months - Math.floor(months / 12) * yearlyFree));
+
 const STATUS_PILL: Record<SubscriptionPayment['status'], string> = {
   pending: 'pill neutral',
   verified: 'pill info',
@@ -126,7 +140,8 @@ const taka = (v: number) => `৳ ${n(v.toLocaleString('en-IN'))}`;
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [s, h] = await Promise.all([billingApi.subscription(), billingApi.payments()]);
+      /* The yearly offer first, so the first total shown is already right. */
+      const [s, h] = await Promise.all([billingApi.subscription(), billingApi.payments(), yearlyReady]);
       setSub(s);
       setHistory(h);
       // What they said they came for, else what they are on, else the cheapest.
@@ -136,7 +151,7 @@ const taka = (v: number) => `৳ ${n(v.toLocaleString('en-IN'))}`;
           s.plans.find((p) => p.key === s.intendedPlan) ??
           s.plans.find((p) => p.key === s.plan) ??
           s.plans[0];
-        return chosen ? { ...f, plan: chosen.key, amount: String(monthOf(chosen) * f.months) } : f;
+        return chosen ? { ...f, plan: chosen.key, amount: String(monthOf(chosen) * charged(f.months)) } : f;
       });
     } catch (e: unknown) {
       const msg = (e as { response?: { data?: { message?: string } } }).response?.data?.message;
@@ -168,7 +183,7 @@ const taka = (v: number) => `৳ ${n(v.toLocaleString('en-IN'))}`;
   };
 
   const selected = sub?.plans.find((p) => p.key === form.plan) ?? null;
-  const base = selected ? monthOf(selected) * form.months : 0;
+  const base = selected ? monthOf(selected) * charged(form.months) : 0;
   const price = applied ? applied.total : base;
 
   /** Prices a code for this plan and these months; asked again whenever either changes. */
@@ -191,7 +206,7 @@ const taka = (v: number) => `৳ ${n(v.toLocaleString('en-IN'))}`;
             : t(q.reason),
         );
         const p = sub?.plans.find((x) => x.key === plan);
-        setForm((f) => ({ ...f, amount: String((p ? monthOf(p) : 0) * months) }));
+        setForm((f) => ({ ...f, amount: String((p ? monthOf(p) : 0) * charged(months)) }));
       }
     } catch {
       setCodeError(t('Could not check that code.'));
@@ -221,13 +236,13 @@ const taka = (v: number) => `৳ ${n(v.toLocaleString('en-IN'))}`;
 
   const pickPlan = (key: string) => {
     const p = sub?.plans.find((x) => x.key === key);
-    setForm((f) => ({ ...f, plan: key, amount: String((p ? monthOf(p) : 0) * f.months) }));
+    setForm((f) => ({ ...f, plan: key, amount: String((p ? monthOf(p) : 0) * charged(f.months)) }));
     if (applied) void applyCode(applied.code, key, form.months);
   };
   const pickMonths = (months: number) => {
     setForm((f) => {
       const p = sub?.plans.find((x) => x.key === f.plan);
-      return { ...f, months, amount: String((p ? monthOf(p) : 0) * months) };
+      return { ...f, months, amount: String((p ? monthOf(p) : 0) * charged(months)) };
     });
     if (applied) void applyCode(applied.code, form.plan, months);
   };
@@ -399,6 +414,12 @@ const taka = (v: number) => `৳ ${n(v.toLocaleString('en-IN'))}`;
                   }`}
                 >
                   {n(m)} {m > 1 ? t('months') : t('month')}
+                  {/* The year's offer, on its own button. */}
+                  {m >= 12 && yearlyFree > 0 && (
+                    <span className={`ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${form.months === m ? 'bg-white/20' : 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400'}`}>
+                      {n(yearlyFree)} {t('free')}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>

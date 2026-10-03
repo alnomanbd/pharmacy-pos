@@ -8,7 +8,7 @@ import { ok, created } from '../utils/response.js';
 import { isProduction } from '../config/env.js';
 import * as online from '../services/onlinePayment.service.js';
 import { publicStatus } from '../services/status.service.js';
-import { getSiteSettings } from '../services/siteSettings.service.js';
+import { publicSiteSettings } from '../services/siteSettings.service.js';
 
 /**
  * The marketing site's endpoints.
@@ -155,7 +155,7 @@ router.post('/contact', contactLimiter, validate(contactSchema), async (req, res
 router.get('/site', async (_req, res, next) => {
   try {
     res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
-    ok(res, await getSiteSettings());
+    ok(res, await publicSiteSettings());
   } catch (err) {
     next(err);
   }

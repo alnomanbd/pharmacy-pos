@@ -7,6 +7,7 @@ import * as notify from './notification.service.js';
 import { purchasablePlans, planByKey, monthlyPrice } from './plan.service.js';
 import { branchCount } from './branch.service.js';
 import { quoteForShop, redeem } from './coupon.service.js';
+import { getSiteSettings, chargedMonths } from './siteSettings.service.js';
 import { accrueCommission } from './agent.service.js';
 
 /**
@@ -62,7 +63,7 @@ export async function submitPayment(orgId: string, userId: string, claim: Paymen
 
   const coupon = await couponFor(orgId, claim);
   const month = monthlyPrice(plan, await branchCount(orgId));
-  const expected = month.total * claim.months - coupon.discount;
+  const expected = month.total * chargedMonths(claim.months, (await getSiteSettings()).yearlyFreeMonths) - coupon.discount;
   if (claim.amount <= 0) throw badRequest('Enter the amount you sent');
 
   // Not a hard equality: a shop may round up, or pay a part now. A shortfall
@@ -289,7 +290,10 @@ export async function recordPayment(orgId: string, operatorId: string, claim: Pa
 
   logger.info({ org: orgId, payment: payment.id, amount: claim.amount, by: operatorId }, 'Payment recorded by an operator');
   const result = await acceptPayment(payment, operatorId);
-  return { ...result, expected: month.total * claim.months - coupon.discount };
+  return {
+    ...result,
+    expected: month.total * chargedMonths(claim.months, (await getSiteSettings()).yearlyFreeMonths) - coupon.discount,
+  };
 }
 
 export async function rejectPayment(paymentId: string, reviewerId: string, reason: string) {

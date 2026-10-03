@@ -3,6 +3,7 @@ import { CouponModel, PaymentModel } from '../models/index.js';
 import type { CouponKind } from '../models/Coupon.js';
 import { planByKey, monthlyPrice } from './plan.service.js';
 import { branchCount } from './branch.service.js';
+import { getSiteSettings, chargedMonths } from './siteSettings.service.js';
 import { badRequest, conflict, notFound } from '../utils/AppError.js';
 
 /**
@@ -77,9 +78,11 @@ export async function quoteForShop(orgId: string, input: { code: string; plan: s
     PaymentModel.exists({ organization: orgId, status: 'verified' }),
     PaymentModel.exists({ organization: orgId, status: 'verified', 'coupon.code': code }),
   ]);
+  /* A code takes its share of what is charged — a year's free months already off. */
+  const charged = chargedMonths(input.months, (await getSiteSettings()).yearlyFreeMonths);
   const q = quote(coupon, {
     plan: plan.key,
-    price: monthlyPrice(plan, await branchCount(orgId)).total,
+    price: (monthlyPrice(plan, await branchCount(orgId)).total * charged) / Math.max(1, input.months),
     months: input.months,
     paidBefore: Boolean(paidBefore),
     usedBefore: Boolean(usedBefore),

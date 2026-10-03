@@ -23,6 +23,7 @@ import HelpArticles from './pages/Help';
 import Audit from './pages/Audit';
 import Medicines from './pages/Medicines';
 import MedicineRequests from './pages/MedicineRequests';
+import Website from './pages/Website';
 import Security from './pages/Security';
 
 /**
@@ -106,6 +107,7 @@ export default function App() {
         <Route path="discounts" element={<Discounts />} />
         <Route path="overview" element={<Overview />} />
         <Route path="system" element={<System />} />
+        <Route path="website" element={<Website />} />
         <Route path="agents" element={<Agents />} />
         <Route path="help" element={<HelpArticles />} />
         {/* What this team did to customer accounts. Read-only. */}

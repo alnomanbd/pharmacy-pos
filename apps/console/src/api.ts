@@ -210,6 +210,22 @@ export interface SystemStatus {
 }
 
 /** The console's first page. `money` is null without revenue.view. */
+/** What the public website shows that is a business decision — see pages/Website. */
+export interface SiteSettings {
+  whatsapp: string;
+  yearlyFreeMonths: number;
+  showLiveStats: boolean;
+  liveStatsMinShops: number;
+  calculator: {
+    expiryLossPercent: number;
+    expirySavedPercent: number;
+    bakiLossPercent: number;
+    closeMinutesPaper: number;
+    closeMinutesDawai: number;
+  };
+  demo: { enabled: boolean; email: string };
+}
+
 export interface PlatformOverview {
   shops: { paying: number; onTrial: number; pending: number; suspended: number; total: number };
   signups: { thisMonth: number; lastMonth: number; byMonth: { month: string; count: number }[] };
@@ -523,8 +539,8 @@ export const platformApi = {
     getData<Paged<PlatformAuditEntry> & { actions: string[] }>(api.get('/platform/audit', { params })),
 
   overview: () => getData<PlatformOverview>(api.get('/platform/overview')),
-  siteSettings: () => getData<{ whatsapp: string }>(api.get('/platform/site-settings')),
-  saveSiteSettings: (payload: { whatsapp: string }) => getData<{ whatsapp: string }>(api.patch('/platform/site-settings', payload)),
+  siteSettings: () => getData<SiteSettings>(api.get('/platform/site-settings')),
+  saveSiteSettings: (payload: Partial<SiteSettings>) => getData<SiteSettings>(api.patch('/platform/site-settings', payload)),
   incidents: () => getData<IncidentRow[]>(api.get('/platform/incidents')),
   createIncident: (payload: Record<string, unknown>) => getData<IncidentRow>(api.post('/platform/incidents', payload)),
   updateIncident: (id: string, payload: Record<string, unknown>) => getData<IncidentRow>(api.patch(`/platform/incidents/${id}`, payload)),

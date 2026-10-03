@@ -1794,6 +1794,7 @@ const bn: Record<string, string> = {
   'Signing in…': 'লগইন হচ্ছে…',
   'Sign in': 'লগইন',
   'Every bill carries your name, and the counter keeps selling when the internet drops.': 'প্রতিটি বিলে আপনার নাম থাকে, আর ইন্টারনেট না থাকলেও কাউন্টারে বিক্রি চলে।',
+  'free': 'ফ্রি',
 };
 
 export const useT = makeUseT(bn);

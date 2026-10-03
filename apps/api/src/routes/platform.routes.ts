@@ -112,7 +112,21 @@ router.patch(
         .string()
         .trim()
         .max(20)
-        .refine((v) => v === '' || /^\+?\d[\d\s-]{8,18}$/.test(v), 'A number with the country code, like +8801XXXXXXXXX'),
+        .refine((v) => v === '' || /^\+?\d[\d\s-]{8,18}$/.test(v), 'A number with the country code, like +8801XXXXXXXXX')
+        .optional(),
+      yearlyFreeMonths: z.number().int().min(0).max(6).optional(),
+      showLiveStats: z.boolean().optional(),
+      liveStatsMinShops: z.number().int().min(0).max(100000).optional(),
+      calculator: z
+        .object({
+          expiryLossPercent: z.number().min(0).max(20).optional(),
+          expirySavedPercent: z.number().min(0).max(100).optional(),
+          bakiLossPercent: z.number().min(0).max(20).optional(),
+          closeMinutesPaper: z.number().min(0).max(300).optional(),
+          closeMinutesDawai: z.number().min(0).max(300).optional(),
+        })
+        .optional(),
+      demo: z.object({ enabled: z.boolean().optional(), email: z.string().trim().email().optional() }).optional(),
     }),
   ),
   handle(async (req) => {
