@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Data API admin</title>
+    <link rel="stylesheet" href="admin.css" />
+  </head>
+  <body>
+    <div id="signin" class="signin" hidden>
+      <form class="card signin-card" id="signin-form">
+        <div class="brand"><span class="mark">D</span><div><b>Dawai Data API</b><small>Admin</small></div></div>
+        <label>Your name <input name="name" autocomplete="name" required maxlength="60" placeholder="Who is changing things" /></label>
+        <label>Admin password <input name="token" type="password" autocomplete="current-password" required /></label>
+        <p class="error" id="signin-error" role="alert"></p>
+        <button class="btn primary" type="submit">Sign in</button>
+        <p class="muted small">Kept for this tab only. Separate from the shop platform's console.</p>
+      </form>
+    </div>
+
+    <div id="shell" class="shell" hidden>
+      <aside class="side">
+        <div class="brand"><span class="mark">D</span><div><b>Data API</b><small>Admin</small></div></div>
+        <nav>
+          <a href="#/" data-nav="overview">Overview</a>
+          <a href="#/clients" data-nav="clients">Clients</a>
+          <a href="#/plans" data-nav="plans">Plans</a>
+          <a href="#/log" data-nav="log">Changes</a>
+          <a href="/docs/" target="_blank" rel="noreferrer">API reference ↗</a>
+        </nav>
+        <div class="who"><span id="who"></span><button class="link" id="signout" type="button">Sign out</button></div>
+      </aside>
+      <main id="main" class="main" tabindex="-1"></main>
+    </div>
+
+    <dialog id="dialog"></dialog>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script type="module" src="admin.js"></script>
+  </body>
+</html>

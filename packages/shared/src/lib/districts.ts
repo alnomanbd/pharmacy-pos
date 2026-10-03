@@ -3,8 +3,8 @@
  * medicine picture counts "Bogra", "Bogura" and "বগুড়া" as the same place.
  *
  * Copied, word for word below this note, into packages/shared/src/lib/districts.ts
- * (shop app, console) and apps/site/src/lib/districts.ts (signup); a test keeps
- * the three the same.
+ * (shop app, console), apps/site/src/lib/districts.ts (signup) and
+ * apps/data-api/src/lib/districts.ts; a test keeps them the same.
  */
 // ---- the list ----
 

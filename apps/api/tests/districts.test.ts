@@ -33,9 +33,10 @@ describe('districts', () => {
     expect(districtOf(null)).toBe('Unknown');
   });
 
-  it('the shop app, console and site carry the same list', () => {
+  it('the shop app, console, site and data API carry the same list', () => {
     const api = listOf('../src/utils/districts.ts');
     expect(listOf('../../../packages/shared/src/lib/districts.ts')).toBe(api);
     expect(listOf('../../site/src/lib/districts.ts')).toBe(api);
+    expect(listOf('../../data-api/src/lib/districts.ts')).toBe(api);
   });
 });

@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dawai Data API</title>
+    <meta name="description" content="Bangladesh's medicine catalogue and anonymous pharmacy sales figures, by API." />
+    <style>
+      :root { --bg: #fbfbfc; --surface: #fff; --ink: #14181f; --muted: #5d6675; --line: #e3e6eb; --primary: #0f8a6c; --code: #f2f4f6; color-scheme: light; }
+      @media (prefers-color-scheme: dark) { :root:not([data-theme='light']) { --bg: #0f1216; --surface: #171b21; --ink: #e8ebef; --muted: #98a1ae; --line: #2a3038; --primary: #2bb38f; --code: #1e242c; color-scheme: dark; } }
+      :root[data-theme='dark'] { --bg: #0f1216; --surface: #171b21; --ink: #e8ebef; --muted: #98a1ae; --line: #2a3038; --primary: #2bb38f; --code: #1e242c; color-scheme: dark; }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.65 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+      .wrap { max-width: 860px; margin: 0 auto; padding: 40px 16px 80px; }
+      h1 { font-size: 30px; letter-spacing: -0.02em; margin: 0 0 6px; }
+      h2 { font-size: 20px; margin: 44px 0 10px; padding-top: 12px; border-top: 1px solid var(--line); }
+      h3 { font-size: 15px; margin: 26px 0 6px; font-family: ui-monospace, 'Cascadia Code', Consolas, monospace; }
+      h3 .m { color: var(--primary); margin-right: 6px; }
+      p, li { color: var(--ink); }
+      .lead { color: var(--muted); font-size: 17px; margin: 0; }
+      code, pre { font-family: ui-monospace, 'Cascadia Code', Consolas, monospace; font-size: 13px; }
+      code { background: var(--code); padding: 1px 5px; border-radius: 5px; }
+      pre { background: var(--code); padding: 14px 16px; border-radius: 10px; overflow-x: auto; border: 1px solid var(--line); }
+      pre code { background: none; padding: 0; }
+      table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 14px; }
+      th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+      th { color: var(--muted); font-weight: 600; font-size: 13px; }
+      .table-wrap { overflow-x: auto; }
+      .note { border-left: 3px solid var(--primary); background: var(--surface); padding: 10px 14px; border-radius: 0 10px 10px 0; margin: 14px 0; }
+      .scope { display: inline-block; font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); margin-left: 6px; vertical-align: 1px; font-family: system-ui, sans-serif; }
+      nav.toc { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 18px 0 0; font-size: 14px; }
+      a { color: var(--primary); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Dawai Data API</h1>
+      <p class="lead">Bangladesh's medicine catalogue, and what pharmacies actually sell — by medicine, generic, company, district and month. Counted across many shops together; no shop, customer or price list is ever exposed.</p>
+      <nav class="toc">
+        <a href="#start">Getting started</a><a href="#privacy">How figures are made</a><a href="#catalogue">Catalogue</a><a href="#demand">Sales figures</a><a href="#trends">Trends</a><a href="#meta">Your account</a><a href="#errors">Errors &amp; limits</a>
+      </nav>
+
+      <h2 id="start">Getting started</h2>
+      <p>Every call needs your key, sent as a bearer token. Keys start with <code>dwk_</code>. Keep yours on a server — never in a web page or app, where anyone can copy it.</p>
+      <pre><code>curl https://data.dawai.com.bd/v1/demand/medicines?from=2026-07&amp;to=2026-09 \
+  -H "Authorization: Bearer dwk_your_key_here"</code></pre>
+      <p>Every answer is JSON: <code>{ "data": … }</code> on success, <code>{ "error": { "code", "message" } }</code> otherwise. Lists take <code>limit</code> (default 25) and <code>offset</code>.</p>
+      <p>Sales figures take a range of <b>whole months</b>, <code>from</code> and <code>to</code> as <code>YYYY-MM</code>; without them you get the last three complete months. The current month may be asked for and is marked <code>"partial": true</code>. Figures are rebuilt every night.</p>
+
+      <h2 id="privacy">How figures are made</h2>
+      <p>Figures come from the bills of pharmacies using Dawai that have not switched themselves out. Every number is built from cells of <b>one medicine, in one district, in one month</b>, and a cell is used only if at least <b>five different pharmacies</b> sold that medicine there that month (the number is returned as <code>minShops</code>). Cells under that are left out before anything is added up — so a country total is the sum of the districts that pass, and a missing month means too few shops or no sales; the two are not told apart.</p>
+      <div class="note"><code>pieces</code> are single units sold (tablets, capsules, bottles), net of returns. <code>value</code> is what customers paid, in taka. <code>share</code> is a percentage of the pieces in the answer.</div>
+
+      <h2 id="catalogue">Catalogue</h2>
+      <h3><span class="m">GET</span>/v1/catalogue/medicines <span class="scope">catalogue</span></h3>
+      <p>Search registered medicines. <code>q</code> matches the start of a brand or generic name; filter with <code>generic</code>, <code>company</code> (ids) or <code>form</code> (e.g. <code>Tablet</code>).</p>
+      <pre><code>{ "data": { "total": 30, "rows": [ { "id": "…", "brand": "Napa", "generic": "Paracetamol", "genericId": "…",
+  "strength": "500 mg", "form": "Tablet", "packSize": "", "price": 1.2, "company": "Beximco Pharmaceuticals Ltd.",
+  "companyId": "…", "dar": "…" } ] } }</code></pre>
+      <h3><span class="m">GET</span>/v1/catalogue/medicines/:id <span class="scope">catalogue</span></h3>
+      <p>One medicine, with its indications, description and side effects where known.</p>
+      <h3><span class="m">GET</span>/v1/catalogue/generics · /v1/catalogue/companies <span class="scope">catalogue</span></h3>
+      <p>Names and ids, searchable with <code>q</code>; up to 500 a page.</p>
+
+      <h2 id="demand">Sales figures</h2>
+      <p>Each takes <code>from</code>, <code>to</code>, and optionally <code>generic</code> and <code>company</code> ids. <code>district</code> (any spelling, either script — see <a href="#meta">districts</a>) needs a plan with district figures.</p>
+      <h3><span class="m">GET</span>/v1/demand/medicines <span class="scope">demand</span></h3>
+      <p>The most-bought medicines, ranked by pieces.</p>
+      <pre><code>{ "data": { "range": { "from": "2026-07", "to": "2026-09", "partial": false }, "filter": { … }, "minShops": 5,
+  "total": { "pieces": 1520400, "value": 9120333.5, "medicines": 2210 },
+  "rows": [ { "rank": 1, "medicine": { "id": "…", "brand": "…", "generic": "…", "company": "…", … },
+              "pieces": 40311, "value": 51210, "share": 2.7 } ] } }</code></pre>
+      <h3><span class="m">GET</span>/v1/demand/medicines/:id <span class="scope">demand</span></h3>
+      <p>One medicine month by month (<code>months</code>, with <code>null</code> where it cannot be said), and — on plans with district figures — by district.</p>
+      <h3><span class="m">GET</span>/v1/demand/generics <span class="scope">demand</span></h3>
+      <p>Each generic's pieces, value, number of brands sold, and share.</p>
+      <h3><span class="m">GET</span>/v1/demand/generics/:id/brands <span class="scope">demand</span></h3>
+      <p>Within one generic, each brand's share — who sells the most paracetamol.</p>
+      <h3><span class="m">GET</span>/v1/demand/companies <span class="scope">demand</span></h3>
+      <p>Each company's pieces, value, medicines sold and share.</p>
+      <h3><span class="m">GET</span>/v1/demand/districts <span class="scope">districts</span></h3>
+      <p>Each district's share, optionally of one <code>medicine</code>, <code>generic</code> or <code>company</code>.</p>
+
+      <h2 id="trends">Trends</h2>
+      <h3><span class="m">GET</span>/v1/trends <span class="scope">trends</span></h3>
+      <p>Medicines rising and falling: the range against the same number of months just before it (returned as <code>previous</code>). Only medicines with at least 20 pieces in one of the two.</p>
+      <pre><code>{ "data": { …, "previous": { "from": "2026-04", "to": "2026-06" },
+  "rising": [ { "medicine": { … }, "pieces": 840, "piecesBefore": 440, "change": 90.9 } ], "falling": [ … ] } }</code></pre>
+
+      <h2 id="meta">Your account</h2>
+      <h3><span class="m">GET</span>/v1</h3>
+      <p>Your plan, what it includes, how far back it reaches, and when the figures were last rebuilt.</p>
+      <h3><span class="m">GET</span>/v1/usage</h3>
+      <p>Calls today and this month, against your limits. Refused calls are not counted.</p>
+      <h3><span class="m">GET</span>/v1/meta/districts</h3>
+      <p>Bangladesh's 64 districts with Bangla names and divisions — the names <code>district</code> takes and returns. <code>Unknown</code> collects shops that have not said where they are.</p>
+
+      <h2 id="errors">Errors &amp; limits</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Status</th><th>Code</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td>400</td><td><code>bad_month</code>, <code>bad_range</code>, <code>bad_id</code>, <code>bad_district</code>, <code>bad_request</code></td><td>Something in the request is not right; the message says what.</td></tr>
+          <tr><td>401</td><td><code>no_key</code>, <code>bad_key</code></td><td>No key, a wrong or revoked key, or the account is suspended or its contract has ended.</td></tr>
+          <tr><td>403</td><td><code>not_in_plan</code>, <code>history_limit</code></td><td>Your plan does not include this, or does not reach that far back.</td></tr>
+          <tr><td>429</td><td><code>rate_limited</code>, <code>daily_quota</code>, <code>monthly_quota</code></td><td>Too many calls; <code>Retry-After</code> says when to try again for the per-minute limit.</td></tr>
+        </tbody>
+      </table></div>
+      <p>Every answer carries <code>X-RateLimit-Limit-Day</code> and <code>X-RateLimit-Remaining-Day</code>. Limits are per account, shared by all its keys.</p>
+      <p class="lead" style="font-size:14px;margin-top:40px">Questions, a key, or a different plan: <a href="mailto:alnoman.cse@outlook.com">alnoman.cse@outlook.com</a></p>
+    </div>
+  </body>
+</html>

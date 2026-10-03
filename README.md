@@ -12,6 +12,7 @@ throughout.
 | Shop app | [`apps/shop`](apps/shop) | 5175 | `shop.dawai.com.bd` |
 | Operator console | [`apps/console`](apps/console) | 5176 | `console.dawai.com.bd` |
 | Marketing site | [`apps/site`](apps/site) | 3100 | `dawai.com.bd` |
+| Data API | [`apps/data-api`](apps/data-api) | 5200 | `data.dawai.com.bd` |
 | Shared UI and API client | [`packages/shared`](packages/shared) | | |
 
 The stack is Express, Mongoose and MongoDB on the server, React and Vite in the

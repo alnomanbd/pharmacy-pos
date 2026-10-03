@@ -124,6 +124,34 @@ services:
     ports:
       - "8084:80"
 
+  # The Data API: data.dawai.com.bd — the catalogue and anonymous medicine
+  # figures, sold by key, with its own admin at /admin. Its own service so it
+  # can be scaled, limited or switched off without touching a shop. Give it a
+  # database user that can only read the catalogue and medicinedemand*/
+  # medicinecoverages collections and write its own data_* ones.
+  data-api:
+    build: ./apps/data-api
+    image: ${DAWAI_REGISTRY:-dawai}/data-api:${DAWAI_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 5200
+      MONGODB_URI: ${DATA_API_MONGODB_URI:-${MONGODB_URI:-mongodb://mongo:27017/dawai}}
+      # Required: the service will not start in production without it (32+ characters).
+      DATA_API_ADMIN_TOKEN: ${DATA_API_ADMIN_TOKEN:-}
+      DEMAND_MIN_SHOPS: ${DEMAND_MIN_SHOPS:-5}
+      TRUST_PROXY: "1"
+    ports:
+      - "8085:5200"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:5200/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      mongo:
+        condition: service_healthy
+
 volumes:
   mongo-data:
   uploads:
