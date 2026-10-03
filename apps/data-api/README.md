@@ -12,8 +12,14 @@ npm run dev               # http://localhost:5200
 
 - `/v1/…` — the API. Every call needs a key (`Authorization: Bearer dwk_…`).
 - `/docs/` — the reference clients read.
-- `/admin/` — clients, keys, plans, usage and a log of every change. Signed
-  in with `DATA_API_ADMIN_TOKEN` and the name of whoever is at the keyboard.
+- **Run it from the console:** Data API in the console menu — what there is
+  to sell, clients, keys, plans and prices, usage, a "Try it" that shows
+  exactly what a client is sent, and the change log. The platform API calls
+  this service's admin with `DATA_API_URL` and the same
+  `DATA_API_ADMIN_TOKEN`; operators need `dataapi.view` to look and
+  `dataapi.manage` to change (the owner has both).
+- `/admin/` — the same, on the service itself, for when the console is down.
+  Signed in with `DATA_API_ADMIN_TOKEN` and the name of whoever is at the keyboard.
 
 ## Where the figures come from
 

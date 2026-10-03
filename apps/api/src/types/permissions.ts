@@ -141,6 +141,19 @@ export const PERMISSIONS = [
   'audit.view',
 
   /**
+   * The Data API's book: who buys the catalogue and the medicine figures,
+   * what they use, what there is to sell, and a look at exactly what a client
+   * is sent.
+   */
+  'dataapi.view',
+  /**
+   * Add and change Data API clients and plans, and make or revoke their keys.
+   * A key is access to everything a plan sells, so it is its own permission,
+   * in no preset.
+   */
+  'dataapi.manage',
+
+  /**
    * See the platform's own health: the database, the scheduled jobs, whether
    * email and SMS are configured, crash reporting and backups. In no preset —
    * it names the providers and the server's environment.
@@ -186,6 +199,7 @@ export const PERMISSION_PRESETS: Record<string, { label: string; description: st
       'payments.verify',
       'revenue.view',
       'plans.view',
+      'dataapi.view',
     ],
   },
   catalogue: {

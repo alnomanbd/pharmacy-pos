@@ -108,6 +108,15 @@ export const env = {
     vatPercent: Number(process.env.INVOICE_VAT_PERCENT ?? '15'),
     footer: process.env.INVOICE_FOOTER || '',
   },
+  /**
+   * The Data API (apps/data-api), a separate service the console manages:
+   * where it answers, and its admin password. Both empty: the console's Data
+   * API pages say it is not connected.
+   */
+  dataApi: {
+    url: process.env.DATA_API_URL || '',
+    token: process.env.DATA_API_ADMIN_TOKEN || '',
+  },
   redisUrl: process.env.REDIS_URL || '',
   seed: {
     adminPassword: process.env.SEED_ADMIN_PASSWORD || 'Admin@1234',

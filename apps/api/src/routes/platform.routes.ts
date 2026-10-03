@@ -48,6 +48,7 @@ import {
 } from '../validators/auth.validator.js';
 import { ok } from '../utils/response.js';
 import { audit, listPlatformAuditLogs } from '../services/audit.service.js';
+import { callDataApi } from '../services/dataApi.service.js';
 import { ORG_STATUS } from '../types/enums.js';
 import { badRequest, forbidden } from '../utils/AppError.js';
 import { getSiteSettings, updateSiteSettings } from '../services/siteSettings.service.js';
@@ -177,6 +178,78 @@ router.get('/stats', requirePermission('shops.view'), handle(() => platform.plat
  * The console's first page. Money is in it only for whoever may see what the
  * company turns over; everybody else gets shops, sign-ups and the to-do list.
  */
+/* -------------------------------------------------------------- data api -- */
+
+/**
+ * Selling the Data API, from the console: what there is to sell, the clients,
+ * their keys and usage, the plans, and a look at exactly what a client gets.
+ * The Data API is its own service with its own records — see dataApi.service;
+ * every change is also in this audit trail under the operator's name.
+ */
+const dataView = requirePermission('dataapi.view', 'dataapi.manage');
+const dataManage = requirePermission('dataapi.manage');
+const operatorName = (req: Request) => req.user?.name || 'console';
+const body = (req: Request) => (req.body ?? {}) as Record<string, unknown>;
+
+router.get('/data-api/overview', dataView, handle(() => callDataApi('GET', '/overview')));
+router.get('/data-api/readiness', dataView, handle(() => callDataApi('GET', '/readiness')));
+router.get('/data-api/clients', dataView, handle(() => callDataApi('GET', '/clients')));
+router.get('/data-api/clients/:id', dataView, handle((req) => callDataApi('GET', `/clients/${req.params.id}`)));
+router.get('/data-api/plans', dataView, handle(() => callDataApi('GET', '/plans')));
+router.get('/data-api/log', dataView, handle(() => callDataApi('GET', '/log')));
+router.get(
+  '/data-api/preview/:what',
+  dataView,
+  handle((req) => callDataApi('GET', `/preview/${req.params.what}`, { query: req.query as Record<string, unknown> })),
+);
+
+router.post(
+  '/data-api/clients',
+  dataManage,
+  handle(async (req) => {
+    const out = (await callDataApi('POST', '/clients', { body: body(req), operator: operatorName(req) })) as { id: string };
+    await audit(req, 'dataapi.client_create', { model: 'DataClient', id: out.id, label: String(body(req).name ?? '') }, { after: { plan: body(req).plan } });
+    return out;
+  }, 'Client added'),
+);
+router.patch(
+  '/data-api/clients/:id',
+  dataManage,
+  handle(async (req) => {
+    const out = await callDataApi('PATCH', `/clients/${req.params.id}`, { body: body(req), operator: operatorName(req) });
+    await audit(req, 'dataapi.client_update', { model: 'DataClient', id: req.params.id, label: String(body(req).name ?? '') }, { after: body(req) });
+    return out;
+  }, 'Saved'),
+);
+router.post(
+  '/data-api/clients/:id/keys',
+  dataManage,
+  handle(async (req) => {
+    const out = (await callDataApi('POST', `/clients/${req.params.id}/keys`, { body: body(req), operator: operatorName(req) })) as { prefix: string };
+    // The key itself goes to the operator once and is never written here.
+    await audit(req, 'dataapi.key_create', { model: 'DataClient', id: req.params.id, label: `${out.prefix}…` });
+    return out;
+  }, 'Key made'),
+);
+router.post(
+  '/data-api/keys/:id/revoke',
+  dataManage,
+  handle(async (req) => {
+    const out = await callDataApi('POST', `/keys/${req.params.id}/revoke`, { operator: operatorName(req) });
+    await audit(req, 'dataapi.key_revoke', { model: 'DataKey', id: req.params.id, label: 'key revoked' });
+    return out;
+  }, 'Key revoked'),
+);
+router.put(
+  '/data-api/plans/:key',
+  dataManage,
+  handle(async (req) => {
+    const out = await callDataApi('PUT', `/plans/${req.params.key}`, { body: body(req), operator: operatorName(req) });
+    await audit(req, 'dataapi.plan_save', { model: 'DataPlan', id: req.params.key, label: String(body(req).name ?? req.params.key) }, { after: body(req) });
+    return out;
+  }, 'Plan saved'),
+);
+
 /** The platform's own health — see the service. Owner-only by default. */
 router.get('/system', requirePermission('system.view'), handle(() => systemStatus()));
 

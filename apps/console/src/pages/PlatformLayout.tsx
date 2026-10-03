@@ -9,6 +9,7 @@ import {
   TrendingUp,
   FileBarChart,
   LineChart,
+  Plug,
   Tags,
   Users,
   Bell,
@@ -164,6 +165,8 @@ const NAV_SECTIONS: { heading: string; links: ConsoleLink[] }[] = [
       { to: '/medicines', label: 'Medicines', icon: Pill, end: false, needs: ['catalogue.view'] },
       /* Which medicines people buy, and where — every counted shop together, none named. */
       { to: '/medicine-insights', label: 'Medicine insights', icon: LineChart, end: false, needs: ['catalogue.view', 'shops.view'] },
+      /* Selling the catalogue and those figures, by key: clients, plans, usage. */
+      { to: '/data-api', label: 'Data API', icon: Plug, end: false, needs: ['dataapi.view', 'dataapi.manage'] },
       {
         /* What shops asked to have added; badged with the pending count. */
         to: '/requests',

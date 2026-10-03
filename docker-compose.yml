@@ -72,6 +72,9 @@ services:
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
       VAPID_SUBJECT: ${VAPID_SUBJECT:-}
       BKASH_CALLBACK_BASE: ${BKASH_CALLBACK_BASE:-}
+      # The console runs the Data API through here: Data API in the console menu.
+      DATA_API_URL: ${DATA_API_URL:-http://data-api:5200}
+      DATA_API_ADMIN_TOKEN: ${DATA_API_ADMIN_TOKEN:-}
     volumes:
       # Shop logos and payment screenshots. Not regenerable; back them up.
       - uploads:/app/uploads

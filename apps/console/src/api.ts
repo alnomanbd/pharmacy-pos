@@ -363,6 +363,113 @@ export interface MedicineInsights {
   quality: { matchedPieces: number; unmatchedPieces: number; lastBuilt: string | null; daysBuilt: number; shopsCounted: number };
 }
 
+/* ---------- the Data API ---------- */
+
+export type DataApiScope = 'catalogue' | 'demand' | 'districts' | 'trends';
+export type DataApiDay = { day: string; calls: number; refused: number };
+
+export interface DataApiOverview {
+  clients: { active: number; suspended: number };
+  keys: number;
+  today: { calls: number; refused: number };
+  month: { month: string; calls: number; rows: number };
+  series: DataApiDay[];
+  topClients: { id: string; name: string; calls: number }[];
+  topEndpoints: { endpoint: string; calls: number }[];
+  figuresBuiltAt: string | null;
+  monthlyRevenue: number;
+  minShops: number;
+}
+
+export interface DataApiReadiness {
+  catalogue: { medicines: number; generics: number; companies: number };
+  month: string;
+  minShops: number;
+  shopsCounted: number;
+  all: { pieces: number; medicines: number; districts: number };
+  sellable: { pieces: number; medicines: number; districts: number; share: number };
+  figuresBuiltAt: string | null;
+}
+
+export interface DataApiPlan {
+  id: string;
+  key: string;
+  name: string;
+  description: string;
+  scopes: DataApiScope[];
+  historyMonths: number;
+  requestsPerMinute: number;
+  requestsPerDay: number;
+  requestsPerMonth: number;
+  priceMonthly: number;
+  isActive: boolean;
+  clients: number;
+}
+
+export type DataApiClientKind = 'pharma' | 'distributor' | 'research' | 'government' | 'other';
+export interface DataApiClientInput {
+  name: string;
+  kind: DataApiClientKind;
+  contactName: string;
+  email: string;
+  phone: string;
+  plan: string;
+  status?: 'active' | 'suspended';
+  /** `YYYY-MM-DD`, or empty for no end. */
+  expiresAt: string;
+  notes: string;
+}
+
+export interface DataApiClient {
+  id: string;
+  name: string;
+  kind: DataApiClientKind;
+  contactName: string;
+  email: string;
+  phone: string;
+  plan: string;
+  status: 'active' | 'suspended';
+  expiresAt: string | null;
+  notes: string;
+  createdAt: string;
+  keys: number;
+  lastUsedAt: string | null;
+  callsThisMonth: number;
+}
+
+export interface DataApiKey {
+  id: string;
+  label: string;
+  prefix: string;
+  lastUsedAt: string | null;
+  revokedAt: string | null;
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface DataApiLogRow {
+  _id: string;
+  at: string;
+  by: string;
+  action: string;
+  client: string | null;
+  clientName?: string;
+  detail: Record<string, unknown>;
+}
+
+export interface DataApiClientDetail extends Omit<DataApiClient, 'keys' | 'lastUsedAt' | 'callsThisMonth'> {
+  keys: DataApiKey[];
+  usage: {
+    day: string;
+    callsToday: number;
+    month: string;
+    callsThisMonth: number;
+    series: DataApiDay[];
+    endpoints: { endpoint: string; calls: number; rows: number }[];
+  };
+  log: DataApiLogRow[];
+}
+
 /** A discount code shops type in when they pay. */
 export interface CouponRow {
   _id: string;
@@ -668,6 +775,21 @@ export const platformApi = {
   medicineInsightFilters: () =>
     getData<{ districts: string[]; generics: { id: string; name: string }[] }>(api.get('/platform/medicines/insights/filters')),
   rebuildMedicineInsights: () => getData<unknown>(api.post('/platform/medicines/insights/rebuild')),
+
+  /* ---------- the Data API: selling the catalogue and the figures ---------- */
+  dataApiOverview: () => getData<DataApiOverview>(api.get('/platform/data-api/overview')),
+  dataApiReadiness: () => getData<DataApiReadiness>(api.get('/platform/data-api/readiness')),
+  dataApiClients: () => getData<DataApiClient[]>(api.get('/platform/data-api/clients')),
+  dataApiClient: (id: string) => getData<DataApiClientDetail>(api.get(`/platform/data-api/clients/${id}`)),
+  dataApiCreateClient: (body: DataApiClientInput) => getData<{ id: string }>(api.post('/platform/data-api/clients', body)),
+  dataApiUpdateClient: (id: string, body: Partial<DataApiClientInput>) => getData<{ id: string }>(api.patch(`/platform/data-api/clients/${id}`, body)),
+  dataApiMakeKey: (clientId: string, label: string) =>
+    getData<{ id: string; key: string; prefix: string }>(api.post(`/platform/data-api/clients/${clientId}/keys`, { label })),
+  dataApiRevokeKey: (keyId: string) => getData<unknown>(api.post(`/platform/data-api/keys/${keyId}/revoke`)),
+  dataApiPlans: () => getData<{ scopes: DataApiScope[]; plans: DataApiPlan[] }>(api.get('/platform/data-api/plans')),
+  dataApiSavePlan: (key: string, body: Omit<DataApiPlan, 'id' | 'key' | 'clients'>) => getData<unknown>(api.put(`/platform/data-api/plans/${key}`, body)),
+  dataApiLog: () => getData<DataApiLogRow[]>(api.get('/platform/data-api/log')),
+  dataApiPreview: (what: string, params: Record<string, string>) => getData<any>(api.get(`/platform/data-api/preview/${what}`, { params })),
   siteSettings: () => getData<SiteSettings>(api.get('/platform/site-settings')),
   saveSiteSettings: (payload: Partial<SiteSettings>) => getData<SiteSettings>(api.patch('/platform/site-settings', payload)),
   incidents: () => getData<IncidentRow[]>(api.get('/platform/incidents')),

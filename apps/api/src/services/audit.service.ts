@@ -169,6 +169,13 @@ const PLATFORM_ACTIONS: readonly string[] = [
   'user.platform_2fa_reset',
   'platform.site_settings',
   'platform.client_errors_cleared',
+
+  /* Selling the Data API. */
+  'dataapi.client_create',
+  'dataapi.client_update',
+  'dataapi.key_create',
+  'dataapi.key_revoke',
+  'dataapi.plan_save',
 ];
 
 export async function listPlatformAuditLogs(

@@ -148,6 +148,12 @@ export const AUDIT_ACTIONS = [
   'user.platform_2fa_reset',
   'platform.site_settings',
   'platform.client_errors_cleared',
+  /** Selling the Data API: a client, a key or a plan changed from the console. */
+  'dataapi.client_create',
+  'dataapi.client_update',
+  'dataapi.key_create',
+  'dataapi.key_revoke',
+  'dataapi.plan_save',
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 

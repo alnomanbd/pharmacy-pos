@@ -4,8 +4,11 @@ import { env } from '../env.js';
 import { handle, HttpError } from '../lib/http.js';
 import { newKey, sameSecret } from '../lib/keys.js';
 import { forget, usageNow } from '../middleware/apiKey.js';
-import { AdminLog, ApiKey, Client, CLIENT_KINDS, Plan, SCOPES, Usage, oid } from '../models.js';
-import { lastBuilt } from '../services/demand.js';
+import { AdminLog, ApiKey, Client, CLIENT_KINDS, Plan, SCOPES, Usage, oid, Company, DemandDaily, DemandRun, Generic, Medicine } from '../models.js';
+import * as demand from '../services/demand.js';
+import * as catalogue from '../services/catalogue.js';
+import { addMonths, monthRange, thisMonth } from '../lib/months.js';
+import { canonicalDistrict } from '../lib/districts.js';
 
 /**
  * Running the Data API: who buys, their keys, their plans, what they use.
@@ -61,9 +64,16 @@ admin.get(
       ]),
       Usage.aggregate<{ _id: unknown; calls: number }>([{ $match: { month } }, { $group: { _id: '$client', calls: { $sum: '$calls' } } }, { $sort: { calls: -1 } }, { $limit: 8 }]),
       Usage.aggregate<{ _id: string; calls: number }>([{ $match: { month } }, { $group: { _id: '$endpoint', calls: { $sum: '$calls' } } }, { $sort: { calls: -1 } }, { $limit: 10 }]),
-      lastBuilt(),
+      demand.lastBuilt(),
     ]);
     const names = new Map((await Client.find({ _id: { $in: topClients.map((c) => c._id) } }).select('name').lean()).map((c) => [String(c._id), c.name]));
+    // What the paying clients add up to a month, at their plans' list prices.
+    const [paying, planPrices] = await Promise.all([
+      Client.find({ status: 'active', $or: [{ expiresAt: null }, { expiresAt: { $gt: new Date() } }] }).select('plan').lean(),
+      Plan.find().select('key priceMonthly').lean(),
+    ]);
+    const priceOf = new Map(planPrices.map((p) => [p.key, p.priceMonthly]));
+    const monthly = paying.reduce((a, c) => a + (priceOf.get(c.plan) ?? 0), 0);
     const byDay = new Map(series.map((s) => [s._id, s]));
     return {
       clients: { active: clients.find((c) => c._id === 'active')?.n ?? 0, suspended: clients.find((c) => c._id === 'suspended')?.n ?? 0 },
@@ -77,6 +87,7 @@ admin.get(
       topClients: topClients.map((c) => ({ id: String(c._id), name: names.get(String(c._id)) ?? '—', calls: c.calls })),
       topEndpoints: topEndpoints.map((e) => ({ endpoint: e._id, calls: e.calls })),
       figuresBuiltAt: built,
+      monthlyRevenue: monthly,
       minShops: env.minShops,
     };
   }),
@@ -273,5 +284,94 @@ admin.get(
     const rows = await AdminLog.find().sort({ at: -1 }).limit(200).lean();
     const names = new Map((await Client.find({ _id: { $in: rows.map((r) => r.client).filter(Boolean) } }).select('name').lean()).map((c) => [String(c._id), c.name]));
     return rows.map((r) => ({ ...r, clientName: r.client ? names.get(String(r.client)) ?? '' : '' }));
+  }),
+);
+
+/* ---------------------------------------------------- what we can sell -- */
+
+/**
+ * What there is to sell right now: the catalogue, and how much of last
+ * month's sales clears the five-shop rule — the medicines, the districts, and
+ * the share of all pieces sold that a client would actually see.
+ */
+admin.get(
+  '/readiness',
+  handle(async () => {
+    const month = addMonths(thisMonth(), -1);
+    const [medicines, generics, companies, all, sellable, run, built] = await Promise.all([
+      Medicine.countDocuments({ isActive: { $ne: false } }),
+      Generic.countDocuments({ isActive: { $ne: false } }),
+      Company.countDocuments({ isActive: { $ne: false } }),
+      DemandDaily.aggregate<{ pieces: number; medicines: number; districts: number }>([
+        { $match: { month } },
+        { $group: { _id: null, pieces: { $sum: '$pieces' }, meds: { $addToSet: '$medicine' }, ds: { $addToSet: '$district' } } },
+        { $project: { _id: 0, pieces: 1, medicines: { $size: '$meds' }, districts: { $size: '$ds' } } },
+      ]),
+      DemandDaily.aggregate<{ pieces: number; medicines: number; districts: number }>([
+        ...demand.cellStages([month], {}),
+        { $group: { _id: null, pieces: { $sum: '$pieces' }, meds: { $addToSet: '$_id.medicine' }, ds: { $addToSet: '$_id.district' } } },
+        { $project: { _id: 0, pieces: 1, medicines: { $size: '$meds' }, districts: { $size: '$ds' } } },
+      ]),
+      DemandRun.aggregate<{ shops: number }>([{ $match: { day: { $regex: `^${month}` } } }, { $group: { _id: null, shops: { $max: '$shops' } } }]),
+      demand.lastBuilt(),
+    ]);
+    const a = all[0] ?? { pieces: 0, medicines: 0, districts: 0 };
+    const s = sellable[0] ?? { pieces: 0, medicines: 0, districts: 0 };
+    return {
+      catalogue: { medicines, generics, companies },
+      month,
+      minShops: env.minShops,
+      shopsCounted: (run[0] as { shops?: number } | undefined)?.shops ?? 0,
+      all: a,
+      sellable: { ...s, share: a.pieces ? Math.round((s.pieces / a.pieces) * 1000) / 10 : 0 },
+      figuresBuiltAt: built,
+    };
+  }),
+);
+
+/**
+ * Exactly what a client would be sent, for the admin to look at before
+ * selling it — every part, any district, no plan limits and nothing metered;
+ * the five-shop rule applies as it does to everyone.
+ */
+admin.get(
+  '/preview/:what',
+  handle(async (req) => {
+    const q = req.query;
+    const str = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : undefined);
+    const limit = Math.min(100, Math.max(1, Number(q.limit) || 25));
+    if (req.params.what === 'catalogue') {
+      return catalogue.searchMedicines({ q: str(q.q), generic: str(q.generic), company: str(q.company), form: str(q.form), limit, offset: 0 });
+    }
+    const r = monthRange(q, 120);
+    const district = str(q.district);
+    const f: demand.Filter = {
+      district: district ? canonicalDistrict(district) ?? (district === 'Unknown' ? 'Unknown' : '__none__') : undefined,
+      generic: oid(str(q.generic)) ?? undefined,
+      company: oid(str(q.company)) ?? undefined,
+    };
+    const meta = { range: { from: r.from, to: r.to, partial: r.partial }, minShops: env.minShops };
+    switch (req.params.what) {
+      case 'medicines':
+        return { ...meta, ...(await demand.topMedicines(r, f, { limit, offset: 0 })) };
+      case 'medicine': {
+        const medicine = oid(str(q.medicine));
+        if (!medicine) throw new HttpError(400, 'bad_id', 'Pick a medicine');
+        return { ...meta, ...(await demand.medicineDetail(r, { ...f, medicine }, !f.district)) };
+      }
+      case 'generics':
+        return { ...meta, ...(await demand.byGeneric(r, f, limit)) };
+      case 'brands':
+        if (!f.generic) throw new HttpError(400, 'bad_id', 'Pick a generic');
+        return { ...meta, ...(await demand.brandsOfGeneric(r, f, limit)) };
+      case 'companies':
+        return { ...meta, ...(await demand.byCompany(r, f, limit)) };
+      case 'districts':
+        return { ...meta, ...(await demand.byDistrict(r, { ...f, medicine: oid(str(q.medicine)) ?? undefined })) };
+      case 'trends':
+        return { ...meta, ...(await demand.trends(r, f, Math.min(limit, 50))) };
+      default:
+        throw new HttpError(404, 'not_found', 'Nothing to preview by that name');
+    }
   }),
 );

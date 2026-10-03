@@ -13,5 +13,9 @@ export const BRAND = {
   siteUrl:
     import.meta.env.VITE_SITE_URL ||
     (import.meta.env.DEV ? 'http://localhost:3100' : 'https://dawai.com.bd'),
+  /** The Data API — where clients call, and its public reference at /docs/. */
+  dataApiUrl:
+    import.meta.env.VITE_DATA_API_URL ||
+    (import.meta.env.DEV ? 'http://localhost:5200' : 'https://data.dawai.com.bd'),
   consoleHost: 'console.dawai.com.bd',
 } as const;
