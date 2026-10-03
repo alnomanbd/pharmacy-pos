@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Users,
   Search,
@@ -15,6 +16,7 @@ import {
   CheckCircle2,
   TriangleAlert,
   Clock,
+  FileSpreadsheet,
 } from 'lucide-react';
 import {
   tillApi,
@@ -112,6 +114,7 @@ const ago = (iso: string | undefined, n: (v: number | string) => string, t: (k: 
 };
 
 export default function Customers() {
+  const role = useAuthStore((s) => s.user?.role);
   const t = useT();
   const lang = useUiLang();
   const { toast } = useToast();
@@ -227,6 +230,11 @@ export default function Customers() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <ExportCsv what="customers" label="Export the khata" />
+          {role !== 'salesman' && (
+            <Link to="/import?what=customers" className="btn btn-ghost h-9">
+              <FileSpreadsheet className="h-4 w-4" /> {t('Import')}
+            </Link>
+          )}
           <button
             type="button"
             className="btn btn-ghost h-9"

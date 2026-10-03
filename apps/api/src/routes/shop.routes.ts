@@ -18,6 +18,7 @@ import * as invoices from '../services/shopInvoicePdf.service.js';
 import * as counts from '../services/stockCount.service.js';
 import * as counters from '../services/counters.service.js';
 import * as transfers from '../services/stockTransfer.service.js';
+import * as dataImport from '../services/dataImport.service.js';
 import * as online from '../services/onlineOrder.service.js';
 import * as wallet from '../services/wallet.service.js';
 import * as saleAdmin from '../services/saleAdmin.service.js';
@@ -251,6 +252,30 @@ const settingsSchema = z.object({
     })
     .optional(),
 });
+
+/* ---------------------------------------------------------------- import -- */
+
+/**
+ * Moving in from a spreadsheet — see dataImport.service. The screen reads the
+ * file and sends its rows, a thousand at a time, first to check and then to
+ * write.
+ */
+const importSchema = z.object({
+  rows: z.array(z.record(z.unknown())).min(1).max(1000),
+  dryRun: z.boolean().optional(),
+});
+
+router.post(
+  '/import/stock',
+  validate(importSchema),
+  handle((req) => dataImport.importStock(actorOf(req), req.body.rows, { dryRun: req.body.dryRun })),
+);
+
+router.post(
+  '/import/customers',
+  validate(importSchema),
+  handle((req) => dataImport.importCustomers(actorOf(req), req.body.rows, { dryRun: req.body.dryRun })),
+);
 
 router.get(
   '/settings',

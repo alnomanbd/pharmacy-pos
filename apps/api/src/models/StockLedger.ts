@@ -29,6 +29,8 @@ export const STOCK_MOVES = [
   'sale_void',
   /** Between two outlets of the same shop. */
   'transfer',
+  /** What was on the shelf the day the shop moved in — see dataImport.service. */
+  'opening',
 ] as const;
 export type StockMove = (typeof STOCK_MOVES)[number];
 

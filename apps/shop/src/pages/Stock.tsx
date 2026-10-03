@@ -21,6 +21,7 @@ import {
   Inbox,
   MessageSquarePlus,
   ArrowRightLeft,
+  FileSpreadsheet,
 } from 'lucide-react';
 import {
   shopApi,
@@ -91,6 +92,7 @@ const MOVE_WORDS: Record<string, string> = {
   adjustment: 'Count corrected',
   sale_void: 'Bill cancelled',
   transfer: 'Transferred',
+  opening: 'Opening stock',
 };
 
 /**
@@ -278,6 +280,9 @@ export default function Stock() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <ExportCsv what="stock" label="Export the list" />
+          <Link to="/import?what=stock" className="btn btn-ghost h-9">
+            <FileSpreadsheet className="h-4 w-4" /> {t('Import')}
+          </Link>
           {/* The shelf against the screen. Beside the list, because that is
               where somebody is standing when they notice the two disagree. */}
           <Link to="/count" className="btn btn-ghost h-9">

@@ -33,6 +33,7 @@ import Expiry from './pages/Expiry';
 import Accounts from './pages/Accounts';
 import Activity from './pages/Activity';
 import BackRoom from './components/BackRoom';
+import Import from './pages/Import';
 import SupportClaim from './pages/SupportClaim';
 import SupportViewBanner from './components/SupportViewBanner';
 import AnnouncementBar from './components/AnnouncementBar';
@@ -130,6 +131,7 @@ export default function App() {
         <Route path="help/:slug" element={<Help />} />
         <Route path="trash" element={<BackRoom><Trash /></BackRoom>} />
         <Route path="stock" element={<BackRoom><Stock /></BackRoom>} />
+        <Route path="import" element={<BackRoom><Import /></BackRoom>} />
         <Route path="count" element={<BackRoom><CountStock /></BackRoom>} />
         <Route path="transfers" element={<BackRoom><Transfers /></BackRoom>} />
         <Route path="racks" element={<BackRoom><Racks /></BackRoom>} />

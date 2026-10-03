@@ -1679,3 +1679,17 @@ export const billingApi = {
     );
   },
 };
+
+/* ------------------------------------------------------------------ import -- */
+
+export interface ImportResult {
+  dryRun: boolean;
+  summary: { new: number; existing: number; errors: number; lots?: number; pieces?: number; value?: number; owed?: number };
+  rows: { row: number; name: string; status: 'new' | 'existing' | 'skipped' | 'error'; message?: string }[];
+}
+
+/** Moving in from a spreadsheet: rows checked (`dryRun`) or written, a thousand at a time. */
+export const importApi = {
+  run: (kind: 'stock' | 'customers', rows: Record<string, unknown>[], dryRun: boolean) =>
+    getData<ImportResult>(api.post(`/shop/import/${kind}`, { rows, dryRun })),
+};
