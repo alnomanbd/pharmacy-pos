@@ -2049,8 +2049,10 @@ const bn: Record<string, string> = {
   'Who did what, and restoring what was deleted': 'কে কী করেছেন, আর মুছে ফেলা জিনিস ফেরত আনা',
   /* ---- medicine figures ---- */
   'Medicine figures': 'ওষুধের হিসাব',
-  'District saved.': 'জেলা সংরক্ষণ হয়েছে।',
-  'Your shop’s district': 'আপনার দোকানের জেলা',
+  'Address saved.': 'ঠিকানা সংরক্ষণ হয়েছে।',
+  'Where your shop is': 'আপনার দোকান কোথায়',
+  'Counted by district. Not printed on bills — the receipt has its own address line.': 'জেলা অনুযায়ী গোনা হয়। বিলে ছাপা হয় না — রসিদের ঠিকানা আলাদা।',
+  'Save address': 'ঠিকানা সংরক্ষণ',
   'How much of each medicine sells, by district and week, counted across many shops together — so companies and the country know what people need.': 'কোন ওষুধ কতটা বিক্রি হয় — জেলা ও সপ্তাহ অনুযায়ী — অনেক দোকান মিলিয়ে গোনা হয়, যাতে কোম্পানি ও দেশ জানে মানুষের কী দরকার।',
   'Count my shop': 'আমার দোকান গুনুন',
   'Never your shop’s name, your customers, your prices or your profit.': 'কখনোই আপনার দোকানের নাম, কাস্টমার, দাম বা লাভ নয়।',
