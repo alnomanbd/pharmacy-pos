@@ -24,15 +24,14 @@ import { useT, useLangStore } from '../i18n/ui';
  *
  * Not a half-and-half page with a slogan on one side. The form is the hub of
  * the shop it opens: the counters, the branches, the shelf and the khata sit
- * on two slow orbits around it, each wired in, with the day's traffic running
+ * around it, each wired in, with the day's traffic running
  * along the wires to the card — a bill rung up, a payment on the khata, stock
  * crossing to a branch. It is an illustration and says so by never using a
  * real name or figure: before sign-in there is nobody's shop to show.
  *
- * Drawn in pixels, not percentages, so the orbits are true ellipses and the
- * pieces sit on them at any window size. On a phone the orbits go and the card
- * takes the screen, with a ring of light behind it and the day's events
- * passing above it one at a time. For a person who asked for less motion,
+ * Placed in pixels round the card, so the pieces keep their spacing at any
+ * window size. On a phone they go and the card takes the screen, with the
+ * day's events passing above it one at a time. For a person who asked for less motion,
  * everything stands still and the form is unchanged.
  */
 
@@ -127,9 +126,6 @@ function useClock() {
   return now;
 }
 
-const ellipsePath = (cx: number, cy: number, rx: number, ry: number) =>
-  `M ${cx - rx} ${cy} a ${rx} ${ry} 0 1 0 ${rx * 2} 0 a ${rx} ${ry} 0 1 0 ${-rx * 2} 0`;
-
 export default function AuthScene({
   children,
   calm = false,
@@ -210,45 +206,11 @@ export default function AuthScene({
         ))}
         <div className="auth-grid absolute inset-0" />
         <MedicineFloat />
-        {/* A ring of light behind the card — the one thing a phone keeps of the orbits. */}
-        <span className="auth-halo lg:hidden" />
       </div>
 
-      {/* ---- the orbits, the wires and the traffic on them (wide screens) ---- */}
+      {/* ---- the wires and the traffic on them (wide screens) ---- */}
       <div aria-hidden className="pointer-events-none absolute inset-0 hidden lg:block">
         <svg className="absolute inset-0 h-full w-full" viewBox={`0 0 ${w} ${h}`}>
-          <defs>
-            <radialGradient id="auth-hub" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="rgb(52 211 153 / 0.28)" />
-              <stop offset="100%" stopColor="rgb(52 211 153 / 0)" />
-            </radialGradient>
-          </defs>
-          <ellipse cx={geo.cx} cy={geo.cy} rx={geo.rings[1].rx * 0.85} ry={geo.rings[1].ry * 0.85} fill="url(#auth-hub)" />
-          {geo.rings.map((r, i) => (
-            <motion.ellipse
-              key={i}
-              cx={geo.cx}
-              cy={geo.cy}
-              rx={r.rx}
-              ry={r.ry}
-              fill="none"
-              stroke={i === 0 ? 'rgb(255 255 255 / 0.10)' : 'rgb(52 211 153 / 0.16)'}
-              strokeWidth="1"
-              strokeDasharray={i === 0 ? '2 10' : '1 0'}
-              className={still ? undefined : i === 0 ? 'auth-orbit' : undefined}
-              initial={{ opacity: 0, scale: 0.92 }}
-              animate={{ opacity: 1, scale: 1 }}
-              style={{ transformOrigin: `${geo.cx}px ${geo.cy}px` }}
-              transition={{ duration: 1.4, delay: 0.1 + i * 0.15, ease: [0.22, 1, 0.36, 1] }}
-            />
-          ))}
-          {/* A light travelling each orbit. */}
-          {!still &&
-            geo.rings.map((r, i) => (
-              <circle key={`comet-${i}`} r={i === 0 ? 2.6 : 2} fill={i === 0 ? 'rgb(167 243 208)' : 'rgb(103 232 249)'} className="auth-comet">
-                <animateMotion dur={`${i === 0 ? 38 : 27}s`} repeatCount="indefinite" path={ellipsePath(geo.cx, geo.cy, r.rx, r.ry)} keyPoints={i === 0 ? '0;1' : '1;0'} keyTimes="0;1" calcMode="linear" />
-              </circle>
-            ))}
           {/* Each piece wired to the card on a gentle curve, with the day's traffic running in. */}
           {geo.placed.map((n, i) => {
             const mx = (n.x + geo.cx) / 2 + (n.y - geo.cy) * 0.12;
@@ -325,7 +287,7 @@ export default function AuthScene({
       </div>
 
       {/* ---- the top bar: the way back, and the language ---- */}
-      <header className="relative z-10 flex items-center justify-between px-5 pt-5 sm:px-8 sm:pt-7">
+      <header className="auth-top relative z-10 flex items-center justify-between px-5 pt-5 sm:px-8 sm:pt-7">
         {backToSignIn ? (
           <Link to="/login" className="auth-back">
             <ArrowLeft className="h-3.5 w-3.5" /> {t('Back to sign in')}
@@ -346,9 +308,9 @@ export default function AuthScene({
       </header>
 
       {/* ---- the card ---- */}
-      <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 pb-8 pt-4 sm:px-6">
+      <main className="auth-main relative z-10 flex flex-1 flex-col items-center justify-center px-4 pb-8 pt-4 sm:px-6">
         {/* On a phone: the day's events, one at a time, above the card. */}
-        <div className="mb-4 h-8 lg:hidden" aria-hidden>
+        <div className="auth-ticker mb-4 h-8 lg:hidden" aria-hidden>
           <AnimatePresence mode="wait">
             <motion.span
               key={still ? 'still' : beat}
@@ -372,10 +334,10 @@ export default function AuthScene({
         >
           {/* A slow ring of light round the card's edge — the hub the wires run to. */}
           <span aria-hidden className="auth-card-ring" />
-          <div className="relative overflow-hidden rounded-[26px] bg-card px-7 pb-7 pt-8 sm:px-8 sm:pb-8">
+          <div className="auth-card-body relative overflow-hidden rounded-[26px] bg-card px-7 pb-7 pt-8 sm:px-8 sm:pb-8">
             {/* The colours of the shop, along the top edge. */}
             <span aria-hidden className="auth-card-strip" />
-            <div className="mb-6 flex items-center justify-between gap-3">
+            <div className="auth-brand mb-6 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <span className="auth-mark relative grid h-11 w-11 place-items-center rounded-2xl bg-primary text-primary-foreground">
                   <ShopMark className="h-5 w-5" />
@@ -402,7 +364,7 @@ export default function AuthScene({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.6 }}
-            className="mt-5 text-center text-sm text-white/65"
+            className="auth-below mt-5 text-center text-sm text-white/65"
           >
             {below}
           </motion.div>

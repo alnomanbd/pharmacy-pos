@@ -977,19 +977,6 @@
   }
 }
 
-/* ---- the orbits round the card ---- */
-.auth-orbit {
-  animation: auth-orbit 60s linear infinite;
-}
-@keyframes auth-orbit {
-  to {
-    stroke-dashoffset: -480;
-  }
-}
-.auth-comet {
-  filter: drop-shadow(0 0 6px rgb(167 243 208 / 0.9));
-}
-
 /* The parts of the shop: glass, lit a little from above. */
 .auth-node {
   border: 1px solid rgb(255 255 255 / 0.1);
@@ -998,19 +985,6 @@
     inset 0 1px 0 rgb(255 255 255 / 0.08),
     0 12px 30px -14px rgb(0 0 0 / 0.6);
   backdrop-filter: blur(12px);
-}
-
-/* On a phone, a ring of light behind the card in place of the orbits. */
-.auth-halo {
-  position: absolute;
-  left: 50%;
-  top: 52%;
-  width: 34rem;
-  height: 34rem;
-  transform: translate(-50%, -50%);
-  border-radius: 9999px;
-  background: radial-gradient(closest-side, rgb(52 211 153 / 0.22), transparent 70%);
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.05);
 }
 
 /* The colours of the shop along the card's top edge. */
@@ -1130,10 +1104,55 @@
   color: hsl(var(--primary));
 }
 
+/*
+ * Short screens — a laptop with the browser's bars, a small phone. The page
+ * must not scroll: the form fits the window, so everything tightens a step
+ * and the event above the card makes way.
+ */
+@media (max-height: 760px) {
+  .auth-top {
+    padding-top: 14px;
+  }
+  .auth-main {
+    padding-top: 8px;
+    padding-bottom: 14px;
+  }
+  .auth-ticker {
+    display: none;
+  }
+  .auth-card-body {
+    padding-top: 22px;
+    padding-bottom: 20px;
+  }
+  .auth-brand {
+    margin-bottom: 14px;
+  }
+  .auth-scene .shop-title {
+    font-size: 21px;
+  }
+  .auth-scene .shop-sub {
+    margin-top: 4px;
+  }
+  .auth-scene .shop-form {
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .auth-scene .shop-input,
+  .auth-scene .shop-submit {
+    height: 44px;
+  }
+  .shop-badges {
+    margin-top: 14px;
+    padding-top: 12px;
+  }
+  .auth-below {
+    margin-top: 12px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .auth-card-ring::before,
   .auth-scene .shop-submit::after,
-  .auth-orbit,
   .auth-mark::after,
   .auth-live::after {
     animation: none;
