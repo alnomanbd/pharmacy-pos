@@ -33,6 +33,34 @@ const schema = new Schema(
       closeMinutesPaper: { type: Number, default: 45, min: 0, max: 300 },
       closeMinutesDawai: { type: Number, default: 2, min: 0, max: 300 },
     },
+    /**
+     * Real shops' own words, shown on the home page only once there is at
+     * least one — the site never shows made-up quotes.
+     */
+    stories: {
+      type: [
+        new Schema(
+          {
+            name: { type: String, trim: true, maxlength: 80 },
+            shop: { type: String, trim: true, maxlength: 120 },
+            area: { type: String, trim: true, maxlength: 120 },
+            quote: { type: String, trim: true, maxlength: 400 },
+            quoteBn: { type: String, trim: true, maxlength: 400, default: '' },
+          },
+          { _id: false },
+        ),
+      ],
+      default: [],
+    },
+    /** A YouTube link: "Watch the 1-minute tour" beside the hero's buttons. Empty hides it. */
+    videoUrl: { type: String, default: '', trim: true, maxlength: 300 },
+    /** Measurement on the website. Empty: nothing is loaded. */
+    analytics: {
+      gaId: { type: String, default: '', trim: true, maxlength: 40 },
+      fbPixelId: { type: String, default: '', trim: true, maxlength: 40 },
+    },
+    /** The published help articles, readable on the website as Guides. */
+    guidesOnWebsite: { type: Boolean, default: true },
     /** "Try the demo": a shop anyone can open, read-only, from the website. */
     demo: {
       enabled: { type: Boolean, default: true },
@@ -58,6 +86,10 @@ export interface SiteSettings {
     closeMinutesDawai: number;
   };
   demo: { enabled: boolean; email: string };
+  stories: { name: string; shop: string; area: string; quote: string; quoteBn: string }[];
+  videoUrl: string;
+  analytics: { gaId: string; fbPixelId: string };
+  guidesOnWebsite: boolean;
 }
 
 const DEFAULTS: SiteSettings = {
@@ -67,6 +99,10 @@ const DEFAULTS: SiteSettings = {
   liveStatsMinShops: 0,
   calculator: { expiryLossPercent: 2, expirySavedPercent: 70, bakiLossPercent: 1, closeMinutesPaper: 45, closeMinutesDawai: 2 },
   demo: { enabled: true, email: 'owner@dawai.demo' },
+  stories: [],
+  videoUrl: '',
+  analytics: { gaId: '', fbPixelId: '' },
+  guidesOnWebsite: true,
 };
 
 /* Read on every checkout and every pricing quote; a minute is fresh enough. */
@@ -85,6 +121,10 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     liveStatsMinShops: d.liveStatsMinShops ?? DEFAULTS.liveStatsMinShops,
     calculator: { ...DEFAULTS.calculator, ...(d.calculator ?? {}) },
     demo: { ...DEFAULTS.demo, ...(d.demo ?? {}) },
+    stories: (d.stories ?? []).map((x) => ({ name: x.name ?? '', shop: x.shop ?? '', area: x.area ?? '', quote: x.quote ?? '', quoteBn: x.quoteBn ?? '' })),
+    videoUrl: d.videoUrl ?? '',
+    analytics: { ...DEFAULTS.analytics, ...(d.analytics ?? {}) },
+    guidesOnWebsite: d.guidesOnWebsite ?? DEFAULTS.guidesOnWebsite,
   };
   cached = { at: Date.now(), value };
   return value;
@@ -99,22 +139,28 @@ export async function publicSiteSettings() {
     showLiveStats: s.showLiveStats,
     calculator: s.calculator,
     demo: { enabled: s.demo.enabled },
+    stories: s.stories.filter((x) => x.quote.trim()),
+    videoUrl: s.videoUrl,
+    analytics: s.analytics,
+    guidesOnWebsite: s.guidesOnWebsite,
   };
 }
 
-type Patch = Partial<Omit<SiteSettings, 'calculator' | 'demo'>> & {
+type Patch = Partial<Omit<SiteSettings, 'calculator' | 'demo' | 'analytics'>> & {
   calculator?: Partial<SiteSettings['calculator']>;
   demo?: Partial<SiteSettings['demo']>;
+  analytics?: Partial<SiteSettings['analytics']>;
 };
 
 export async function updateSiteSettings(input: Patch): Promise<SiteSettings> {
   const set: Record<string, unknown> = {};
   if (input.whatsapp !== undefined) set.whatsapp = input.whatsapp.replace(/\D/g, '');
-  for (const k of ['yearlyFreeMonths', 'showLiveStats', 'liveStatsMinShops'] as const) {
+  for (const k of ['yearlyFreeMonths', 'showLiveStats', 'liveStatsMinShops', 'stories', 'videoUrl', 'guidesOnWebsite'] as const) {
     if (input[k] !== undefined) set[k] = input[k];
   }
   for (const [k, v] of Object.entries(input.calculator ?? {})) if (v !== undefined) set[`calculator.${k}`] = v;
   for (const [k, v] of Object.entries(input.demo ?? {})) if (v !== undefined) set[`demo.${k}`] = v;
+  for (const [k, v] of Object.entries(input.analytics ?? {})) if (v !== undefined) set[`analytics.${k}`] = v;
   await SiteSettingsModel.updateOne({ key: 'site' }, { $set: set }, { upsert: true });
   cached = null;
   return getSiteSettings();

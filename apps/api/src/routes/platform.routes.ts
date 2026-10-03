@@ -127,6 +127,31 @@ router.patch(
         })
         .optional(),
       demo: z.object({ enabled: z.boolean().optional(), email: z.string().trim().email().optional() }).optional(),
+      stories: z
+        .array(
+          z.object({
+            name: z.string().trim().max(80),
+            shop: z.string().trim().max(120),
+            area: z.string().trim().max(120),
+            quote: z.string().trim().max(400),
+            quoteBn: z.string().trim().max(400).default(''),
+          }),
+        )
+        .max(12)
+        .optional(),
+      videoUrl: z
+        .string()
+        .trim()
+        .max(300)
+        .refine((v) => v === '' || /^https:\/\/(www\.)?(youtube\.com|youtu\.be)\//i.test(v), 'A YouTube link')
+        .optional(),
+      analytics: z
+        .object({
+          gaId: z.string().trim().max(40).refine((v) => v === '' || /^G-[A-Z0-9]{4,20}$/i.test(v), 'A GA4 id looks like G-XXXXXXX').optional(),
+          fbPixelId: z.string().trim().max(40).refine((v) => v === '' || /^\d{6,20}$/.test(v), 'A Pixel id is digits').optional(),
+        })
+        .optional(),
+      guidesOnWebsite: z.boolean().optional(),
     }),
   ),
   handle(async (req) => {

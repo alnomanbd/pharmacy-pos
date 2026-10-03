@@ -224,6 +224,10 @@ export interface SiteSettings {
     closeMinutesDawai: number;
   };
   demo: { enabled: boolean; email: string };
+  stories: { name: string; shop: string; area: string; quote: string; quoteBn: string }[];
+  videoUrl: string;
+  analytics: { gaId: string; fbPixelId: string };
+  guidesOnWebsite: boolean;
 }
 
 export interface PlatformOverview {

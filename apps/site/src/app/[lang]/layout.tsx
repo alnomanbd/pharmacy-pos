@@ -5,6 +5,7 @@ import { SiteHeader } from '@/components/site-header';
 import { SiteFooter } from '@/components/site-footer';
 import { GoToTop } from '@/components/go-to-top';
 import { ChatButton } from '@/components/chat-button';
+import { Analytics } from '@/components/analytics';
 
 /**
  * Every page lives under a language segment, and the language is on `<html>`
@@ -38,6 +39,7 @@ export default async function LangLayout({
       <SiteFooter lang={lang as Lang} />
       <GoToTop lang={lang as Lang} />
       <ChatButton lang={lang as Lang} />
+      <Analytics />
     </div>
   );
 }

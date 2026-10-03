@@ -8,7 +8,8 @@ import { ok, created } from '../utils/response.js';
 import { isProduction } from '../config/env.js';
 import * as online from '../services/onlinePayment.service.js';
 import { publicStatus } from '../services/status.service.js';
-import { publicSiteSettings, liveStats } from '../services/siteSettings.service.js';
+import { publicSiteSettings, liveStats, getSiteSettings } from '../services/siteSettings.service.js';
+import { publishedList, publishedOne } from '../services/help.service.js';
 import { startDemo } from '../services/impersonation.service.js';
 
 /**
@@ -181,6 +182,31 @@ const demoLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: isProduction ? 20
 router.post('/demo', demoLimiter, async (_req, res, next) => {
   try {
     ok(res, await startDemo());
+  } catch (err) {
+    next(err);
+  }
+});
+
+/*
+ * Guides: the help articles the shops read, on the website too — while the
+ * console has them on (Website → Guides on the website).
+ */
+router.get('/guides', async (_req, res, next) => {
+  try {
+    res.setHeader('Cache-Control', 'public, max-age=120');
+    ok(res, (await getSiteSettings()).guidesOnWebsite ? await publishedList() : []);
+  } catch (err) {
+    next(err);
+  }
+});
+router.get('/guides/:slug', async (req, res, next) => {
+  try {
+    if (!(await getSiteSettings()).guidesOnWebsite) {
+      res.status(404).json({ success: false, message: 'Not found' });
+      return;
+    }
+    res.setHeader('Cache-Control', 'public, max-age=120');
+    ok(res, await publishedOne(String(req.params.slug)));
   } catch (err) {
     next(err);
   }

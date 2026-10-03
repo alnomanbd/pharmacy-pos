@@ -9,6 +9,8 @@ import { StockSection } from '@/components/sections/stock';
 import { OfflineSection } from '@/components/sections/offline';
 import { CompareSection } from '@/components/sections/compare';
 import { SavingsSection } from '@/components/sections/savings';
+import { StoriesSection } from '@/components/sections/stories';
+import { SecuritySection } from '@/components/sections/security';
 import { HowSection } from '@/components/sections/how';
 import { PricingPreview } from '@/components/sections/pricing-preview';
 import { FaqPreview } from '@/components/sections/faq-preview';
@@ -91,8 +93,10 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
       <OfflineSection lang={lang} />
       <CompareSection lang={lang} />
       <SavingsSection lang={lang} />
+      <StoriesSection lang={lang} />
       <BranchesSection lang={lang} />
       <HowSection lang={lang} />
+      <SecuritySection lang={lang} />
       <PricingPreview lang={lang} />
       <FaqPreview lang={lang} />
       <CtaSection lang={lang} />

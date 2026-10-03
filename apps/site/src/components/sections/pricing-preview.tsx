@@ -6,7 +6,9 @@ import { translate, type Lang } from '@/i18n/dictionary';
 import { Section, SectionHead } from '@/components/section';
 import { Reveal } from '@/components/motion/primitives';
 import { Button } from '@/components/ui/button';
-import { PlanCards } from '@/components/plan-cards';
+import { PlanCards, type Plan } from '@/components/plan-cards';
+import { PlanFinder } from '@/components/plan-finder';
+import { tItems } from '@/i18n/dictionary';
 
 /**
  * The price, on the home page.
@@ -31,7 +33,8 @@ export function PricingPreview({ lang }: { lang: Lang }) {
           align="center"
         />
 
-        <div className="mt-14">
+        <div className="mt-12">
+          <PlanFinder lang={lang} names={Object.fromEntries(tItems<Plan>(lang, 'pricing.plans').map((p) => [p.key ?? '', p.name]))} />
           <PlanCards lang={lang} compact />
         </div>
 

@@ -24,6 +24,10 @@ export interface SiteSettings {
     closeMinutesDawai: number;
   };
   demo: { enabled: boolean };
+  stories: { name: string; shop: string; area: string; quote: string; quoteBn: string }[];
+  videoUrl: string;
+  analytics: { gaId: string; fbPixelId: string };
+  guidesOnWebsite: boolean;
 }
 
 export const DEFAULT_SETTINGS: SiteSettings = {
@@ -32,6 +36,10 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   showLiveStats: true,
   calculator: { expiryLossPercent: 2, expirySavedPercent: 70, bakiLossPercent: 1, closeMinutesPaper: 45, closeMinutesDawai: 2 },
   demo: { enabled: true },
+  stories: [],
+  videoUrl: '',
+  analytics: { gaId: '', fbPixelId: '' },
+  guidesOnWebsite: true,
 };
 
 let settingsPromise: Promise<SiteSettings> | null = null;
@@ -47,6 +55,8 @@ function loadSettings() {
         ...d,
         calculator: { ...DEFAULT_SETTINGS.calculator, ...(d.calculator ?? {}) },
         demo: { ...DEFAULT_SETTINGS.demo, ...(d.demo ?? {}) },
+        analytics: { ...DEFAULT_SETTINGS.analytics, ...(d.analytics ?? {}) },
+        stories: d.stories ?? [],
       };
       return settingsValue;
     })

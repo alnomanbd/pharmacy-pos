@@ -173,7 +173,7 @@ export function SavingsSection({ lang }: { lang: Lang }) {
                   <PiggyBank className="size-5 text-primary" />
                   {c.month}
                 </p>
-                <p className="mt-1 font-mono text-5xl font-bold tabular-nums text-primary">
+                <p className={`mt-1 text-5xl font-bold tabular-nums text-primary ${lang === 'bn' ? '' : 'font-mono'}`}>
                   <Glide value={seen ? total : 0} lang={lang} prefix="৳" />
                 </p>
 

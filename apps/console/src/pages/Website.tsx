@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Calculator, Globe, Loader2, MessageCircle, MonitorPlay, Radio, Save, Tag } from 'lucide-react';
+import { BarChart3, BookOpen, Calculator, Globe, Loader2, MessageCircle, MonitorPlay, Plus, Quote, Radio, Save, Tag, Trash2, Video } from 'lucide-react';
 import { platformApi, type SiteSettings } from '../api';
 import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
@@ -142,7 +142,7 @@ export default function Website() {
             A band on the home page: shops on Dawai, bills rung up on it, medicines in the list. Totals only — never one shop’s figures.
           </p>
           <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={form.showLiveStats} onChange={(e) => set('showLiveStats', e.target.checked)} />
+            <input type="checkbox" className="h-4 w-4 shrink-0 accent-[hsl(var(--primary))]" checked={form.showLiveStats} onChange={(e) => set('showLiveStats', e.target.checked)} />
             Show it on the website
           </label>
           <label className="mt-3 flex flex-wrap items-center gap-2 text-sm">
@@ -168,7 +168,7 @@ export default function Website() {
             A button on the website that opens a real shop, read-only, with no sign-up. Visitors can look at everything and change nothing.
           </p>
           <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={form.demo.enabled} onChange={(e) => set('demo', { ...form.demo, enabled: e.target.checked })} />
+            <input type="checkbox" className="h-4 w-4 shrink-0 accent-[hsl(var(--primary))]" checked={form.demo.enabled} onChange={(e) => set('demo', { ...form.demo, enabled: e.target.checked })} />
             Offer the demo on the website
           </label>
           <label className="mt-3 block text-sm">
@@ -181,6 +181,121 @@ export default function Website() {
               aria-label="Demo account email"
             />
           </label>
+        </section>
+
+        {/* ---- the video ---- */}
+        <section className="card !mb-0">
+          <h3 className="mb-1 flex items-center gap-2">
+            <Video className="h-4 w-4" /> One-minute tour
+          </h3>
+          <p className="mb-3 text-sm text-muted-foreground">
+            A YouTube link. The home page shows “Watch the 1-minute tour” beside its buttons and plays it in place. Empty hides it.
+          </p>
+          <input
+            className="input h-10 w-full"
+            placeholder="https://www.youtube.com/watch?v=…"
+            value={form.videoUrl}
+            onChange={(e) => set('videoUrl', e.target.value)}
+            aria-label="Video link"
+          />
+        </section>
+
+        {/* ---- guides ---- */}
+        <section className="card !mb-0">
+          <h3 className="mb-1 flex items-center gap-2">
+            <BookOpen className="h-4 w-4" /> Guides on the website
+          </h3>
+          <p className="mb-3 text-sm text-muted-foreground">
+            The published help articles (Help articles page) readable on the website too, in English and Bangla — answers that also bring visitors from search.
+          </p>
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" className="h-4 w-4 shrink-0 accent-[hsl(var(--primary))]" checked={form.guidesOnWebsite} onChange={(e) => set('guidesOnWebsite', e.target.checked)} />
+            Show the guides on the website
+          </label>
+        </section>
+
+        {/* ---- analytics ---- */}
+        <section className="card !mb-0 lg:col-span-2">
+          <h3 className="mb-1 flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" /> Analytics
+          </h3>
+          <p className="mb-3 text-sm text-muted-foreground">
+            To measure visits and ads. Empty: nothing is loaded on the website.
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="block text-sm">
+              <span className="mb-1 block text-xs font-semibold text-muted-foreground">Google Analytics (GA4) id</span>
+              <input
+                className="input h-10 w-full font-mono"
+                placeholder="G-XXXXXXXXXX"
+                value={form.analytics.gaId}
+                onChange={(e) => set('analytics', { ...form.analytics, gaId: e.target.value.trim() })}
+              />
+            </label>
+            <label className="block text-sm">
+              <span className="mb-1 block text-xs font-semibold text-muted-foreground">Facebook Pixel id</span>
+              <input
+                className="input h-10 w-full font-mono"
+                placeholder="123456789012345"
+                value={form.analytics.fbPixelId}
+                onChange={(e) => set('analytics', { ...form.analytics, fbPixelId: e.target.value.trim() })}
+              />
+            </label>
+          </div>
+        </section>
+
+        {/* ---- customer stories ---- */}
+        <section className="card !mb-0 lg:col-span-2">
+          <div className="mb-1 flex items-center justify-between gap-2">
+            <h3 className="mb-0 flex items-center gap-2">
+              <Quote className="h-4 w-4" /> Customer stories
+            </h3>
+            {form.stories.length < 12 && (
+              <button
+                type="button"
+                className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-semibold hover:bg-muted"
+                onClick={() => set('stories', [...form.stories, { name: '', shop: '', area: '', quote: '', quoteBn: '' }])}
+              >
+                <Plus className="h-3.5 w-3.5" /> Add a story
+              </button>
+            )}
+          </div>
+          <p className="mb-3 text-sm text-muted-foreground">
+            Real shops’ own words, with their permission. The home page shows the section only once there is at least one.
+          </p>
+          {form.stories.length === 0 ? (
+            <p className="rounded-lg border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
+              No stories yet — the section stays hidden.
+            </p>
+          ) : (
+            <div className="grid gap-3">
+              {form.stories.map((st, i) => {
+                const upd = (k: keyof typeof st, v: string) =>
+                  set('stories', form.stories.map((x, j) => (j === i ? { ...x, [k]: v } : x)));
+                return (
+                  <div key={i} className="grid gap-2 rounded-xl border border-border p-3">
+                    <div className="grid gap-2 sm:grid-cols-3">
+                      <input className="input h-9" placeholder="Name — e.g. Rafiq Hasan" value={st.name} onChange={(e) => upd('name', e.target.value)} />
+                      <input className="input h-9" placeholder="Shop — e.g. Jonni Pharmacy" value={st.shop} onChange={(e) => upd('shop', e.target.value)} />
+                      <input className="input h-9" placeholder="Area — e.g. Mirpur 10, Dhaka" value={st.area} onChange={(e) => upd('area', e.target.value)} />
+                    </div>
+                    <textarea className="input min-h-[60px] py-2" maxLength={400} placeholder="What they said (English)" value={st.quote} onChange={(e) => upd('quote', e.target.value)} />
+                    <div className="flex items-start gap-2">
+                      <textarea className="input min-h-[60px] flex-1 py-2" maxLength={400} placeholder="What they said (বাংলা, optional)" value={st.quoteBn} onChange={(e) => upd('quoteBn', e.target.value)} />
+                      <button
+                        type="button"
+                        aria-label="Remove this story"
+                        className="rounded-md p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                        onClick={() => set('stories', form.stories.filter((_, j) => j !== i))}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </section>
 
         {/* ---- the calculator ---- */}

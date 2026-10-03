@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Magnetic, Orb, CountUp, Reveal } from '@/components/motion/primitives';
 import { PosScreen } from '@/components/pos-screen';
 import { TryDemoButton } from '@/components/try-demo';
+import { VideoTour } from '@/components/video-tour';
 import { LiveStats } from '@/components/sections/live-stats';
 
 /**
@@ -187,13 +188,17 @@ export function Hero({ lang }: { lang: Lang }) {
             <TryDemoButton lang={lang} className="w-full sm:w-auto" />
           </motion.div>
 
-          <Link
-            href={`/${lang}/demo`}
-            className="-mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground transition-colors hover:text-primary"
-          >
-            <PlayCircle className="size-4 text-primary" />
-            {t('hero.ctaSecondary')}
-          </Link>
+          <div className="-mt-2 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
+            {/* The console's video, when it has one (Website → One-minute tour). */}
+            <VideoTour lang={lang} />
+            <Link
+              href={`/${lang}/demo`}
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground transition-colors hover:text-primary"
+            >
+              <PlayCircle className="size-4 text-primary" />
+              {t('hero.ctaSecondary')}
+            </Link>
+          </div>
 
           <motion.ul
             className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2"

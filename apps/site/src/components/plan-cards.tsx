@@ -41,7 +41,7 @@ export type Plan = {
 };
 
 /** What the API says a plan allows — the one source the console edits. */
-type Live = {
+export type Live = {
   key: string;
   price: number;
   includedBranches?: number;
@@ -62,7 +62,7 @@ const FALLBACK: Live[] = [
 ];
 
 let cache: Live[] | null = null;
-function useLivePlans() {
+export function useLivePlans() {
   const [plans, setPlans] = React.useState<Live[]>(cache ?? FALLBACK);
   React.useEffect(() => {
     if (cache) return;
