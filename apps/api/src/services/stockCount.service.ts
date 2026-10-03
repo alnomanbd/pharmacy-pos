@@ -151,6 +151,16 @@ export async function saveCount(
   if (!count) throw notFound('Stock count');
   if (count.status !== 'open') throw badRequest('That count has already been finished');
 
+  /*
+   * What the screen says at the moment each line is counted, not when the
+   * count began. A strip sold between starting the count and reaching that
+   * shelf is already off the screen and off the shelf; measured against the
+   * starting figure, it would come off a second time when the count is applied.
+   */
+  const ids = lines.map((e) => count.lines.id(e.lineId)?.batch).filter(Boolean);
+  const nowOnHand = new Map(
+    (await StockBatchModel.find({ _id: { $in: ids }, organization: actor.org }).select('qtyOnHand').lean()).map((b) => [String(b._id), b.qtyOnHand]),
+  );
   for (const entry of lines) {
     const line = count.lines.id(entry.lineId);
     if (!line) continue;
@@ -161,7 +171,12 @@ export async function saveCount(
     if (!Number.isFinite(entry.counted) || entry.counted < 0) {
       throw badRequest(`${line.name}: a shelf cannot hold less than nothing`);
     }
-    line.counted = Math.round(entry.counted);
+    const counted = Math.round(entry.counted);
+    if (line.counted !== counted) {
+      const screen = nowOnHand.get(String(line.batch));
+      if (screen !== undefined) line.expected = screen;
+    }
+    line.counted = counted;
   }
 
   await count.save();

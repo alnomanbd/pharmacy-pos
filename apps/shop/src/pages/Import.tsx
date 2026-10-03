@@ -133,6 +133,8 @@ export default function Import() {
 
   const missing = fields.filter((f) => f.required && mapping[f.key] === undefined);
   const problems = result?.rows.filter((r) => r.status === 'error') ?? [];
+  /* Left out on purpose — already in stock, or the same row twice — so the shelf is not doubled. */
+  const skipped = result?.rows.filter((r) => r.status === 'skipped') ?? [];
   const s = result?.summary;
 
   return (
@@ -339,6 +341,25 @@ export default function Import() {
                         <td className="w-16 px-3 py-1.5 font-mono text-xs text-muted-foreground">#{p.row}</td>
                         <td className="px-3 py-1.5 font-medium">{p.name || '—'}</td>
                         <td className="px-3 py-1.5 text-destructive">{p.message}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {skipped.length > 0 && (
+            <div className="mt-4">
+              <p className="mb-2 text-sm font-semibold">{t('Left out, so nothing is counted twice:')}</p>
+              <div className="max-h-48 overflow-auto rounded-xl border border-border">
+                <table className="w-full text-sm">
+                  <tbody>
+                    {skipped.slice(0, 200).map((p) => (
+                      <tr key={p.row} className="border-b border-border last:border-0">
+                        <td className="w-16 px-3 py-1.5 font-mono text-xs text-muted-foreground">#{p.row}</td>
+                        <td className="px-3 py-1.5 font-medium">{p.name || '—'}</td>
+                        <td className="px-3 py-1.5 text-amber-700 dark:text-amber-400">{p.message}</td>
                       </tr>
                     ))}
                   </tbody>

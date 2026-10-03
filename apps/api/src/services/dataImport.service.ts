@@ -175,10 +175,12 @@ export async function importStock(actor: Actor, rows: ImportRow[], opts: { dryRu
     .lean();
   const byKey = new Map(existing.map((p) => [keyOf(p.name, p.strength ?? ''), p._id as Types.ObjectId]));
   const byBarcode = new Map(existing.filter((p) => p.barcode).map((p) => [String(p.barcode), p._id as Types.ObjectId]));
-  const branch = opts.dryRun ? null : await writeBranchOf(actor);
+  const branch = await writeBranchOf(actor);
+  /* Lots this file has already put in, so the same row twice is caught too. */
+  const seenLots = new Set<string>();
 
   const results: RowResult[] = [];
-  const summary = { new: 0, existing: 0, errors: 0, lots: 0, pieces: 0, value: 0 };
+  const summary = { new: 0, existing: 0, errors: 0, skipped: 0, lots: 0, pieces: 0, value: 0 };
 
   for (let i = 0; i < rows.length; i++) {
     const r = readStockRow(rows[i]);
@@ -231,6 +233,36 @@ export async function importStock(actor: Actor, rows: ImportRow[], opts: { dryRu
       if (productId) byKey.set(key, productId);
       else if (opts.dryRun) byKey.set(key, new Types.ObjectId());
       if (r.barcode && productId) byBarcode.set(r.barcode, productId);
+
+      /*
+       * The same stock twice is the one mistake an import must not make: a
+       * file run again, or a row copied, would double the shelf. A lot with
+       * this batch number is already here — or, with no batch number, this
+       * item already had opening stock imported at this branch — so the
+       * stock is left out and the row says why.
+       */
+      let duplicate = '';
+      if (r.qty > 0) {
+        const lotKey = `${key}|${r.batchNo.toLowerCase()}`;
+        if (seenLots.has(lotKey)) duplicate = r.batchNo ? `Batch ${r.batchNo} is in this file twice — its stock was added once` : 'This item is in the file twice with no batch number — its stock was added once';
+        else if (!isNew && productId && r.batchNo) {
+          const there = await StockBatchModel.findOne({ organization: actor.org, branch, product: productId, batchNo: new RegExp(`^${r.batchNo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') })
+            .select('_id')
+            .lean();
+          if (there) duplicate = `Batch ${r.batchNo} is already in stock — skipped, nothing added`;
+        } else if (!isNew && productId) {
+          const imported = await StockLedgerModel.findOne({ organization: actor.org, branch, product: productId, move: 'opening' }).select('_id').lean();
+          if (imported) duplicate = 'Opening stock for this item was already imported — skipped (give a batch number to add another lot)';
+        }
+        seenLots.add(lotKey);
+      }
+
+      if (duplicate) {
+        summary.skipped++;
+        results.push({ row: i + 1, name: label, status: 'skipped', message: duplicate });
+        if (isNew) summary.new++;
+        continue;
+      }
 
       if (r.qty > 0) {
         if (!opts.dryRun) {

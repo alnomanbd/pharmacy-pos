@@ -15,7 +15,7 @@ import {
 import { assertMonthOpen } from './shopCash.service.js';
 import { badRequest, notFound } from '../utils/AppError.js';
 import { expiryFromInput, calendarPartsInAppTz, dayKeyFromParts } from '../utils/date.js';
-import { branchMatch, writeBranchOf, type BranchScope } from './branchScope.service.js';
+import { branchMatch, writeBranchOf, branchOrMain, type BranchScope } from './branchScope.service.js';
 import { orderForDelivery, closeWithDelivery } from './shopOrder.service.js';
 
 /**
@@ -311,6 +311,7 @@ export async function paySupplier(
 
   await SupplierLedgerModel.create({
     organization: actor.org,
+    branch: await branchOrMain(actor),
     supplier: supplier._id,
     entry: 'payment',
     // Negative: a payment reduces what the shop owes.
@@ -1097,6 +1098,7 @@ export async function createPurchase(
      see both, not one net figure. */
   await SupplierLedgerModel.create({
     organization: actor.org,
+    branch,
     supplier: supplier._id,
     entry: 'purchase',
     amount: total,
@@ -1110,6 +1112,7 @@ export async function createPurchase(
   if (input.paidAmount) {
     await SupplierLedgerModel.create({
       organization: actor.org,
+      branch,
       supplier: supplier._id,
       entry: 'payment',
       amount: -Math.abs(input.paidAmount),

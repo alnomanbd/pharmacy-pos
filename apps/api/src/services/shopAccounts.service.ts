@@ -71,7 +71,8 @@ export async function accounts(
   /* Earlier returns that never reached the accounts, written in once. */
   await backfillRefunds(actor.org).catch(() => 0);
   const org = new Types.ObjectId(actor.org);
-  // The branches in view — a branch's takings, spend, drawer and shelf; baki and companies are the shop's.
+  // The branches in view — a branch's takings, spend, drawer, shelf, and the baki and company payments
+  // that went through it. What is owed (receivable, payable) is the whole shop's: an account is not a branch's.
   const bm = branchMatch(actor.branch);
   const to = formatDayKey(parseDayKey(opts.to));
   const from = opts.from ? formatDayKey(parseDayKey(opts.from)) : shiftKey(to, -29);
@@ -94,12 +95,12 @@ export async function accounts(
       { $group: { _id: { day: '$dayKey', method: '$payments.method' }, amount: { $sum: '$payments.amount' }, bills: { $sum: 1 } } },
     ]),
     /* ---- the baki khata settled ---- */
-    CustomerLedgerModel.find({ organization: org, entry: 'payment', at: { $gte: start, $lte: end } })
+    CustomerLedgerModel.find({ organization: org, ...bm, entry: 'payment', at: { $gte: start, $lte: end } })
       .populate<{ customer: { name?: string } | null }>('customer', 'name')
       .sort({ at: -1 })
       .lean(),
     /* ---- paid to the companies, at the door or later ---- */
-    SupplierLedgerModel.find({ organization: org, entry: 'payment', at: { $gte: start, $lte: end } })
+    SupplierLedgerModel.find({ organization: org, ...bm, entry: 'payment', at: { $gte: start, $lte: end } })
       .populate<{ supplier: { name?: string } | null }>('supplier', 'name')
       .sort({ at: -1 })
       .lean(),

@@ -23,6 +23,8 @@ const schema = new Schema(
   {
     organization: { type: Schema.Types.ObjectId, ref: 'Organization', required: true, index: true },
     supplier: { type: Schema.Types.ObjectId, ref: 'Supplier', required: true, index: true },
+    /** The branch whose drawer or counter this went through — so one branch's accounts show only its own. */
+    branch: { type: Schema.Types.ObjectId, ref: 'Branch', default: null, index: true },
 
     entry: { type: String, enum: SUPPLIER_ENTRIES, required: true },
     /** Signed: positive is owed to the company, negative reduces it. */

@@ -16,7 +16,7 @@ import { badRequest, notFound } from '../utils/AppError.js';
 import { todayKey, calendarPartsInAppTz, parseDayKey, formatDayKey } from '../utils/date.js';
 import type { Actor } from './shop.service.js';
 import { recordRefund } from './shopCash.service.js';
-import { branchMatch, writeBranchOf, inScope } from './branchScope.service.js';
+import { branchMatch, writeBranchOf, inScope, branchOrMain, visibleMatch } from './branchScope.service.js';
 import { BranchModel } from '../models/index.js';
 import { bdMobile, BD_MOBILE_MESSAGE } from '../utils/phone.js';
 
@@ -835,6 +835,7 @@ export async function createSale(
     await customer.save();
     await CustomerLedgerModel.create({
       organization: actor.org,
+      branch,
       customer: customer._id,
       entry: 'sale',
       amount: due,
@@ -910,7 +911,8 @@ export async function returnSale(
   saleId: string,
   input: { lines: { lineId: string; pieces: number }[]; reason?: string },
 ) {
-  const sale = await SaleModel.findOne({ _id: oid(saleId), organization: actor.org, ...branchMatch(actor.branch) });
+  /* A bill from any branch this person works at — what comes back goes onto this branch's shelf (below). */
+  const sale = await SaleModel.findOne({ _id: oid(saleId), organization: actor.org, ...visibleMatch(actor.branch) });
   if (!sale || sale.deletedAt) throw notFound('Bill');
   /* A cancelled bill has already given everything back; a return on it would
      put the strips on the shelf and the money over the counter a second time. */
@@ -945,10 +947,40 @@ export async function returnSale(
     moves.push({ line, pieces: ask.pieces });
   }
 
+  /* The strips go back on the shelf of the branch taking them back — that is
+     where they physically are now — into the same lot (number, expiry, cost)
+     there, made if that branch has never held it. */
+  const here = actor.branch?.write ?? null;
   for (const { line, pieces } of moves) {
     line.returnedPieces = (line.returnedPieces ?? 0) + pieces;
     if (!line.batch) continue;
-    const batch = await StockBatchModel.findOneAndUpdate({ _id: line.batch }, { $inc: { qtyOnHand: pieces } }, { new: true });
+    let target: unknown = line.batch;
+    const sold = await StockBatchModel.findById(line.batch).lean();
+    if (sold && here && sold.branch && String(sold.branch) !== String(here)) {
+      const there =
+        (await StockBatchModel.findOne({
+          organization: actor.org,
+          branch: here,
+          product: sold.product,
+          batchNo: sold.batchNo ?? '',
+          expiry: sold.expiry ?? null,
+        }).select('_id').lean()) ??
+        (await StockBatchModel.create({
+          organization: actor.org,
+          branch: here,
+          product: sold.product,
+          batchNo: sold.batchNo ?? '',
+          expiry: sold.expiry ?? null,
+          costPerPiece: sold.costPerPiece,
+          mrpPerPiece: sold.mrpPerPiece,
+          qtyOnHand: 0,
+          purchase: sold.purchase ?? null,
+          supplier: sold.supplier ?? null,
+          receivedAt: new Date(),
+        }));
+      target = there._id;
+    }
+    const batch = await StockBatchModel.findOneAndUpdate({ _id: target }, { $inc: { qtyOnHand: pieces } }, { new: true });
     if (!batch) continue;
     await StockLedgerModel.create({
       organization: actor.org,
@@ -996,6 +1028,7 @@ export async function returnSale(
           await customer.save();
           await CustomerLedgerModel.create({
             organization: actor.org,
+            branch: sale.branch ?? null,
             customer: customer._id,
             entry: 'sale_return',
             amount: -againstDue,
@@ -1397,7 +1430,8 @@ export async function getSale(actor: Actor, id: string) {
 
 /** Finding the bill a customer has come back with. */
 export async function findSale(actor: Actor, billNo: string) {
-  return SaleModel.find({ organization: actor.org, billNo: billNo.trim(), ...branchMatch(actor.branch) })
+  /* Any branch this person works at: the slip in the customer's hand may be from the other one. */
+  return SaleModel.find({ organization: actor.org, billNo: billNo.trim(), ...visibleMatch(actor.branch) })
     .sort({ soldAt: -1 })
     .limit(5)
     .lean();
@@ -1748,6 +1782,7 @@ export async function payCustomer(
 
   await CustomerLedgerModel.create({
     organization: actor.org,
+    branch: await branchOrMain(actor),
     customer: customer._id,
     entry: 'payment',
     amount: -Math.abs(input.amount),

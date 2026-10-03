@@ -150,6 +150,7 @@ async function shiftBill(sale: SaleDoc, actor: Actor, dir: 1 | -1, move: 'sale_v
       await customer.save();
       await CustomerLedgerModel.create({
         organization: actor.org,
+        branch: sale.branch ?? null,
         customer: customer._id,
         entry: 'adjustment',
         amount: dir * dueLeft,

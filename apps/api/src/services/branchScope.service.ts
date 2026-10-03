@@ -15,6 +15,8 @@ import {
   ExpenseModel,
   IncomeModel,
   OrganizationModel,
+  CustomerLedgerModel,
+  SupplierLedgerModel,
 } from '../models/index.js';
 import { ensureMainBranch } from './branch.service.js';
 import { badRequest } from '../utils/AppError.js';
@@ -58,6 +60,27 @@ export async function writeBranchOf(actor: { org: string; branch?: BranchScope |
   }
   // No scope given (a service called from elsewhere) or a single-branch shop: the Main branch.
   return (await ensureMainBranch(actor.org))._id as Types.ObjectId;
+}
+
+/**
+ * The branch to stamp on money that belongs to the whole shop but went
+ * through one drawer — a baki payment, a payment to a company. The branch in
+ * view, or Main when the owner is looking at all of them; never a refusal,
+ * because settling a customer's account is not something to block.
+ */
+export async function branchOrMain(actor: { org: string; branch?: BranchScope | null }): Promise<Types.ObjectId> {
+  if (actor.branch?.write) return actor.branch.write;
+  return (await ensureMainBranch(actor.org))._id as Types.ObjectId;
+}
+
+/**
+ * Every branch this person may switch to, rather than the one in view. For
+ * the few look-ups that cross branches on purpose — a customer bringing back
+ * at one branch what they bought at another.
+ */
+export function visibleMatch(scope?: BranchScope | null): Record<string, unknown> {
+  if (!scope?.visible || scope.count <= 1) return {};
+  return { branch: { $in: scope.visible } };
 }
 
 /** Whether a record's branch is one this request may touch. Records from before branches have none. */
@@ -142,6 +165,8 @@ export async function assignMainBranches() {
     CashMoveModel,
     ExpenseModel,
     IncomeModel,
+    CustomerLedgerModel,
+    SupplierLedgerModel,
   ];
   const orgs = await OrganizationModel.find({}).select('_id').lean();
   let moved = 0;

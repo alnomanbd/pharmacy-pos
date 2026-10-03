@@ -1962,6 +1962,8 @@ const bn: Record<string, string> = {
   'Set it up': 'চালু করুন',
   'Not now': 'এখন না',
   'Phone & alerts': 'ফোন ও অ্যালার্ট',
+  /* ---- import duplicates ---- */
+  'Left out, so nothing is counted twice:': 'বাদ রাখা হয়েছে, যাতে কিছু দুবার না যায়:',
   /* ---- returns ---- */
   'off their account': 'বাকি থেকে কাটা',
   'cash from the drawer': 'ক্যাশ থেকে ফেরত',
