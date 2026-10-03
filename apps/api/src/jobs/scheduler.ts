@@ -1,5 +1,26 @@
 import { sendSubscriptionReminders } from '../services/subscriptionReminder.service.js';
 import { sendDigests } from '../services/push.service.js';
+import { rollupRecent } from '../services/medicineDemand.service.js';
+import { env as appEnv } from '../config/env.js';
+
+/** Once a day, after 2am in the shop's timezone: the last few days of medicine figures, rebuilt. */
+let demandDay = '';
+async function maybeRollupDemand() {
+  const now = new Date();
+  const hour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: appEnv.appTz, hour: '2-digit', hour12: false }).format(now)) % 24;
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: appEnv.appTz }).format(now);
+  if (hour < 2 || demandDay === today) return null;
+  const done = await JobRunModel.findOne({ job: 'medicineDemand', ok: true, startedAt: { $gte: new Date(now.getTime() - 20 * 3_600_000) } }).lean();
+  if (done) {
+    demandDay = today;
+    return null;
+  }
+  const startedAt = new Date();
+  const result = await rollupRecent();
+  demandDay = today;
+  await JobRunModel.create({ job: 'medicineDemand', startedAt, finishedAt: new Date(), ok: true, error: '', result }).catch(() => undefined);
+  return result;
+}
 import { logger } from '../utils/logger.js';
 import { env } from '../config/env.js';
 import { JobRunModel } from '../models/index.js';
@@ -38,6 +59,12 @@ async function tick() {
       return 0;
     });
     result = { ...(result as object), pushed };
+    /* The medicine figures, once a night after two — see medicineDemand.service. */
+    const demand = await maybeRollupDemand().catch((err) => {
+      logger.warn({ err }, 'Medicine demand rollup failed');
+      return null;
+    });
+    if (demand) result = { ...(result as object), demand };
     ok = true;
   } catch (err) {
     error = err instanceof Error ? err.message : String(err);

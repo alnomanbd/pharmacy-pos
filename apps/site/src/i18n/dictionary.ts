@@ -769,7 +769,11 @@ const en = {
           },
           {
             h: 'Your data is yours',
-            t: 'We never sell or rent your data. It is used to run the software, keep it working and improve it. Deleting the account deletes the data within ninety days.',
+            t: 'We never sell or rent your shop’s records — your bills, customers, prices or staff. They are used to run the software, keep it working and improve it. Deleting the account deletes them within ninety days.',
+          },
+          {
+            h: 'Anonymous medicine figures',
+            t: 'How much of each medicine sells, by district and by week, is counted across many shops together and may be shared with or licensed to others — pharmaceutical companies, distributors, researchers. A figure is only ever made from at least five shops, and never names a shop, a customer or a shop’s prices. You can switch your shop out of it at any time in Settings → Medicine figures.',
           },
           {
             h: 'The counter is a pharmacy',
@@ -807,7 +811,11 @@ const en = {
           },
           {
             h: 'What we never do',
-            t: 'We do not sell data, rent data, or hand it to advertisers. We do not read your bills to advertise to your customers.',
+            t: 'We do not sell or rent your shop’s records, or hand them to advertisers. We do not read your bills to advertise to your customers.',
+          },
+          {
+            h: 'Anonymous medicine figures',
+            t: 'We count how much of each medicine sells, by district and week, across many shops at once. Those counts — never fewer than five shops in one figure, never with a shop’s name, its customers or its prices — may be shared or licensed. A shop that would rather not be counted switches it off in Settings → Medicine figures, and stops being counted from that day.',
           },
           {
             h: 'Where it lives',
@@ -1581,7 +1589,11 @@ const bn: DeepPartial<Dictionary> = {
           },
           {
             h: 'আপনার তথ্য আপনার',
-            t: 'আমরা আপনার তথ্য বিক্রি বা ভাড়া দিই না। এটি ব্যবহৃত হয় সফটওয়্যার চালাতে, কাজ রাখতে ও উন্নত করতে। অ্যাকাউন্ট মুছলে তথ্য নব্বই দিনের মধ্যে মুছে যায়।',
+            t: 'আমরা আপনার দোকানের রেকর্ড — বিল, কাস্টমার, দাম বা স্টাফ — বিক্রি বা ভাড়া দিই না। এগুলো ব্যবহৃত হয় সফটওয়্যার চালাতে, কাজ রাখতে ও উন্নত করতে। অ্যাকাউন্ট মুছলে নব্বই দিনের মধ্যে মুছে যায়।',
+          },
+          {
+            h: 'নাম-পরিচয়হীন ওষুধের হিসাব',
+            t: 'কোন ওষুধ কতটা বিক্রি হয় — জেলা ও সপ্তাহ অনুযায়ী — অনেক দোকান মিলিয়ে গোনা হয়, এবং তা ওষুধ কোম্পানি, ডিস্ট্রিবিউটর বা গবেষকদের সাথে শেয়ার বা লাইসেন্স করা হতে পারে। প্রতিটি হিসাব অন্তত পাঁচটি দোকান মিলিয়ে, এবং কখনোই কোনো দোকান, কাস্টমার বা দোকানের দামের পরিচয় থাকে না। যেকোনো সময় সেটিংস → ওষুধের হিসাব থেকে আপনার দোকান বাদ দিতে পারেন।',
           },
           {
             h: 'কাউন্টার হলো ফার্মেসি',
@@ -1619,7 +1631,11 @@ const bn: DeepPartial<Dictionary> = {
           },
           {
             h: 'যা আমরা কখনোই করি না',
-            t: 'আমরা তথ্য বিক্রি করি না, ভাড়া দিই না, বিজ্ঞাপনদাতার হাতে দিই না। আপনার কাস্টমারকে বিজ্ঞাপন দিতে আপনার বিল পড়ি না।',
+            t: 'আমরা আপনার দোকানের রেকর্ড বিক্রি করি না, ভাড়া দিই না, বিজ্ঞাপনদাতার হাতে দিই না। আপনার কাস্টমারকে বিজ্ঞাপন দিতে আপনার বিল পড়ি না।',
+          },
+          {
+            h: 'নাম-পরিচয়হীন ওষুধের হিসাব',
+            t: 'অনেক দোকান মিলিয়ে আমরা গুনি কোন ওষুধ জেলা ও সপ্তাহ অনুযায়ী কতটা বিক্রি হয়। সেই হিসাব — কখনো পাঁচটির কম দোকান নিয়ে নয়, কখনো দোকানের নাম, কাস্টমার বা দাম ছাড়া — শেয়ার বা লাইসেন্স করা হতে পারে। যে দোকান গোনায় থাকতে চায় না, সেটিংস → ওষুধের হিসাব থেকে বন্ধ করে দিলে সেদিন থেকেই আর গোনা হয় না।',
           },
           {
             h: 'যেখানে থাকে',

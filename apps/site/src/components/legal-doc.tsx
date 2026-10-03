@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
  * fact about a build, and the same date has to hold in every language.
  */
 
-const UPDATED = '2026-09-26';
+const UPDATED = '2026-10-03';
 const ICON = { terms: FileText, privacy: ShieldCheck, refund: ReceiptText } as const;
 
 export function LegalDoc({

@@ -19,6 +19,7 @@ import {
   Smartphone,
   Star,
   BellRing,
+  BarChart3,
 } from 'lucide-react';
 import { settingsApi, type ShopSettings, type Sale } from '../api';
 import SheetPreview, { openAlignmentPage } from '../components/SheetPreview';
@@ -27,6 +28,7 @@ import OrderLinkCard from '../components/OrderLinkCard';
 import WalletCard from '../components/WalletCard';
 import LoyaltyCard from '../components/LoyaltyCard';
 import PhoneAlertsCard from '../components/PhoneAlertsCard';
+import DataSharingCard from '../components/DataSharingCard';
 import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import Receipt from '../components/Receipt';
@@ -88,6 +90,7 @@ const SECTIONS = [
   { id: 'wallets', label: 'bKash & Nagad', icon: Smartphone },
   { id: 'loyalty', label: 'Loyalty points', icon: Star },
   { id: 'alerts', label: 'Phone & alerts', icon: BellRing },
+  { id: 'figures', label: 'Medicine figures', icon: BarChart3 },
   { id: 'vat', label: 'VAT', icon: Percent },
 ] as const;
 
@@ -712,6 +715,9 @@ export default function Settings() {
 
           {/* The shop on the owner's phone, and its alerts. */}
           <PhoneAlertsCard />
+
+          {/* Whether the shop is counted in the anonymous medicine figures. */}
+          <DataSharingCard />
 
           <Section
             id="vat"

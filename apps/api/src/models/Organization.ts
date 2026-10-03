@@ -84,6 +84,16 @@ const schema = new Schema(
      * `plan.service#effectiveLimits`, never directly.
      */
     /**
+     * Whether this shop is counted in the anonymous medicine figures
+     * (services/medicineDemand). Counted unless the owner switches it off;
+     * switched off, it stops being counted from that night.
+     */
+    dataSharing: {
+      optedOut: { type: Boolean, default: false },
+      changedAt: { type: Date, default: null },
+      changedByName: { type: String, default: '' },
+    },
+    /**
      * A plan feature given to or taken from this one shop, whatever its plan
      * says. `null` follows the plan. Read through plan.service#orgFeatures.
      */

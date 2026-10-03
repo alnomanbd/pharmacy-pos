@@ -4,7 +4,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import multer from 'multer';
 import { storage, keys, assertAllowed } from '../services/storage.service.js';
-import { ShopSettingsModel } from '../models/index.js';
+import { ShopSettingsModel, OrganizationModel } from '../models/index.js';
 import { badRequest, forbidden } from '../utils/AppError.js';
 import * as shop from '../services/shop.service.js';
 import * as staff from '../services/shopStaff.service.js';
@@ -350,6 +350,32 @@ router.post(
   '/push/test',
   validate(endpoint),
   handle((req) => push.sendTest(actorOf(req), req.body.endpoint)),
+);
+
+/* ------------------------------------------------------ medicine figures -- */
+
+/**
+ * Whether this shop is counted in the anonymous medicine figures — see
+ * medicineDemand.service and the Terms. Counted unless switched off.
+ */
+router.get(
+  '/data-sharing',
+  handle(async (req) => {
+    const o = await OrganizationModel.findById(actorOf(req).org).select('dataSharing').lean();
+    return { counted: !o?.dataSharing?.optedOut, changedAt: o?.dataSharing?.changedAt ?? null, changedByName: o?.dataSharing?.changedByName ?? '' };
+  }),
+);
+router.patch(
+  '/data-sharing',
+  validate(z.object({ counted: z.boolean() })),
+  handle(async (req) => {
+    const a = actorOf(req);
+    await OrganizationModel.updateOne(
+      { _id: a.org },
+      { $set: { 'dataSharing.optedOut': !req.body.counted, 'dataSharing.changedAt': new Date(), 'dataSharing.changedByName': a.name } },
+    );
+    return { counted: req.body.counted };
+  }, 'Saved'),
 );
 
 /* ---------------------------------------------------------------- import -- */
