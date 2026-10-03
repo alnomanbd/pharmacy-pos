@@ -6,11 +6,34 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { siteConfig, type Lang } from '@/lib/site';
 
+let liveNumber: string | null = null;
+
+/** The number set in the console, read once per visit; the build's own until it arrives. */
+function useWhatsApp() {
+  const [n, setN] = React.useState(liveNumber ?? siteConfig.whatsapp);
+  React.useEffect(() => {
+    if (liveNumber !== null) return;
+    let live = true;
+    fetch(`${siteConfig.apiUrl}/public/site`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j: { data?: { whatsapp?: string } } | null) => {
+        if (!live || !j?.data) return;
+        liveNumber = j.data.whatsapp ?? '';
+        setN(liveNumber);
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, []);
+  return n;
+}
+
 /**
  * "Ask us" — on every page, in the corner opposite the way back to the top.
  *
  * A shop owner here asks on WhatsApp before anything else, so when the number
- * is set (`NEXT_PUBLIC_WHATSAPP`, digits with the country code) the bubble
+ * is set (in the console, System → Website contact) the bubble
  * opens a chat with a first line already written. Until then it opens the
  * contact page, so the button is never a dead end. A small note pops out once
  * after a few seconds, and is put away for the visit when closed.
@@ -34,7 +57,7 @@ function WhatsAppGlyph({ className }: { className?: string }) {
 export function ChatButton({ lang }: { lang: Lang }) {
   const c = COPY[lang];
   const still = useReducedMotion() ?? false;
-  const number = (siteConfig.whatsapp || '').replace(/\D/g, '');
+  const number = (useWhatsApp() || '').replace(/\D/g, '');
   const href = number ? `https://wa.me/${number}?text=${encodeURIComponent(c.hello)}` : `/${lang}/contact`;
   const [note, setNote] = React.useState(false);
 

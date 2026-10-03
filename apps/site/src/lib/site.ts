@@ -44,8 +44,12 @@ export const siteConfig = {
   appUrl: process.env.NEXT_PUBLIC_APP_URL ?? 'https://shop.dawai.com.bd',
   apiUrl: process.env.NEXT_PUBLIC_API_URL ?? 'https://api.dawai.com.bd/api',
   contactEmail: 'alnoman.cse@outlook.com',
-  /** WhatsApp, digits with the country code (8801…). Empty: the chat button opens the contact page. */
-  whatsapp: process.env.NEXT_PUBLIC_WHATSAPP ?? '',
+  /**
+   * WhatsApp, digits with the country code. The live number is set in the
+   * console (System → Website contact) and read from the API; this is only
+   * what the button uses before that answer arrives.
+   */
+  whatsapp: process.env.NEXT_PUBLIC_WHATSAPP ?? '8801731686489',
   address: 'Dhaka, Bangladesh',
   addressBn: 'ঢাকা, বাংলাদেশ',
 } as const;

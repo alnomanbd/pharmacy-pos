@@ -45,6 +45,7 @@ import { ok } from '../utils/response.js';
 import { audit, listPlatformAuditLogs } from '../services/audit.service.js';
 import { ORG_STATUS } from '../types/enums.js';
 import { badRequest, forbidden } from '../utils/AppError.js';
+import { getSiteSettings, updateSiteSettings } from '../services/siteSettings.service.js';
 import { permissionsForOrgUpdate } from '../services/orgUpdateAuthz.js';
 
 /**
@@ -98,6 +99,27 @@ router.patch(
       .refine((v) => Object.keys(v).length > 0, { message: 'Nothing to update' }),
   ),
   handle((req) => team.updateSelf(req.user!.id, req.body), 'Saved'),
+);
+
+/* The public website's contact details. Any operator may read them; the owner changes them. */
+router.get('/site-settings', handle(() => getSiteSettings()));
+router.patch(
+  '/site-settings',
+  requireRole(...PLATFORM_OWNER_ROLES),
+  validate(
+    z.object({
+      whatsapp: z
+        .string()
+        .trim()
+        .max(20)
+        .refine((v) => v === '' || /^\+?\d[\d\s-]{8,18}$/.test(v), 'A number with the country code, like +8801XXXXXXXXX'),
+    }),
+  ),
+  handle(async (req) => {
+    const next = await updateSiteSettings(req.body);
+    await audit(req, 'platform.site_settings', { model: 'SiteSettings', id: 'site', label: 'Website contact' });
+    return next;
+  }, 'Saved'),
 );
 
 /* The shared catalogue and the shops' requests for it — see catalogue.routes.ts. */

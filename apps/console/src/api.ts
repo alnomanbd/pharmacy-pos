@@ -523,6 +523,8 @@ export const platformApi = {
     getData<Paged<PlatformAuditEntry> & { actions: string[] }>(api.get('/platform/audit', { params })),
 
   overview: () => getData<PlatformOverview>(api.get('/platform/overview')),
+  siteSettings: () => getData<{ whatsapp: string }>(api.get('/platform/site-settings')),
+  saveSiteSettings: (payload: { whatsapp: string }) => getData<{ whatsapp: string }>(api.patch('/platform/site-settings', payload)),
   incidents: () => getData<IncidentRow[]>(api.get('/platform/incidents')),
   createIncident: (payload: Record<string, unknown>) => getData<IncidentRow>(api.post('/platform/incidents', payload)),
   updateIncident: (id: string, payload: Record<string, unknown>) => getData<IncidentRow>(api.patch(`/platform/incidents/${id}`, payload)),

@@ -8,6 +8,7 @@ import { ok, created } from '../utils/response.js';
 import { isProduction } from '../config/env.js';
 import * as online from '../services/onlinePayment.service.js';
 import { publicStatus } from '../services/status.service.js';
+import { getSiteSettings } from '../services/siteSettings.service.js';
 
 /**
  * The marketing site's endpoints.
@@ -143,6 +144,18 @@ router.post('/contact', contactLimiter, validate(contactSchema), async (req, res
       source: 'landing',
     });
     created(res, result, 'Thanks — we have it, and we will reply.');
+  } catch (err) {
+    next(err);
+  }
+});
+
+/* ------------------------------ how to reach us ----------------------------- */
+
+/** The website's contact details, as set in the console — the WhatsApp number. */
+router.get('/site', async (_req, res, next) => {
+  try {
+    res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
+    ok(res, await getSiteSettings());
   } catch (err) {
     next(err);
   }

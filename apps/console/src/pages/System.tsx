@@ -6,6 +6,7 @@ import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import { BTN_OUTLINE, errorMessage } from '../lib/ui';
 import { lastSeen } from '../lib/lastSeen';
 import IncidentsCard from '../components/IncidentsCard';
+import WebsiteContactCard from '../components/WebsiteContactCard';
 
 /**
  * Is the platform healthy.
@@ -89,6 +90,8 @@ export default function System() {
           <RefreshCw className={`h-3.5 w-3.5 ${busy ? 'animate-spin' : ''}`} /> Check again
         </button>
       </div>
+
+      <WebsiteContactCard />
 
       <div className="card">
         <div className="flex items-center gap-3">
