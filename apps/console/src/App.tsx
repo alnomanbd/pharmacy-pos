@@ -11,6 +11,7 @@ import Revenue from './pages/Revenue';
 import Reports from './pages/Reports';
 import MedicineInsights from './pages/MedicineInsights';
 import DataApi from './pages/DataApi';
+import CatalogueGaps from './pages/CatalogueGaps';
 import DataApiClient from './pages/DataApiClient';
 import Plans from './pages/Plans';
 import Team from './pages/Team';
@@ -99,6 +100,7 @@ export default function App() {
         <Route path="revenue" element={<Revenue />} />
         <Route path="reports" element={<Reports />} />
         <Route path="medicine-insights" element={<MedicineInsights />} />
+        <Route path="catalogue-gaps" element={<CatalogueGaps />} />
         <Route path="data-api" element={<DataApi />} />
         <Route path="data-api/clients/:id" element={<DataApiClient />} />
         <Route path="plans" element={<Plans />} />

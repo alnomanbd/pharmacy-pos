@@ -1,3 +1,4 @@
+import { rebuildSuggestions } from '../services/catalogueGaps.service.js';
 import { sendSubscriptionReminders } from '../services/subscriptionReminder.service.js';
 import { sendDigests } from '../services/push.service.js';
 import { rollupRecent } from '../services/medicineDemand.service.js';
@@ -17,9 +18,14 @@ async function maybeRollupDemand() {
   }
   const startedAt = new Date();
   const result = await rollupRecent();
+  // Then what shops' entries suggest for the catalogue's gaps — see catalogueGaps.service.
+  const suggestions = await rebuildSuggestions().catch((err) => {
+    logger.warn({ err }, 'Catalogue suggestions failed');
+    return null;
+  });
   demandDay = today;
-  await JobRunModel.create({ job: 'medicineDemand', startedAt, finishedAt: new Date(), ok: true, error: '', result }).catch(() => undefined);
-  return result;
+  await JobRunModel.create({ job: 'medicineDemand', startedAt, finishedAt: new Date(), ok: true, error: '', result: { ...result, suggestions } }).catch(() => undefined);
+  return { ...result, suggestions };
 }
 import { logger } from '../utils/logger.js';
 import { env } from '../config/env.js';

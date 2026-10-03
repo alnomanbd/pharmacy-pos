@@ -2,6 +2,8 @@ import { Router } from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import * as catalogue from '../services/catalogue.service.js';
 import * as requests from '../services/medicineRequest.service.js';
+import * as gaps from '../services/catalogueGaps.service.js';
+import { z } from 'zod';
 import { requirePermission } from '../middlewares/auth.js';
 import { validate } from '../middlewares/validate.js';
 import {
@@ -54,6 +56,79 @@ const REF_MODEL_NAME = {
   generics: 'MedicineGeneric',
   groups: 'MedicineGroup',
 } as const;
+
+/* ------------------------------------------------------------ the gaps -- */
+
+/**
+ * What the catalogue is missing, and suggestions from shops' own entries to
+ * fill it — see catalogueGaps.service. Reading needs `catalogue.view`;
+ * accepting, dismissing and writing a generic's write-up need
+ * `catalogue.manage`.
+ */
+const operator = (req: Request) => req.user?.name || 'console';
+const gapFilter = z
+  .object({
+    field: z.enum(gaps.GAP_FIELDS).optional(),
+    confidence: z.enum(['high', 'low']).optional(),
+    kind: z.enum(['fill', 'update']).optional(),
+    stockedOnly: z.boolean().optional(),
+  })
+  .optional();
+
+router.get('/catalogue/gaps', canView, handle(() => gaps.gapsOverview()));
+router.get(
+  '/catalogue/gaps/suggestions',
+  canView,
+  handle((req) =>
+    gaps.listSuggestions({
+      field: str(req.query.field),
+      confidence: str(req.query.confidence),
+      kind: str(req.query.kind),
+      stockedOnly: req.query.stockedOnly === 'true',
+      page: num(req.query.page),
+      limit: num(req.query.limit),
+    }),
+  ),
+);
+router.post(
+  '/catalogue/gaps/decide',
+  canManage,
+  validate(z.object({ ids: z.array(z.string().max(40)).max(5000).optional(), filter: gapFilter, accept: z.boolean() })),
+  handle(async (req) => {
+    const r = await gaps.decideSuggestions(req.body, operator(req));
+    await audit(
+      req,
+      'catalogue.medicine_update',
+      // Many medicines at once: no one record to point at, so no id.
+      { model: 'Medicine', label: req.body.accept ? `${r.applied} suggestion(s) accepted` : `${r.dismissed} suggestion(s) dismissed` },
+      { after: { ...r, filter: req.body.filter ?? null, count: req.body.ids?.length ?? null } },
+    );
+    return r;
+  }, 'Done'),
+);
+router.post('/catalogue/gaps/rebuild', canManage, handle(() => gaps.rebuildSuggestions(), 'Suggestions worked out again'));
+
+router.get(
+  '/catalogue/gaps/generics',
+  canView,
+  handle((req) => gaps.genericsWithoutWriteup({ search: str(req.query.q), page: num(req.query.page), limit: num(req.query.limit) })),
+);
+router.get('/catalogue/generics/:id/writeup', canView, handle((req) => gaps.getGenericWriteup(req.params.id)));
+router.put(
+  '/catalogue/generics/:id/writeup',
+  canManage,
+  validate(
+    z.object({
+      drugClass: z.string().max(200).optional(),
+      monograph: z.object(Object.fromEntries(gaps.MONOGRAPH_KEYS.map((k) => [k, z.string().max(20_000).optional()]))),
+    }),
+  ),
+  handle(async (req) => {
+    const r = await gaps.saveGenericWriteup(req.params.id, req.body, operator(req));
+    await audit(req, 'catalogue.ref_update', { model: 'MedicineGeneric', id: req.params.id, label: `${r.name}: write-up` }, { after: { sections: Object.keys(req.body.monograph ?? {}) } });
+    return r;
+  }, 'Write-up saved'),
+);
 
 const medicineLabel = (m: { brandName: string; strength: string }) =>
   [m.brandName, m.strength].filter(Boolean).join(' ');

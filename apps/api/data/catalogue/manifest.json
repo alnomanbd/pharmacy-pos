@@ -1,5 +1,5 @@
 {
-  "exportedAt": "2026-10-03T17:01:59.824Z",
+  "exportedAt": "2026-10-03T18:01:45.187Z",
   "format": "ndjson+gzip, canonical extended JSON",
   "collections": {
     "medicinegroups": {
@@ -20,7 +20,7 @@
     "medicines": {
       "file": "medicines.ndjson.gz",
       "count": 46303,
-      "sha256": "aeee9b46abe989ee7b15805cc63459583a5111117fe4d54ffc11529da2fe2cdc"
+      "sha256": "9c428d07fb8ea01512e6820fe0fd9401752573e36cc7f4b3777af4992e780e8b"
     }
   }
 }

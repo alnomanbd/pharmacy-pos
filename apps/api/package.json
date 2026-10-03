@@ -22,6 +22,7 @@
     "seed:shop-demo": "tsx src/seed/run.ts shop-demo",
     "catalog:build": "tsx src/seed/run.ts catalog:build",
     "catalog:monographs": "tsx src/seed/run.ts catalog:monographs",
+    "catalog:dar": "tsx src/seed/run.ts catalog:dar",
     "mail:test": "tsx src/scripts/mailTest.ts",
     "sms:test": "tsx src/scripts/smsTest.ts"
   },

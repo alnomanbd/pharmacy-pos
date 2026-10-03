@@ -21,6 +21,7 @@ import { logger } from '../utils/logger.js';
  *   catalog:export  write the live catalogue back to data/catalogue, to commit
  *   catalog:copy    the catalogue from another database (--from=<mongodb uri>)
  *   catalog:build   build the catalogue CSV from the DGDA registry / drug index
+ *   catalog:dar     registration numbers for medicines without one, from the DGDA registry (--dgda=)
  *   catalog:monographs  what each generic is for, its dosage and side effects, from the drug index (--medex=)
  *   medicines:full  import that CSV (a rebuild from source, rarely needed)
  *   companies      the pharmaceutical company list
@@ -62,6 +63,13 @@ async function run() {
     }
     if (task === 'catalog:restore') {
       logger.info(await restoreCatalog(arg('dir'), (m) => logger.info(m)), 'Catalogue restored');
+      return;
+    }
+    if (task === 'catalog:dar') {
+      const dgda = arg('dgda');
+      if (!dgda) throw new Error('Say where the registry is: --dgda=/path/Allopathic_Drug_Database.csv');
+      const { backfillDar } = await import('./darBackfill.js');
+      logger.info(await backfillDar({ dgda, dryRun: process.argv.includes('--dry-run'), onProgress: (m) => logger.info(m) }), 'DAR numbers filled from the registry');
       return;
     }
     if (task === 'catalog:monographs') {

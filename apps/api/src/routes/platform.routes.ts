@@ -245,7 +245,8 @@ router.put(
   dataManage,
   handle(async (req) => {
     const out = await callDataApi('PUT', `/plans/${req.params.key}`, { body: body(req), operator: operatorName(req) });
-    await audit(req, 'dataapi.plan_save', { model: 'DataPlan', id: req.params.key, label: String(body(req).name ?? req.params.key) }, { after: body(req) });
+    // Plans are keyed by name, not by an id this trail can hold.
+    await audit(req, 'dataapi.plan_save', { model: 'DataPlan', label: `${String(body(req).name ?? '')} (${req.params.key})` }, { after: body(req) });
     return out;
   }, 'Plan saved'),
 );

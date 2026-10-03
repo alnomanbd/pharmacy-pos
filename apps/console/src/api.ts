@@ -363,6 +363,33 @@ export interface MedicineInsights {
   quality: { matchedPieces: number; unmatchedPieces: number; lastBuilt: string | null; daysBuilt: number; shopsCounted: number };
 }
 
+/* ---------- the catalogue's gaps ---------- */
+
+export type GapField = 'price' | 'packSize' | 'group';
+export interface CatalogueGaps {
+  medicines: number;
+  stocked: number;
+  missing: Record<GapField | 'dar', { all: number; stocked: number }>;
+  open: { field: GapField; confidence: 'high' | 'low'; kind: 'fill' | 'update'; n: number }[];
+  generics: { withoutWriteup: number };
+  builtAt: string | null;
+  minShops: number;
+}
+export interface CatalogueSuggestion {
+  _id: string;
+  medicine: { _id: string; brandName: string; strength?: string; dosageForm?: string; genericName?: string; company?: { name: string } | null; price?: number | null; packSize?: string } | null;
+  field: GapField;
+  kind: 'fill' | 'update';
+  value: unknown;
+  display: string;
+  basis: 'shops' | 'generic';
+  agree: number;
+  reporting: number;
+  confidence: 'high' | 'low';
+  stocked: number;
+  sold: number;
+}
+
 /* ---------- the Data API ---------- */
 
 export type DataApiScope = 'catalogue' | 'demand' | 'districts' | 'trends';
@@ -775,6 +802,22 @@ export const platformApi = {
   medicineInsightFilters: () =>
     getData<{ districts: string[]; generics: { id: string; name: string }[] }>(api.get('/platform/medicines/insights/filters')),
   rebuildMedicineInsights: () => getData<unknown>(api.post('/platform/medicines/insights/rebuild')),
+
+  /* ---------- the catalogue's gaps, and suggestions from shops to fill them ---------- */
+  catalogueGaps: () => getData<CatalogueGaps>(api.get('/platform/catalogue/gaps')),
+  catalogueSuggestions: (params: { field?: string; confidence?: string; kind?: string; stockedOnly?: boolean; page?: number; limit?: number }) =>
+    getData<{ rows: CatalogueSuggestion[]; total: number; page: number; limit: number }>(api.get('/platform/catalogue/gaps/suggestions', { params })),
+  decideCatalogueSuggestions: (body: { ids?: string[]; filter?: { field?: string; confidence?: string; kind?: string; stockedOnly?: boolean }; accept: boolean }) =>
+    getData<{ applied: number; skipped: number; dismissed: number }>(api.post('/platform/catalogue/gaps/decide', body)),
+  rebuildCatalogueSuggestions: () => getData<{ suggestions: number }>(api.post('/platform/catalogue/gaps/rebuild')),
+  genericsWithoutWriteup: (params: { q?: string; page?: number; limit?: number }) =>
+    getData<{ rows: { id: string; name: string; drugClass: string; medicines: number; stocked: number }[]; total: number; page: number; limit: number }>(
+      api.get('/platform/catalogue/gaps/generics', { params }),
+    ),
+  genericWriteup: (id: string) =>
+    getData<{ id: string; name: string; drugClass: string; monograph: Record<string, string>; source: string }>(api.get(`/platform/catalogue/generics/${id}/writeup`)),
+  saveGenericWriteup: (id: string, body: { drugClass: string; monograph: Record<string, string> }) =>
+    getData<unknown>(api.put(`/platform/catalogue/generics/${id}/writeup`, body)),
 
   /* ---------- the Data API: selling the catalogue and the figures ---------- */
   dataApiOverview: () => getData<DataApiOverview>(api.get('/platform/data-api/overview')),

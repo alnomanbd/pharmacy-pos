@@ -10,6 +10,7 @@ import {
   FileBarChart,
   LineChart,
   Plug,
+  ClipboardCheck,
   Tags,
   Users,
   Bell,
@@ -165,6 +166,8 @@ const NAV_SECTIONS: { heading: string; links: ConsoleLink[] }[] = [
       { to: '/medicines', label: 'Medicines', icon: Pill, end: false, needs: ['catalogue.view'] },
       /* Which medicines people buy, and where — every counted shop together, none named. */
       { to: '/medicine-insights', label: 'Medicine insights', icon: LineChart, end: false, needs: ['catalogue.view', 'shops.view'] },
+      /* What the catalogue is missing, and shops' own entries suggesting how to fill it. */
+      { to: '/catalogue-gaps', label: 'Catalogue gaps', icon: ClipboardCheck, end: false, needs: ['catalogue.view'] },
       /* Selling the catalogue and those figures, by key: clients, plans, usage. */
       { to: '/data-api', label: 'Data API', icon: Plug, end: false, needs: ['dataapi.view', 'dataapi.manage'] },
       {
