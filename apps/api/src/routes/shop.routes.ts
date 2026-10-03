@@ -21,6 +21,7 @@ import * as transfers from '../services/stockTransfer.service.js';
 import * as dataImport from '../services/dataImport.service.js';
 import * as push from '../services/push.service.js';
 import * as roles from '../services/accessRole.service.js';
+import { trending as trendingReport } from '../services/shopTrending.service.js';
 import type { ShopPermission } from '../types/shopPermissions.js';
 import * as online from '../services/onlineOrder.service.js';
 import * as wallet from '../services/wallet.service.js';
@@ -657,6 +658,12 @@ router.get(
 router.get(
   '/reports/attention',
   handle((req) => reports.needsAttention(actorOf(req))),
+);
+
+/** What is moving: rising, falling, new, running out and slow, this stretch against the last. */
+router.get(
+  '/reports/trending',
+  handle((req) => trendingReport(actorOf(req), { from: str(req.query.from), to: str(req.query.to) })),
 );
 
 router.get(

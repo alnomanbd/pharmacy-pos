@@ -715,6 +715,8 @@ export const shopApi = {
     getData<ShopOrder>(api.patch(`/shop/orders/${id}/status`, payload)),
 
   /* ---- what the owner asks at the end of a month ---- */
+  /** Rising, falling, new, running out and slow — this stretch against the last. */
+  trending: (params?: { from?: string; to?: string }) => getData<TrendingReport>(api.get('/shop/reports/trending', { params })),
   ownerReport: (params?: { from?: string; to?: string }) =>
     getData<OwnerReport>(api.get('/shop/reports/owner', { params })),
   /** What came in today — the deliveries the evening screen counts. */
@@ -1734,3 +1736,31 @@ export const importApi = {
   run: (kind: 'stock' | 'customers', rows: Record<string, unknown>[], dryRun: boolean) =>
     getData<ImportResult>(api.post(`/shop/import/${kind}`, { rows, dryRun })),
 };
+
+/* ---------------------------------------------------------------- trending -- */
+
+export interface TrendItem {
+  id: string;
+  name: string;
+  strength: string;
+  generic: string;
+  company: string;
+  pieces: number;
+  piecesBefore: number;
+  value: number;
+  valueBefore: number;
+  change: number | null;
+  onHand: number;
+  daysLeft: number | null;
+}
+
+export interface TrendingReport {
+  range: { from: string; to: string; days: number; previousFrom: string; previousTo: string };
+  rising: TrendItem[];
+  falling: TrendItem[];
+  fresh: TrendItem[];
+  runningOut: TrendItem[];
+  slow: { id: string; name: string; onHand: number; value: number; sold: number }[];
+  byGeneric: { name: string; value: number; valueBefore: number; pieces: number; change: number | null }[];
+  byCompany: { name: string; value: number; valueBefore: number; pieces: number; change: number | null }[];
+}

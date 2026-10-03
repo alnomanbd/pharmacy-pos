@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import TrendingView from '../components/TrendingView';
+import { useCan } from '../access';
 import {
   BarChart3,
   Users,
@@ -37,7 +39,6 @@ import {
   type OwnerReport,
 } from '../api';
 import { useToast } from '@dawai/shared/components/Toast';
-import { useAuthStore } from '@dawai/shared/store/auth.store';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import { toLocalDate } from '@dawai/shared/lib/date';
 import { useT, useUiLang, bnNumerals } from '../i18n/ui';
@@ -125,11 +126,11 @@ export function useNumbers() {
 }
 
 export default function ShopReports() {
-  const [tab, setTab] = useState<'today' | 'stretch'>('today');
+  const [tab, setTab] = useState<'today' | 'stretch' | 'trending'>('today');
   const t = useT();
   /* A salesman gets the counter's day — no cost, no margin, no companies —
      and not the stretch, which is the owner's sit-down question. */
-  const backRoom = useAuthStore((s) => s.user?.role) !== 'salesman';
+  const backRoom = useCan()('reports.view');
 
   return (
     <div className="page">
@@ -141,7 +142,9 @@ export default function ShopReports() {
           <p className="text-sm text-muted-foreground">
             {tab === 'today'
               ? t('What came in today, and who still owes what.')
-              : t('This stretch against the one before it.')}
+              : tab === 'trending'
+                ? t('Which medicines are selling more, less, or not at all.')
+                : t('This stretch against the one before it.')}
           </p>
         </div>
         {backRoom && (
@@ -151,12 +154,13 @@ export default function ShopReports() {
             options={[
               ['today', 'Today'],
               ['stretch', 'The stretch'],
+              ['trending', 'Trending'],
             ]}
           />
         )}
       </div>
 
-      {tab === 'today' || !backRoom ? <TodayView backRoom={backRoom} /> : <StretchView />}
+      {tab === 'today' || !backRoom ? <TodayView backRoom={backRoom} /> : tab === 'trending' ? <TrendingView /> : <StretchView />}
     </div>
   );
 }

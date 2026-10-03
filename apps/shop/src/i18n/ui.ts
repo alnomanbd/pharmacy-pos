@@ -2047,6 +2047,25 @@ const bn: Record<string, string> = {
   'Open, rename and close branches': 'শাখা খোলা, নাম বদলানো আর বন্ধ',
   'Activity and the bin': 'অ্যাক্টিভিটি ও রিসাইকেল বিন',
   'Who did what, and restoring what was deleted': 'কে কী করেছেন, আর মুছে ফেলা জিনিস ফেরত আনা',
+  /* ---- trending ---- */
+  'Lasts today': 'আজই শেষ হবে',
+  'Trending': 'ট্রেন্ডিং',
+  'Which medicines are selling more, less, or not at all.': 'কোন ওষুধ বেশি, কম বা একদমই বিক্রি হচ্ছে না।',
+  'Against the same number of days before. Pieces that stayed sold — returns taken off.': 'আগের সমান দিনের তুলনায়। ফেরত বাদ দিয়ে যা বিক্রি থেকেছে।',
+  'Selling well, running out': 'ভালো বিক্রি, কিন্তু শেষ হয়ে আসছে',
+  'At this stretch’s pace, the shelf lasts a week or less. Reorder before the next customer asks.': 'এই গতিতে স্টক এক সপ্তাহ বা তার কম চলবে। পরের কাস্টমার চাওয়ার আগেই অর্ডার দিন।',
+  'Out now': 'এখন শেষ',
+  'Rising': 'বাড়ছে',
+  'Falling': 'কমছে',
+  'Nothing is selling noticeably more.': 'কোনোটির বিক্রি উল্লেখযোগ্যভাবে বাড়েনি।',
+  'Nothing is selling noticeably less.': 'কোনোটির বিক্রি উল্লেখযোগ্যভাবে কমেনি।',
+  'New movers': 'নতুন চলতি',
+  'Sold this stretch, not at all the one before.': 'এবার বিক্রি হয়েছে, আগেরবার একদমই না।',
+  'Nothing new started selling.': 'নতুন কিছু বিক্রি শুরু হয়নি।',
+  'Slow movers': 'ধীরে চলা',
+  'On the shelf, worth the most, and barely selling — money standing still.': 'তাকে আছে, দামও বেশি, কিন্তু প্রায় বিক্রি হয় না — আটকে থাকা টাকা।',
+  'Everything on the shelf is moving.': 'তাকের সবকিছুই চলছে।',
+  'By generic': 'জেনেরিক অনুযায়ী',
 };
 
 export const useT = makeUseT(bn);
