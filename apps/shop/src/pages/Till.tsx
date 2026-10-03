@@ -71,6 +71,7 @@ import Receipt from '../components/Receipt';
 import ReturnBill from '../components/ReturnBill';
 import CustomerPicker, { type CustomerPickerHandle } from '../pos/CustomerPicker';
 import Modal from '../components/Modal';
+import Clock from '../components/Clock';
 import RecentBills from '../pos/RecentBills';
 import AlertBell from '../alerts/AlertBell';
 import AlertTicker from '../alerts/AlertTicker';
@@ -218,7 +219,6 @@ export default function Till() {
   const [heldOpen, setHeldOpen] = useState(false);
   const [held, setHeld] = useState<HeldBill[]>(() => heldBills());
   const [picks, setPicks] = useState<SellableProduct[]>(() => quickPicks());
-  const [clock, setClock] = useState(() => new Date());
 
   const searchRef = useRef<HTMLInputElement>(null);
   const customerRef = useRef<CustomerPickerHandle>(null);
@@ -249,12 +249,6 @@ export default function Till() {
       .then(setSettings)
       .catch(() => undefined);
   }, [loadShift]);
-
-  /* The clock in the status strip. A till has one; people look at it. */
-  useEffect(() => {
-    const timer = setInterval(() => setClock(new Date()), 30_000);
-    return () => clearInterval(timer);
-  }, []);
 
   useEffect(() => {
     const off = onHeldChange(() => setHeld(heldBills()));
@@ -823,13 +817,7 @@ export default function Till() {
             {offline ? t('Offline') : stale ? `${waiting.length}` : t('Online')}
           </span>
 
-          <span className="hidden tabular-nums text-xs text-muted-foreground lg:inline">
-            {clock.toLocaleTimeString('en-GB', {
-              hour: 'numeric',
-              minute: '2-digit',
-              hour12: true,
-            })}
-          </span>
+          <Clock className="mr-1 border-r border-border pr-3" />
 
           <AlertBell runsTheShop={runsTheShop} />
           <IconButton

@@ -46,6 +46,7 @@ import { BRAND } from '../brand';
 import { supportApi, onlineOrdersApi } from '../api';
 import SetupChecklist from '../components/SetupChecklist';
 import BranchSwitcher from '../components/BranchSwitcher';
+import Clock from '../components/Clock';
 import { useBranchStore } from '../branch';
 
 /**
@@ -383,6 +384,8 @@ export default function ShopLayout() {
               are read by people in the same one.
             */}
             {/* The owner's alone: setting the shop up is their job. */}
+            {/* Today and the time, Dhaka, 12-hour. */}
+            <Clock className="mr-1 border-r border-border pr-3" />
             {/* Only drawn for a shop with more than one branch. */}
             <BranchSwitcher />
             {owns && <SetupChecklist />}
