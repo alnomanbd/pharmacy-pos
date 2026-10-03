@@ -6,9 +6,11 @@ import {
   StockLedgerModel,
   ShopCustomerModel,
   CustomerLedgerModel,
+  CashMoveModel,
   type SaleDoc,
 } from '../models/index.js';
 import { assertMonthOpen } from './shopCash.service.js';
+import { refundsSoFar } from './till.service.js';
 import { badRequest, notFound, forbidden } from '../utils/AppError.js';
 import { recordAudit } from './audit.service.js';
 import type { Actor } from './shop.service.js';
@@ -84,79 +86,7 @@ export function mayVoid(
  * and quietly moving its total afterwards would make an honest count look wrong.
  */
 async function unapply(sale: SaleDoc, actor: Actor, move: 'sale_void', reason: string) {
-  for (const line of sale.lines) {
-    const back = line.qtyPieces - (line.returnedPieces ?? 0);
-    if (back <= 0 || !line.batch) continue;
-
-    const batch = await StockBatchModel.findById(line.batch);
-    if (!batch) continue;
-    batch.qtyOnHand += back;
-    await batch.save();
-
-    await StockLedgerModel.create({
-      organization: actor.org,
-      product: line.product,
-      batch: batch._id,
-      move,
-      qtyDelta: back,
-      balanceAfter: batch.qtyOnHand,
-      costPerPiece: line.costPerPiece,
-      ref: { model: 'Sale', id: sale._id },
-      reason,
-      actor: actor.id,
-      actorName: actor.name,
-    });
-  }
-
-  if (sale.customer && sale.due > 0) {
-    const customer = await ShopCustomerModel.findOne({
-      _id: sale.customer,
-      organization: actor.org,
-    });
-    if (customer) {
-      const balance = money((customer.balance ?? 0) - sale.due);
-      customer.balance = balance;
-      await customer.save();
-      await CustomerLedgerModel.create({
-        organization: actor.org,
-        customer: customer._id,
-        entry: 'adjustment',
-        amount: -sale.due,
-        balanceAfter: balance,
-        reference: sale.billNo,
-        note: reason,
-        ref: { model: 'Sale', id: sale._id },
-        actor: actor.id,
-        actorName: actor.name,
-      });
-    }
-  }
-
-  let shiftTouched = false;
-  if (sale.shift) {
-    const shift = await ShiftModel.findOne({ _id: sale.shift, organization: actor.org });
-    if (shift && !shift.closedAt) {
-      const cash = (sale.payments ?? [])
-        .filter((p) => p.method === 'cash')
-        .reduce((n, p) => n + p.amount, 0);
-      await ShiftModel.updateOne(
-        { _id: shift._id },
-        {
-          $inc: {
-            salesCount: -1,
-            salesTotal: -sale.total,
-            cashTaken: -cash,
-            digitalTaken: -(sale.paid - cash),
-            dueGiven: -sale.due,
-            expectedCash: -cash,
-          },
-        },
-      );
-      shiftTouched = true;
-    }
-  }
-
-  return { shiftTouched };
+  return shiftBill(sale, actor, -1, move, reason);
 }
 
 /**
@@ -173,24 +103,36 @@ async function unapply(sale: SaleDoc, actor: Actor, move: 'sale_void', reason: s
  * pieces are with the customer either way.
  */
 async function reapply(sale: SaleDoc, actor: Actor, reason: string) {
+  return shiftBill(sale, actor, 1, 'sale', reason);
+}
+
+/**
+ * Takes a bill off the books (`dir` −1) or puts it back on (+1).
+ *
+ * Only what the bill still stands for after its returns: the pieces not yet
+ * returned, the baki not already taken off by a return, the cash and the
+ * bKash not already given back. A return followed by a cancel then nets to
+ * exactly nothing, wherever the money went — and the return's own refund
+ * lines are set aside with the bill, so the accounts drop both together.
+ * Loyalty points go the same way: earned ones taken back, spent ones given
+ * back (and the reverse on a restore).
+ */
+async function shiftBill(sale: SaleDoc, actor: Actor, dir: 1 | -1, move: 'sale_void' | 'sale', reason: string) {
   for (const line of sale.lines) {
     const back = line.qtyPieces - (line.returnedPieces ?? 0);
     if (back <= 0 || !line.batch) continue;
-
-    const batch = await StockBatchModel.findById(line.batch);
+    const batch = await StockBatchModel.findOneAndUpdate({ _id: line.batch }, { $inc: { qtyOnHand: -dir * back } }, { new: true });
     if (!batch) continue;
-    batch.qtyOnHand -= back;
-    await batch.save();
-
     await StockLedgerModel.create({
       organization: actor.org,
+      branch: batch.branch,
       product: line.product,
       batch: batch._id,
-      move: 'sale',
-      qtyDelta: -back,
+      move,
+      qtyDelta: -dir * back,
       balanceAfter: batch.qtyOnHand,
       costPerPiece: line.costPerPiece,
-      pricePerPiece: line.pricePerPiece,
+      ...(dir === 1 ? { pricePerPiece: line.pricePerPiece } : {}),
       ref: { model: 'Sale', id: sale._id },
       reason,
       actor: actor.id,
@@ -198,20 +140,19 @@ async function reapply(sale: SaleDoc, actor: Actor, reason: string) {
     });
   }
 
-  if (sale.customer && sale.due > 0) {
-    const customer = await ShopCustomerModel.findOne({
-      _id: sale.customer,
-      organization: actor.org,
-    });
+  const done = refundsSoFar(sale);
+  const dueLeft = money(Math.max(0, (sale.due ?? 0) - done.againstDue));
+  if (sale.customer && dueLeft > 0) {
+    const customer = await ShopCustomerModel.findOne({ _id: sale.customer, organization: actor.org });
     if (customer) {
-      const balance = money((customer.balance ?? 0) + sale.due);
+      const balance = money((customer.balance ?? 0) + dir * dueLeft);
       customer.balance = balance;
       await customer.save();
       await CustomerLedgerModel.create({
         organization: actor.org,
         customer: customer._id,
         entry: 'adjustment',
-        amount: sale.due,
+        amount: dir * dueLeft,
         balanceAfter: balance,
         reference: sale.billNo,
         note: reason,
@@ -222,23 +163,42 @@ async function reapply(sale: SaleDoc, actor: Actor, reason: string) {
     }
   }
 
+  /* Points: what this bill earned (less what returns already took back), and what was spent on it. */
+  const lp = sale.loyalty;
+  if (sale.customer && lp && ((lp.earned ?? 0) > 0 || (lp.redeemed ?? 0) > 0)) {
+    const earnedLeft = Math.max(0, (lp.earned ?? 0) - (lp.reversed ?? 0));
+    const holder = await ShopCustomerModel.findOne({ _id: sale.customer, organization: actor.org }).select('points').lean();
+    const have = Math.floor(holder?.points ?? 0);
+    /* Cancel: earned ones come off (never below zero), spent ones come back. Restore: the reverse. */
+    const delta = dir === -1 ? -Math.min(earnedLeft, have) + (lp.redeemed ?? 0) : earnedLeft - Math.min(lp.redeemed ?? 0, have + earnedLeft);
+    if (delta !== 0) await ShopCustomerModel.updateOne({ _id: sale.customer }, { $inc: { points: delta } });
+  }
+
+  /* The return lines of a cancelled bill leave the books with it; a restore brings them back. */
+  await CashMoveModel.updateMany(
+    { organization: actor.org, kind: 'refund', sale: sale._id, ...(dir === -1 ? { deletedAt: null } : { deleteReason: 'Bill cancelled' }) },
+    dir === -1
+      ? { $set: { deletedAt: new Date(), deletedByName: 'System', deleteReason: 'Bill cancelled' } }
+      : { $set: { deletedAt: null, deletedByName: '', deleteReason: '' } },
+  );
+
   let shiftTouched = false;
   if (sale.shift) {
     const shift = await ShiftModel.findOne({ _id: sale.shift, organization: actor.org });
     if (shift && !shift.closedAt) {
-      const cash = (sale.payments ?? [])
-        .filter((p) => p.method === 'cash')
-        .reduce((n, p) => n + p.amount, 0);
+      const cashPaid = (sale.payments ?? []).filter((p) => p.method === 'cash').reduce((n, p) => n + p.amount, 0);
+      const cash = money(cashPaid - done.cash);
+      const digital = money(sale.paid - cashPaid - done.other);
       await ShiftModel.updateOne(
         { _id: shift._id },
         {
           $inc: {
-            salesCount: 1,
-            salesTotal: sale.total,
-            cashTaken: cash,
-            digitalTaken: sale.paid - cash,
-            dueGiven: sale.due,
-            expectedCash: cash,
+            salesCount: dir,
+            salesTotal: dir * money(sale.total - done.value),
+            cashTaken: dir * cash,
+            digitalTaken: dir * digital,
+            dueGiven: dir * dueLeft,
+            expectedCash: dir * cash,
           },
         },
       );

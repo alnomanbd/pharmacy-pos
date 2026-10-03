@@ -111,7 +111,8 @@ router.patch(
 router.get('/online-orders/photo', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const key = String(req.query.key ?? '');
-    if (!key.startsWith(`org/${req.user!.org}/orders/`)) throw forbidden('Not found');
+    /* The shop's own order photos, and nothing a `..` could climb out to. */
+    if (!key.startsWith(`org/${req.user!.org}/orders/`) || key.includes('..') || key.includes('\\')) throw forbidden('Not found');
     const buf = await storage.read(key);
     res.setHeader('Content-Type', key.endsWith('.png') ? 'image/png' : key.endsWith('.webp') ? 'image/webp' : 'image/jpeg');
     res.setHeader('Cache-Control', 'private, max-age=600');

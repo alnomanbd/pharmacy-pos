@@ -181,11 +181,11 @@ async function spendFor(org: Scope, from: string, to: string) {
 /** What returns took off the stretch's sales and its stock's cost. */
 async function returnsFor(org: Scope, from: string, to: string) {
   const { start, end } = dayRangeInstants(from, to);
-  const [row] = await CashMoveModel.aggregate<{ value: number; cost: number }>([
+  const [row] = await CashMoveModel.aggregate<{ value: number; cost: number; vat: number }>([
     { $match: { ...org, kind: 'refund', deletedAt: null, moveDate: { $gte: start, $lte: end } } },
-    { $group: { _id: null, value: { $sum: '$returnValue' }, cost: { $sum: '$returnCost' } } },
+    { $group: { _id: null, value: { $sum: '$returnValue' }, cost: { $sum: '$returnCost' }, vat: { $sum: '$returnVat' } } },
   ]);
-  return { value: row?.value ?? 0, cost: row?.cost ?? 0 };
+  return { value: row?.value ?? 0, cost: row?.cost ?? 0, vat: row?.vat ?? 0 };
 }
 
 /** Money in that is not a sale, over a range. */
@@ -222,6 +222,7 @@ async function totalsFor(org: Scope, from: string, to: string): Promise<RangeTot
       bills: number;
       sales: number;
       cost: number;
+      vat?: number;
       due: number;
       itemsSold: number;
     }>([
@@ -241,6 +242,7 @@ async function totalsFor(org: Scope, from: string, to: string): Promise<RangeTot
           bills: { $sum: 1 },
           sales: { $sum: '$total' },
           cost: { $sum: '$cost' },
+          vat: { $sum: '$vat' },
           due: { $sum: '$due' },
           itemsSold: { $sum: { $sum: '$lines.qtyPieces' } },
         },
@@ -265,7 +267,8 @@ async function totalsFor(org: Scope, from: string, to: string): Promise<RangeTot
   /* Returns come off both, the same as on the Accounts page. */
   const sales = money(row.sales - back.value);
   const cost = money(row.cost - back.cost);
-  const margin = money(sales - cost);
+  /* VAT is the government's, not the shop's: out of the margin. */
+  const margin = money(sales - ((row.vat ?? 0) - back.vat) - cost);
   return {
     bills: row.bills,
     sales,
@@ -335,7 +338,8 @@ async function byMethod(org: Scope, from: string, to: string) {
   const rows = await SaleModel.aggregate<{ _id: string; amount: number; bills: number }>([
     { $match: { ...org, dayKey: { $gte: from, $lte: to }, deletedAt: null, status: { $ne: 'void' } } },
     { $unwind: '$payments' },
-    { $match: { 'payments.amount': { $gt: 0 } } },
+    /* Baki is not money taken — it is the bill's `due`, not a way of paying. */
+    { $match: { 'payments.amount': { $gt: 0 }, 'payments.method': { $ne: 'due' } } },
     { $group: { _id: '$payments.method', amount: { $sum: '$payments.amount' }, bills: { $sum: 1 } } },
     { $sort: { amount: -1 } },
   ]);

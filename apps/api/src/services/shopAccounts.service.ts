@@ -82,9 +82,9 @@ export async function accounts(
 
   const [sales, takings, khata, paidOut, spent, earned, owed, suppliers, stock, moves, bank] = await Promise.all([
     /* ---- earned: the bills, at what they sold for and what they cost ---- */
-    SaleModel.aggregate<{ sales: number; cost: number; due: number; bills: number }>([
+    SaleModel.aggregate<{ sales: number; cost: number; due: number; vat: number; bills: number }>([
       { $match: { organization: org, ...bm, dayKey: { $gte: from, $lte: to }, deletedAt: null, status: { $ne: 'void' } } },
-      { $group: { _id: null, sales: { $sum: '$total' }, cost: { $sum: '$cost' }, due: { $sum: '$due' }, bills: { $sum: 1 } } },
+      { $group: { _id: null, sales: { $sum: '$total' }, cost: { $sum: '$cost' }, due: { $sum: '$due' }, vat: { $sum: '$vat' }, bills: { $sum: 1 } } },
     ]),
     /* ---- received at the counter, per day and method, net of change ---- */
     SaleModel.aggregate<{ _id: { day: string; method: string }; amount: number; bills: number }>([
@@ -124,22 +124,27 @@ export async function accounts(
     ]),
   ]);
 
-  const sumOf = (kind: string, field: 'amount' | 'returnValue' | 'returnCost' = 'amount') =>
+  const sumOf = (kind: string, field: 'amount' | 'returnValue' | 'returnCost' | 'returnVat' | 'otherBack' = 'amount') =>
     moves.filter((m) => m.kind === kind).reduce((n, m) => n + (m[field] ?? 0), 0);
   const drawings = sumOf('drawing');
   const capital = sumOf('capital');
-  const refunds = sumOf('refund');
+  /* Refunds: what left the drawer, and what went back by bKash, Nagad or card. */
+  const refundsCash = sumOf('refund');
+  const refundsOther = sumOf('refund', 'otherBack');
+  const refunds = refundsCash + refundsOther;
   const returns = sumOf('refund', 'returnValue');
   const returnCost = sumOf('refund', 'returnCost');
+  const returnVat = sumOf('refund', 'returnVat');
   const deposited = sumOf('bank_deposit');
   const withdrawn = sumOf('bank_withdrawal');
 
-  const sold = sales[0] ?? { sales: 0, cost: 0, due: 0, bills: 0 };
+  const sold = sales[0] ?? { sales: 0, cost: 0, due: 0, vat: 0, bills: 0 };
   const expenses = spent.reduce((n, e) => n + e.amount, 0);
   const otherIncome = earned.reduce((n, e) => n + e.amount, 0);
   /* A return takes its value off the sales and its stock off the cost, so the
      margin is what the shop actually kept on what stayed sold. */
-  const margin = sold.sales - returns - (sold.cost - returnCost);
+  /* VAT is collected for the government, not earned, so it stays out of the margin. */
+  const margin = sold.sales - returns - ((sold.vat ?? 0) - returnVat) - (sold.cost - returnCost);
 
   /* ---- money in and out, by how ---- */
   const inBy = new Map<string, number>();
@@ -152,7 +157,8 @@ export async function accounts(
   for (const e of spent) add(outBy, 'cash', e.amount);
   if (capital) add(inBy, 'cash', capital);
   if (drawings) add(outBy, 'cash', drawings);
-  if (refunds) add(outBy, 'cash', refunds);
+  if (refundsCash) add(outBy, 'cash', refundsCash);
+  for (const m of moves) if (m.kind === 'refund' && (m.otherBack ?? 0) > 0) add(outBy, m.otherMethod || 'bkash', m.otherBack ?? 0);
 
   const counter = takings.reduce((n, t) => n + t.amount, 0);
   const collected = khata.reduce((n, k) => n + Math.abs(k.amount), 0);
@@ -231,8 +237,9 @@ export async function accounts(
           : 'transfer') as Direction,
       kind: m.kind as BookLine['kind'],
       title: m.kind === 'refund' ? m.reference || 'A returned bill' : m.kind,
-      detail: m.kind === 'refund' ? m.note || 'Cash back for a return' : m.note ?? '',
-      amount: money(m.amount),
+      detail: m.kind === 'refund' ? m.note || 'Money back for a return' : m.note ?? '',
+      amount: money(m.amount + (m.kind === 'refund' ? m.otherBack ?? 0 : 0)),
+      ...(m.kind === 'refund' && (m.otherBack ?? 0) > 0 && !m.amount ? { method: m.otherMethod || 'bkash' } : {}),
     })),
     ...spent.map((e) => ({
       key: `expense:${e._id}`,

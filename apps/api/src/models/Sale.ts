@@ -172,6 +172,31 @@ const schema = new Schema(
       default: undefined,
     },
 
+    /**
+     * Everything returns have given back on this bill, so far.
+     *
+     * Kept on the bill so the next return, a cancel, or a report knows what is
+     * left: `value` is what was refunded (at what the customer actually paid —
+     * after discounts and points, with its VAT), split into what came off the
+     * customer's baki, what went back in cash from the drawer, and what went
+     * back by bKash, Nagad or card. `vat` and `cost` are the returned pieces'
+     * share of the bill's VAT and of what they cost the shop.
+     */
+    refunds: {
+      type: new Schema(
+        {
+          value: { type: Number, default: 0 },
+          againstDue: { type: Number, default: 0 },
+          cash: { type: Number, default: 0 },
+          other: { type: Number, default: 0 },
+          vat: { type: Number, default: 0 },
+          cost: { type: Number, default: 0 },
+        },
+        { _id: false },
+      ),
+      default: undefined,
+    },
+
     status: {
       type: String,
       enum: ['completed', 'returned', 'void'],

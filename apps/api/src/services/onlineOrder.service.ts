@@ -7,6 +7,7 @@ import { storage } from './storage.service.js';
 import { sendSms } from '../integrations/sms.js';
 import { pushToShop } from './push.service.js';
 import { branchMatch, inScope } from './branchScope.service.js';
+import { ensureMainBranch } from './branch.service.js';
 import type { Actor } from './shop.service.js';
 
 /**
@@ -297,7 +298,7 @@ export async function placeOrder(code: string, input: PlaceOrder, files: { buffe
     branch = (b?._id as Types.ObjectId) ?? null;
   }
   if (!branch) {
-    const main = await BranchModel.findOne({ organization: s.organization, isMain: true }).select('_id').lean();
+    const main = await ensureMainBranch(s.organization);
     branch = (main?._id as Types.ObjectId) ?? null;
   }
 
@@ -389,11 +390,23 @@ export async function updateOrder(
   if (input.billNo !== undefined) {
     const billNo = input.billNo.trim();
     if (billNo) {
-      const sale = await SaleModel.findOne({ organization: actor.org, billNo, deletedAt: null })
-        .sort({ soldAt: -1 })
+      /* This branch's bill, not cancelled, and from around the order — bill
+         numbers start again each month, so "13-0042" is only unique nearby. */
+      const since = new Date(new Date(order.createdAt as Date).getTime() - 2 * 86_400_000);
+      const sale = await SaleModel.findOne({
+        organization: actor.org,
+        billNo,
+        deletedAt: null,
+        status: { $ne: 'void' },
+        soldAt: { $gte: since },
+        ...branchMatch(actor.branch),
+      })
+        .sort({ soldAt: 1 })
         .select('_id total billNo')
         .lean();
-      if (!sale) throw badRequest(`No bill ${billNo} in this shop`);
+      if (!sale) throw badRequest(`No bill ${billNo} here since this order came in`);
+      const taken = await OnlineOrderModel.findOne({ organization: actor.org, sale: sale._id, _id: { $ne: order._id } }).select('number').lean();
+      if (taken) throw badRequest(`Bill ${billNo} is already linked to order ${taken.number}`);
       order.set({ sale: sale._id, billNo: sale.billNo, total: sale.total });
     } else {
       order.set({ sale: null, billNo: '', total: 0 });

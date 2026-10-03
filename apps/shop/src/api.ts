@@ -875,6 +875,8 @@ export interface SaleLine {
   pricePerPiece: number;
   discount: number;
   lineTotal: number;
+  /** This line's VAT, when the shop charges it. */
+  vat?: number;
   returnedPieces?: number;
 }
 
@@ -914,6 +916,8 @@ export interface Sale {
   /** And what went back with the customer. */
   changeGiven?: number;
   due: number;
+  /** What returns have given back so far: refunded, off the baki, in cash, by bKash/card. */
+  refunds?: { value: number; againstDue: number; cash: number; other: number };
   /** Points earned, spent (and the taka they took off, inside `discount`), and taken back by a return. */
   loyalty?: { earned: number; redeemed: number; value: number; reversed?: number };
   /** The customer's points after this bill — only on the answer to a sale just made. */
@@ -1139,6 +1143,9 @@ export const tillApi = {
       refund: number;
       /** Cash out of the box. */
       cashBack: number;
+      /** Sent back by bKash, Nagad or card — the way the bill was paid, not from the drawer. */
+      otherBack?: number;
+      otherMethod?: string;
       /** Taken off what they owed, when the bill was on account. */
       againstDue: number;
       status: string;

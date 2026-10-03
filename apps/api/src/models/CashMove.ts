@@ -33,6 +33,11 @@ const schema = new Schema(
     /* ---- a refund's effect on the sale, for the profit ---- */
     returnValue: { type: Number, default: 0, min: 0 },
     returnCost: { type: Number, default: 0, min: 0 },
+    /** A refund's VAT share — VAT is not the shop's money, so it is kept out of the margin. */
+    returnVat: { type: Number, default: 0, min: 0 },
+    /** The part of a refund sent back by bKash, Nagad or card rather than from the drawer. */
+    otherBack: { type: Number, default: 0, min: 0 },
+    otherMethod: { type: String, default: '' },
     sale: { type: Schema.Types.ObjectId, ref: 'Sale', default: null },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
     createdByName: { type: String, default: '' },

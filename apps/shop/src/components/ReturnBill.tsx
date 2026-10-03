@@ -17,6 +17,9 @@ import Modal from './Modal';
  * refund comes off what they owe before any cash leaves the box. Refunding cash
  * on a bill nobody paid hands money to somebody who has not given any.
  */
+
+const METHOD_LABEL: Record<string, string> = { bkash: 'bKash', nagad: 'Nagad', rocket: 'Rocket', card: 'card', bank: 'bank' };
+
 export default function ReturnBill({
   onClose,
   onDone,
@@ -67,13 +70,14 @@ export default function ReturnBill({
     setBusy(true);
     try {
       const res = await tillApi.returnLines(bill._id, { lines, reason: reason.trim() });
-      toast(
-        res.againstDue > 0
-          ? `${taka(res.refund)} returned — ${taka(res.againstDue)} off their account, ${taka(
-              res.cashBack,
-            )} cash.`
-          : `${taka(res.refund)} back to the customer.`,
-      );
+      /* Said the way the counter has to act on it: what comes off the khata,
+         what to hand over from the drawer, and what to send back by bKash. */
+      const parts = [
+        res.againstDue > 0 && `${taka(res.againstDue)} ${t('off their account')}`,
+        res.cashBack > 0 && `${taka(res.cashBack)} ${t('cash from the drawer')}`,
+        (res.otherBack ?? 0) > 0 && `${taka(res.otherBack ?? 0)} ${t('to send back by')} ${METHOD_LABEL[res.otherMethod ?? ''] ?? res.otherMethod}`,
+      ].filter(Boolean);
+      toast(`${taka(res.refund)} ${t('returned')}${parts.length ? ` — ${parts.join(', ')}` : ''}.`);
       onDone();
       onClose();
     } catch (e: unknown) {
@@ -84,9 +88,22 @@ export default function ReturnBill({
     }
   };
 
+  /* What the customer actually paid for each piece — after the line's and the
+     bill's discount (points included), with its VAT — the same reckoning the
+     shop makes, so the figure here is the figure handed back. */
+  const keep = bill && bill.subTotal > 0 ? Math.max(0, (bill.subTotal - (bill.discount || 0)) / bill.subTotal) : 1;
   const refund = bill
-    ? bill.lines.reduce((n, l) => n + (Number(qty[l._id ?? ''] ) || 0) * l.pricePerPiece, 0)
+    ? Math.min(
+        Math.max(0, bill.total - (bill.refunds?.value ?? 0)),
+        Math.round(
+          bill.lines.reduce(
+            (n, l) => n + ((Number(qty[l._id ?? '']) || 0) / l.qtyPieces) * (l.lineTotal * keep + (l.vat ?? 0)),
+            0,
+          ) * 100,
+        ) / 100,
+      )
     : 0;
+  const dueLeft = bill ? Math.max(0, bill.due - (bill.refunds?.againstDue ?? 0)) : 0;
 
   return (
     <Modal onClose={onClose} className="w-full max-w-xl">
@@ -218,9 +235,9 @@ export default function ReturnBill({
                   {t('To give back')}
                 </div>
                 <div className="text-xl font-semibold tabular-nums">{taka(refund)}</div>
-                {bill.due > 0 && (
+                {dueLeft > 0 && refund > 0 && (
                   <p className="text-[11px] text-muted-foreground">
-                    {taka(Math.min(refund, bill.due))} comes off their account first.
+                    {taka(Math.min(refund, dueLeft))} {t('comes off their account first.')}
                   </p>
                 )}
               </div>

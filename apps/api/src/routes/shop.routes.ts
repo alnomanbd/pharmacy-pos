@@ -815,7 +815,8 @@ router.post(
   ),
   handle(async (req) => {
     const range = cash.monthRange(req.params.month);
-    const a = await accounts(actorOf(req), { ...range, limit: 1 });
+    /* The whole shop's month, whichever branch the owner happens to be looking at: the lock is shop-wide. */
+    const a = await accounts({ ...actorOf(req), branch: null }, { ...range, limit: 1 });
     return cash.closeMonth(actorOf(req), req.params.month, req.body, {
       range,
       profit: a.profit,

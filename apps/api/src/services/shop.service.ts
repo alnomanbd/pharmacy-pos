@@ -1255,6 +1255,10 @@ export async function returnToSupplier(
       ...branchMatch(actor.branch),
     });
     if (!batch) throw notFound('Batch');
+    /* Back to the company it came from — a lot from one company credited to another's account is a debt to the wrong people. */
+    if (batch.supplier && String(batch.supplier) !== String(supplier._id)) {
+      throw badRequest(`Batch ${batch.batchNo || '—'} came from another company — return it to them`);
+    }
     if (line.pieces <= 0 || line.pieces > batch.qtyOnHand) {
       throw badRequest(`Only ${batch.qtyOnHand} of batch ${batch.batchNo || '—'} are on the shelf`);
     }

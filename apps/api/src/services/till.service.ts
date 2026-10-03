@@ -318,6 +318,12 @@ async function allocate(
   allowShort = false,
   /** Only this branch's lots — a bill takes stock off the shelf it was rung up at. */
   branch: Types.ObjectId | null = null,
+  /**
+   * Pieces this same bill has already taken from each lot, on an earlier line.
+   * Without it, the same product on two lines is checked twice against the
+   * same shelf, and ten get sold out of six.
+   */
+  reserved: Map<string, number> = new Map(),
 ) {
   const batches = await StockBatchModel.find({
     organization: org,
@@ -341,10 +347,11 @@ async function allocate(
     : fefoOrder(batches.filter((b) => !isExpired(b, now)));
   const picked: { batch: (typeof batches)[number]; pieces: number }[] = [];
   let left = pieces;
+  const free = (b: (typeof batches)[number]) => b.qtyOnHand - (reserved.get(String(b._id)) ?? 0);
   for (const batch of inOrder) {
     if (left <= 0) break;
-    if (batch.qtyOnHand <= 0) continue;
-    const take = Math.min(batch.qtyOnHand, left);
+    if (free(batch) <= 0) continue;
+    const take = Math.min(free(batch), left);
     picked.push({ batch, pieces: take });
     left -= take;
   }
@@ -358,6 +365,7 @@ async function allocate(
     else last.pieces += left;
     left = 0;
   }
+  if (left <= 0) for (const p of picked) reserved.set(String(p.batch._id), (reserved.get(String(p.batch._id)) ?? 0) + p.pieces);
 
   if (left > 0) {
     const have = pieces - left;
@@ -601,6 +609,8 @@ export async function createSale(
   /* The classified register lines, gathered while the lines are still only
      planned so the bill fails whole instead of posting and then refusing. */
   const trace = new Map<string, { buyerName: string; buyerPhone: string; doctorName: string }>();
+  /* Lots already spoken for by an earlier line of this bill. */
+  const reserved = new Map<string, number>();
   for (const line of input.lines) {
     const product = byId.get(line.productId);
     if (!product) throw badRequest('One of those items is not on this shop’s list');
@@ -610,7 +620,7 @@ export async function createSale(
       product,
       price: line.pricePerPiece ?? product.mrpPerPiece ?? 0,
       discount: line.discount ?? 0,
-      picks: await allocate(actor.org, product._id as Types.ObjectId, line.qtyPieces, offline, branch),
+      picks: await allocate(actor.org, product._id as Types.ObjectId, line.qtyPieces, offline, branch, reserved),
     });
 
     if (product.controlled) {
@@ -782,14 +792,13 @@ export async function createSale(
   }
 
   for (const line of priced) {
-    const batch = await StockBatchModel.findById(line.batch);
+    /* One atomic step: two counters selling off the same lot at the same
+       moment each take their own pieces, rather than one overwriting the
+       other's. Never clamped — the shelf and its ledger must agree, and a
+       minus figure (an offline bill, or two counters racing for the last
+       strip) is a shelf to count, not a number to hide. */
+    const batch = await StockBatchModel.findOneAndUpdate({ _id: line.batch }, { $inc: { qtyOnHand: -line.qtyPieces } }, { new: true });
     if (!batch) continue;
-    const next = batch.qtyOnHand - line.qtyPieces;
-    /* Clamped for an ordinary sale, because allocation already proved the
-       pieces were there. Left to go minus for a bill posted from offline,
-       where they were not — see `allocate`. */
-    batch.qtyOnHand = offline ? next : Math.max(0, next);
-    await batch.save();
 
     await StockLedgerModel.create({
       organization: actor.org,
@@ -902,54 +911,124 @@ export async function returnSale(
   input: { lines: { lineId: string; pieces: number }[]; reason?: string },
 ) {
   const sale = await SaleModel.findOne({ _id: oid(saleId), organization: actor.org, ...branchMatch(actor.branch) });
-  if (!sale) throw notFound('Bill');
+  if (!sale || sale.deletedAt) throw notFound('Bill');
+  /* A cancelled bill has already given everything back; a return on it would
+     put the strips on the shelf and the money over the counter a second time. */
+  if (sale.status === 'void') throw badRequest('That bill was cancelled — there is nothing left on it to take back');
+  if (sale.onHold) throw badRequest('That bill is on hold — clear the hold before taking anything back');
   if (!input.lines?.length) throw badRequest('Which items are coming back?');
 
+  /*
+   * What the customer actually paid for a piece: the line after its own
+   * discount, less its share of the bill's discount (loyalty points
+   * included), plus its VAT. Refunding the shelf price instead hands back
+   * money that was never taken.
+   */
+  const keep = sale.subTotal > 0 ? Math.max(0, (sale.subTotal - (sale.discount || 0)) / sale.subTotal) : 1;
+  const prior = refundsSoFar(sale);
+
   let refund = 0;
-  /* What the returned pieces had cost the shop, so the month's margin can be
-     corrected by exactly as much as its sales. */
   let returnCost = 0;
+  let returnVat = 0;
+  const moves: { line: (typeof sale.lines)[number]; pieces: number }[] = [];
   for (const ask of input.lines) {
     const line = sale.lines.find((l) => String(l._id) === ask.lineId);
     if (!line) throw badRequest('That line is not on this bill');
-
-    const left = line.qtyPieces - (line.returnedPieces ?? 0);
+    const left = line.qtyPieces - (line.returnedPieces ?? 0) - moves.filter((m) => m.line === line).reduce((n, m) => n + m.pieces, 0);
     if (ask.pieces <= 0 || ask.pieces > left) {
       throw badRequest(`${line.name}: only ${left} can come back`);
     }
-
-    line.returnedPieces = (line.returnedPieces ?? 0) + ask.pieces;
-    refund += ask.pieces * line.pricePerPiece;
+    const share = ask.pieces / line.qtyPieces;
+    refund += (line.lineTotal * keep + (line.vat ?? 0)) * share;
+    returnVat += (line.vat ?? 0) * share;
     returnCost += ask.pieces * (line.costPerPiece ?? 0);
+    moves.push({ line, pieces: ask.pieces });
+  }
 
-    if (line.batch) {
-      const batch = await StockBatchModel.findById(line.batch);
-      if (batch) {
-        batch.qtyOnHand += ask.pieces;
-        await batch.save();
-        await StockLedgerModel.create({
-          organization: actor.org,
-          branch: batch.branch,
-          product: line.product,
-          batch: batch._id,
-          move: 'sale_return',
-          qtyDelta: ask.pieces,
-          balanceAfter: batch.qtyOnHand,
-          costPerPiece: line.costPerPiece,
-          ref: { model: 'Sale', id: sale._id },
-          reason: input.reason ?? '',
-          actor: actor.id,
-          actorName: actor.name,
-        });
-      }
-    }
+  for (const { line, pieces } of moves) {
+    line.returnedPieces = (line.returnedPieces ?? 0) + pieces;
+    if (!line.batch) continue;
+    const batch = await StockBatchModel.findOneAndUpdate({ _id: line.batch }, { $inc: { qtyOnHand: pieces } }, { new: true });
+    if (!batch) continue;
+    await StockLedgerModel.create({
+      organization: actor.org,
+      branch: batch.branch,
+      product: line.product,
+      batch: batch._id,
+      move: 'sale_return',
+      qtyDelta: pieces,
+      balanceAfter: batch.qtyOnHand,
+      costPerPiece: line.costPerPiece,
+      ref: { model: 'Sale', id: sale._id },
+      reason: input.reason ?? '',
+      actor: actor.id,
+      actorName: actor.name,
+    });
   }
 
   const allBack = sale.lines.every((l) => (l.returnedPieces ?? 0) >= l.qtyPieces);
+  /* Never more than is left on the bill; and the last piece back settles it
+     exactly, so paisa rounding cannot leave a bill a taka short or over. */
+  const remaining = money(Math.max(0, sale.total - prior.value));
+  refund = allBack ? remaining : Math.min(money(refund), remaining);
+  returnVat = money(Math.min(returnVat, Math.max(0, (sale.vat ?? 0) - prior.vat)));
+  returnCost = money(returnCost);
+
+  /*
+   * Where the money goes back to.
+   *
+   * First off whatever of this bill is still on the customer's baki —
+   * refunding cash on a bill that was never paid for hands money to somebody
+   * who has not given any. Then back the way it came: cash from the drawer up
+   * to the cash this bill took, and the rest by the bKash, Nagad or card it
+   * was paid with, which never leaves the drawer.
+   */
+  let againstDue = 0;
+  if (sale.customer) {
+    const dueLeft = money(Math.max(0, (sale.due ?? 0) - prior.againstDue));
+    if (dueLeft > 0) {
+      const customer = await ShopCustomerModel.findOne({ _id: sale.customer, organization: actor.org });
+      if (customer) {
+        againstDue = money(Math.min(refund, dueLeft, Math.max(0, customer.balance ?? 0)));
+        if (againstDue > 0) {
+          const balance = money((customer.balance ?? 0) - againstDue);
+          customer.balance = balance;
+          await customer.save();
+          await CustomerLedgerModel.create({
+            organization: actor.org,
+            customer: customer._id,
+            entry: 'sale_return',
+            amount: -againstDue,
+            balanceAfter: balance,
+            reference: sale.billNo,
+            note: input.reason ?? 'Returned',
+            ref: { model: 'Sale', id: sale._id },
+            actor: actor.id,
+            actorName: actor.name,
+          });
+        }
+      }
+    }
+  }
+  const rest = money(refund - againstDue);
+  const cashPaid = (sale.payments ?? []).filter((p) => p.method === 'cash').reduce((n, p) => n + p.amount, 0);
+  const cashBack = money(Math.min(rest, Math.max(0, cashPaid - prior.cash)));
+  const otherBack = money(rest - cashBack);
+  const otherMethod =
+    otherBack > 0
+      ? [...(sale.payments ?? [])].filter((p) => p.method !== 'cash' && p.method !== 'due').sort((a, b) => b.amount - a.amount)[0]?.method ?? 'bkash'
+      : '';
+
+  sale.set('refunds', {
+    value: money(prior.value + refund),
+    againstDue: money(prior.againstDue + againstDue),
+    cash: money(prior.cash + cashBack),
+    other: money(prior.other + otherBack),
+    vat: money(prior.vat + returnVat),
+    cost: money(prior.cost + returnCost),
+  });
   sale.status = allBack ? 'returned' : 'completed';
   await sale.save();
-
-  refund = money(refund);
 
   /* The points this bill earned go back in proportion to what came back. */
   const lp = sale.loyalty;
@@ -964,62 +1043,34 @@ export async function returnSale(
     }
   }
 
-  /*
-   * Where the money goes back to.
-   *
-   * If the bill was on account, the first taka comes off what the customer
-   * owes — refunding cash on a bill that was never paid for hands money to
-   * somebody who has not given any. Whatever is left after that is cash out of
-   * the box, and it comes off the shift's expected total so the count at the
-   * end of the day still matches.
-   */
-  let againstDue = 0;
-  let cashBack = refund;
-
-  if (sale.customer && sale.due > 0) {
-    const customer = await ShopCustomerModel.findOne({
-      _id: sale.customer,
-      organization: actor.org,
-    });
-    if (customer) {
-      againstDue = Math.min(refund, sale.due);
-      cashBack = money(refund - againstDue);
-
-      const balance = money((customer.balance ?? 0) - againstDue);
-      customer.balance = balance;
-      await customer.save();
-
-      await CustomerLedgerModel.create({
-        organization: actor.org,
-        customer: customer._id,
-        entry: 'sale_return',
-        amount: -againstDue,
-        balanceAfter: balance,
-        reference: sale.billNo,
-        note: input.reason ?? 'Returned',
-        ref: { model: 'Sale', id: sale._id },
-        actor: actor.id,
-        actorName: actor.name,
-      });
-    }
-  }
-
-  /* On the accounts: the cash that went back over the counter, and what the
-     return took off the sale. */
+  /* On the accounts: what went back and how, and what the return took off the sale. */
   await recordRefund(actor, {
     saleId: sale._id,
     billNo: sale.billNo,
     cashBack,
+    otherBack,
+    otherMethod,
     returnValue: refund,
-    returnCost: money(returnCost),
+    returnCost,
+    returnVat,
     note: input.reason ?? '',
   }).catch(() => undefined);
 
+  /* The counter doing the return: its drawer gives the cash, and its day's
+     figures lose the sale. */
   const shift = await openShift(actor);
-  if (shift && cashBack > 0) {
+  if (shift) {
     await ShiftModel.updateOne(
       { _id: shift._id },
-      { $inc: { cashTaken: -cashBack, expectedCash: -cashBack, salesTotal: -refund } },
+      {
+        $inc: {
+          cashTaken: -cashBack,
+          expectedCash: -cashBack,
+          digitalTaken: -otherBack,
+          dueGiven: -againstDue,
+          salesTotal: -refund,
+        },
+      },
     );
   }
 
@@ -1027,9 +1078,32 @@ export async function returnSale(
     billNo: sale.billNo,
     refund,
     cashBack,
+    otherBack,
+    otherMethod,
     againstDue,
     status: sale.status,
   };
+}
+
+/**
+ * What returns have already given back on a bill.
+ *
+ * Read from the bill's own record. A bill returned before that record was
+ * kept is worked out the old way — its returned pieces at the price sold —
+ * so a later return or a cancel on it still knows roughly what is left.
+ */
+export function refundsSoFar(sale: {
+  refunds?: { value?: number | null; againstDue?: number | null; cash?: number | null; other?: number | null; vat?: number | null; cost?: number | null } | null;
+  lines?: { returnedPieces?: number | null; pricePerPiece: number; costPerPiece?: number | null }[];
+  due?: number | null;
+}) {
+  const r = sale.refunds;
+  if (r && r.value !== undefined && r.value !== null) {
+    return { value: r.value ?? 0, againstDue: r.againstDue ?? 0, cash: r.cash ?? 0, other: r.other ?? 0, vat: r.vat ?? 0, cost: r.cost ?? 0 };
+  }
+  const legacy = returnedOf(sale.lines ?? []);
+  const againstDue = Math.min(legacy.value, sale.due ?? 0);
+  return { value: legacy.value, againstDue, cash: money(legacy.value - againstDue), other: 0, vat: 0, cost: legacy.cost };
 }
 
 /* --------------------------------------------------------------- the day -- */
@@ -1047,17 +1121,23 @@ export function returnedOf(
   return { value: money(value), cost: money(cost) };
 }
 
-/* The same, inside an aggregation over bills. */
+/* The same, inside an aggregation over bills: the bill's own refund record
+   where it has one, the old shelf-price reckoning where it does not. */
 const RETURNED_VALUE = {
-  $reduce: {
-    input: '$lines',
-    initialValue: 0,
-    in: {
-      $add: ['$$value', { $multiply: [{ $ifNull: ['$$this.returnedPieces', 0] }, '$$this.pricePerPiece'] }],
+  $ifNull: [
+    '$refunds.value',
+    {
+      $reduce: {
+        input: '$lines',
+        initialValue: 0,
+        in: {
+          $add: ['$$value', { $multiply: [{ $ifNull: ['$$this.returnedPieces', 0] }, '$$this.pricePerPiece'] }],
+        },
+      },
     },
-  },
+  ],
 };
-const RETURNED_COST = {
+const RETURNED_COST_LEGACY = {
   $reduce: {
     input: '$lines',
     initialValue: 0,
@@ -1069,6 +1149,7 @@ const RETURNED_COST = {
     },
   },
 };
+const RETURNED_COST = { $ifNull: ['$refunds.cost', RETURNED_COST_LEGACY] };
 
 /**
  * What this till has taken today.
@@ -1093,16 +1174,18 @@ export async function daySummary(actor: Actor, opts: { all?: boolean; dayKey?: s
   const byMethod: Record<string, number> = {};
   for (const s of sales) {
     for (const p of s.payments ?? []) {
+      /* Baki is not money taken; it is on the bill's own `due`. */
+      if (p.method === 'due') continue;
       byMethod[p.method] = money((byMethod[p.method] ?? 0) + p.amount);
     }
   }
 
   const back = sales.reduce(
     (acc, s) => {
-      const b = returnedOf(s.lines ?? []);
-      return { value: acc.value + b.value, cost: acc.cost + b.cost };
+      const b = refundsSoFar(s);
+      return { value: acc.value + b.value, cost: acc.cost + b.cost, vat: acc.vat + b.vat };
     },
-    { value: 0, cost: 0 },
+    { value: 0, cost: 0, vat: 0 },
   );
 
   return {
@@ -1115,7 +1198,8 @@ export async function daySummary(actor: Actor, opts: { all?: boolean; dayKey?: s
     /* Only an owner is told what the day made — a salesman sees what they took,
        never what it cost the shop. Net of what came back, as the accounts are. */
     margin: opts.all
-      ? money(sales.reduce((n, s) => n + (s.total - s.cost), 0) - (back.value - back.cost))
+      ? /* VAT is collected for the government, not earned: out of the margin, on the bills and on the returns. */
+        money(sales.reduce((n, s) => n + (s.total - (s.vat ?? 0) - s.cost), 0) - (back.value - back.vat - back.cost))
       : undefined,
     byMethod,
     sales: rows.slice(0, 50).map((s) => ({
@@ -1597,7 +1681,7 @@ export async function customerStatement(
   const to = range.to ? new Date(`${range.to}T23:59:59.999`) : null;
   const shown = entries.filter((e) => (!from || new Date(e.at) >= from) && (!to || new Date(e.at) <= to));
 
-  const bills = await SaleModel.find({ organization: actor.org, customer: customer._id })
+  const bills = await SaleModel.find({ organization: actor.org, customer: customer._id, deletedAt: null })
     .sort({ soldAt: -1 })
     .limit(100)
     .lean();
@@ -1621,10 +1705,11 @@ export async function customerStatement(
       status: b.status,
       salesmanName: b.salesmanName,
     })),
+    /* Cancelled bills are listed, marked, and not added up — and what came back is taken off. */
     totals: {
-      bought: money(bills.reduce((n, b) => n + b.total, 0)),
-      paidAtCounter: money(bills.reduce((n, b) => n + b.paid, 0)),
-      onAccount: money(bills.reduce((n, b) => n + b.due, 0)),
+      bought: money(bills.filter((b) => b.status !== 'void').reduce((n, b) => n + b.total - refundsSoFar(b).value, 0)),
+      paidAtCounter: money(bills.filter((b) => b.status !== 'void').reduce((n, b) => n + b.paid, 0)),
+      onAccount: money(bills.filter((b) => b.status !== 'void').reduce((n, b) => n + Math.max(0, b.due - refundsSoFar(b).againstDue), 0)),
     },
   };
 }
@@ -1651,6 +1736,15 @@ export async function payCustomer(
   const balance = money((customer.balance ?? 0) - input.amount);
   customer.balance = balance;
   await customer.save();
+
+  /* Cash taken at an open counter is in that drawer, and the evening count
+     has to expect it — or every baki collected reads as money found. */
+  if ((input.method ?? 'cash') === 'cash') {
+    const shift = await openShift(actor);
+    if (shift) {
+      await ShiftModel.updateOne({ _id: shift._id }, { $inc: { expectedCash: money(input.amount), khataTaken: money(input.amount) } });
+    }
+  }
 
   await CustomerLedgerModel.create({
     organization: actor.org,

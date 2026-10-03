@@ -157,8 +157,12 @@ export async function recordRefund(
     saleId: unknown;
     billNo: string;
     cashBack: number;
+    /** Sent back by bKash, Nagad or card — not out of the drawer. */
+    otherBack?: number;
+    otherMethod?: string;
     returnValue: number;
     returnCost: number;
+    returnVat?: number;
     note?: string;
   },
 ) {
@@ -166,8 +170,11 @@ export async function recordRefund(
     organization: new Types.ObjectId(actor.org),
     kind: 'refund',
     amount: money(input.cashBack),
+    otherBack: money(input.otherBack ?? 0),
+    otherMethod: input.otherMethod ?? '',
     returnValue: money(input.returnValue),
     returnCost: money(input.returnCost),
+    returnVat: money(input.returnVat ?? 0),
     reference: input.billNo,
     note: input.note ?? '',
     sale: input.saleId ?? null,
@@ -203,7 +210,16 @@ export function refundGap(
   lines: { returnedPieces?: number | null; pricePerPiece: number; costPerPiece?: number | null }[],
   written: { value: number; cash: number } | undefined,
   offDue: number,
+  /** The bill's own refund record, where it keeps one — then that is the truth, not the shelf price. */
+  recorded?: { value?: number | null; cash?: number | null; cost?: number | null } | null,
 ) {
+  if (recorded && typeof recorded.value === 'number') {
+    const missing = money(recorded.value - (written?.value ?? 0));
+    if (missing <= 0.01) return null;
+    const cash = money(Math.max(0, Math.min(missing, (recorded.cash ?? 0) - (written?.cash ?? 0))));
+    const cost = recorded.value > 0 ? money(((recorded.cost ?? 0) * missing) / recorded.value) : 0;
+    return { value: missing, cash, cost };
+  }
   const value = money(lines.reduce((t, l) => t + (l.returnedPieces ?? 0) * l.pricePerPiece, 0));
   const cost = money(lines.reduce((t, l) => t + (l.returnedPieces ?? 0) * (l.costPerPiece ?? 0), 0));
   const missing = money(value - (written?.value ?? 0));
@@ -219,13 +235,14 @@ export async function backfillRefunds(org: string) {
   const orgId = new Types.ObjectId(org);
 
   const sales = await SaleModel.find({ organization: orgId, 'lines.returnedPieces': { $gt: 0 } })
-    .select('billNo lines soldAt branch')
+    .select('billNo lines soldAt branch refunds status')
     .lean();
   if (!sales.length) return 0;
   const ids = sales.map((s) => s._id);
 
   const [written, stockBack, dueBack] = await Promise.all([
     CashMoveModel.aggregate<{ _id: Types.ObjectId; value: number; cash: number }>([
+      /* Counted whether or not they were set aside with a cancelled bill, so nothing is written twice. */
       { $match: { organization: orgId, kind: 'refund', sale: { $in: ids } } },
       { $group: { _id: '$sale', value: { $sum: '$returnValue' }, cash: { $sum: '$amount' } } },
     ]),
@@ -244,10 +261,13 @@ export async function backfillRefunds(org: string) {
 
   const rows = [];
   for (const sale of sales) {
+    /* A cancelled bill's refunds are taken out of the books with it. */
+    if (sale.status === 'void') continue;
     const gap = refundGap(
       sale.lines ?? [],
       writtenOf.get(String(sale._id)),
       dueOf.get(String(sale._id)) ?? 0,
+      (sale as { refunds?: { value?: number; cash?: number; cost?: number } }).refunds ?? null,
     );
     if (!gap) continue;
     rows.push({

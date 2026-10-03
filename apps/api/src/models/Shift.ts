@@ -50,6 +50,8 @@ const schema = new Schema(
     cashTaken: { type: Number, default: 0 },
     digitalTaken: { type: Number, default: 0 },
     dueGiven: { type: Number, default: 0 },
+    /** Baki collected in cash at this counter while it was open — in the drawer too. */
+    khataTaken: { type: Number, default: 0 },
 
     note: { type: String, default: '', trim: true, maxlength: 500 },
   },
