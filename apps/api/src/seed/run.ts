@@ -21,6 +21,7 @@ import { logger } from '../utils/logger.js';
  *   catalog:export  write the live catalogue back to data/catalogue, to commit
  *   catalog:copy    the catalogue from another database (--from=<mongodb uri>)
  *   catalog:build   build the catalogue CSV from the DGDA registry / drug index
+ *   catalog:monographs  what each generic is for, its dosage and side effects, from the drug index (--medex=)
  *   medicines:full  import that CSV (a rebuild from source, rarely needed)
  *   companies      the pharmaceutical company list
  *   demo-shop      one demo pharmacy with an owner, pharmacist and salesman
@@ -61,6 +62,14 @@ async function run() {
     }
     if (task === 'catalog:restore') {
       logger.info(await restoreCatalog(arg('dir'), (m) => logger.info(m)), 'Catalogue restored');
+      return;
+    }
+    if (task === 'catalog:monographs') {
+      const medex = arg('medex');
+      if (!medex) throw new Error('Say where the drug index is: --medex=/path/to/archive (the folder with generic.csv)');
+      const { importMonographs } = await import('./monographs.js');
+      const r = await importMonographs({ medex, dryRun: process.argv.includes('--dry-run'), onProgress: (m) => logger.info(m) });
+      logger.info(r, 'Monographs imported — run catalog:export and commit data/catalogue');
       return;
     }
     if (task === 'catalog:export') {

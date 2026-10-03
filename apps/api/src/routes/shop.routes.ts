@@ -22,6 +22,7 @@ import * as dataImport from '../services/dataImport.service.js';
 import * as push from '../services/push.service.js';
 import * as roles from '../services/accessRole.service.js';
 import { trending as trendingReport } from '../services/shopTrending.service.js';
+import { productMedicineInfo } from '../services/medicineInfo.service.js';
 import { address as addressField } from '../validators/auth.validator.js';
 import type { ShopPermission } from '../types/shopPermissions.js';
 import * as online from '../services/onlineOrder.service.js';
@@ -526,6 +527,12 @@ router.patch(
 router.get(
   '/products/:id/batches',
   handle((req) => shop.productBatches(actorOf(req), req.params.id)),
+);
+
+/** What it is as a medicine: its catalogue entry and its generic's write-up. */
+router.get(
+  '/products/:id/medicine-info',
+  handle((req) => productMedicineInfo(actorOf(req), req.params.id)),
 );
 
 /** And its whole history, which is where a wrong number gets explained. */

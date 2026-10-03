@@ -37,6 +37,7 @@ import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import { useT, useUiLang, bnNumerals } from '../i18n/ui';
 import Pager from '../components/Pager';
 import Modal from '../components/Modal';
+import MedicineInfo from '../components/MedicineInfo';
 import ExportCsv from '../components/ExportCsv';
 import ConfirmWithReason from '../components/ConfirmWithReason';
 import { useAlertStore } from '../alerts/useStockAlerts';
@@ -883,7 +884,7 @@ function Batches({
   const [reason, setReason] = useState('');
   const [editing, setEditing] = useState(false);
   const [binning, setBinning] = useState(false);
-  const [view, setView] = useState<'shelf' | 'history'>('shelf');
+  const [view, setView] = useState<'shelf' | 'history' | 'info'>('shelf');
 
   const bin = async (why: string) => {
     setBusy(true);
@@ -971,7 +972,7 @@ function Batches({
         <Barcode product={product} onSaved={onChanged} />
 
         <div className="seg mb-3">
-          {(['shelf', 'history'] as const).map((key) => (
+          {(['shelf', 'history', ...(product.isMedicine ? (['info'] as const) : [])] as const).map((key) => (
             <button
               key={key}
               type="button"
@@ -979,12 +980,14 @@ function Batches({
               onClick={() => setView(key)}
               className="seg-btn"
             >
-              {key === 'shelf' ? t('On the shelf') : t('History')}
+              {key === 'shelf' ? t('On the shelf') : key === 'history' ? t('History') : t('Medicine info')}
             </button>
           ))}
         </div>
 
-        {view === 'history' ? (
+        {view === 'info' ? (
+          <MedicineInfo productId={productId} />
+        ) : view === 'history' ? (
           <History productId={productId} />
         ) : !batches ? (
           <LoadingBlock />
