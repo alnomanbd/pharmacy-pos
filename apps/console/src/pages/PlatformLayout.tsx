@@ -7,6 +7,7 @@ import {
   ShieldCheck,
   Receipt,
   TrendingUp,
+  FileBarChart,
   Tags,
   Users,
   Bell,
@@ -141,6 +142,8 @@ const NAV_SECTIONS: { heading: string; links: ConsoleLink[] }[] = [
         needs: ['payments.view', 'payments.verify'],
       },
       { to: '/revenue', label: 'Sales', icon: TrendingUp, end: false, needs: ['revenue.view'] },
+      /* Money, growth and how the shops use Dawai — any stretch against the last. */
+      { to: '/reports', label: 'Reports', icon: FileBarChart, end: false, needs: ['shops.view'] },
       /* Discount codes, and shops that brought in other shops. */
       { to: '/discounts', label: 'Discounts', icon: TicketPercent, end: false, needs: ['coupons.manage'] },
       /* The people who sign shops up, and their commission. */

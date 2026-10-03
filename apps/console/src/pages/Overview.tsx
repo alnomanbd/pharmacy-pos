@@ -10,19 +10,24 @@ import {
   NotebookPen,
   CalendarClock,
   ArrowUpRight,
-  ArrowDownRight,
   CheckCircle2,
   Wallet,
-  TrendingUp,
   UserPlus,
+  ShoppingCart,
+  BadgeCheck,
+  Globe,
+  Layers,
+  Trophy,
+  CalendarRange,
   UserMinus,
   Store,
 } from 'lucide-react';
-import { platformApi, type PlatformOverview, type ShopNote } from '../api';
+import { platformApi, type PlatformOverview, type PlatformStretch, type ShopNote } from '../api';
+import { useRange, RangeBar, Hero, CompareTile, PeriodBars, MixBar, RankList, rangeLine } from '../components/Stretch';
 import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import { errorMessage } from '../lib/ui';
-import { CountUp, Rise, Ring, Sparkline, useSeen } from '@dawai/shared/components/motion';
+import { CountUp, Rise, Ring, useSeen } from '@dawai/shared/components/motion';
 
 /**
  * How the business is doing, and what needs doing today.
@@ -36,124 +41,6 @@ import { CountUp, Rise, Ring, Sparkline, useSeen } from '@dawai/shared/component
 const taka = (n: number) => `৳ ${Math.round(n).toLocaleString('en-BD')}`;
 const MONTH = (key: string) =>
   new Date(`${key}-01T00:00:00`).toLocaleDateString('en-GB', { month: 'short' });
-
-/** "+3 on last month", "−৳1,500 on last month", or "same as last month". */
-function Delta({ now, before, money = false }: { now: number; before: number; money?: boolean }) {
-  const diff = now - before;
-  if (diff === 0) return <span className="text-xs text-muted-foreground">same as last month</span>;
-  const up = diff > 0;
-  const Icon = up ? ArrowUpRight : ArrowDownRight;
-  const amount = money ? taka(Math.abs(diff)) : Math.abs(diff).toLocaleString();
-  return (
-    <span className="inline-flex items-center gap-0.5 text-xs text-muted-foreground">
-      <Icon className={`h-3.5 w-3.5 ${up ? 'text-emerald-600 dark:text-emerald-400' : 'text-destructive'}`} />
-      {up ? '+' : '−'}
-      {amount} on last month
-    </span>
-  );
-}
-
-function Tile({
-  label,
-  value,
-  format = (n: number) => n.toLocaleString(),
-  sub,
-  icon: Icon,
-  tone = 'bg-primary/10 text-primary',
-  delay = 0,
-  side,
-}: {
-  label: string;
-  value: number;
-  format?: (n: number) => string;
-  sub?: React.ReactNode;
-  icon: typeof Receipt;
-  tone?: string;
-  delay?: number;
-  /** Beside the figure, on the right — a ring, for a share. */
-  side?: React.ReactNode;
-}) {
-  return (
-    <Rise delay={delay} className="h-full">
-      <div className="card !mb-0 flex h-full items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-xl ${tone}`}>
-              <Icon className="h-4 w-4" />
-            </span>
-            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</span>
-          </div>
-          <div className="mt-2.5 text-2xl font-bold tabular-nums">
-            <CountUp value={value} format={format} />
-          </div>
-          {sub && <div className="mt-1">{sub}</div>}
-        </div>
-        {side}
-      </div>
-    </Rise>
-  );
-}
-
-/**
- * Six months as bars, one measure.
- *
- * Thin bars rounded at the top and square on the baseline, a hairline baseline
- * and no grid, the value in text ink on hover or focus, and the month under
- * each bar. Every bar is focusable, so the numbers are not mouse-only.
- */
-function Bars({ title, rows, format }: { title: string; rows: { label: string; value: number }[]; format: (n: number) => string }) {
-  const [hover, setHover] = useState<number | null>(null);
-  const [plot, seen] = useSeen<HTMLDivElement>();
-  const max = Math.max(1, ...rows.map((r) => r.value));
-  const empty = rows.every((r) => r.value === 0);
-  return (
-    <div className="card !mb-0">
-      <h3 className="mb-3">{title}</h3>
-
-      <div ref={plot} className="relative flex h-40 items-end gap-2 border-b border-border pt-6" role="list" aria-label={title}>
-        {/* Six flat months say "nothing yet" better in words than as a blank chart. */}
-        {empty && <p className="pointer-events-none absolute inset-0 grid place-items-center text-sm text-muted-foreground">Nothing in the last six months yet.</p>}
-        {rows.map((r, i) => (
-          <div
-            key={r.label}
-            role="listitem"
-            tabIndex={0}
-            aria-label={`${r.label}: ${format(r.value)}`}
-            className="group relative flex h-full flex-1 cursor-default items-end justify-center outline-none"
-            onMouseEnter={() => setHover(i)}
-            onMouseLeave={() => setHover(null)}
-            onFocus={() => setHover(i)}
-            onBlur={() => setHover(null)}
-          >
-            {hover === i && (
-              <span className="absolute -top-1 z-10 -translate-y-full whitespace-nowrap rounded-md border border-border bg-card px-2 py-1 text-xs font-semibold text-foreground shadow-sm">
-                {format(r.value)}
-              </span>
-            )}
-            <span
-              className={`block w-full max-w-10 rounded-t-[4px] transition-opacity ${hover !== null && hover !== i ? 'opacity-50' : ''} ${
-                seen ? 'motion-grow-y' : 'scale-y-0'
-              }`}
-              style={{
-                height: `${(r.value / max) * 100}%`,
-                minHeight: r.value > 0 ? 2 : 0,
-                background: i === rows.length - 1 ? 'hsl(var(--primary))' : 'hsl(var(--primary) / 0.65)',
-                animationDelay: `${i * 90}ms`,
-              }}
-            />
-          </div>
-        ))}
-      </div>
-      <div className="mt-1.5 flex gap-2">
-        {rows.map((r, i) => (
-          <span key={r.label} className={`flex-1 text-center text-[11px] ${i === rows.length - 1 ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>
-            {r.label}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 const TODO: { key: keyof PlatformOverview['todo']; one: string; many: string; href: string; icon: typeof Receipt }[] = [
   { key: 'pendingPayments', one: 'payment to check', many: 'payments to check', href: '/payments?status=pending', icon: Receipt },
@@ -169,6 +56,16 @@ export default function Overview() {
   const { toast } = useToast();
   const [data, setData] = useState<PlatformOverview | null>(null);
   const [followUps, setFollowUps] = useState<ShopNote[]>([]);
+  /* The stretch: this month by default, against the same days before it. */
+  const r = useRange('month');
+  const [stretch, setStretch] = useState<PlatformStretch | null>(null);
+  useEffect(() => {
+    setStretch(null);
+    platformApi
+      .stretch(r.range)
+      .then(setStretch)
+      .catch((e) => toast(errorMessage(e, 'Could not load the figures for that stretch.'), 'error'));
+  }, [r.range, toast]);
 
   useEffect(() => {
     platformApi
@@ -205,83 +102,104 @@ export default function Overview() {
         </div>
       </div>
 
-      {/* ---- the headline: what the shops pay us, and its shape ---- */}
-      {money && (
-        <Rise className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/[0.14] via-primary/[0.05] to-transparent p-5 sm:p-6">
-          <Sparkline
-            values={money.byMonth.map((m) => m.total)}
-            className="absolute bottom-0 right-0 h-2/5 w-full opacity-50 sm:h-3/5 sm:w-1/2"
-          />
-          <div className="relative flex flex-wrap items-end gap-x-10 gap-y-4">
-            <div>
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                <Wallet className="h-4 w-4 text-primary" /> Monthly revenue
-              </div>
-              <div className="mt-1 text-4xl font-bold tabular-nums text-primary">
-                <CountUp value={money.mrr} format={taka} duration={1200} />
-              </div>
-              <div className="text-xs text-muted-foreground">
-                from {data.shops.paying} paying shop{data.shops.paying === 1 ? '' : 's'}
-              </div>
-            </div>
-            <div>
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                <TrendingUp className="h-4 w-4 text-primary" /> Received this month
-              </div>
-              <div className="mt-1 text-2xl font-bold tabular-nums">
-                <CountUp value={money.thisMonth} format={taka} />
-              </div>
-              <Delta now={money.thisMonth} before={money.lastMonth} money />
-            </div>
-          </div>
-        </Rise>
-      )}
+      {/* ---- the stretch, against the one before it ---- */}
+      <RangeBar r={r} />
+      {stretch && <p className="-mt-2 mb-4 text-xs text-muted-foreground">{rangeLine(stretch.range)}</p>}
 
-      {/* ---- four figures ---- */}
-      <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Tile
-          icon={Store}
-          label="Paying shops"
-          value={data.shops.paying}
-          sub={<span className="text-xs text-muted-foreground">{data.shops.onTrial} on trial · {data.shops.total} in all</span>}
-        />
-        <Tile
-          icon={UserPlus}
-          tone="bg-sky-500/10 text-sky-600 dark:text-sky-400"
-          label="Sign-ups this month"
-          value={data.signups.thisMonth}
-          delay={70}
-          sub={<Delta now={data.signups.thisMonth} before={data.signups.lastMonth} />}
-        />
-        <Tile
-          icon={TrendingUp}
-          tone="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-          label="Trial to paid"
-          value={data.conversion.paid}
-          format={(n) => `${n} of ${data.conversion.signedUp}`}
-          delay={140}
-          sub={<span className="text-xs text-muted-foreground">signed up in the last 90 days</span>}
-          side={<Ring value={data.conversion.rate} size={64} label={`Trial to paid: ${data.conversion.rate ?? 0}%`} />}
-        />
-        <Tile
-          icon={UserMinus}
-          tone="bg-destructive/10 text-destructive"
-          label="Lost in 30 days"
-          value={data.lost30d}
-          delay={210}
-          sub={
-            <Link to="/renewals" className="text-xs text-primary hover:underline">
-              paid before, not renewed →
-            </Link>
-          }
-        />
-      </div>
+      {!stretch ? (
+        <LoadingBlock />
+      ) : (
+        <>
+          {/* The headline: what the shops paid us — or, for whoever may not see money, what they sold through Dawai. */}
+          {stretch.money ? (
+            <Hero
+              icon={Wallet}
+              label="Received"
+              now={stretch.money.received.now}
+              before={stretch.money.received.before}
+              format={taka}
+              line={stretch.money.series.map((p) => p.total)}
+              sub={`${stretch.money.payments.now} payment${stretch.money.payments.now === 1 ? '' : 's'} accepted`}
+              extra={
+                money && (
+                  <>
+                    <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">Monthly revenue now</span>
+                    <div className="mt-0.5 text-2xl font-bold tabular-nums text-primary">
+                      <CountUp value={money.mrr} format={taka} />
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      from {data.shops.paying} paying shop{data.shops.paying === 1 ? '' : 's'}
+                    </p>
+                  </>
+                )
+              }
+            />
+          ) : (
+            <Hero
+              icon={ShoppingCart}
+              label="Sold through Dawai"
+              now={stretch.use.sold.now}
+              before={stretch.use.sold.before}
+              format={taka}
+              line={stretch.use.series.map((p) => p.total)}
+              sub={`${stretch.use.bills.now.toLocaleString('en-BD')} bills across ${stretch.use.activeShops.now} shop${stretch.use.activeShops.now === 1 ? '' : 's'}`}
+            />
+          )}
+
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            <CompareTile icon={UserPlus} tone="bg-sky-500/10 text-sky-600 dark:text-sky-400" label="Sign-ups" now={stretch.growth.signups.now} before={stretch.growth.signups.before} />
+            <CompareTile icon={BadgeCheck} tone="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" label="Paid for the first time" now={stretch.growth.firstPaid.now} before={stretch.growth.firstPaid.before} delay={60} />
+            <CompareTile icon={UserMinus} tone="bg-destructive/10 text-destructive" label="Lost — did not renew" now={stretch.growth.lost.now} before={stretch.growth.lost.before} upIsBad delay={120} />
+            <CompareTile icon={Globe} tone="bg-violet-500/10 text-violet-600 dark:text-violet-400" label="Online orders in shops" now={stretch.use.onlineOrders.now} before={stretch.use.onlineOrders.before} delay={180} />
+            <CompareTile icon={ShoppingCart} tone="bg-primary/10 text-primary" label="Sold through Dawai" now={stretch.use.sold.now} before={stretch.use.sold.before} format={taka} delay={240} />
+            <CompareTile icon={Receipt} tone="bg-primary/10 text-primary" label="Bills rung up" now={stretch.use.bills.now} before={stretch.use.bills.before} delay={300} />
+            <CompareTile icon={Store} tone="bg-amber-500/10 text-amber-600 dark:text-amber-400" label="Shops that sold" now={stretch.use.activeShops.now} before={stretch.use.activeShops.before} delay={360} />
+            <Rise delay={420} className="stat flex h-full min-h-[128px] items-center justify-between gap-3">
+              <div>
+                <span className="label !mt-0">Trial to paid</span>
+                <div className="value mt-1 tabular-nums">
+                  {data.conversion.paid} of {data.conversion.signedUp}
+                </div>
+                <span className="text-[11px] text-muted-foreground">signed up in the last 90 days</span>
+              </div>
+              <Ring value={data.conversion.rate} size={64} label={`Trial to paid: ${data.conversion.rate ?? 0}%`} />
+            </Rise>
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+            {stretch.money ? (
+              <PeriodBars title="Received, this stretch against the last" now={stretch.money.series} before={stretch.money.prev} format={taka} />
+            ) : (
+              <PeriodBars title="Sold through Dawai, this stretch against the last" now={stretch.use.series} before={stretch.use.prev} format={taka} />
+            )}
+            {stretch.money ? (
+              <MixBar icon={Layers} title="Received by plan" rows={stretch.money.byPlan.map((p) => ({ label: p.plan, value: p.total }))} format={taka} empty="Nothing received in this stretch." />
+            ) : (
+              <RankList icon={Trophy} title="Busiest shops" rows={stretch.use.topShops.map((s) => ({ id: s.id, name: s.name, value: s.total, sub: `${s.bills} bills` }))} format={taka} />
+            )}
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+            <PeriodBars title="Sign-ups, this stretch against the last" now={stretch.growth.signups.series} before={stretch.growth.signups.prev} pick={(p) => p.count} delay={80} />
+            {stretch.money ? (
+              <RankList icon={Trophy} title="Busiest shops" rows={stretch.use.topShops.map((s) => ({ id: s.id, name: s.name, value: s.total, sub: `${s.bills} bills` }))} format={taka} />
+            ) : (
+              <MixBar icon={Building2} title="Shops by where they stand" rows={[
+                { label: 'Paying', value: data.shops.paying },
+                { label: 'On trial', value: data.shops.onTrial },
+                { label: 'Waiting for approval', value: data.shops.pending },
+                { label: 'Suspended', value: data.shops.suspended },
+              ]} />
+            )}
+          </div>
+        </>
+      )}
 
       <ShopMix shops={data.shops} />
 
       <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
         <div className="card !mb-0">
-          <h3 className="mb-2">Today</h3>
+          <h3 className="mb-2">Waiting on us</h3>
           {todo.length === 0 ? (
             <div className="flex items-center gap-2 py-4 text-sm text-muted-foreground">
               <CheckCircle2 className="h-4 w-4 text-emerald-600" /> Nothing waiting. Everything is answered.
@@ -317,10 +235,8 @@ export default function Overview() {
             </div>
           )}
         </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Bars title="Sign-ups" rows={data.signups.byMonth.map((m) => ({ label: MONTH(m.month), value: m.count }))} format={(n) => `${n} sign-up${n === 1 ? '' : 's'}`} />
-          {money && <Bars title="Received" rows={money.byMonth.map((m) => ({ label: MONTH(m.month), value: m.total }))} format={taka} />}
-        </div>
+        {/* What the shops paid and when, month by month, for the half-year view. */}
+        <MonthLine data={data} />
       </div>
 
       {data.leaving.length > 0 && (
@@ -408,6 +324,67 @@ function ShopMix({ shops }: { shops: PlatformOverview['shops'] }) {
             <strong className="tabular-nums">{p.n}</strong>
           </Link>
         ))}
+      </div>
+    </Rise>
+  );
+}
+
+/**
+ * Six months at a glance: sign-ups as bars, and — for whoever may see money —
+ * what was received as a line drawn over them. The stretch above answers
+ * "how is this month going"; this answers "which way is the business going".
+ */
+function MonthLine({ data }: { data: PlatformOverview }) {
+  const [ref, seen] = useSeen<HTMLDivElement>();
+  const months = data.signups.byMonth;
+  const topSign = Math.max(1, ...months.map((m) => m.count));
+  const received = data.money?.byMonth ?? [];
+  const topMoney = Math.max(1, ...received.map((m) => m.total));
+  const W = 600;
+  const H = 160;
+  const x = (i: number) => (months.length > 1 ? (i / (months.length - 1)) * (W - 40) + 20 : W / 2);
+  const pts = received.map((m, i) => [x(i), H - 12 - (m.total / topMoney) * (H - 30)]);
+  const line = pts.map(([a, b], i) => `${i ? 'L' : 'M'}${a.toFixed(1)},${b.toFixed(1)}`).join(' ');
+  return (
+    <Rise delay={140} className="card !mb-0 min-w-0">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="mb-0 flex items-center gap-2">
+          <CalendarRange className="h-4 w-4 text-primary" /> Six months
+        </h3>
+        <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-sm bg-sky-500/60" /> Sign-ups
+          </span>
+          {data.money && (
+            <span className="inline-flex items-center gap-1.5">
+              <span className="h-0.5 w-4 rounded bg-primary" /> Received
+            </span>
+          )}
+        </div>
+      </div>
+      <div ref={ref} className="relative mt-4">
+        <div className="flex h-40 items-end gap-3 border-b border-border px-2">
+          {months.map((m, i) => (
+            <div key={m.month} className="flex h-full flex-1 flex-col justify-end" title={`${MONTH(m.month)}: ${m.count} sign-ups${received[i] ? `, ${taka(received[i].total)} received` : ''}`}>
+              <div
+                className={`mx-auto w-full max-w-10 rounded-t-[5px] bg-sky-500/50 ${seen ? 'motion-grow-y' : 'scale-y-0'}`}
+                style={{ height: `${(m.count / topSign) * 100}%`, minHeight: m.count ? 3 : 0, animationDelay: `${i * 90}ms` }}
+              />
+            </div>
+          ))}
+        </div>
+        {data.money && received.length > 1 && (
+          <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="pointer-events-none absolute inset-x-0 top-0 h-40 w-full" aria-hidden="true">
+            <path d={line} fill="none" stroke="hsl(var(--primary))" strokeWidth="2.5" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" pathLength={1000} className={seen ? 'motion-draw' : 'opacity-0'} />
+          </svg>
+        )}
+        <div className="mt-1.5 flex gap-3 px-2">
+          {months.map((m) => (
+            <span key={m.month} className="flex-1 text-center text-[10px] text-muted-foreground">
+              {MONTH(m.month)}
+            </span>
+          ))}
+        </div>
       </div>
     </Rise>
   );

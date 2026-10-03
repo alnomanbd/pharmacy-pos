@@ -8,6 +8,7 @@ import Shops from './pages/Shops';
 import ShopDetail from './pages/ShopDetail';
 import Payments from './pages/Payments';
 import Revenue from './pages/Revenue';
+import Reports from './pages/Reports';
 import Plans from './pages/Plans';
 import Team from './pages/Team';
 import Leads from './pages/Leads';
@@ -93,6 +94,7 @@ export default function App() {
         <Route path="shops/:id" element={<ShopDetail />} />
         <Route path="payments" element={<Payments />} />
         <Route path="revenue" element={<Revenue />} />
+        <Route path="reports" element={<Reports />} />
         <Route path="plans" element={<Plans />} />
         <Route path="team" element={<Team />} />
         {/* The shared catalogue, and what shops asked to have added to it. */}

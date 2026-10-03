@@ -289,6 +289,44 @@ export interface PlatformOverview {
   money: { mrr: number; thisMonth: number; lastMonth: number; byMonth: { month: string; total: number }[] } | null;
 }
 
+/** One day of a stretch: a total and a count. */
+export interface StretchPoint {
+  dayKey: string;
+  total: number;
+  count: number;
+}
+type NowBefore = { now: number; before: number };
+
+/** Any run of days against the same number just before it — /platform/stretch. */
+export interface PlatformStretch {
+  range: { from: string; to: string; prevFrom: string; prevTo: string; days: number };
+  money: {
+    received: NowBefore;
+    payments: NowBefore;
+    series: StretchPoint[];
+    prev: StretchPoint[];
+    byPlan: { plan: string; total: number; count: number }[];
+    byMethod: { method: string; total: number; count: number }[];
+    topPayers: { id: string; name: string; total: number; count: number }[];
+  } | null;
+  growth: {
+    signups: NowBefore & { series: StretchPoint[]; prev: StretchPoint[] };
+    firstPaid: NowBefore;
+    lost: NowBefore & { shops: { id: string; name: string; plan: string; endedAt: string }[] };
+  };
+  use: {
+    sold: NowBefore;
+    bills: NowBefore;
+    activeShops: NowBefore;
+    onlineOrders: NowBefore;
+    series: StretchPoint[];
+    prev: StretchPoint[];
+    topShops: { id: string; name: string; plan: string; total: number; bills: number }[];
+    quiet: { id: string; name: string; plan: string; paidUntil: string }[];
+    payingNow: number;
+  };
+}
+
 /** A discount code shops type in when they pay. */
 export interface CouponRow {
   _id: string;
@@ -586,6 +624,7 @@ export const platformApi = {
     getData<Paged<PlatformAuditEntry> & { actions: string[] }>(api.get('/platform/audit', { params })),
 
   overview: () => getData<PlatformOverview>(api.get('/platform/overview')),
+  stretch: (range: { from: string; to: string }) => getData<PlatformStretch>(api.get('/platform/stretch', { params: range })),
   siteSettings: () => getData<SiteSettings>(api.get('/platform/site-settings')),
   saveSiteSettings: (payload: Partial<SiteSettings>) => getData<SiteSettings>(api.patch('/platform/site-settings', payload)),
   incidents: () => getData<IncidentRow[]>(api.get('/platform/incidents')),

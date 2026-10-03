@@ -33,6 +33,7 @@ import * as team from '../services/platformTeam.service.js';
 import catalogueRoutes from './catalogue.routes.js';
 import { PERMISSIONS } from '../types/permissions.js';
 import * as accessRoles from '../services/accessRole.service.js';
+import { platformStretch } from '../services/platformReport.service.js';
 import { PAYMENT_METHODS } from '../models/Payment.js';
 import { validate } from '../middlewares/validate.js';
 import {
@@ -194,6 +195,19 @@ router.get(
   requirePermission('shops.view'),
   handle((req) => overview({ money: (req.user!.permissions ?? []).includes('revenue.view') })),
 );
+/**
+ * Any run of days against the same number just before it: money (for whoever
+ * may see it), growth and how the shops are using Dawai. The Overview and
+ * Reports pages both draw from it.
+ */
+router.get(
+  '/stretch',
+  requirePermission('shops.view'),
+  handle((req) =>
+    platformStretch({ from: str(req.query.from), to: str(req.query.to) }, { money: (req.user!.permissions ?? []).includes('revenue.view') }),
+  ),
+);
+
 /* ---------------------------------- plans ---------------------------------- */
 
 const limitsSchema = z.object({
