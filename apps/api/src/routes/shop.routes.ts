@@ -19,6 +19,7 @@ import * as counts from '../services/stockCount.service.js';
 import * as counters from '../services/counters.service.js';
 import * as transfers from '../services/stockTransfer.service.js';
 import * as dataImport from '../services/dataImport.service.js';
+import * as push from '../services/push.service.js';
 import * as online from '../services/onlineOrder.service.js';
 import * as wallet from '../services/wallet.service.js';
 import * as saleAdmin from '../services/saleAdmin.service.js';
@@ -252,6 +253,59 @@ const settingsSchema = z.object({
     })
     .optional(),
 });
+
+/* ------------------------------------------------------------------ push -- */
+
+/**
+ * Alerts on the owner's phone — see push.service. The phone is named by its
+ * push address, which only that phone's browser knows.
+ */
+const pushKinds = z.array(z.enum(['takings', 'stock', 'orders'])).max(3);
+const endpoint = z.object({ endpoint: z.string().url().max(1000) });
+
+router.get(
+  '/push/key',
+  handle(() => push.publicKey()),
+);
+
+router.post(
+  '/push/subscribe',
+  validate(
+    z.object({
+      subscription: z.object({
+        endpoint: z.string().url().max(1000),
+        keys: z.object({ p256dh: z.string().max(200), auth: z.string().max(100) }),
+      }),
+      kinds: pushKinds.optional(),
+      device: z.string().max(160).optional(),
+    }),
+  ),
+  handle((req) => push.subscribe(actorOf(req), req.body)),
+);
+
+router.post(
+  '/push/me',
+  validate(endpoint),
+  handle((req) => push.mine(actorOf(req), req.body.endpoint)),
+);
+
+router.patch(
+  '/push/kinds',
+  validate(endpoint.extend({ kinds: pushKinds })),
+  handle((req) => push.setKinds(actorOf(req), req.body.endpoint, req.body.kinds)),
+);
+
+router.post(
+  '/push/unsubscribe',
+  validate(endpoint),
+  handle((req) => push.unsubscribe(actorOf(req), req.body.endpoint)),
+);
+
+router.post(
+  '/push/test',
+  validate(endpoint),
+  handle((req) => push.sendTest(actorOf(req), req.body.endpoint)),
+);
 
 /* ---------------------------------------------------------------- import -- */
 

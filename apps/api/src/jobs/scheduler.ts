@@ -1,4 +1,5 @@
 import { sendSubscriptionReminders } from '../services/subscriptionReminder.service.js';
+import { sendDigests } from '../services/push.service.js';
 import { logger } from '../utils/logger.js';
 import { env } from '../config/env.js';
 import { JobRunModel } from '../models/index.js';
@@ -6,7 +7,8 @@ import { JobRunModel } from '../models/index.js';
 /**
  * Background scheduler.
  *
- * One job today: warning a shop before its trial or subscription runs out.
+ * Two jobs: warning a shop before its trial or subscription runs out, and
+ * the morning and evening digests to owners' phones (push.service).
  * A plain interval rather than a cron library — the job is idempotent (each
  * threshold is remembered per shop once it is sent) and a missed tick is picked
  * up by the next, so precision is not worth a dependency. `SCHEDULER=off`
@@ -30,6 +32,12 @@ async function tick() {
   let result: unknown = null;
   try {
     result = { sent: await sendSubscriptionReminders() };
+    /* The phone digests ride on the same tick; a failure there is logged, not fatal. */
+    const pushed = await sendDigests().catch((err) => {
+      logger.warn({ err }, 'Push digests failed');
+      return 0;
+    });
+    result = { ...(result as object), pushed };
     ok = true;
   } catch (err) {
     error = err instanceof Error ? err.message : String(err);

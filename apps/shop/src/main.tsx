@@ -6,6 +6,7 @@ import { restoreSession } from '@dawai/shared/api/client';
 import { useAuthStore } from '@dawai/shared/store/auth.store';
 import ErrorBoundary from '@dawai/shared/components/ErrorBoundary';
 import App from './App';
+import { registerServiceWorker } from './pwa';
 // Loaded first: it scopes the till's browser storage to whoever signs in.
 import './branch';
 import './styles/index.css';
@@ -29,6 +30,9 @@ if (window.location.pathname.startsWith('/support/claim')) {
 } else {
   void restoreSession();
 }
+
+/* Installable on a phone, and alerts on it — see pwa.ts. */
+registerServiceWorker();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

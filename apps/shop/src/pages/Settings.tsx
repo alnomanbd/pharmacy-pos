@@ -18,6 +18,7 @@ import {
   ShoppingBag,
   Smartphone,
   Star,
+  BellRing,
 } from 'lucide-react';
 import { settingsApi, type ShopSettings, type Sale } from '../api';
 import SheetPreview, { openAlignmentPage } from '../components/SheetPreview';
@@ -25,6 +26,7 @@ import LetterheadPicture from '../components/LetterheadPicture';
 import OrderLinkCard from '../components/OrderLinkCard';
 import WalletCard from '../components/WalletCard';
 import LoyaltyCard from '../components/LoyaltyCard';
+import PhoneAlertsCard from '../components/PhoneAlertsCard';
 import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import Receipt from '../components/Receipt';
@@ -85,6 +87,7 @@ const SECTIONS = [
   { id: 'orders', label: 'Online orders', icon: ShoppingBag },
   { id: 'wallets', label: 'bKash & Nagad', icon: Smartphone },
   { id: 'loyalty', label: 'Loyalty points', icon: Star },
+  { id: 'alerts', label: 'Phone & alerts', icon: BellRing },
   { id: 'vat', label: 'VAT', icon: Percent },
 ] as const;
 
@@ -706,6 +709,9 @@ export default function Settings() {
 
           {/* Points for regulars. */}
           <LoyaltyCard />
+
+          {/* The shop on the owner's phone, and its alerts. */}
+          <PhoneAlertsCard />
 
           <Section
             id="vat"

@@ -4,6 +4,7 @@ import { BranchModel, SaleModel, ShopSettingsModel } from '../models/index.js';
 import { badRequest, notFound } from '../utils/AppError.js';
 import { storage } from './storage.service.js';
 import { sendSms } from '../integrations/sms.js';
+import { pushToShop } from './push.service.js';
 import { branchMatch, inScope } from './branchScope.service.js';
 import type { Actor } from './shop.service.js';
 
@@ -215,6 +216,12 @@ export async function placeOrder(code: string, input: PlaceOrder, files: { buffe
         `${s.shopName || 'Pharmacy'}: your order ${made.number} is received. We will message you when it is confirmed.`,
         { kind: 'online-order', organization: org },
       );
+      void pushToShop(s.organization, 'orders', {
+        title: `New order ${made.number}`,
+        body: `${made.customerName} · ${made.mode === 'delivery' ? 'delivery' : 'pickup'}${made.items ? ` — ${made.items.split(/\r?\n/)[0].slice(0, 80)}` : ''}`,
+        url: '/online-orders',
+        tag: `order-${made.number}`,
+      });
       return { number: made.number, shop: s.shopName || 'Pharmacy', phone: s.phone || '' };
     } catch (err) {
       if ((err as { code?: number }).code !== 11000) throw err;

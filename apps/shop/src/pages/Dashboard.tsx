@@ -21,6 +21,7 @@ import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import { useT, useUiLang } from '../i18n/ui';
 import { CountUp, Rise, useSeen } from '../components/motion';
+import { PhoneNudge } from '../components/PhoneAlertsCard';
 import { Attention, PaymentMix, PeriodCompare, dayOf, useNumbers } from './ShopReports';
 
 /**
@@ -106,6 +107,8 @@ export default function Dashboard() {
           </Link>
         </div>
       </div>
+
+      <PhoneNudge />
 
       {loading || !day || !week ? (
         <LoadingBlock />

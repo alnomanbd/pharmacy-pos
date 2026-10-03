@@ -1,0 +1,25 @@
+{
+  "name": "Dawai — Pharmacy POS",
+  "short_name": "Dawai",
+  "description": "Your pharmacy's counter, stock and takings — on your phone.",
+  "id": "/",
+  "start_url": "/dashboard?from=app",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f6faf9",
+  "theme_color": "#0f766e",
+  "lang": "en",
+  "categories": ["business", "productivity", "medical"],
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ],
+  "shortcuts": [
+    { "name": "POS", "url": "/", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Dashboard", "url": "/dashboard", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Online orders", "url": "/online-orders", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] }
+  ]
+}
