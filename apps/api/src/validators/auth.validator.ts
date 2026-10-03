@@ -1,4 +1,13 @@
 import { z } from 'zod';
+import { canonicalDistrict } from '../utils/districts.js';
+
+/** A district from the list — any spelling, stored as the official one. Empty clears it. */
+export const district = z
+  .string()
+  .trim()
+  .max(120)
+  .refine((v) => !v || !!canonicalDistrict(v), { message: 'Pick a district from the list' })
+  .transform((v) => (v ? canonicalDistrict(v)! : ''));
 
 /**
  * What a password has to be.
@@ -78,6 +87,8 @@ export const registerSchema = z.object({
   outlets: z.number().int().min(1).max(100).optional(),
   /** Their drug licence number, as typed. Recorded for the operator; not verified. */
   licence: z.string().trim().max(80).optional(),
+  /** The district the shop is in, from the list. Optional; asked again in Settings. */
+  district: district.optional(),
   /**
    * The plan they say they are here for (a `Plan.key`). Not enforced during the
    * trial — the trial is full-featured — but it is what billing offers first.
@@ -162,7 +173,7 @@ export const shopProfileSchema = z.object({
       street: z.string().max(160).optional(),
       area: z.string().max(120).optional(),
       city: z.string().max(120).optional(),
-      district: z.string().max(120).optional(),
+      district: district.optional(),
       postalCode: z.string().max(20).optional(),
     })
     .optional(),

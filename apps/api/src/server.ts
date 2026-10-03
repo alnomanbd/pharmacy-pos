@@ -3,6 +3,7 @@ import { app } from './app.js';
 import { env } from './config/env.js';
 import { connectDB, disconnectDB } from './config/db.js';
 import { assignMainBranches } from './services/branchScope.service.js';
+import { tidyDistricts } from './services/medicineDemand.service.js';
 import { startScheduler, stopScheduler } from './jobs/scheduler.js';
 import { initErrorReporting } from './integrations/errorReporter.js';
 import { logger } from './utils/logger.js';
@@ -14,6 +15,7 @@ async function main() {
   await connectDB();
   // Records made before branches existed go into each shop's Main branch. Idempotent.
   await assignMainBranches().catch((err) => logger.error({ err }, 'Could not assign records to Main branches'));
+  await tidyDistricts().catch((err) => logger.error({ err }, 'Could not tidy district spellings'));
 
   const server = http.createServer(app);
   startScheduler();

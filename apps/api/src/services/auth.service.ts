@@ -71,6 +71,8 @@ export async function registerShop(payload: {
   outlets?: number;
   /** Their drug licence number, as typed. */
   licence?: string;
+  /** The district the shop is in, already made the official spelling by the validator. */
+  district?: string;
   /** Where they came from, if the page could tell. Never trusted beyond a label. */
   attribution?: {
     channel?: string;
@@ -114,6 +116,7 @@ export async function registerShop(payload: {
       licence: payload.licence?.trim() ?? '',
     },
     limitOverrides: overrides,
+    ...(payload.district ? { address: { district: payload.district } } : {}),
   });
 
   const owner = await UserModel.create({

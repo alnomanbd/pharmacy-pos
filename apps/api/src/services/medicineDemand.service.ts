@@ -2,6 +2,7 @@ import { Schema, model, Types } from 'mongoose';
 import { MedicineModel, OrganizationModel, SaleModel, ShopProductModel } from '../models/index.js';
 import { formatDayKey, todayKey } from '../utils/date.js';
 import { logger } from '../utils/logger.js';
+import { canonicalDistrict } from '../utils/districts.js';
 
 /**
  * How much of each medicine sells, and where — the medicine picture, counted
@@ -71,15 +72,13 @@ export const MedicineDemandRunModel = model('MedicineDemandRun', runSchema);
 
 /* ------------------------------------------------------------------ */
 
-/** The district a shop is counted in: its district, else its city, tidied; `Unknown` when it never said. */
+/**
+ * The district a shop is counted in: the district it named, else its city if
+ * that is a district's name — any spelling, either script, made the official
+ * one. `Unknown` when neither names a district, so typos never become places.
+ */
 export function districtOf(address?: { district?: string | null; city?: string | null } | null) {
-  const raw = (address?.district || address?.city || '').trim().replace(/\s+district$/i, '');
-  if (!raw) return 'Unknown';
-  return raw
-    .toLowerCase()
-    .split(/\s+/)
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ');
+  return canonicalDistrict(address?.district) ?? canonicalDistrict(address?.city) ?? 'Unknown';
 }
 
 /** Shops that may be counted, with their district. Switched out: not counted from that day. */
@@ -206,6 +205,27 @@ export async function rollupCoverage(month: string) {
   const docs = [...cells.values()].map((c) => ({ month, medicine: c.medicine, district: c.district, shops: c.shops.size }));
   if (docs.length) await MedicineCoverageModel.insertMany(docs, { ordered: false });
   return { month, rows: docs.length };
+}
+
+/**
+ * Old spellings made the official one — "Bogra" to "Bogura", "চট্টগ্রাম" to
+ * "Chattogram" — on every shop whose district names one. Text that names no
+ * district is left as typed for someone to fix from the console. Run at start;
+ * a shop already tidy is not touched.
+ */
+export async function tidyDistricts() {
+  const orgs = await OrganizationModel.find({ 'address.district': { $nin: ['', null] } }).select('address.district').lean();
+  let fixed = 0;
+  for (const o of orgs) {
+    const was = o.address?.district ?? '';
+    const now = canonicalDistrict(was);
+    if (now && now !== was) {
+      await OrganizationModel.updateOne({ _id: o._id }, { $set: { 'address.district': now } });
+      fixed++;
+    }
+  }
+  if (fixed) logger.info({ fixed }, 'District spellings tidied');
+  return fixed;
 }
 
 const shiftDay = (day: string, by: number) => formatDayKey(new Date(new Date(`${day}T00:00:00Z`).getTime() + by * 86_400_000));

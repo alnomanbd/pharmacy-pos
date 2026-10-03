@@ -34,6 +34,8 @@ import { LoadingBlock, Spinner } from '@dawai/shared/components/Spinner';
 import Modal from '../components/Modal';
 import { BTN_DANGER, BTN_OUTLINE, BTN_OUTLINE_DANGER, BTN_SECONDARY, can, errorMessage, useAccess } from '../lib/ui';
 import type { User } from '@dawai/shared/types';
+import DistrictSelect from '@dawai/shared/components/DistrictSelect';
+import { findDistrict } from '@dawai/shared/lib/districts';
 import { lastSeen } from '../lib/lastSeen';
 
 /**
@@ -126,7 +128,12 @@ export default function ShopDetail() {
         name: profile.name.trim(),
         contactPhone: profile.contactPhone.trim(),
         contactEmail: profile.contactEmail.trim(),
-        address: Object.fromEntries(Object.entries(profile.address).map(([k, v]) => [k, v.trim()])),
+        // A district typed before the list, and left as it was, is not sent back to be refused.
+        address: Object.fromEntries(
+          Object.entries(profile.address)
+            .filter(([k, v]) => k !== 'district' || !v.trim() || findDistrict(v))
+            .map(([k, v]) => [k, v.trim()]),
+        ),
       });
       toast('Shop details saved.');
       setProfileOpen(false);
@@ -571,13 +578,22 @@ export default function ShopDetail() {
           {ADDRESS_FIELDS.map((f) => (
             <label key={f.key} className={`label ${f.key === 'street' ? 'sm:col-span-2' : ''}`}>
               {f.label}
-              <input
-                className="input mt-1"
-                value={profile.address[f.key] ?? ''}
-                onChange={(e) =>
-                  setProfile({ ...profile, address: { ...profile.address, [f.key]: e.target.value } })
-                }
-              />
+              {f.key === 'district' ? (
+                /* From the list, so the medicine figures count every shop in its one district. */
+                <DistrictSelect
+                  className="input mt-1"
+                  value={profile.address.district ?? ''}
+                  onChange={(v) => setProfile({ ...profile, address: { ...profile.address, district: v } })}
+                />
+              ) : (
+                <input
+                  className="input mt-1"
+                  value={profile.address[f.key] ?? ''}
+                  onChange={(e) =>
+                    setProfile({ ...profile, address: { ...profile.address, [f.key]: e.target.value } })
+                  }
+                />
+              )}
             </label>
           ))}
           <button type="submit" className="hidden" aria-hidden="true" tabIndex={-1} />

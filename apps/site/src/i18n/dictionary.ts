@@ -604,6 +604,8 @@ const en = {
       branchOne: '{n} branch',
       branchMany: '{n} branches',
       licence: 'Drug licence no. (optional)',
+      district: 'District (optional)',
+      districtPick: 'Where is the shop?',
       plan: {
         kicker: 'Your plan',
         basic: 'For a one-counter shop.',
@@ -1426,6 +1428,8 @@ const bn: DeepPartial<Dictionary> = {
       branchOne: '{n}টি শাখা',
       branchMany: '{n}টি শাখা',
       licence: 'ড্রাগ লাইসেন্স নং (ঐচ্ছিক)',
+      district: 'জেলা (ঐচ্ছিক)',
+      districtPick: 'দোকান কোথায়?',
       plan: {
         kicker: 'আপনার প্ল্যান',
         basic: 'এক কাউন্টারের দোকানের জন্য।',

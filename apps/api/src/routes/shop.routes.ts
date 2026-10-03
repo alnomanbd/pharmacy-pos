@@ -22,6 +22,7 @@ import * as dataImport from '../services/dataImport.service.js';
 import * as push from '../services/push.service.js';
 import * as roles from '../services/accessRole.service.js';
 import { trending as trendingReport } from '../services/shopTrending.service.js';
+import { district as districtField } from '../validators/auth.validator.js';
 import type { ShopPermission } from '../types/shopPermissions.js';
 import * as online from '../services/onlineOrder.service.js';
 import * as wallet from '../services/wallet.service.js';
@@ -356,25 +357,34 @@ router.post(
 
 /**
  * Whether this shop is counted in the anonymous medicine figures — see
- * medicineDemand.service and the Terms. Counted unless switched off.
+ * medicineDemand.service and the Terms. Counted unless switched off. The
+ * district it is counted in is set here too: it is the one place an owner
+ * says where the shop is, outside the receipt's own address line.
  */
 router.get(
   '/data-sharing',
   handle(async (req) => {
-    const o = await OrganizationModel.findById(actorOf(req).org).select('dataSharing').lean();
-    return { counted: !o?.dataSharing?.optedOut, changedAt: o?.dataSharing?.changedAt ?? null, changedByName: o?.dataSharing?.changedByName ?? '' };
+    const o = await OrganizationModel.findById(actorOf(req).org).select('dataSharing address.district').lean();
+    return {
+      counted: !o?.dataSharing?.optedOut,
+      district: o?.address?.district ?? '',
+      changedAt: o?.dataSharing?.changedAt ?? null,
+      changedByName: o?.dataSharing?.changedByName ?? '',
+    };
   }),
 );
 router.patch(
   '/data-sharing',
-  validate(z.object({ counted: z.boolean() })),
+  validate(z.object({ counted: z.boolean().optional(), district: districtField.optional() })),
   handle(async (req) => {
     const a = actorOf(req);
-    await OrganizationModel.updateOne(
-      { _id: a.org },
-      { $set: { 'dataSharing.optedOut': !req.body.counted, 'dataSharing.changedAt': new Date(), 'dataSharing.changedByName': a.name } },
-    );
-    return { counted: req.body.counted };
+    const set: Record<string, unknown> = {};
+    if (req.body.counted !== undefined) {
+      Object.assign(set, { 'dataSharing.optedOut': !req.body.counted, 'dataSharing.changedAt': new Date(), 'dataSharing.changedByName': a.name });
+    }
+    if (req.body.district !== undefined) set['address.district'] = req.body.district;
+    if (Object.keys(set).length) await OrganizationModel.updateOne({ _id: a.org }, { $set: set });
+    return { counted: req.body.counted, district: req.body.district };
   }, 'Saved'),
 );
 

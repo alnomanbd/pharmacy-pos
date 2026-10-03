@@ -24,7 +24,8 @@ import { siteConfig } from '@/lib/site';
 import { translate, tItems, tList, type Lang } from '@/i18n/dictionary';
 import { num } from '@/i18n/mock';
 import { Button } from '@/components/ui/button';
-import { Field, Input } from '@/components/ui/input';
+import { Field, Input, Select } from '@/components/ui/input';
+import { DISTRICTS, DIVISIONS, findDistrict, type Division } from '@/lib/districts';
 import { PasswordInput } from '@/components/ui/password-input';
 import { cn } from '@/lib/utils';
 import { postJson, attribution, referralCode, agentCode } from '@/lib/api';
@@ -50,6 +51,7 @@ type Values = {
   counters: number;
   outlets: number;
   licence: string;
+  district: string;
   yourName: string;
   phone: string;
   email: string;
@@ -62,7 +64,7 @@ type Key = keyof Values;
 type Errors = Partial<Record<Key, string>>;
 
 const STEP_FIELDS: Key[][] = [
-  ['shopName', 'counters', 'outlets', 'licence'],
+  ['shopName', 'counters', 'outlets', 'licence', 'district'],
   ['yourName', 'phone', 'email'],
   ['password', 'confirm', 'terms'],
 ];
@@ -73,6 +75,7 @@ const SERVER_FIELD: Record<string, Key> = {
   counters: 'counters',
   outlets: 'outlets',
   licence: 'licence',
+  district: 'district',
   name: 'yourName',
   phone: 'phone',
   email: 'email',
@@ -84,6 +87,7 @@ const FIRST_FIELD = ['r-shop', 'r-name', 'r-password'];
 const FIELD_ID: Partial<Record<Key, string>> = {
   shopName: 'r-shop',
   licence: 'r-licence',
+  district: 'r-district',
   yourName: 'r-name',
   phone: 'r-phone',
   email: 'r-email',
@@ -120,6 +124,7 @@ export function RegisterForm({ lang }: { lang: Lang }) {
     counters: 1,
     outlets: 1,
     licence: '',
+    district: '',
     yourName: '',
     phone: '',
     email: '',
@@ -235,6 +240,7 @@ export function RegisterForm({ lang }: { lang: Lang }) {
       counters: clamp(values.counters, 1, MAX_COUNTERS),
       outlets: clamp(values.outlets, 1, MAX_OUTLETS),
       ...(licence ? { licence } : {}),
+      ...(values.district ? { district: values.district } : {}),
       attribution: { channel: 'website', ...attribution(), referralCode: referralCode(), agentCode: agentCode() },
     });
     if (res.ok) {
@@ -341,6 +347,21 @@ export function RegisterForm({ lang }: { lang: Lang }) {
                     </IconInput>
                   </Field>
                 </div>
+
+                <Field label={t('auth.register.district')} htmlFor="r-district" error={errors.district}>
+                  <Select id="r-district" name="district" value={values.district} onChange={(e) => set('district', e.target.value)}>
+                    <option value="">{t('auth.register.districtPick')}</option>
+                    {(Object.keys(DIVISIONS) as Division[]).map((div) => (
+                      <optgroup key={div} label={lang === 'bn' ? `${DIVISIONS[div]} বিভাগ` : `${div} division`}>
+                        {DISTRICTS.filter((d) => d.division === div).map((d) => (
+                          <option key={d.name} value={d.name}>
+                            {lang === 'bn' ? d.bn : d.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </Select>
+                </Field>
               </>
             )}
 
@@ -440,6 +461,7 @@ export function RegisterForm({ lang }: { lang: Lang }) {
                         values.shopName.trim(),
                         `${counterWord(values.counters)} · ${branchWord(values.outlets)}`,
                         values.licence.trim(),
+                        values.district ? (lang === 'bn' ? findDistrict(values.district)?.bn ?? values.district : values.district) : '',
                       ],
                     },
                     {

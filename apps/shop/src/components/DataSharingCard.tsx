@@ -1,26 +1,45 @@
 import { useEffect, useState } from 'react';
-import { BarChart3, Loader2, ShieldCheck } from 'lucide-react';
+import { BarChart3, Loader2, MapPin, ShieldCheck } from 'lucide-react';
 import api, { getData } from '@dawai/shared/api/client';
 import { useToast } from '@dawai/shared/components/Toast';
-import { useT } from '../i18n/ui';
+import DistrictSelect from '@dawai/shared/components/DistrictSelect';
+import { useT, useUiLang } from '../i18n/ui';
 import { BRAND } from '../brand';
 
 /**
  * Settings → Medicine figures: whether this shop is counted in the anonymous
  * picture of which medicines sell where. Said plainly — what is counted, what
- * never leaves — with the switch the Terms promise.
+ * never leaves — with the switch the Terms promise — and the district the
+ * shop is counted in, picked from the list.
  */
 export default function DataSharingCard() {
   const t = useT();
+  const bn = useUiLang() === 'bn';
   const { toast } = useToast();
   const [counted, setCounted] = useState<boolean | null>(null);
+  const [district, setDistrict] = useState('');
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    getData<{ counted: boolean }>(api.get('/shop/data-sharing'))
-      .then((d) => setCounted(d.counted))
+    getData<{ counted: boolean; district: string }>(api.get('/shop/data-sharing'))
+      .then((d) => {
+        setCounted(d.counted);
+        setDistrict(d.district ?? '');
+      })
       .catch(() => undefined);
   }, []);
+
+  const pickDistrict = async (v: string) => {
+    const was = district;
+    setDistrict(v);
+    try {
+      await getData(api.patch('/shop/data-sharing', { district: v }));
+      toast(t('District saved.'));
+    } catch {
+      setDistrict(was);
+      toast(t('Could not save that.'), 'error');
+    }
+  };
 
   const set = async (v: boolean) => {
     setBusy(true);
@@ -54,6 +73,11 @@ export default function DataSharingCard() {
           {t('Count my shop')}
         </label>
       </div>
+      <label className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+        <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
+        <span className="font-semibold">{t('Your shop’s district')}</span>
+        <DistrictSelect bn={bn} className="input h-9 w-full sm:w-64" value={district} onChange={(v) => void pickDistrict(v)} aria-label={t('Your shop’s district')} />
+      </label>
       <ul className="mt-3 space-y-1.5 rounded-xl bg-muted/50 p-3 text-xs text-muted-foreground">
         <li className="flex items-start gap-2">
           <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600" />
