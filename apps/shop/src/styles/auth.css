@@ -977,9 +977,165 @@
   }
 }
 
+/* ---- the orbits round the card ---- */
+.auth-orbit {
+  animation: auth-orbit 60s linear infinite;
+}
+@keyframes auth-orbit {
+  to {
+    stroke-dashoffset: -480;
+  }
+}
+.auth-comet {
+  filter: drop-shadow(0 0 6px rgb(167 243 208 / 0.9));
+}
+
+/* The parts of the shop: glass, lit a little from above. */
+.auth-node {
+  border: 1px solid rgb(255 255 255 / 0.1);
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.09), rgb(255 255 255 / 0.03));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.08),
+    0 12px 30px -14px rgb(0 0 0 / 0.6);
+  backdrop-filter: blur(12px);
+}
+
+/* On a phone, a ring of light behind the card in place of the orbits. */
+.auth-halo {
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  width: 34rem;
+  height: 34rem;
+  transform: translate(-50%, -50%);
+  border-radius: 9999px;
+  background: radial-gradient(closest-side, rgb(52 211 153 / 0.22), transparent 70%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.05);
+}
+
+/* The colours of the shop along the card's top edge. */
+.auth-card-strip {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 4px;
+  background: linear-gradient(90deg, #10b981, #14b8a6 40%, #22d3ee 70%, #a78bfa);
+}
+
+/* The mark, with a soft glow that breathes. */
+.auth-mark {
+  box-shadow: 0 10px 30px -10px hsl(var(--primary));
+}
+.auth-mark::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 18px;
+  border: 1px solid hsl(var(--primary) / 0.35);
+  animation: auth-breathe 3.2s ease-in-out infinite;
+}
+@keyframes auth-breathe {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+/* "Open" — the green dot by the clock. */
+.auth-live {
+  position: relative;
+  width: 7px;
+  height: 7px;
+  border-radius: 9999px;
+  background: #10b981;
+}
+.auth-live::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 9999px;
+  background: rgb(16 185 129 / 0.45);
+  animation: auth-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+@keyframes auth-ping {
+  75%,
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+/* Inside the scene the fields are a size up, with a softer glow on focus. */
+.auth-scene .shop-input {
+  height: 48px;
+  border-radius: 12px;
+  background: hsl(var(--muted) / 0.35);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.2s ease,
+    background-color 0.15s ease;
+}
+.auth-scene .shop-input:hover {
+  border-color: hsl(var(--primary) / 0.4);
+}
+.auth-scene .shop-input:focus {
+  background: hsl(var(--card));
+  box-shadow:
+    0 0 0 4px hsl(var(--primary) / 0.12),
+    0 8px 24px -12px hsl(var(--primary) / 0.5);
+}
+.auth-scene .shop-submit {
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #0f766e, #10b981);
+  box-shadow: 0 12px 28px -12px rgb(16 185 129 / 0.75);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.2s ease,
+    opacity 0.15s ease;
+}
+.auth-scene .shop-submit:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0f766e, #10b981);
+  transform: translateY(-1px);
+  box-shadow: 0 16px 32px -12px rgb(16 185 129 / 0.85);
+}
+.auth-scene .shop-submit:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Three short reassurances under the form. */
+.shop-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin: 22px 0 0;
+  padding: 16px 0 0;
+  border-top: 1px solid hsl(var(--border));
+  list-style: none;
+}
+.shop-badges li {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 9999px;
+  background: hsl(var(--primary) / 0.07);
+  padding: 4px 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: hsl(var(--primary));
+}
+
 @media (prefers-reduced-motion: reduce) {
   .auth-card-ring::before,
-  .auth-scene .shop-submit::after {
+  .auth-scene .shop-submit::after,
+  .auth-orbit,
+  .auth-mark::after,
+  .auth-live::after {
     animation: none;
   }
 }

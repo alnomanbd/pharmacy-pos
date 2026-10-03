@@ -1962,6 +1962,13 @@ const bn: Record<string, string> = {
   'Set it up': 'চালু করুন',
   'Not now': 'এখন না',
   'Phone & alerts': 'ফোন ও অ্যালার্ট',
+  /* ---- sign-in ---- */
+  'Working late': 'অনেক রাত পর্যন্ত কাজ',
+  'New to Dawai?': 'দাওয়াই-এ নতুন?',
+  'Start a free trial': 'ফ্রি ট্রায়াল শুরু করুন',
+  'Works offline': 'ইন্টারনেট ছাড়াও চলে',
+  'Secure sign-in': 'নিরাপদ লগইন',
+  'বাংলা · English': 'বাংলা · English',
   /* ---- import duplicates ---- */
   'Left out, so nothing is counted twice:': 'বাদ রাখা হয়েছে, যাতে কিছু দুবার না যায়:',
   /* ---- returns ---- */

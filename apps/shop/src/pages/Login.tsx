@@ -7,14 +7,17 @@ import {
   Eye,
   EyeOff,
   Loader2,
+  Languages,
   Lock,
   Mail,
   ShieldCheck,
+  WifiOff,
 } from 'lucide-react';
 import { authApi } from '@dawai/shared/api';
 import { useAuthStore } from '@dawai/shared/store/auth.store';
 import { useT, useLangStore } from '../i18n/ui';
 import AuthScene from '../components/AuthScene';
+import { BRAND } from '../brand';
 
 /**
  * The shop's own sign-in, in the middle of the scene (components/AuthScene).
@@ -28,6 +31,10 @@ import AuthScene from '../components/AuthScene';
  * name at the end of the day.
  */
 const PLATFORM_ROLES = ['platformAdmin', 'platformStaff'];
+
+/** The greeting a counter would give at this hour. */
+const greetingFor = (hour: number) =>
+  hour < 5 ? 'Working late' : hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
 export default function Login() {
   const t = useT();
@@ -48,6 +55,7 @@ export default function Login() {
   const login = useAuthStore((s) => s.login);
   const logout = useAuthStore((s) => s.logout);
   const justReset = params.get('reset') === '1';
+  const lang = useLangStore((st) => st.lang) === 'bn' ? 'bn' : 'en';
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,9 +82,18 @@ export default function Login() {
   };
 
   return (
-    <AuthScene>
+    <AuthScene
+      below={
+        <>
+          {t('New to Dawai?')}{' '}
+          <a href={`${BRAND.siteUrl}/${lang}/register/`} className="font-semibold text-emerald-300 underline-offset-4 hover:text-emerald-200 hover:underline">
+            {t('Start a free trial')} →
+          </a>
+        </>
+      }
+    >
 
-          <h1 className="shop-title">{t('Welcome back')}</h1>
+          <h1 className="shop-title">{t(greetingFor(new Date().getHours()))}</h1>
           <p className="shop-sub">{t('Sign in to open today’s counter.')}</p>
 
           {justReset && (
@@ -162,10 +179,18 @@ export default function Login() {
             </button>
           </form>
 
-          <p className="shop-trust">
-            <ShieldCheck className="h-4 w-4 shrink-0" />
-            {t('Every bill carries your name, and the counter keeps selling when the internet drops.')}
-          </p>
+          {/* Three things a shop worries about, said in three words each. */}
+          <ul className="shop-badges">
+            <li>
+              <WifiOff className="h-3.5 w-3.5" /> {t('Works offline')}
+            </li>
+            <li>
+              <ShieldCheck className="h-3.5 w-3.5" /> {t('Secure sign-in')}
+            </li>
+            <li>
+              <Languages className="h-3.5 w-3.5" /> {t('বাংলা · English')}
+            </li>
+          </ul>
 
     </AuthScene>
   );
