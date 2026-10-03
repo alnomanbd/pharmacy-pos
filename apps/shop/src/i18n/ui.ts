@@ -1863,6 +1863,25 @@ const bn: Record<string, string> = {
   'Username': 'ইউজারনেম',
   'Saved — leave empty to keep': 'সেভ আছে — রাখতে খালি রাখুন',
   'Sandbox (bKash’s test system — no real money)': 'স্যান্ডবক্স (বিকাশের টেস্ট সিস্টেম — আসল টাকা নয়)',
+  /* ---- loyalty ---- */
+  'Loyalty points': 'লয়ালটি পয়েন্ট',
+  'Regulars earn points on what they pay and spend them as money off a later bill. A phone number at the till is all it takes.': 'নিয়মিত কাস্টমাররা যা পরিশোধ করেন তাতে পয়েন্ট পান, আর পরের বিলে সেটা ছাড় হিসেবে খরচ করেন। POS-এ শুধু একটা ফোন নম্বর দিলেই হয়।',
+  'Taka for one point': 'এক পয়েন্টের জন্য টাকা',
+  'What a customer pays to earn one point.': 'এক পয়েন্ট পেতে কাস্টমার কত টাকা দেবেন।',
+  'One point is worth (৳)': 'এক পয়েন্টের মূল্য (৳)',
+  'Taka off the bill for each point spent.': 'প্রতিটি পয়েন্ট খরচে বিল থেকে কত টাকা কমবে।',
+  'Fewest points to spend': 'সর্বনিম্ন খরচযোগ্য পয়েন্ট',
+  'Below this, points keep adding up.': 'এর কম হলে পয়েন্ট জমতে থাকবে।',
+  'Most of a bill points can pay (%)': 'বিলের সর্বোচ্চ কত অংশ পয়েন্টে (%)',
+  'So points never pay for a whole bill.': 'যাতে পুরো বিল পয়েন্টে না যায়।',
+  'paid earns': 'পরিশোধে পাবেন',
+  'points, worth': 'পয়েন্ট, যার মূল্য',
+  'on a later bill.': 'পরের বিলে।',
+  'points': 'পয়েন্ট',
+  'Points': 'পয়েন্ট',
+  'on this bill': 'এই বিলে',
+  'Use points': 'পয়েন্ট ব্যবহার',
+  'For a bigger bill': 'বড় বিলে ব্যবহারযোগ্য',
 };
 
 export const useT = makeUseT(bn);

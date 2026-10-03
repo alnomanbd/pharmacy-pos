@@ -127,6 +127,14 @@ const schema = new Schema(
         password: { type: String, default: '', select: false },
       },
     },
+    /** Points for regulars — see services/loyalty. Off until the shop turns it on. */
+    loyalty: {
+      enabled: { type: Boolean, default: false },
+      spendPerPoint: { type: Number, default: 100, min: 1 },
+      pointValue: { type: Number, default: 1, min: 0 },
+      minRedeem: { type: Number, default: 50, min: 0 },
+      maxRedeemPercent: { type: Number, default: 50, min: 0, max: 100 },
+    },
     /** Orders from customers through the shop's own link — see onlineOrder.service. */
     onlineOrders: {
       enabled: { type: Boolean, default: false },

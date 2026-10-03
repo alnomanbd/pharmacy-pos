@@ -420,6 +420,11 @@ export default function Customers() {
                             <Clock className="h-3 w-3" /> {ago(c.lastAt, n, t)}
                           </span>
                         )}
+                        {(c.points ?? 0) > 0 && (
+                          <span className="inline-flex items-center gap-1 font-semibold text-amber-700 dark:text-amber-400">
+                            ★ {n(Math.floor(c.points ?? 0))} {t('points')}
+                          </span>
+                        )}
                         {over && (
                           <span className="pill pending !px-1.5 !py-0 text-[10px]">
                             {t('over limit')} {money(c.creditLimit!)}

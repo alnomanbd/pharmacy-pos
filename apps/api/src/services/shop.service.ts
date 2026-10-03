@@ -371,11 +371,13 @@ export async function updateSettings(actor: Actor, input: Record<string, unknown
    * Dot paths set what was sent and leave the rest alone, which is what the
    * screen means when it saves one field.
    */
-  if (patch.invoice && typeof patch.invoice === 'object') {
-    for (const [key, value] of Object.entries(patch.invoice as Record<string, unknown>)) {
-      patch[`invoice.${key}`] = value;
+  for (const group of ['invoice', 'loyalty'] as const) {
+    if (patch[group] && typeof patch[group] === 'object') {
+      for (const [key, value] of Object.entries(patch[group] as Record<string, unknown>)) {
+        patch[`${group}.${key}`] = value;
+      }
+      delete patch[group];
     }
-    delete patch.invoice;
   }
 
   await getSettings(actor);

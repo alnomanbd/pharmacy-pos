@@ -11,6 +11,7 @@ import {
   StockLedgerModel,
   ShopControlLogModel,
 } from '../models/index.js';
+import { rulesOf, redeemFor, pointsEarned, pointsClawedBack } from './loyalty.js';
 import { badRequest, notFound } from '../utils/AppError.js';
 import { todayKey, calendarPartsInAppTz, parseDayKey, formatDayKey } from '../utils/date.js';
 import type { Actor } from './shop.service.js';
@@ -532,6 +533,8 @@ export async function createSale(
     lines: { productId: string; qtyPieces: number; pricePerPiece?: number; discount?: number }[];
     payments?: { method: string; amount: number; reference?: string }[];
     discount?: number;
+    /** Loyalty points spent on this bill, by the customer named in `customerId`. */
+    redeemPoints?: number;
     customerId?: string;
     customerName?: string;
     customerPhone?: string;
@@ -650,12 +653,33 @@ export async function createSale(
   );
 
   const subTotal = money(lines.reduce((n, l) => n + l.lineTotal, 0));
-  const afterDiscount = money(Math.max(0, subTotal - (input.discount || 0)));
 
   const settings = await ShopSettingsModel.findOne({ organization: actor.org })
-    .select('vatPercent vatOnMedicine')
+    .select('vatPercent vatOnMedicine loyalty')
     .lean();
-  const { vat, perLine } = vatFor(lines, subTotal, input.discount || 0, settings);
+  const rules = rulesOf(settings?.loyalty);
+
+  /* Points spent come off as a discount, after the counter's own. Checked
+     against the customer's balance here; a bill from offline is not refused,
+     because the customer has already gone home with the discount. */
+  let redeem = { points: 0, value: 0, deduct: 0 };
+  if ((input.redeemPoints ?? 0) > 0 && rules.enabled) {
+    if (!input.customerId) throw badRequest('Pick the customer whose points these are');
+    const holder = await ShopCustomerModel.findOne({ _id: oid(input.customerId), organization: actor.org })
+      .select('points')
+      .lean();
+    if (!holder) throw notFound('Customer');
+    const available = Math.floor(holder.points ?? 0);
+    const asked = input.redeemPoints!;
+    if (!offline && asked > available) throw badRequest(`Only ${available} points to spend`);
+    if (!offline && asked < rules.minRedeem) throw badRequest(`At least ${rules.minRedeem} points at a time`);
+    const r = redeemFor(rules, asked, Math.max(0, subTotal - (input.discount || 0)));
+    redeem = { ...r, deduct: Math.min(r.points, available) };
+  }
+  const discount = money((input.discount || 0) + redeem.value);
+  const afterDiscount = money(Math.max(0, subTotal - discount));
+
+  const { vat, perLine } = vatFor(lines, subTotal, discount, settings);
   const priced = lines.map(({ isMedicine, ...l }, i) => {
     void isMedicine;
     return { ...l, vat: perLine[i] };
@@ -667,16 +691,18 @@ export async function createSale(
   const { payments, paid, due, cashTendered, changeGiven } = settleUp(input.payments, total);
 
   let customer = null;
+  const loyaltyPhone = rules.enabled ? bdMobile(input.customerPhone) : null;
   if (input.customerId) {
     customer = await ShopCustomerModel.findOne({
       _id: oid(input.customerId),
       organization: actor.org,
     });
     if (!customer) throw notFound('Customer');
-  } else if (due > 0) {
+  } else if (due > 0 || loyaltyPhone) {
     /* Money owed has to be owed by somebody. A due with no name is a hole in
-       the till that nobody can chase. */
-    const name = input.customerName?.trim();
+       the till that nobody can chase. A number given for the points is enough
+       to open a page for them — the name can come later. */
+    const name = input.customerName?.trim() || (due > 0 ? '' : loyaltyPhone!);
     if (!name) throw badRequest('Who is taking it on account?');
     /* A number that is not a mobile number does not go on the book — the bill
        still keeps what was typed, but a bill is never refused over it, because
@@ -735,7 +761,7 @@ export async function createSale(
       customerPhone: customer?.phone ?? input.customerPhone?.trim() ?? '',
       lines: priced,
       subTotal,
-      discount: input.discount || 0,
+      discount,
       vat,
       vatPercent: settings?.vatPercent ?? 0,
       total,
@@ -781,7 +807,20 @@ export async function createSale(
     });
   }
 
+  /* Points: what was spent comes off, what this bill earned goes on. */
+  const earned = customer ? pointsEarned(rules, paid) : 0;
+  if (customer && (earned > 0 || redeem.deduct > 0)) {
+    await ShopCustomerModel.updateOne(
+      { _id: customer._id },
+      { $inc: { points: earned - redeem.deduct, pointsEarned: earned } },
+    );
+    customer.points = Math.max(0, (customer.points ?? 0) + earned - redeem.deduct);
+    sale.set('loyalty', { earned, redeemed: redeem.points, value: redeem.value, reversed: 0 });
+    await sale.save();
+  }
+
   if (customer && due > 0) {
+    customer = await ShopCustomerModel.findById(customer._id).orFail();
     const balance = money((customer.balance ?? 0) + due);
     customer.balance = balance;
     await customer.save();
@@ -816,7 +855,7 @@ export async function createSale(
     );
   }
 
-  const saleDoc = sale.toObject();
+  const saleDoc = { ...sale.toObject(), ...(customer && rules.enabled ? { pointsBalance: Math.floor(customer.points ?? 0) } : {}) };
 
   /* The classified register: one line per controlled drug, with the name the
      counter was made to take on the way in. Written after the bill so the line
@@ -911,6 +950,19 @@ export async function returnSale(
   await sale.save();
 
   refund = money(refund);
+
+  /* The points this bill earned go back in proportion to what came back. */
+  const lp = sale.loyalty;
+  if (sale.customer && lp?.earned) {
+    const back = pointsClawedBack(lp.earned, lp.reversed ?? 0, refund, sale.total);
+    if (back > 0) {
+      const holder = await ShopCustomerModel.findOne({ _id: sale.customer, organization: actor.org }).select('points').lean();
+      const take = Math.min(back, Math.floor(holder?.points ?? 0));
+      if (take > 0) await ShopCustomerModel.updateOne({ _id: sale.customer }, { $inc: { points: -take } });
+      sale.set('loyalty.reversed', (lp.reversed ?? 0) + back);
+      await sale.save();
+    }
+  }
 
   /*
    * Where the money goes back to.

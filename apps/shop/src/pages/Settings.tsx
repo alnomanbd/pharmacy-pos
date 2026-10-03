@@ -17,12 +17,14 @@ import {
   Ruler,
   ShoppingBag,
   Smartphone,
+  Star,
 } from 'lucide-react';
 import { settingsApi, type ShopSettings, type Sale } from '../api';
 import SheetPreview, { openAlignmentPage } from '../components/SheetPreview';
 import LetterheadPicture from '../components/LetterheadPicture';
 import OrderLinkCard from '../components/OrderLinkCard';
 import WalletCard from '../components/WalletCard';
+import LoyaltyCard from '../components/LoyaltyCard';
 import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import Receipt from '../components/Receipt';
@@ -82,6 +84,7 @@ const SECTIONS = [
   { id: 'sheet', label: 'The A4 sheet', icon: FileText },
   { id: 'orders', label: 'Online orders', icon: ShoppingBag },
   { id: 'wallets', label: 'bKash & Nagad', icon: Smartphone },
+  { id: 'loyalty', label: 'Loyalty points', icon: Star },
   { id: 'vat', label: 'VAT', icon: Percent },
 ] as const;
 
@@ -700,6 +703,9 @@ export default function Settings() {
 
           {/* bKash and Nagad at the counter. */}
           <WalletCard />
+
+          {/* Points for regulars. */}
+          <LoyaltyCard />
 
           <Section
             id="vat"

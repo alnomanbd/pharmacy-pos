@@ -159,6 +159,19 @@ const schema = new Schema(
     /** Rung up while the line was down, and posted afterwards. */
     wasOffline: { type: Boolean, default: false },
 
+    /**
+     * Loyalty points on this bill: what it earned, what was spent on it and
+     * the taka those took off (already inside `discount`), and how many a
+     * return has taken back.
+     */
+    loyalty: {
+      type: new Schema(
+        { earned: Number, redeemed: Number, value: Number, reversed: { type: Number, default: 0 } },
+        { _id: false },
+      ),
+      default: undefined,
+    },
+
     status: {
       type: String,
       enum: ['completed', 'returned', 'void'],

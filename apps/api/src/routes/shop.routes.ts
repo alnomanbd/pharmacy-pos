@@ -220,6 +220,15 @@ const settingsSchema = z.object({
   vatPercent: z.number().min(0).max(100).optional(),
   vatOnMedicine: z.boolean().optional(),
   vatBin: z.string().trim().max(40).optional(),
+  loyalty: z
+    .object({
+      enabled: z.boolean().optional(),
+      spendPerPoint: z.number().min(1).max(100_000).optional(),
+      pointValue: z.number().min(0).max(10_000).optional(),
+      minRedeem: z.number().int().min(0).max(1_000_000).optional(),
+      maxRedeemPercent: z.number().min(0).max(100).optional(),
+    })
+    .optional(),
   /* The A4 sheet is its own document with its own look. A colour is checked
      here rather than in the renderer, because an unparseable one reaches pdfkit
      as a thrown error halfway through a print. */

@@ -914,6 +914,10 @@ export interface Sale {
   /** And what went back with the customer. */
   changeGiven?: number;
   due: number;
+  /** Points earned, spent (and the taka they took off, inside `discount`), and taken back by a return. */
+  loyalty?: { earned: number; redeemed: number; value: number; reversed?: number };
+  /** The customer's points after this bill — only on the answer to a sale just made. */
+  pointsBalance?: number;
   note?: string;
   status: 'completed' | 'returned' | 'void';
   /** Questioned, and not to be touched until somebody has finished looking. */
@@ -988,6 +992,9 @@ export interface ShopCustomer {
   note?: string;
   balance: number;
   creditLimit?: number;
+  /** Loyalty points to spend, and every one ever earned. */
+  points?: number;
+  pointsEarned?: number;
   createdAt?: string;
 }
 
@@ -1451,8 +1458,18 @@ export const supportApi = {
 
 /* ------------------------------------------------------- the shop's paper -- */
 
+/** Points for regulars — Settings → Loyalty points. */
+export interface LoyaltySettings {
+  enabled: boolean;
+  spendPerPoint: number;
+  pointValue: number;
+  minRedeem: number;
+  maxRedeemPercent: number;
+}
+
 export interface ShopSettings {
   _id: string;
+  loyalty?: LoyaltySettings;
   shopName: string;
   shopNameBn?: string;
   address?: string;

@@ -205,6 +205,8 @@ const saleSchema = z.object({
     .max(6)
     .optional(),
   discount: z.number().min(0).max(1_000_000).optional(),
+  /* Loyalty points the customer is spending on this bill. */
+  redeemPoints: z.number().int().min(0).max(100_000_000).optional(),
   customerId: z.string().trim().max(40).optional(),
   customerName: z.string().trim().max(120).optional(),
   customerPhone: z.string().trim().max(40).optional(),

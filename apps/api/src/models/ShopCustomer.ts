@@ -30,6 +30,10 @@ const schema = new Schema(
      */
     creditLimit: { type: Number, default: 0, min: 0 },
 
+    /** Loyalty points to spend, and every point ever earned — see services/loyalty. */
+    points: { type: Number, default: 0, min: 0 },
+    pointsEarned: { type: Number, default: 0, min: 0 },
+
     /**
      * When this account was last chased, and how often.
      *

@@ -460,6 +460,17 @@ export default function Receipt({
               <td className="right bold">{tk(sale.due)}</td>
             </tr>
           )}
+          {/* Loyalty points: what this bill earned and spent, and where they stand. */}
+          {(sale.loyalty?.earned || sale.loyalty?.redeemed) && (
+            <tr>
+              <td className="muted">{bn ? 'পয়েন্ট' : 'Points'}</td>
+              <td className="right muted">
+                {sale.loyalty?.redeemed ? `−${say(String(sale.loyalty.redeemed))} ` : ''}
+                {sale.loyalty?.earned ? `+${say(String(sale.loyalty.earned))}` : ''}
+                {sale.pointsBalance !== undefined ? ` = ${say(String(sale.pointsBalance))}` : ''}
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
 

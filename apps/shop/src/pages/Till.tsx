@@ -32,6 +32,7 @@ import {
   Banknote,
   QrCode,
   Zap,
+  Star,
 } from 'lucide-react';
 import {
   tillApi,
@@ -43,6 +44,7 @@ import {
   type Sale,
   type ShopSettings,
   type ShopCustomer,
+  type LoyaltySettings,
   type ShopCounter,
 } from '../api';
 import { useToast } from '@dawai/shared/components/Toast';
@@ -202,6 +204,8 @@ export default function Till() {
   /* The shop's header and paper width. Fetched once: it changes about twice a
      year and the counter prints a bill every two minutes. */
   const [settings, setSettings] = useState<ShopSettings | null>(null);
+  /* Spending the picked customer's loyalty points on this bill. */
+  const [usePoints, setUsePoints] = useState(false);
   const [printing, setPrinting] = useState<Sale | null>(null);
   const [returning, setReturning] = useState(false);
   /* The register sends somebody here with a bill already chosen — ?return=13-0042
@@ -335,7 +339,23 @@ export default function Till() {
     () => lines.reduce((n, l) => n + l.qtyPieces * l.pricePerPiece, 0),
     [lines],
   );
-  const afterDiscount = Math.max(0, subTotal - (Number(discount) || 0));
+  /*
+   * Loyalty points: as many of the customer's as this bill may take, on the
+   * same rule the server holds it to — at least the minimum, never more than
+   * the set share of the bill.
+   */
+  const loyalty = settings?.loyalty?.enabled ? settings.loyalty : null;
+  const spendable = useMemo(() => {
+    const none = { points: 0, value: 0 };
+    if (!loyalty || !customer || !(loyalty.pointValue > 0)) return none;
+    const have = Math.floor(customer.points ?? 0);
+    const bill = Math.max(0, subTotal - (Number(discount) || 0));
+    const cap = Math.floor((bill * loyalty.maxRedeemPercent) / 100 / loyalty.pointValue + 1e-9);
+    const points = Math.max(0, Math.min(have, cap));
+    return points > 0 && points >= loyalty.minRedeem ? { points, value: Math.round(points * loyalty.pointValue * 100) / 100 } : none;
+  }, [loyalty, customer, subTotal, discount]);
+  const redeem = useMemo(() => (usePoints ? spendable : { points: 0, value: 0 }), [usePoints, spendable]);
+  const afterDiscount = Math.max(0, subTotal - (Number(discount) || 0) - redeem.value);
   /*
    * VAT, shown before the server works it out again.
    *
@@ -347,12 +367,12 @@ export default function Till() {
   const vat = useMemo(() => {
     const rate = settings?.vatPercent ?? 0;
     if (!(rate > 0) || subTotal <= 0) return 0;
-    const keep = Math.max(0, 1 - (Number(discount) || 0) / subTotal);
+    const keep = Math.max(0, 1 - ((Number(discount) || 0) + redeem.value) / subTotal);
     const base = lines
       .filter((l) => settings?.vatOnMedicine || l.product.isMedicine === false)
       .reduce((n, l) => n + l.qtyPieces * l.pricePerPiece, 0);
     return Math.round(((base * keep * rate) / 100) * 100) / 100;
-  }, [lines, subTotal, discount, settings]);
+  }, [lines, subTotal, discount, settings, redeem.value]);
 
   const total = Math.round((afterDiscount + vat) * 100) / 100;
   const paidTotal = Object.values(paid).reduce((n, v) => n + (Number(v) || 0), 0);
@@ -450,6 +470,7 @@ export default function Till() {
     setDiscount('');
     setPaid({ cash: '' });
     setRefs({});
+    setUsePoints(false);
     setCustomer(null);
     setCustomerName('');
     setCustomerPhone('');
@@ -554,6 +575,7 @@ export default function Till() {
       })),
       payments,
       discount: Number(discount) || 0,
+      ...(redeem.points > 0 ? { redeemPoints: redeem.points } : {}),
       /* The id where the shop already knows them, so one Kabir Bhai does not
          become four; the typed name only for somebody new. */
       customerId: customer?._id,
@@ -571,7 +593,10 @@ export default function Till() {
       /* Printed straight away unless the shop has said not to: the customer is
          still standing there, and a bill printed later is a bill nobody takes. */
       if (settings?.autoPrint !== false) setPrinting(bill);
-      toast(`Bill ${bill.billNo} · ${taka(bill.total)}`);
+      toast(
+        `Bill ${bill.billNo} · ${taka(bill.total)}` +
+          (bill.loyalty?.earned ? ` · +${bill.loyalty.earned} ${t('points')}` : ''),
+      );
       /* That bill may have emptied a shelf; the bell should know before the
          next customer asks for it. */
       refreshAlerts();
@@ -629,6 +654,8 @@ export default function Till() {
     lines,
     paid,
     discount,
+    redeem,
+    customer,
     customerName,
     customerPhone,
     settings,
@@ -1497,7 +1524,10 @@ export default function Till() {
                  nothing typed it is a cash sale, and asking for a name then is
                  asking for one that should not be on it. */
               required={plan.owing > 0 && lines.length > 0 && (!plan.nothingTaken || plan.onAccount)}
-              onPick={setCustomer}
+              onPick={(c) => {
+                setCustomer(c);
+                setUsePoints(false);
+              }}
               onType={(patch) => {
                 if (patch.name !== undefined) setCustomerName(patch.name);
                 if (patch.phone !== undefined) setCustomerPhone(patch.phone);
@@ -1509,6 +1539,18 @@ export default function Till() {
               moment the first item goes on read as an error the counter had
               made; the nudge now waits until a part payment is typed.
             */}
+            {/* Loyalty points: what the picked customer has, and the switch to spend them. */}
+            {loyalty && (customer || customerPhone.trim()) && (
+              <LoyaltyRow
+                rules={loyalty}
+                have={customer ? Math.floor(customer.points ?? 0) : null}
+                earns={Math.floor(Math.max(0, total) / loyalty.spendPerPoint)}
+                redeem={redeem}
+                spendable={spendable.points > 0}
+                using={usePoints}
+                onToggle={() => setUsePoints((u) => !u)}
+              />
+            )}
             {lines.length > 0 && plan.nothingTaken && !plan.onAccount && (
               <p className="mt-2 flex items-start gap-1.5 text-[11px] text-muted-foreground">
                 <Banknote className="mt-0.5 h-3.5 w-3.5 shrink-0" />
@@ -1550,6 +1592,14 @@ export default function Till() {
                 <div className="flex items-baseline justify-between text-muted-foreground">
                   <span>{t('Discount')}</span>
                   <span className="tabular-nums">− {taka(Number(discount))}</span>
+                </div>
+              )}
+              {redeem.value > 0 && (
+                <div className="flex items-baseline justify-between text-amber-700 dark:text-amber-400">
+                  <span>
+                    ★ {t('Points')} ({redeem.points})
+                  </span>
+                  <span className="tabular-nums">− {taka(redeem.value)}</span>
                 </div>
               )}
               {vat > 0 && (
@@ -2163,5 +2213,62 @@ function CloseTill({ shift, onClosed }: { shift: Shift; onClosed: () => Promise<
         </div>
       )}
     </>
+  );
+}
+
+/** The customer's points under their name: the balance, and spending them on this bill. */
+function LoyaltyRow({
+  rules,
+  have,
+  earns,
+  redeem,
+  spendable,
+  using,
+  onToggle,
+}: {
+  rules: LoyaltySettings;
+  /** Null for somebody new, known only by the number typed. */
+  have: number | null;
+  earns: number;
+  redeem: { points: number; value: number };
+  /** Whether this bill is big enough to spend any on. */
+  spendable: boolean;
+  using: boolean;
+  onToggle: () => void;
+}) {
+  const t = useT();
+  const enough = have !== null && have >= rules.minRedeem;
+  return (
+    <div className="mt-2 flex items-center justify-between gap-2 rounded-md border border-amber-500/30 bg-amber-500/[0.07] px-2.5 py-2 text-xs">
+      <span className="flex min-w-0 items-center gap-1.5 text-amber-800 dark:text-amber-300">
+        <Star className="h-3.5 w-3.5 shrink-0 fill-current" />
+        <span className="truncate">
+          {have !== null && (
+            <>
+              <strong className="tabular-nums">{have}</strong> {t('points')}
+            </>
+          )}
+          {earns > 0 && (
+            <span className="text-muted-foreground">
+              {have !== null ? ' · ' : ''}+{earns} {t('on this bill')}
+            </span>
+          )}
+        </span>
+      </span>
+      {enough && !spendable && <span className="shrink-0 text-[11px] text-muted-foreground">{t('For a bigger bill')}</span>}
+      {enough && spendable && (
+        <button
+          type="button"
+          onClick={onToggle}
+          className={`shrink-0 rounded-md px-2 py-1 font-semibold ${
+            using
+              ? 'bg-amber-500 text-white'
+              : 'border border-amber-500/50 text-amber-800 hover:bg-amber-500/10 dark:text-amber-300'
+          }`}
+        >
+          {using ? `− ৳${redeem.value}` : t('Use points')}
+        </button>
+      )}
+    </div>
   );
 }
