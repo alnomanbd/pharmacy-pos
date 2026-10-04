@@ -6,6 +6,7 @@ import { useAuthStore } from '@dawai/shared/store/auth.store';
 import Modal from './Modal';
 import { BTN_OUTLINE, BTN_SECONDARY, errorMessage } from '../lib/ui';
 import { lastSeen } from '../lib/lastSeen';
+import { fileSize as size, stampLabel as when } from '../lib/backups';
 
 /**
  * The backups kept on this server, and the last run.
@@ -16,22 +17,6 @@ import { lastSeen } from '../lib/lastSeen';
  * not here on purpose: it rolls every shop back at once, and is done on the
  * server (docs/OPERATIONS.md).
  */
-
-function size(bytes: number) {
-  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
-  if (bytes < 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
-  return `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`;
-}
-
-/** `2026-10-04_0200` → `4 Oct 2026, 2:00 AM`, in the server's time as the name was written. */
-function when(stamp: string) {
-  const m = /^(\d{4})-(\d{2})-(\d{2})_(\d{2})(\d{2})$/.exec(stamp);
-  if (!m) return stamp;
-  const [, y, mo, d, h, mi] = m;
-  const date = new Date(Number(y), Number(mo) - 1, Number(d));
-  const hour = Number(h) % 12 || 12;
-  return `${date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}, ${hour}:${mi} ${Number(h) < 12 ? 'AM' : 'PM'}`;
-}
 
 const OFFSITE: Record<string, string> = {
   ok: 'copied to Google Drive',
@@ -172,8 +157,8 @@ export default function BackupsCard() {
                 <div key={s.stamp} className="flex flex-wrap items-center gap-2 py-2 text-sm">
                   <span className="min-w-0 flex-1">
                     <strong>{when(s.stamp)}</strong>{' '}
-                    <span className="text-xs text-muted-foreground">
-                      · database {s.database ? size(s.database.size) : 'missing'}
+                    <span className="block text-xs text-muted-foreground sm:inline">
+                      <span className="hidden sm:inline">· </span>database {s.database ? size(s.database.size) : 'missing'}
                       {s.uploads ? ` · files ${size(s.uploads.size)}` : ''}
                     </span>
                   </span>

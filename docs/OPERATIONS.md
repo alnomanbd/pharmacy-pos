@@ -189,7 +189,41 @@ different `BACKUP_REMOTE` — nothing else changes.
 
 The service's log says what each run did: `docker compose logs backup`.
 
-### Putting a backup back
+### Putting one shop back
+
+When one shop deletes the wrong things or an import goes wrong, do it from
+the console: **Shop Detail → Restore from a backup** (permission
+`shops.restore`, in no preset).
+
+1. **Load a backup.** Pick a night and press *Load this backup*. The backup
+   service loads the shop-owned collections of that backup into a side
+   database, `<db>_restore`, in a minute or two. It holds every shop's books
+   from that night, so clear it (*Choose another*) when you are done.
+2. **See what would change.** The card lists, for this shop, what it has now
+   against what the backup holds — products, bills, khata entries and so on.
+3. **Restore.** Type the shop's name and your two-step code. Ask the shop to
+   stop billing first; it takes under a minute.
+
+Put back: stock, bills, khata, suppliers, purchases, cash, expenses, branches,
+counters, staff roles and settings. **Not** put back: staff logins, the
+subscription and its payments, the audit trail, support threads and operator
+notes. Staff keep their accounts; a branch the backup does not have comes off
+their list. The list lives in `apps/api/src/services/shopRestore.service.ts`,
+and a test fails if a new collection carrying a shop is in neither list.
+
+Before anything changes, the shop's current rows are saved as
+`shop-<id>-<time>.ejson.gz` beside the backups and kept for a week. *Put this
+back* under "Before each restore" undoes the restore the same way. If a
+restore stops part way (there is no transaction across collections on a single
+MongoDB server), that is also how to recover.
+
+The console only lists backups still on the server (the last week). For an
+older night, copy it back from Drive first (step 1 below), then load it.
+
+If MongoDB has authentication, the backup service's user needs `readWrite` on
+`<db>_restore`, and the API's user needs to read it and drop it.
+
+### Putting the whole database back
 
 This replaces **every shop's** data with the backup's, so everything sold since
 it was taken is gone. It is for a lost or corrupted database, not one shop's

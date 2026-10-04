@@ -25,6 +25,7 @@ import { overview } from '../services/overview.service.js';
 import { systemStatus } from '../services/system.service.js';
 import { backupState, requestBackup, backupFile } from '../services/backup.service.js';
 import { verifyCode } from '../services/twoFactor.service.js';
+import * as shopRestore from '../services/shopRestore.service.js';
 import { UserModel } from '../models/index.js';
 import { recentClientErrors, clearClientError } from '../services/clientError.service.js';
 import { setupOf } from '../services/onboarding.service.js';
@@ -302,9 +303,7 @@ router.post(
   validate(z.object({ name: z.string().min(1).max(80), code: z.string().trim().min(6).max(20) })),
   async (req, res, next) => {
     try {
-      const user = await UserModel.findById(req.user!.id).select('twoFactorEnabled').lean();
-      if (!user?.twoFactorEnabled) throw forbidden('Turn on two-step sign-in for your account before downloading a backup.');
-      if (!(await verifyCode(req.user!.id, req.body.code))) throw badRequest('That code is not right. Use the current one from your authenticator app.');
+      await requireFreshCode(req);
       const file = await backupFile(req.body.name);
       if (!file) throw badRequest('That backup is not on the server any more.');
       await audit(req, 'platform.backup_downloaded', { model: 'Backup', id: req.body.name, label: req.body.name });
@@ -316,6 +315,58 @@ router.post(
       next(err);
     }
   },
+);
+
+/**
+ * The operator's two-step code, asked again for what hands over or replaces a
+ * shop's books. A stolen session alone is not enough.
+ */
+async function requireFreshCode(req: Request) {
+  const user = await UserModel.findById(req.user!.id).select('twoFactorEnabled').lean();
+  if (!user?.twoFactorEnabled) throw forbidden('Turn on two-step sign-in for your account first.');
+  if (!(await verifyCode(req.user!.id, String(req.body.code ?? '')))) {
+    throw badRequest('That code is not right. Use the current one from your authenticator app.');
+  }
+}
+
+/* ------------------------------ one shop back ------------------------------ */
+
+/*
+ * Putting one shop back from a nightly backup — see shopRestore.service. The
+ * backup is loaded aside first (prepare), the page shows what would change,
+ * then the swap; the shop's rows from just before are kept for "Undo".
+ */
+router.get('/organizations/:id/restore', requirePermission('shops.restore'), handle((req) => shopRestore.restoreState(req.params.id)));
+router.post(
+  '/restore/prepare',
+  requirePermission('shops.restore'),
+  validate(z.object({ archive: z.string().min(1).max(80) })),
+  handle((req) => shopRestore.prepareRestore(req.body.archive, req.user!.name || req.user!.id), 'Loading the backup'),
+);
+router.delete('/restore/prepare', requirePermission('shops.restore'), handle(() => shopRestore.discardStage(), 'Cleared'));
+router.post(
+  '/organizations/:id/restore',
+  requirePermission('shops.restore'),
+  backupDownloadLimiter,
+  validate(z.object({ confirm: z.string().min(1), code: z.string().trim().min(6).max(20) })),
+  handle(async (req) => {
+    await requireFreshCode(req);
+    const r = await shopRestore.applyRestore(req.params.id, req.body.confirm);
+    await audit(req, 'platform.shop_restored', { model: 'Organization', id: req.params.id, label: `from ${r.archive}` }, { after: r.counts });
+    return r;
+  }, 'Shop restored'),
+);
+router.post(
+  '/organizations/:id/restore/undo',
+  requirePermission('shops.restore'),
+  backupDownloadLimiter,
+  validate(z.object({ snapshot: z.string().min(1).max(120), confirm: z.string().min(1), code: z.string().trim().min(6).max(20) })),
+  handle(async (req) => {
+    await requireFreshCode(req);
+    const r = await shopRestore.undoRestore(req.params.id, req.body.snapshot, req.body.confirm);
+    await audit(req, 'platform.shop_restore_undone', { model: 'Organization', id: req.params.id, label: `back to ${r.from}` }, { after: r.counts });
+    return r;
+  }, 'Shop put back'),
 );
 
 router.get(

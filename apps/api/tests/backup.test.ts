@@ -61,6 +61,12 @@ describe('asking for one', () => {
     expect((await requestBackup('Noman', dir)).alreadyQueued).toBe(true);
   });
 
+  it('says the folder is missing, rather than failing as an internal error', async () => {
+    const gone = path.join(dir, 'not-there');
+    await expect(requestBackup('Noman', gone)).rejects.toMatchObject({ statusCode: 400 });
+    await expect(requestBackup('Noman', gone)).rejects.toThrow(/is not on this server/);
+  });
+
   it('keeps a quote in a name from breaking the request file', async () => {
     await requestBackup('A "B"\n', dir);
     expect(JSON.parse(await readFile(path.join(dir, '.request'), 'utf8')).by).toBe('A  B  ');

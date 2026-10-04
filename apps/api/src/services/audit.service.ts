@@ -171,6 +171,8 @@ const PLATFORM_ACTIONS: readonly string[] = [
   'platform.client_errors_cleared',
   'platform.backup_requested',
   'platform.backup_downloaded',
+  'platform.shop_restored',
+  'platform.shop_restore_undone',
 
   /* Selling the Data API. */
   'dataapi.client_create',

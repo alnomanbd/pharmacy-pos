@@ -99,7 +99,8 @@ if [ -n "$REMOTE" ]; then
 fi
 
 # What this server keeps: the last week, by default. Drive keeps the month.
-find "$DIR" -maxdepth 1 -type f \( -name 'dawai-*.archive.gz' -o -name 'uploads-*.tgz' \) \
+# The copies of a shop taken before putting it back (shop-*.ejson.gz) go too.
+find "$DIR" -maxdepth 1 -type f \( -name 'dawai-*.archive.gz' -o -name 'uploads-*.tgz' -o -name 'shop-*.ejson.gz' \) \
   -mtime +"$KEEP_LOCAL" -delete
 
 status ok "$OFFSITE" "$OFFSITE_ERR"

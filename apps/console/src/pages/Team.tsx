@@ -44,7 +44,7 @@ const GROUPS: { title: string; prefix: string }[] = [
 const inAnyGroup = (p: string) => GROUPS.some((g) => p.startsWith(g.prefix));
 
 /** The ones that should never be handed out casually. */
-const DANGEROUS = new Set(['shops.delete', 'plans.manage', 'team.manage', 'dataapi.manage', 'system.backup']);
+const DANGEROUS = new Set(['shops.delete', 'plans.manage', 'team.manage', 'dataapi.manage', 'system.backup', 'shops.restore']);
 
 export default function Team() {
   const { toast } = useToast();

@@ -151,6 +151,9 @@ export const AUDIT_ACTIONS = [
   /** A backup asked for from the console, and one downloaded — every shop's books in one file. */
   'platform.backup_requested',
   'platform.backup_downloaded',
+  /** One shop put back from a backup, or put back as it was before that. */
+  'platform.shop_restored',
+  'platform.shop_restore_undone',
   /** Selling the Data API: a client, a key or a plan changed from the console. */
   'dataapi.client_create',
   'dataapi.client_update',

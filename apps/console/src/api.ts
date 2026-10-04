@@ -265,6 +265,14 @@ export interface BackupRun {
   offsite: 'ok' | 'failed' | 'off' | 'none';
   error: string;
 }
+export interface ShopRestoreState {
+  configured: boolean;
+  shop?: string;
+  stage?: { state: 'queued' | 'running' | 'ready' | 'failed'; archive: string; by: string; startedAt: string; finishedAt: string; error: string } | null;
+  rows?: { key: string; label: string; now: number; backup: number }[] | null;
+  lastBillInBackup?: string | null;
+  snapshots?: { name: string; at: string; size: number }[];
+}
 export type BackupState =
   | { configured: false }
   | {
@@ -878,6 +886,17 @@ export const platformApi = {
     getData<unknown>(api.patch(`/platform/organizations/${shopId}/agent`, { code })),
   system: () => getData<SystemStatus>(api.get('/platform/system')),
   backups: () => getData<BackupState>(api.get('/platform/backups')),
+  shopRestore: (id: string) => getData<ShopRestoreState>(api.get(`/platform/organizations/${id}/restore`)),
+  loadBackupForRestore: (archive: string) => getData(api.post('/platform/restore/prepare', { archive })),
+  clearLoadedBackup: () => getData(api.delete('/platform/restore/prepare')),
+  restoreShop: (id: string, confirm: string, code: string) =>
+    getData<{ archive: string; snapshot: string; counts: Record<string, number> }>(
+      api.post(`/platform/organizations/${id}/restore`, { confirm, code }),
+    ),
+  undoShopRestore: (id: string, snapshot: string, confirm: string, code: string) =>
+    getData<{ from: string; snapshot: string; counts: Record<string, number> }>(
+      api.post(`/platform/organizations/${id}/restore/undo`, { snapshot, confirm, code }),
+    ),
   backupNow: () => getData<{ alreadyQueued: boolean }>(api.post('/platform/backups')),
   /** Needs the operator's current two-step code. The server's refusal arrives as a Blob and is read back here. */
   downloadBackup: (name: string, code: string) =>

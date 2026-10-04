@@ -29,6 +29,7 @@ import ShopBranchesCard from '../components/ShopBranchesCard';
 import ShopAgentCard from '../components/ShopAgentCard';
 import ShopFeaturesCard from '../components/ShopFeaturesCard';
 import ShopLimitsCard, { signupSummary } from '../components/ShopLimitsCard';
+import ShopRestoreCard from '../components/ShopRestoreCard';
 import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock, Spinner } from '@dawai/shared/components/Spinner';
 import Modal from '../components/Modal';
@@ -182,6 +183,7 @@ export default function ShopDetail() {
   const canEdit = can(access, 'shops.edit');
   const canSuspend = can(access, 'shops.suspend');
   const canDelete = can(access, 'shops.delete');
+  const canRestore = can(access, 'shops.restore');
   const canPlan = can(access, 'shops.plan');
   const canViewAs = can(access, 'shops.impersonate');
   const canRecordPayment = can(access, 'payments.verify');
@@ -436,6 +438,8 @@ export default function ShopDetail() {
           </div>
         </dl>
       </div>
+
+      {canRestore && <ShopRestoreCard shopId={id} onRestored={() => void load()} />}
 
       {(canSuspend || canDelete) && (
         <div className="card" style={{ borderColor: 'hsl(var(--destructive) / 0.45)' }}>

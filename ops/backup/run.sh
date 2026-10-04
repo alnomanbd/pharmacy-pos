@@ -1,7 +1,8 @@
 #!/bin/bash
 # The backup container's whole life: a backup every night at BACKUP_AT (server
-# time, TZ), and one whenever the console asks for it by leaving
-# /backups/.request. One loop, so the two can never run over each other.
+# time, TZ), one whenever the console asks for it by leaving /backups/.request,
+# and a backup loaded aside when the console wants to put one shop back
+# (/backups/.stage-request). One loop, so none of them run over each other.
 set -uo pipefail
 
 DIR=${BACKUP_DIR:-/backups}
@@ -17,6 +18,8 @@ while true; do
     rm -f "$DIR/.request"
     backup.sh manual "$who"
   fi
+
+  [ -f "$DIR/.stage-request" ] && stage.sh
 
   today=$(date +%F)
   now=$(date +%H%M)

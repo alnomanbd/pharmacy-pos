@@ -6,8 +6,8 @@
 # See docs/OPERATIONS.md, "Backups".
 FROM alpine:3.20
 RUN apk add --no-cache bash coreutils tar gzip tzdata mongodb-tools rclone
-COPY backup.sh run.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/backup.sh /usr/local/bin/run.sh
+COPY backup.sh run.sh stage.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/backup.sh /usr/local/bin/run.sh /usr/local/bin/stage.sh
 ENV RCLONE_CONFIG=/config/rclone/rclone.conf
 VOLUME ["/backups"]
 CMD ["run.sh"]

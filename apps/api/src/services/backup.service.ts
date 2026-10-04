@@ -117,8 +117,27 @@ export async function requestBackup(by: string, dir = backupDir()) {
   if (state.configured && (state.pending || state.last?.state === 'running')) {
     return { alreadyQueued: true as const };
   }
-  await writeFile(path.join(dir, '.request'), JSON.stringify({ by: by.replace(/["\\\n\r]/g, ' '), at: new Date().toISOString() }));
+  await writeForBackupService(dir, '.request', JSON.stringify({ by: by.replace(/["\\\n\r]/g, ' '), at: new Date().toISOString() }));
   return { alreadyQueued: false as const };
+}
+
+/**
+ * Leave a file for the backup service. The folder is the backup service's
+ * volume; when it is not there, say so rather than fail as an internal error.
+ */
+export async function writeForBackupService(dir: string, name: string, content: string) {
+  try {
+    await writeFile(path.join(dir, name), content);
+  } catch (err) {
+    const code = (err as NodeJS.ErrnoException).code;
+    if (code === 'ENOENT' || code === 'ENOTDIR') {
+      throw badRequest(`The backup folder (${dir}) is not on this server. Is the backup service running? See docs/OPERATIONS.md, "Backups".`);
+    }
+    if (code === 'EACCES' || code === 'EPERM' || code === 'EROFS') {
+      throw badRequest(`The API cannot write to the backup folder (${dir}). Check that the volume is mounted read-write.`);
+    }
+    throw err;
+  }
 }
 
 /** The path of a backup to send, or null — never anything outside the folder. */

@@ -24,6 +24,12 @@ export const PERMISSIONS = [
   /** Permanent deletion. Nothing comes back. */
   'shops.delete',
   /**
+   * Put one shop's books back as they were in a nightly backup. Everything
+   * the shop did since is replaced, so it is in no preset, and asks for the
+   * shop's name and the operator's two-step code.
+   */
+  'shops.restore',
+  /**
    * Correct a shop's own details — its name, address and contact.
    *
    * Separate from `shops.plan`: fixing a misspelled shop name is clerical,
