@@ -37,13 +37,14 @@ const GROUPS: { title: string; prefix: string }[] = [
   { title: 'Catalogue', prefix: 'catalogue.' },
   { title: 'Team', prefix: 'team.' },
   { title: 'Data API', prefix: 'dataapi.' },
+  { title: 'System', prefix: 'system.' },
 ];
 
 /** Whatever no group above claims, so a new permission is never ungrantable. */
 const inAnyGroup = (p: string) => GROUPS.some((g) => p.startsWith(g.prefix));
 
 /** The ones that should never be handed out casually. */
-const DANGEROUS = new Set(['shops.delete', 'plans.manage', 'team.manage', 'dataapi.manage']);
+const DANGEROUS = new Set(['shops.delete', 'plans.manage', 'team.manage', 'dataapi.manage', 'system.backup']);
 
 export default function Team() {
   const { toast } = useToast();

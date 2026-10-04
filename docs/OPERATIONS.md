@@ -108,37 +108,125 @@ before.
 
 ## Backups
 
-There are two things to back up. Neither can be regenerated.
+Two things hold what cannot be regenerated: **the database** (every shop's
+books) and **the `uploads` volume** (shop logos, payment screenshots). The
+`backup` service in docker-compose takes both:
 
-1. **The database**, which holds every shop's books:
+- every night at `BACKUP_AT` (default `02:00`, in `APP_TZ`), and
+- whenever an operator presses **Back up now** on the console's System page.
 
-   ```bash
-   # nightly, from the host
-   docker compose exec -T mongo mongodump --db=dawai --archive --gzip > backups/dawai-$(date +%F).archive.gz
-   # restore
-   docker compose exec -T mongo mongorestore --archive --gzip --drop < backups/dawai-2026-10-01.archive.gz
-   ```
+Each run writes `dawai-<date>_<time>.archive.gz` and `uploads-<date>_<time>.tgz`
+to the `backups` volume, keeps the last `BACKUP_KEEP_LOCAL_DAYS` (7) on the
+server, and copies them, encrypted, to Google Drive, which keeps
+`BACKUP_KEEP_DAYS` (30). The System page shows the last run, turns red if it
+failed or a night was missed, and lets an operator with `system.backup`
+download one after entering their two-step code. Every request and download
+is in the audit trail.
 
-   Keep copies off the server, for at least 30 days, and test a restore every
-   quarter.
+### Setting up Google Drive (once)
 
-   **Tell the console it ran.** The console's System page shows when the last
-   backup finished, but it cannot see a job that runs on the host. Point
-   `BACKUP_MARKER_FILE` at a file the API can read, and touch it as the last
-   step of the nightly backup, only once the dump has succeeded:
+The copy goes through [rclone](https://rclone.org): a Google Drive remote, and
+an encrypting remote on top of it so that what sits in Drive cannot be read by
+anyone who gets into the Google account.
 
-   ```bash
-   docker compose exec -T mongo mongodump --db=dawai --archive --gzip > backups/dawai-$(date +%F).archive.gz \
-     && touch /srv/dawai/backups/.last-backup
-   ```
-
-   With `BACKUP_MARKER_FILE=/srv/dawai/backups/.last-backup` (mounted into the
-   API container), System shows the time, and turns red if a night is missed.
-2. **The `uploads` volume**, which holds shop logos and payment screenshots:
+1. **Sign in to Google, on your own computer.** The server has no browser.
+   Install rclone on a PC ([rclone.org/downloads](https://rclone.org/downloads/))
+   and run:
 
    ```bash
-   docker run --rm -v dawai_uploads:/data -v "$PWD/backups":/out alpine tar czf /out/uploads-$(date +%F).tgz -C /data .
+   rclone authorize "drive"
    ```
+
+   A browser opens; sign in with the Google account the backups should go to,
+   and allow access. rclone prints a token (`{"access_token":...}`). Copy all of it.
+
+2. **Make the two remotes, on the server**, from the folder with docker-compose:
+
+   ```bash
+   mkdir -p ops/backup/rclone
+   docker compose run --rm backup rclone config
+   ```
+
+   - `n` (new remote), name it **`gdrive`**, storage **`drive`**. Leave client
+     id and secret blank, scope **`1`** (full access), leave the rest at the
+     defaults. At "Use web browser to automatically authenticate?" answer
+     **`n`**, and paste the token from step 1.
+   - `n` again, name it **`dawai-crypt`**, storage **`crypt`**, remote
+     **`gdrive:dawai-backups`**, filename encryption **`standard`**, directory
+     name encryption **`true`**. Choose **`g`** to generate a strong
+     passphrase, and generate the salt (password2) too.
+   - `q` to quit.
+
+3. **Write down the two passphrases, somewhere other than this server** — a
+   password manager. If the server is lost, `ops/backup/rclone/rclone.conf` is
+   lost with it, and without those passphrases the backups in Drive are
+   unreadable to you as well. Keeping a copy of `rclone.conf` itself in the
+   same safe place is simplest.
+
+4. **Turn it on** in `.env`, and restart the service:
+
+   ```bash
+   BACKUP_REMOTE=dawai-crypt:
+   ```
+
+   ```bash
+   docker compose up -d backup
+   ```
+
+5. **Check it.** Press **Back up now** on the System page. Within a couple of
+   minutes the Backups card should say "copied to Google Drive". In Drive you
+   will see a `dawai-backups` folder whose file names are scrambled — that is
+   the encryption working. To see them as rclone does:
+
+   ```bash
+   docker compose run --rm backup rclone ls dawai-crypt:
+   ```
+
+A free Google account has 15 GB. Thirty nights of a compressed database stays
+well inside that for a long time; if Drive fills, the copy fails and the System
+page says so. Switching to S3 or Backblaze later is another rclone remote and a
+different `BACKUP_REMOTE` — nothing else changes.
+
+The service's log says what each run did: `docker compose logs backup`.
+
+### Putting a backup back
+
+This replaces **every shop's** data with the backup's, so everything sold since
+it was taken is gone. It is for a lost or corrupted database, not one shop's
+mistake, and is deliberately not a button in the console.
+
+1. Pick the backup. On the server: `docker compose exec backup ls -l /backups`.
+   For an older one, from Drive:
+
+   ```bash
+   docker compose run --rm backup rclone copy dawai-crypt:dawai-2026-10-01_0200.archive.gz /backups/
+   ```
+
+2. Take one of the current state first, in case you need to go back:
+
+   ```bash
+   docker compose exec backup backup.sh manual before-restore
+   ```
+
+3. Stop the API so nothing writes while it runs, restore, start it again:
+
+   ```bash
+   docker compose stop api data-api
+   docker compose exec backup mongorestore --uri="mongodb://mongo:27017"      --archive=/backups/dawai-2026-10-01_0200.archive.gz --gzip --drop
+   docker compose start api data-api
+   ```
+
+4. The uploads, if they were lost too:
+
+   ```bash
+   docker run --rm -v dawai_backups:/b -v dawai_uploads:/data alpine      tar xzf /b/uploads-2026-10-01_0200.tgz -C /data
+   ```
+
+   (The volume names carry the compose project's name — `docker volume ls`
+   shows them.)
+
+Test this on a spare machine every few months. A backup that has never been
+restored is a hope, not a backup.
 
 The medicine catalogue is also kept in this repository. If the database is
 lost, `catalog:restore` brings back the catalogue even without a dump. See

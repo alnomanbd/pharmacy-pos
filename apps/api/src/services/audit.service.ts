@@ -169,6 +169,8 @@ const PLATFORM_ACTIONS: readonly string[] = [
   'user.platform_2fa_reset',
   'platform.site_settings',
   'platform.client_errors_cleared',
+  'platform.backup_requested',
+  'platform.backup_downloaded',
 
   /* Selling the Data API. */
   'dataapi.client_create',

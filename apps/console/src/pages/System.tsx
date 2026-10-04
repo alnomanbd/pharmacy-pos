@@ -7,6 +7,7 @@ import { BTN_OUTLINE, errorMessage } from '../lib/ui';
 import { lastSeen } from '../lib/lastSeen';
 import IncidentsCard from '../components/IncidentsCard';
 import BrowserErrorsCard from '../components/BrowserErrorsCard';
+import BackupsCard from '../components/BackupsCard';
 
 /**
  * Is the platform healthy.
@@ -121,6 +122,8 @@ export default function System() {
           })}
         </div>
       </div>
+
+      <BackupsCard />
 
       <IncidentsCard />
 

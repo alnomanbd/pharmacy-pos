@@ -148,6 +148,9 @@ export const AUDIT_ACTIONS = [
   'user.platform_2fa_reset',
   'platform.site_settings',
   'platform.client_errors_cleared',
+  /** A backup asked for from the console, and one downloaded — every shop's books in one file. */
+  'platform.backup_requested',
+  'platform.backup_downloaded',
   /** Selling the Data API: a client, a key or a plan changed from the console. */
   'dataapi.client_create',
   'dataapi.client_update',

@@ -249,6 +249,31 @@ export interface SystemStatus {
   checkedAt: string;
 }
 
+export interface BackupFile {
+  name: string;
+  kind: 'database' | 'uploads';
+  size: number;
+  at: string;
+}
+export interface BackupRun {
+  state: 'running' | 'ok' | 'failed';
+  reason: string;
+  by: string;
+  startedAt: string;
+  finishedAt: string;
+  remote: string;
+  offsite: 'ok' | 'failed' | 'off' | 'none';
+  error: string;
+}
+export type BackupState =
+  | { configured: false }
+  | {
+      configured: true;
+      last: BackupRun | null;
+      pending: { by: string; at: string } | null;
+      sets: { stamp: string; at: string; database: BackupFile | null; uploads: BackupFile | null }[];
+    };
+
 /** The console's first page. `money` is null without revenue.view. */
 /** What the public website shows that is a business decision — see pages/Website. */
 export interface SiteSettings {
@@ -852,6 +877,24 @@ export const platformApi = {
   assignAgent: (shopId: string, code: string | null) =>
     getData<unknown>(api.patch(`/platform/organizations/${shopId}/agent`, { code })),
   system: () => getData<SystemStatus>(api.get('/platform/system')),
+  backups: () => getData<BackupState>(api.get('/platform/backups')),
+  backupNow: () => getData<{ alreadyQueued: boolean }>(api.post('/platform/backups')),
+  /** Needs the operator's current two-step code. The server's refusal arrives as a Blob and is read back here. */
+  downloadBackup: (name: string, code: string) =>
+    api
+      .post('/platform/backups/download', { name, code }, { responseType: 'blob' })
+      .then((r) => r.data as Blob)
+      .catch(async (e: { response?: { data?: unknown } }) => {
+        const data = e?.response?.data;
+        if (data instanceof Blob) {
+          try {
+            e.response!.data = JSON.parse(await data.text());
+          } catch {
+            /* Not JSON: the caller's fallback words stand. */
+          }
+        }
+        throw e;
+      }),
   clientErrors: () => getData<{ last24h: number; rows: ClientErrorRow[] }>(api.get('/platform/client-errors')),
   clearClientError: (id?: string) => getData<{ ok: boolean }>(api.delete(`/platform/client-errors${id ? `/${id}` : ''}`)),
 

@@ -1,4 +1,6 @@
 import { Router } from 'express';
+import { createReadStream } from 'node:fs';
+import rateLimit from 'express-rate-limit';
 import type { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import * as platform from '../services/platform.service.js';
@@ -21,6 +23,9 @@ import { COUPON_KINDS } from '../models/Coupon.js';
 import * as referrals from '../services/referral.service.js';
 import { overview } from '../services/overview.service.js';
 import { systemStatus } from '../services/system.service.js';
+import { backupState, requestBackup, backupFile } from '../services/backup.service.js';
+import { verifyCode } from '../services/twoFactor.service.js';
+import { UserModel } from '../models/index.js';
 import { recentClientErrors, clearClientError } from '../services/clientError.service.js';
 import { setupOf } from '../services/onboarding.service.js';
 import { branchesPage as branchesPageFor } from '../services/branch.service.js';
@@ -264,6 +269,53 @@ router.delete(
     await audit(req, 'platform.client_errors_cleared', { model: 'ClientError', id: req.params.id ?? 'all', label: req.params.id ? 'One browser error' : 'All browser errors' });
     return r;
   }),
+);
+
+/* --------------------------------- backups --------------------------------- */
+
+/** What is kept on the server, how the last run went, and whether one is waiting. */
+router.get('/backups', requirePermission('system.view'), handle(() => backupState()));
+
+/** One now, as well as tonight's. The backup service picks it up within fifteen seconds. */
+router.post(
+  '/backups',
+  requirePermission('system.backup'),
+  handle(async (req) => {
+    const r = await requestBackup(req.user!.name || req.user!.id);
+    if (!r.alreadyQueued) {
+      await audit(req, 'platform.backup_requested', { model: 'Backup', id: 'now', label: 'Backup asked for' });
+    }
+    return r;
+  }, 'Backup started'),
+);
+
+/*
+ * A download is every shop's books in one file, so it asks for the operator's
+ * two-step code every time — a stolen session alone is not enough — and few
+ * guesses at it.
+ */
+const backupDownloadLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, standardHeaders: true, legacyHeaders: false });
+router.post(
+  '/backups/download',
+  requirePermission('system.backup'),
+  backupDownloadLimiter,
+  validate(z.object({ name: z.string().min(1).max(80), code: z.string().trim().min(6).max(20) })),
+  async (req, res, next) => {
+    try {
+      const user = await UserModel.findById(req.user!.id).select('twoFactorEnabled').lean();
+      if (!user?.twoFactorEnabled) throw forbidden('Turn on two-step sign-in for your account before downloading a backup.');
+      if (!(await verifyCode(req.user!.id, req.body.code))) throw badRequest('That code is not right. Use the current one from your authenticator app.');
+      const file = await backupFile(req.body.name);
+      if (!file) throw badRequest('That backup is not on the server any more.');
+      await audit(req, 'platform.backup_downloaded', { model: 'Backup', id: req.body.name, label: req.body.name });
+      res.setHeader('Content-Type', 'application/octet-stream');
+      res.setHeader('Content-Length', String(file.size));
+      res.setHeader('Content-Disposition', `attachment; filename="${req.body.name}"`);
+      createReadStream(file.path).on('error', next).pipe(res);
+    } catch (err) {
+      next(err);
+    }
+  },
 );
 
 router.get(

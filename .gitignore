@@ -23,3 +23,8 @@ uploads/
 # The catalogue CSV is a build intermediate. The catalogue itself is kept in
 # apps/api/data/catalogue (see docs/CATALOGUE.md).
 apps/api/dgda-products.csv
+
+# rclone's settings on the server: the Google Drive sign-in and the backup
+# encryption passphrase. See docs/OPERATIONS.md, "Backups".
+ops/backup/rclone/
+backups/

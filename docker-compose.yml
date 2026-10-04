@@ -75,9 +75,14 @@ services:
       # The console runs the Data API through here: Data API in the console menu.
       DATA_API_URL: ${DATA_API_URL:-http://data-api:5200}
       DATA_API_ADMIN_TOKEN: ${DATA_API_ADMIN_TOKEN:-}
+      # The backup service's folder: the console lists, asks for and downloads
+      # backups through it, and System reads when the last one finished.
+      BACKUP_DIR: /app/backups
+      BACKUP_MARKER_FILE: /app/backups/.last-backup
     volumes:
       # Shop logos and payment screenshots. Not regenerable; back them up.
       - uploads:/app/uploads
+      - backups:/app/backups
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:5100/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
@@ -155,6 +160,34 @@ services:
       mongo:
         condition: service_healthy
 
+  # Backups: the database and the uploads every night at BACKUP_AT, and on
+  # request from the console's System page. Kept here for a week and copied,
+  # encrypted, to Google Drive (or any rclone remote) for a month. Set up the
+  # remote once with `docker compose run --rm backup rclone config` — see
+  # docs/OPERATIONS.md, "Backups".
+  backup:
+    build: ./ops/backup
+    image: ${DAWAI_REGISTRY:-dawai}/backup:${DAWAI_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      TZ: ${APP_TZ:-Asia/Dhaka}
+      MONGODB_URI: ${BACKUP_MONGODB_URI:-${MONGODB_URI:-mongodb://mongo:27017/dawai}}
+      BACKUP_AT: ${BACKUP_AT:-02:00}
+      BACKUP_REMOTE: ${BACKUP_REMOTE:-}
+      BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-30}
+      BACKUP_KEEP_LOCAL_DAYS: ${BACKUP_KEEP_LOCAL_DAYS:-7}
+    volumes:
+      - backups:/backups
+      - uploads:/uploads:ro
+      # rclone's settings, with the Google Drive sign-in and the encryption
+      # passphrase. On the server only, never in git; keep a copy somewhere safe,
+      # because without the passphrase the backups in Drive cannot be read.
+      - ./ops/backup/rclone:/config/rclone
+    depends_on:
+      mongo:
+        condition: service_healthy
+
 volumes:
   mongo-data:
   uploads:
+  backups:

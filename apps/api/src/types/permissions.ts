@@ -159,6 +159,12 @@ export const PERMISSIONS = [
    * it names the providers and the server's environment.
    */
   'system.view',
+  /**
+   * Take a backup now and download one. A download is every shop's books in a
+   * single file, so it is its own permission, in no preset, and asks for the
+   * operator's two-step code each time.
+   */
+  'system.backup',
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];

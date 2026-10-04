@@ -7,6 +7,7 @@ import { env, isProduction } from '../config/env.js';
 import { emailProvider } from '../integrations/email.js';
 import { smsProvider } from '../integrations/sms.js';
 import { errorReportingActive } from '../integrations/errorReporter.js';
+import { backupState, type BackupRun } from './backup.service.js';
 
 /**
  * Is the platform healthy — the console's System page.
@@ -55,10 +56,15 @@ export function schedulerVerdict(
   return now.getTime() - s.lastRun.startedAt.getTime() > allowed ? 'critical' : 'ok';
 }
 
-/** A backup older than a day and a half has missed a night. */
-export function backupVerdict(lastAt: Date | null, now = new Date()): Verdict {
+/**
+ * A backup older than a day and a half has missed a night. The last run
+ * failing is as bad; one kept here but not copied off the server is not yet.
+ */
+export function backupVerdict(lastAt: Date | null, now = new Date(), last: Pick<BackupRun, 'state' | 'offsite'> | null = null): Verdict {
+  if (last?.state === 'failed') return 'critical';
   if (!lastAt) return 'warning';
-  return now.getTime() - lastAt.getTime() > 1.5 * DAY_MS ? 'critical' : 'ok';
+  if (now.getTime() - lastAt.getTime() > 1.5 * DAY_MS) return 'critical';
+  return last?.offsite === 'failed' || last?.offsite === 'off' ? 'warning' : 'ok';
 }
 
 async function messageCounts(channel: 'email' | 'sms') {
@@ -124,6 +130,8 @@ export async function systemStatus() {
 
   // ---- backups: the nightly job touches a file when it finishes (see OPERATIONS.md)
   const markerPath = process.env.BACKUP_MARKER_FILE?.trim() || '';
+  const backups = await backupState();
+  const lastBackupRun = backups.configured ? backups.last : null;
   let lastBackupAt: Date | null = null;
   if (markerPath) {
     try {
@@ -197,18 +205,24 @@ export async function systemStatus() {
       ? `${browserErrors} different ${browserErrors === 1 ? 'fault' : 'faults'} in shops' and the console's browsers in the last day — listed below`
       : 'None in the last day',
   });
-  const bv = backupVerdict(lastBackupAt, now);
+  const bv = backupVerdict(lastBackupAt, now, lastBackupRun);
   checks.push({
     key: 'backup',
     label: 'Backups',
     verdict: bv,
     detail: !markerPath
       ? 'Not reported to the app — set BACKUP_MARKER_FILE and have the nightly backup touch it (see OPERATIONS.md)'
-      : lastBackupAt
-        ? bv === 'ok'
-          ? 'Up to date'
-          : 'The last one is more than a day and a half old — a night was missed'
-        : `No backup has finished yet (${markerPath} does not exist)`,
+      : lastBackupRun?.state === 'failed'
+        ? `The last backup failed: ${lastBackupRun.error || 'unknown error'}`
+        : !lastBackupAt
+          ? `No backup has finished yet (${markerPath} does not exist)`
+          : now.getTime() - lastBackupAt.getTime() > 1.5 * DAY_MS
+            ? 'The last one is more than a day and a half old — a night was missed'
+            : lastBackupRun?.offsite === 'failed'
+              ? `Kept on this server, but not copied off it: ${lastBackupRun.error || 'the copy failed'}`
+              : lastBackupRun?.offsite === 'off'
+                ? 'Up to date, but kept only on this server — set BACKUP_REMOTE to copy them to Google Drive'
+                : 'Up to date',
   });
 
   const worst: Verdict = checks.some((c) => c.verdict === 'critical')

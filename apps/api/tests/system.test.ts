@@ -30,4 +30,11 @@ describe('backups', () => {
     expect(backupVerdict(minsAgo(37 * 60), now)).toBe('critical');
     expect(backupVerdict(null, now)).toBe('warning');
   });
+
+  it('are a problem when the last run failed, and a warning when not copied off the server', () => {
+    expect(backupVerdict(minsAgo(20 * 60), now, { state: 'failed', offsite: 'none' })).toBe('critical');
+    expect(backupVerdict(minsAgo(20 * 60), now, { state: 'ok', offsite: 'failed' })).toBe('warning');
+    expect(backupVerdict(minsAgo(20 * 60), now, { state: 'ok', offsite: 'off' })).toBe('warning');
+    expect(backupVerdict(minsAgo(20 * 60), now, { state: 'ok', offsite: 'ok' })).toBe('ok');
+  });
 });
