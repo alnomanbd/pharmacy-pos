@@ -602,7 +602,7 @@ export default function PlatformLayout() {
               </div>
 
               <button
-                className="tb-icon-btn"
+                className="tb-icon-btn tb-hide-phone"
                 onClick={toggleFullscreen}
                 title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
                 aria-label="Toggle fullscreen"
@@ -651,7 +651,7 @@ export default function PlatformLayout() {
                 >
                   <span className="tb-avatar">{initials}</span>
                   <ChevronDown
-                    className={`h-3.5 w-3.5 text-muted-foreground transition-transform${
+                    className={`tb-hide-phone h-3.5 w-3.5 text-muted-foreground transition-transform${
                       menuOpen ? ' rotate-180' : ''
                     }`}
                   />

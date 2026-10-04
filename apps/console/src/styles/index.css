@@ -478,6 +478,7 @@ body {
 
 .topbar-brand {
   display: flex;
+  min-width: 0px;
   align-items: center;
   gap: .625rem;
 }
@@ -530,8 +531,20 @@ body {
 .topbar-actions {
   margin-left: auto;
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   gap: .25rem;
+}
+
+/*
+ * What a phone's top bar leaves out, so the bar fits a 320px screen: the
+ * fullscreen button (phones barely support it — iPhones not at all) and the
+ * chevron beside the avatar. Everything else stays.
+ */
+@media (max-width: 639px) {
+.tb-hide-phone {
+  display: none !important;
+}
 }
 
 @media (min-width: 640px) {
