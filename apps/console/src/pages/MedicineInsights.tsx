@@ -234,7 +234,7 @@ function TopTable({ data }: { data: Insights }) {
           type="button"
           className={BTN_OUTLINE}
           onClick={() =>
-            downloadCsv(
+            void downloadCsv(
               `dawai-medicines-${data.range.from}-${data.range.to}.csv`,
               ['Brand', 'Strength', 'Form', 'Generic', 'Company', 'Pieces', 'Pieces before', 'Change %', 'Shops', 'Shareable'],
               data.top.map((m) => [m.brand, m.strength, m.form, m.generic, m.company, m.pieces, m.piecesBefore, m.change ?? '', m.shops, m.shareable ? 'yes' : 'no']),

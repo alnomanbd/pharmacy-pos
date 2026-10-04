@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Eye, KeyRound, Loader2, Pencil, ShieldAlert, ShieldOff, X } from 'lucide-react';
 import { platformApi } from '../api';
 import { useToast } from '@dawai/shared/components/Toast';
+import { confirmAction } from '@dawai/shared/lib/confirm';
 import type { User } from '@dawai/shared/types';
 import { openSupportView } from '../lib/supportView';
 
@@ -214,6 +215,15 @@ export default function ShopUserActions({
   }
 
   const viewAs = async () => {
+    if (
+      !(await confirmAction({
+        title: `View the shop as ${user.name}?`,
+        message: 'The shop app opens in a new tab as them, read-only for 30 minutes, and it is recorded in the audit trail.',
+        confirmLabel: `View as ${user.name}`,
+        icon: 'question',
+      }))
+    )
+      return;
     setBusy(true);
     try {
       const shop = await openSupportView(shopId, user._id);

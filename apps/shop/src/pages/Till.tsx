@@ -68,7 +68,7 @@ import {
   shelfSearch,
   type PendingSale,
 } from '../offline';
-import { useT, useLangStore } from '../i18n/ui';
+import { useT, useNumerals, useLangStore } from '../i18n/ui';
 import { useShortcuts, SHORTCUT_HELP } from '../pos/useShortcuts';
 import { heldBills, hold, drop, labelFor, onHeldChange, type HeldBill } from '../pos/held';
 import { quickPicks, remember } from '../pos/quickPicks';
@@ -76,6 +76,7 @@ import Receipt from '../components/Receipt';
 import ReturnBill from '../components/ReturnBill';
 import CustomerPicker, { type CustomerPickerHandle } from '../pos/CustomerPicker';
 import Modal from '../components/Modal';
+import { confirmAction } from '@dawai/shared/lib/confirm';
 import Clock from '../components/Clock';
 import RecentBills from '../pos/RecentBills';
 import AlertBell from '../alerts/AlertBell';
@@ -183,6 +184,7 @@ export default function Till() {
   /* The bell's stock alerts are for whoever looks after the shelves. */
   const runsTheShop = useCan()('stock.view');
   const t = useT();
+  const { num, stop } = useNumerals();
   const { toast } = useToast();
   const navigate = useNavigate();
   const { theme, toggle: toggleTheme } = useTheme();
@@ -500,6 +502,23 @@ export default function Till() {
     searchRef.current?.focus();
   }, []);
 
+  /* What Clear and Escape do: `clear` itself stays silent, because a sale
+     finished or a bill put aside empties the counter on purpose. */
+  const confirmClear = useCallback(async () => {
+    if (lines.length === 0) return;
+    if (
+      !(await confirmAction({
+        title: t('Clear this bill?'),
+        message: `${num(lines.length)} ${t(lines.length === 1 ? 'line' : 'lines')}${stop} ${t('The lines, the customer and the payment are all removed.')}`,
+        confirmLabel: t('Clear the bill'),
+        tone: 'danger',
+        icon: 'delete',
+      }))
+    )
+      return;
+    clear();
+  }, [lines.length, clear, t, num, stop]);
+
   /* ---- bills put aside ---- */
 
   const park = useCallback(() => {
@@ -783,7 +802,7 @@ export default function Till() {
           setQ('');
           return searchRef.current?.focus();
         }
-        if (lines.length > 0) clear();
+        if (lines.length > 0) void confirmClear();
       },
       ArrowDown: () => {
         if (hits.length > 0) setHitAt((i) => Math.min(hits.length - 1, i + 1));
@@ -1822,7 +1841,7 @@ export default function Till() {
         <BarKey
           k="Esc"
           label={t('Clear')}
-          onClick={clear}
+          onClick={() => void confirmClear()}
           icon={X}
           disabled={lines.length === 0}
         />
@@ -2087,6 +2106,7 @@ function HeldSheet({
   onClose: () => void;
 }) {
   const t = useT();
+  const { num, stop } = useNumerals();
   return (
     <Modal onClose={onClose} className="w-full max-w-md">
         <div className="mb-3 flex items-start justify-between gap-3">
@@ -2125,7 +2145,19 @@ function HeldSheet({
                 </button>
                 <button
                   type="button"
-                  onClick={() => drop(b.id)}
+                  onClick={async () => {
+                    if (
+                      !(await confirmAction({
+                        title: `${t('Delete the bill put aside')} “${b.label}”?`,
+                        message: `${num(b.lines.length)} ${t(b.lines.length === 1 ? 'line' : 'lines')} · ${taka(b.total)}${stop} ${t('It cannot be brought back.')}`,
+                        confirmLabel: t('Delete it'),
+                        tone: 'danger',
+                        icon: 'delete',
+                      }))
+                    )
+                      return;
+                    drop(b.id);
+                  }}
                   aria-label={t('Remove')}
                   className="rounded p-2 text-muted-foreground hover:text-destructive"
                 >

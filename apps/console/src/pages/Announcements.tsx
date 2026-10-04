@@ -5,6 +5,7 @@ import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import Modal from '../components/Modal';
 import { BTN_ICON, BTN_SECONDARY, errorMessage } from '../lib/ui';
+import { confirmAction } from '@dawai/shared/lib/confirm';
 
 /**
  * Messages from the team across the top of every shop's app.
@@ -138,6 +139,17 @@ export default function Announcements() {
   };
 
   const toggle = async (a: AnnouncementRow) => {
+    const who = a.plans.length ? `every shop on ${a.plans.map(planName).join(', ')}` : 'every shop';
+    if (
+      !(await confirmAction({
+        title: a.active ? `Take down “${a.title}”?` : `Turn on “${a.title}”?`,
+        message: a.active ? `It disappears for ${who} at once.` : `It shows to ${who} the next time they open the app.`,
+        confirmLabel: a.active ? 'Take it down' : 'Turn it on',
+        tone: 'danger',
+        icon: a.active ? 'close' : 'send',
+      }))
+    )
+      return;
     try {
       await platformApi.updateAnnouncement(a._id, { active: !a.active });
       toast(a.active ? 'Taken down.' : 'Back on.');
@@ -148,7 +160,16 @@ export default function Announcements() {
   };
 
   const remove = async (a: AnnouncementRow) => {
-    if (!window.confirm(`Delete “${a.title}”? Shops stop seeing it at once.`)) return;
+    if (
+      !(await confirmAction({
+        title: `Delete “${a.title}”?`,
+        message: 'Shops stop seeing it at once.',
+        confirmLabel: 'Delete',
+        tone: 'danger',
+        icon: 'delete',
+      }))
+    )
+      return;
     try {
       await platformApi.deleteAnnouncement(a._id);
       toast('Deleted.');

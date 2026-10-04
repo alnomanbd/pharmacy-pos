@@ -6,6 +6,7 @@ import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import Modal from '../components/Modal';
 import { BTN_ICON, BTN_OUTLINE, BTN_SECONDARY, errorMessage } from '../lib/ui';
 import { lastSeen } from '../lib/lastSeen';
+import { confirmAction } from '@dawai/shared/lib/confirm';
 
 /**
  * The help articles shops read in their app, written here.
@@ -76,7 +77,16 @@ export default function HelpArticles() {
   };
 
   const remove = async (a: HelpRow) => {
-    if (!window.confirm(`Delete “${a.title}”? Shops stop seeing it at once.`)) return;
+    if (
+      !(await confirmAction({
+        title: `Delete “${a.title}”?`,
+        message: 'Shops stop seeing it at once.',
+        confirmLabel: 'Delete',
+        tone: 'danger',
+        icon: 'delete',
+      }))
+    )
+      return;
     try {
       await platformApi.deleteHelpArticle(a._id);
       await load();

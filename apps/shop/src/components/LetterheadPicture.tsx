@@ -3,6 +3,7 @@ import { ImagePlus, Loader2, RefreshCw, Trash2 } from 'lucide-react';
 import { letterheadApi, type LetterheadSlot } from '../api';
 import { useToast } from '@dawai/shared/components/Toast';
 import { useT } from '../i18n/ui';
+import { confirmAction } from '@dawai/shared/lib/confirm';
 
 /**
  * One picture on the A4 sheet — the logo, or the shop's letterhead header or
@@ -78,6 +79,16 @@ export default function LetterheadPicture({
   };
 
   const remove = async () => {
+    if (
+      !(await confirmAction({
+        title: `${t('Remove the picture')} — ${label}?`,
+        message: t('It is deleted and comes off the printed sheet. To have it back, upload it again.'),
+        confirmLabel: t('Remove it'),
+        tone: 'danger',
+        icon: 'delete',
+      }))
+    )
+      return;
     setBusy(true);
     try {
       await letterheadApi.remove(slot);

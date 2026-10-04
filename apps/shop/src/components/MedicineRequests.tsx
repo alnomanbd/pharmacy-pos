@@ -5,6 +5,7 @@ import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import { medicineRequestsApi, type MedicineRequest, type MedicineRequestInput } from '../api';
 import { useT, useUiLang, bnNumerals } from '../i18n/ui';
 import Modal from './Modal';
+import { confirmAction } from '@dawai/shared/lib/confirm';
 
 /**
  * Asking Dawai for a medicine the catalogue does not have.
@@ -197,6 +198,16 @@ export function MedicineRequestsPanel({
   }, [load]);
 
   const withdraw = async (r: MedicineRequest) => {
+    if (
+      !(await confirmAction({
+        title: `${t('Withdraw the request for')} ${[r.brandName, r.strength].filter(Boolean).join(' ')}?`,
+        message: t('It is taken out of the queue and nobody looks at it. Ask again if you still need it.'),
+        confirmLabel: t('Withdraw it'),
+        tone: 'danger',
+        icon: 'delete',
+      }))
+    )
+      return;
     setWithdrawing(r._id);
     try {
       await medicineRequestsApi.withdraw(r._id);

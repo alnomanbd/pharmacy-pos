@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { platformApi, fileObjectUrl, downloadBlob } from '../api';
 import { useToast } from '@dawai/shared/components/Toast';
+import { confirmAction } from '@dawai/shared/lib/confirm';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import type { Payment } from '@dawai/shared/types';
 
@@ -116,6 +117,25 @@ export default function Payments() {
   }, [status]);
 
   const act = async (p: Payment, verify: boolean) => {
+    const shop = nameOf(p.organization);
+    const months = `${p.months} month${p.months === 1 ? '' : 's'}`;
+    const ok = await confirmAction(
+      verify
+        ? {
+            title: `Accept ${taka(p.amount)} from ${shop}?`,
+            message: `Their ${p.plan} subscription is extended by ${months}. Only accept it once it has reached the account.`,
+            confirmLabel: `Accept ${taka(p.amount)}`,
+            tone: 'danger',
+          }
+        : {
+            title: `Reject ${taka(p.amount)} from ${shop}?`,
+            message: 'The shop is told it could not be matched to a received payment, and their subscription is not extended.',
+            confirmLabel: 'Reject the payment',
+            tone: 'danger',
+            icon: 'close',
+          },
+    );
+    if (!ok) return;
     setBusyId(p._id);
     try {
       if (verify) {

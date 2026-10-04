@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { TicketPercent, Plus, Pencil, Gift, Loader2, CheckCircle2 } from 'lucide-react';
 import { platformApi, type CouponRow, type ReferralRow, type ShopPlan } from '../api';
 import { useToast } from '@dawai/shared/components/Toast';
+import { confirmAction } from '@dawai/shared/lib/confirm';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import Modal from '../components/Modal';
 import { BTN_ICON, BTN_OUTLINE, BTN_SECONDARY, can, errorMessage, useAccess } from '../lib/ui';
@@ -132,6 +133,16 @@ export default function Discounts() {
   };
 
   const toggle = async (c: CouponRow) => {
+    if (
+      c.active &&
+      !(await confirmAction({
+        title: `Turn off ${c.code}?`,
+        message: 'Shops that type it when paying are told it is not valid; payments already made keep their discount.',
+        confirmLabel: 'Turn it off',
+        tone: 'danger',
+      }))
+    )
+      return;
     try {
       await platformApi.updateCoupon(c._id, { active: !c.active });
       await load();

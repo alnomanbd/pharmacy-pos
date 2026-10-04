@@ -11,6 +11,7 @@ import type { PlatformMember, PermissionPreset } from '@dawai/shared/types';
 import Modal from '../components/Modal';
 import { BTN_OUTLINE, BTN_OUTLINE_DANGER, BTN_SECONDARY, errorMessage } from '../lib/ui';
 import { lastSeen } from '../lib/lastSeen';
+import { confirmAction } from '@dawai/shared/lib/confirm';
 
 /**
  * The people who run this deployment.
@@ -133,6 +134,16 @@ export default function Team() {
   };
 
   const toggleActive = async (m: PlatformMember) => {
+    if (
+      m.isActive !== false &&
+      !(await confirmAction({
+        title: `Disable ${m.name}?`,
+        message: 'They are locked out of the console at once, until somebody enables them again.',
+        confirmLabel: `Disable ${m.name}`,
+        tone: 'danger',
+      }))
+    )
+      return;
     setBusy(m._id);
     try {
       const on = m.isActive !== false;
@@ -283,7 +294,16 @@ export default function Team() {
     }
   };
   const deleteRole = async (r: PlatformRole) => {
-    if (!window.confirm(`Delete the role “${r.name}”?`)) return;
+    if (
+      !(await confirmAction({
+        title: `Delete the role “${r.name}”?`,
+        message: 'Nobody can be given it again. People who have it keep their access until you change it.',
+        confirmLabel: 'Delete the role',
+        tone: 'danger',
+        icon: 'delete',
+      }))
+    )
+      return;
     try {
       await platformApi.deleteTeamRole(r.id);
       toast('Role deleted.');

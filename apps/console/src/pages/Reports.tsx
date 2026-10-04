@@ -236,7 +236,7 @@ function TableCard({
           <button
             type="button"
             className={BTN_OUTLINE}
-            onClick={() => downloadCsv(file, head, rows.map((r) => r.raw ?? r.cells.map((c) => String(c ?? ''))))}
+            onClick={() => void downloadCsv(file, head, rows.map((r) => r.raw ?? r.cells.map((c) => String(c ?? ''))))}
           >
             <Download className="h-3.5 w-3.5" /> CSV
           </button>
@@ -304,7 +304,7 @@ function DailyTable({
           <button type="button" className={BTN_OUTLINE} onClick={() => setOpen((v) => !v)}>
             {open ? 'Hide' : 'Show'} the table
           </button>
-          <button type="button" className={BTN_OUTLINE} onClick={() => downloadCsv(file, ['Day', ...cols], rows.map((p) => [p.dayKey, ...cells(p)]))}>
+          <button type="button" className={BTN_OUTLINE} onClick={() => void downloadCsv(file, ['Day', ...cols], rows.map((p) => [p.dayKey, ...cells(p)]))}>
             <Download className="h-3.5 w-3.5" /> CSV
           </button>
         </div>

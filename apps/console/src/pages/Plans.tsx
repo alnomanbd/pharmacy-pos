@@ -3,6 +3,7 @@ import { Tags, Plus, Save, Archive, Users, Monitor, Store, X } from 'lucide-reac
 import { platformApi, PLAN_FEATURES, type ShopPlan as Plan, type PlanFeatures } from '../api';
 import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
+import { confirmAction } from '@dawai/shared/lib/confirm';
 
 /**
  * The plan catalogue.
@@ -21,6 +22,8 @@ const LIMITS = [
   { key: 'shopUsers', label: 'Staff logins', icon: Users },
   { key: 'outlets', label: 'Branches (max)', icon: Store },
 ] as const;
+
+const taka = (n: number) => `৳ ${Math.round(n).toLocaleString('en-BD')}`;
 
 const EMPTY = {
   key: '',
@@ -74,6 +77,18 @@ export default function Plans() {
     }
   };
 
+  /**
+   * The table's inputs save when they lose focus, and a saved change reaches
+   * every shop on the plan at once — so ask, and on a no put back what is saved.
+   */
+  const change = async (input: HTMLInputElement, saved: string, p: Plan, patch: Record<string, unknown>, title: string, message: string) => {
+    if (!(await confirmAction({ title, message, confirmLabel: 'Save the change', tone: 'danger' }))) {
+      input.value = saved;
+      return;
+    }
+    await save(p.id, patch);
+  };
+
   const create = async () => {
     if (!draft.key.trim() || !draft.name.trim()) {
       toast('A key and a name are required.', 'error');
@@ -94,6 +109,16 @@ export default function Plans() {
   };
 
   const retire = async (p: Plan) => {
+    if (
+      !(await confirmAction({
+        title: `Retire ${p.name}?`,
+        message: 'It comes off the price list, so no shop can choose it again; shops already on it keep their limits.',
+        confirmLabel: `Retire ${p.name}`,
+        tone: 'danger',
+        icon: 'warning',
+      }))
+    )
+      return;
     setBusy(p.id);
     try {
       await platformApi.retirePlan(p.id);
@@ -276,7 +301,8 @@ export default function Plans() {
                             style={{ width: 130 }}
                             defaultValue={p.name}
                             onBlur={(e) =>
-                              e.target.value !== p.name && save(p.id, { name: e.target.value })
+                              e.target.value !== p.name &&
+                              void change(e.target, p.name, p, { name: e.target.value }, `Rename ${p.name} to “${e.target.value}”?`, 'Every shop on this plan sees the new name.')
                             }
                           />
                           <span className="mt-0.5 block font-mono text-[11px] text-muted-foreground">
@@ -297,7 +323,14 @@ export default function Plans() {
                               defaultValue={p.price}
                               onBlur={(e) =>
                                 Number(e.target.value) !== p.price &&
-                                save(p.id, { price: Number(e.target.value) })
+                                void change(
+                                  e.target,
+                                  String(p.price),
+                                  p,
+                                  { price: Number(e.target.value) },
+                                  `Change ${p.name} from ${taka(p.price)} to ${taka(Number(e.target.value))} a month?`,
+                                  'Every shop on this plan is quoted the new price from their next payment.',
+                                )
                               }
                             />
                           )}
@@ -318,7 +351,15 @@ export default function Plans() {
                                 disabled={busy === p.id}
                                 onBlur={(e) => {
                                   const v = Math.max(1, Number(e.target.value) || 1);
-                                  if (v !== (p.includedBranches ?? 1)) save(p.id, { includedBranches: v });
+                                  if (v !== (p.includedBranches ?? 1))
+                                    void change(
+                                      e.target,
+                                      String(p.includedBranches ?? 1),
+                                      p,
+                                      { includedBranches: v },
+                                      `Include ${v} branch${v === 1 ? '' : 'es'} in ${p.name}’s price?`,
+                                      'Every shop on this plan is billed for its branches this way from their next payment.',
+                                    );
                                 }}
                               />
                               <span className="text-xs text-muted-foreground">·</span>
@@ -332,7 +373,15 @@ export default function Plans() {
                                 disabled={busy === p.id}
                                 onBlur={(e) => {
                                   const v = Math.max(0, Number(e.target.value) || 0);
-                                  if (v !== (p.extraBranchPrice ?? 0)) save(p.id, { extraBranchPrice: v });
+                                  if (v !== (p.extraBranchPrice ?? 0))
+                                    void change(
+                                      e.target,
+                                      String(p.extraBranchPrice ?? 0),
+                                      p,
+                                      { extraBranchPrice: v },
+                                      `Charge ${taka(v)} a month per extra branch on ${p.name}?`,
+                                      'Every shop on this plan with more branches is billed the new amount from their next payment.',
+                                    );
                                 }}
                               />
                             </span>
@@ -351,7 +400,14 @@ export default function Plans() {
                               onBlur={(e) => {
                                 const next = parseLimit(e.target.value);
                                 if (next !== (p.limits[l.key] ?? null)) {
-                                  save(p.id, { limits: { [l.key]: next } });
+                                  void change(
+                                    e.target,
+                                    limitValue(p.limits[l.key]),
+                                    p,
+                                    { limits: { [l.key]: next } },
+                                    `Set ${l.label.toLowerCase()} on ${p.name} to ${next === null ? 'unlimited' : next}?`,
+                                    'Every shop on this plan is held to it at once.',
+                                  );
                                 }
                               }}
                             />
@@ -364,7 +420,21 @@ export default function Plans() {
                                 type="checkbox"
                                 checked={!!p.features?.[f.key]}
                                 disabled={busy === p.id}
-                                onChange={(e) => save(p.id, { features: { [f.key]: e.target.checked } })}
+                                onChange={async (e) => {
+                                  // Controlled: until the answer is yes, the box stays as saved.
+                                  const on = e.target.checked;
+                                  if (
+                                    await confirmAction({
+                                      title: `${on ? 'Include' : 'Take'} ${f.label} ${on ? 'in' : 'out of'} ${p.name}?`,
+                                      message: on
+                                        ? 'Every shop on this plan gets it at once.'
+                                        : 'Every shop on this plan loses it at once, unless it is switched on for that shop alone.',
+                                      confirmLabel: on ? `Include ${f.label}` : `Take ${f.label} out`,
+                                      tone: 'danger',
+                                    })
+                                  )
+                                    await save(p.id, { features: { [f.key]: on } });
+                                }}
                               />
                               <span className="text-xs text-muted-foreground">{p.features?.[f.key] ? 'included' : 'not included'}</span>
                             </label>

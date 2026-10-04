@@ -1,0 +1,153 @@
+/* The one "are you sure?" dialog — beside the component so no app can leave it unstyled. */
+.cfm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: hsl(220 30% 8% / 0.5);
+  backdrop-filter: blur(3px);
+  animation: cfm-fade 0.12s ease-out;
+}
+
+.cfm {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  padding: 22px 22px 18px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 18px;
+  background: hsl(var(--card));
+  color: hsl(var(--foreground));
+  box-shadow: 0 30px 70px -20px hsl(220 40% 10% / 0.45);
+  text-align: center;
+  animation: cfm-pop 0.16s ease-out;
+}
+
+@keyframes cfm-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes cfm-pop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cfm-backdrop,
+  .cfm {
+    animation: none;
+  }
+}
+
+.cfm-x {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  color: hsl(var(--muted-foreground));
+}
+
+.cfm-x:hover {
+  background: hsl(var(--muted));
+  color: hsl(var(--foreground));
+}
+
+.cfm-icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 12px;
+  border-radius: 999px;
+  background: hsl(var(--primary) / 0.12);
+  color: hsl(var(--primary));
+}
+
+.cfm-icon.is-danger {
+  background: hsl(var(--destructive) / 0.12);
+  color: hsl(var(--destructive));
+}
+
+.cfm-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.cfm-message {
+  margin-top: 6px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: hsl(var(--muted-foreground));
+}
+
+.cfm-message b,
+.cfm-message strong {
+  color: hsl(var(--foreground));
+}
+
+.cfm-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.cfm-btn {
+  min-height: 42px;
+  padding: 8px 12px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 11px;
+  background: hsl(var(--card));
+  font-size: 14px;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  cursor: pointer;
+  transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+
+.cfm-btn:hover {
+  background: hsl(var(--muted));
+}
+
+.cfm-btn:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+.cfm-btn--primary {
+  border-color: hsl(var(--primary));
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+.cfm-btn--primary:hover {
+  background: hsl(var(--primary) / 0.9);
+}
+
+.cfm-btn--danger {
+  border-color: hsl(var(--destructive));
+  background: hsl(var(--destructive));
+  color: hsl(var(--destructive-foreground, 0 0% 100%));
+}
+
+.cfm-btn--danger:hover {
+  background: hsl(var(--destructive) / 0.9);
+}
+
+@media print {
+  .cfm-backdrop {
+    display: none !important;
+  }
+}

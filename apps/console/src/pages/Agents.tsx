@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { UserRoundSearch, Plus, Pencil, Copy, Loader2, Phone, Wallet } from 'lucide-react';
 import { platformApi, type AgentRow, type AgentDetail } from '../api';
 import { useToast } from '@dawai/shared/components/Toast';
+import { confirmAction } from '@dawai/shared/lib/confirm';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import Modal from '../components/Modal';
 import { BTN_ICON, BTN_OUTLINE, BTN_SECONDARY, errorMessage } from '../lib/ui';
@@ -88,6 +89,15 @@ export default function Agents() {
 
   const payOut = async () => {
     if (!detail || !picked.length) return;
+    if (
+      !(await confirmAction({
+        title: `Mark ${taka(pickedTotal)} paid to ${detail.agent.name}?`,
+        message: `${picked.length === 1 ? 'That commission line stops' : `Those ${picked.length} commission lines stop`} showing as owed, recorded against “${payoutRef.trim()}”.`,
+        confirmLabel: `Mark ${taka(pickedTotal)} paid`,
+        tone: 'danger',
+      }))
+    )
+      return;
     setBusy(true);
     try {
       const r = await platformApi.payAgent(detail.agent._id, picked, payoutRef.trim());

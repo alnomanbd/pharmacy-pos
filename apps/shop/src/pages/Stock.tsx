@@ -34,11 +34,12 @@ import {
 } from '../api';
 import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
-import { useT, useUiLang, bnNumerals } from '../i18n/ui';
+import { useT, useNumerals, useUiLang, bnNumerals } from '../i18n/ui';
 import Pager from '../components/Pager';
 import Modal from '../components/Modal';
 import MedicineInfo from '../components/MedicineInfo';
 import ExportCsv from '../components/ExportCsv';
+import { confirmAction } from '@dawai/shared/lib/confirm';
 import ConfirmWithReason from '../components/ConfirmWithReason';
 import { useAlertStore } from '../alerts/useStockAlerts';
 import { fetchBranchSwitcher } from '../branch';
@@ -877,6 +878,7 @@ function Batches({
 }) {
   const productId = product._id;
   const t = useT();
+  const { num, stop } = useNumerals();
   const { toast } = useToast();
   const [batches, setBatches] = useState<StockBatch[] | null>(null);
   const [busy, setBusy] = useState(false);
@@ -915,6 +917,18 @@ function Batches({
   const adjust = async (batchId: string) => {
     const n = Number(qty);
     if (!n) return;
+    const batch = batches?.find((b) => b._id === batchId);
+    const why = move === 'damage' ? 'Damaged' : move === 'expiry' ? 'Expired' : 'Count was wrong';
+    if (
+      !(await confirmAction({
+        title: t('Take these pieces off stock?'),
+        message: `${num(Math.abs(n))} ${t('pieces')} · ${product.name}${batch?.batchNo ? ` (${batch.batchNo})` : ''} · ${t(why)}: ${reason.trim()}${stop} ${t('They leave stock now, and the ledger keeps your name against it.')}`,
+        confirmLabel: t('Take them off'),
+        tone: 'danger',
+        icon: 'warning',
+      }))
+    )
+      return;
     setBusy(true);
     try {
       await shopApi.adjust({ batchId, qtyDelta: -Math.abs(n), move, reason: reason.trim() });
@@ -1077,7 +1091,7 @@ function Batches({
               disabled={busy || !qty || reason.trim().length < 2}
               onClick={() => void adjust(adjusting)}
             >
-              {busy && <Loader2 className="h-4 w-4 animate-spin" />} Take off
+              {busy && <Loader2 className="h-4 w-4 animate-spin" />} {t('Take off')}
             </button>
             <p className="text-[11px] text-muted-foreground sm:col-span-4">
               <TriangleAlert className="mr-1 inline h-3 w-3" />

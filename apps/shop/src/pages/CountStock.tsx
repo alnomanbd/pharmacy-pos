@@ -18,8 +18,9 @@ import {
   type StockCountSummary,
 } from '../api';
 import { useToast } from '@dawai/shared/components/Toast';
-import { useT } from '../i18n/ui';
+import { useT, useNumerals } from '../i18n/ui';
 import Modal from '../components/Modal';
+import { confirmAction } from '@dawai/shared/lib/confirm';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
 
 /**
@@ -43,6 +44,7 @@ import { LoadingBlock } from '@dawai/shared/components/Spinner';
  */
 export default function CountStock() {
   const t = useT();
+  const { num, stop } = useNumerals();
   const { toast } = useToast();
   const [sheet, setSheet] = useState<StockCount | null>(null);
   const [history, setHistory] = useState<StockCountSummary[]>([]);
@@ -143,6 +145,16 @@ export default function CountStock() {
 
   const drop = async () => {
     if (!sheet) return;
+    if (
+      !(await confirmAction({
+        title: t('Drop this count?'),
+        message: `${num(totals.counted)} / ${num(totals.of)} ${t('counted')}${stop} ${t('Everything counted so far is thrown away — nothing on the shelf changes.')}`,
+        confirmLabel: t('Drop the count'),
+        tone: 'danger',
+        icon: 'delete',
+      }))
+    )
+      return;
     setBusy(true);
     try {
       await shopApi.abandonCount(sheet._id);

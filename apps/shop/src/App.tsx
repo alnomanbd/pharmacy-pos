@@ -2,6 +2,8 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from '@dawai/shared/store/auth.store';
 import { useBanglaKeyboard } from '@dawai/shared/store/banglaKeyboard.store';
 import { BanglaKeyboard } from '@dawai/shared/components/BanglaKeyboard';
+import ConfirmHost from '@dawai/shared/components/ConfirmHost';
+import { useT } from './i18n/ui';
 import Login from './pages/Login';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
@@ -83,10 +85,17 @@ function KeyboardHost() {
   return open ? <BanglaKeyboard onClose={close} /> : null;
 }
 
+/** The one "are you sure?" dialog — see shared/lib/confirm — in the shop's language. */
+function ConfirmAsker() {
+  const t = useT();
+  return <ConfirmHost cancelLabel={t('Cancel')} />;
+}
+
 export default function App() {
   return (
     <>
     <KeyboardHost />
+    <ConfirmAsker />
     {/* Above every screen, the till included, for as long as a support view lasts. */}
     <SupportViewBanner />
     {/* The team's announcements, also above every screen. */}

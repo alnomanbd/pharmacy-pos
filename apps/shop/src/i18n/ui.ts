@@ -1,6 +1,8 @@
+import { useMemo } from 'react';
 import { makeUseT } from '@dawai/shared/i18n/lang';
 
 export { useLangStore, useUiLang, type UiLang } from '@dawai/shared/i18n/lang';
+import { useUiLang } from '@dawai/shared/i18n/lang';
 import { bnNumerals as bnDigits } from '@dawai/shared/i18n/lang';
 
 /*
@@ -173,6 +175,18 @@ const bn: Record<string, string> = {
   Save: 'সেভ করুন',
   Close: 'বন্ধ করুন',
   Cancel: 'বাতিল',
+  'Export the sales register?': 'বিক্রির খাতা এক্সপোর্ট করবেন?',
+  'Every bill in the dates on screen — amounts, payments and customers — is saved as a file on this computer.':
+    'স্ক্রিনে দেখানো তারিখের সব বিল — টাকা, পেমেন্ট ও কাস্টমার — এই কম্পিউটারে একটা ফাইল হিসেবে সেভ হবে।',
+  'Export the stock list?': 'স্টকের তালিকা এক্সপোর্ট করবেন?',
+  'Every item with its stock, cost and price is saved as a file on this computer.':
+    'প্রতিটা আইটেমের স্টক, কেনা দাম ও বিক্রির দাম এই কম্পিউটারে একটা ফাইল হিসেবে সেভ হবে।',
+  'Export the supplier accounts?': 'সাপ্লায়ারদের হিসাব এক্সপোর্ট করবেন?',
+  'Every supplier with what you owe them is saved as a file on this computer.':
+    'প্রতিটা সাপ্লায়ার ও তাদের কাছে কত পাওনা — এই কম্পিউটারে একটা ফাইল হিসেবে সেভ হবে।',
+  'Export the khata?': 'বাকির খাতা এক্সপোর্ট করবেন?',
+  "Every customer's name, phone and what they owe is saved as a file on this computer.":
+    'প্রতিটা কাস্টমারের নাম, ফোন ও বাকি এই কম্পিউটারে একটা ফাইল হিসেবে সেভ হবে।',
   Back: 'ফিরে যান',
   Find: 'খুঁজুন',
   Search: 'খুঁজুন',
@@ -1696,7 +1710,9 @@ const bn: Record<string, string> = {
   'Could not load your branches.': 'শাখাগুলো আনা যায়নি।',
   'Could not save that branch.': 'শাখাটি সেভ করা যায়নি।',
   'Could not change that branch.': 'শাখাটি বদলানো যায়নি।',
-  'Close this branch? Its history stays; it stops taking new bills.': 'শাখাটি বন্ধ করবেন? এর পুরোনো হিসাব থাকবে, শুধু নতুন বিল নেওয়া বন্ধ হবে।',
+  'Close this branch?': 'শাখাটি বন্ধ করবেন?',
+  'Its history stays; it stops taking new bills.': 'এর পুরোনো হিসাব থাকবে, শুধু নতুন বিল নেওয়া বন্ধ হবে।',
+  'Close the branch': 'শাখা বন্ধ করুন',
   'Your shop has one branch. Open another when you open a second shop — each keeps its own stock, counters and takings.': 'আপনার দোকানের একটি শাখা আছে। দ্বিতীয় দোকান খুললে আরেকটি শাখা খুলুন — প্রতিটির নিজের স্টক, কাউন্টার আর বিক্রি থাকবে।',
   'Each branch keeps its own stock, counters and takings. Customers’ baki and your suppliers are shared.': 'প্রতিটি শাখার নিজের স্টক, কাউন্টার আর বিক্রি থাকে। কাস্টমারের বাকি আর সাপ্লায়ার সব শাখার জন্য একই।',
   'Your plan has no room for another branch': 'আপনার প্ল্যানে আর শাখা খোলার সুযোগ নেই',
@@ -1849,7 +1865,12 @@ const bn: Record<string, string> = {
   'Share on WhatsApp': 'WhatsApp-এ শেয়ার',
   'Open it': 'খুলে দেখুন',
   'New link': 'নতুন লিংক',
-  'Make a new link? The old link and its QR stop working.': 'নতুন লিংক বানাবেন? পুরোনো লিংক আর QR আর কাজ করবে না।',
+  'Make a new link?': 'নতুন লিংক বানাবেন?',
+  'The old link and its QR stop working — customers who saved it cannot order with it.':
+    'পুরোনো লিংক আর QR আর কাজ করবে না — যারা সেটা সেভ করে রেখেছে, তারা ওটা দিয়ে আর অর্ডার করতে পারবে না।',
+  'Make a new link': 'নতুন লিংক বানান',
+  'Nobody can be given it again. Staff who have it keep their access until you change it.':
+    'এই রোল আর কাউকে দেওয়া যাবে না। যাদের কাছে আছে, আপনি না বদলানো পর্যন্ত তাদের অনুমতি থাকবে।',
   'Scan to order medicines': 'স্ক্যান করে ঔষধ অর্ডার করুন',
   'Download the QR': 'QR ডাউনলোড',
   /* ---- bKash & Nagad ---- */
@@ -2113,6 +2134,114 @@ const bn: Record<string, string> = {
   'On the shelf, worth the most, and barely selling — money standing still.': 'তাকে আছে, দামও বেশি, কিন্তু প্রায় বিক্রি হয় না — আটকে থাকা টাকা।',
   'Everything on the shelf is moving.': 'তাকের সবকিছুই চলছে।',
   'By generic': 'জেনেরিক অনুযায়ী',
+  /* ---- are you sure? ---- */
+  'Remind everyone who owes?': 'বাকি থাকা সবাইকে মনে করিয়ে দেবেন?',
+  'Customers who owe you': 'যাদের কাছে বাকি আছে',
+  'Each gets one SMS — anyone reminded in the last three days is skipped.':
+    'প্রত্যেকে একটি করে SMS পাবেন — গত তিন দিনে যাদের মনে করানো হয়েছে, তারা বাদ যাবেন।',
+  'Send the SMS': 'SMS পাঠান',
+  'Send a reminder?': 'মনে করিয়ে দেবেন?',
+  'gets one SMS saying they owe': 'একটি SMS পাবেন, বাকি',
+  lot: 'লট',
+  'Send these lots back to the supplier?': 'এই লটগুলো সাপ্লায়ারকে ফেরত পাঠাবেন?',
+  'Their stock leaves the shelf now, and their cost comes off what you owe this supplier.':
+    'এগুলোর স্টক এখনই তাক থেকে কমে যাবে, আর এগুলোর দাম এই সাপ্লায়ারের পাওনা থেকে বাদ যাবে।',
+  'Drop this count?': 'এই গণনা বাদ দেবেন?',
+  'Everything counted so far is thrown away — nothing on the shelf changes.':
+    'এ পর্যন্ত যা গোনা হয়েছে সব বাদ যাবে — তাকের কিছুই বদলাবে না।',
+  'Drop the count': 'গণনা বাদ দিন',
+  'Clear this bill?': 'এই বিল মুছে ফেলবেন?',
+  'The lines, the customer and the payment are all removed.': 'লাইন, কাস্টমার আর পেমেন্ট — সব মুছে যাবে।',
+  'Clear the bill': 'বিল মুছুন',
+  'Delete the bill put aside': 'রেখে দেওয়া বিলটি মুছবেন',
+  'It cannot be brought back.': 'এটি আর ফেরত আনা যাবে না।',
+  'Delete it': 'মুছে ফেলুন',
+  'Confirm this order?': 'অর্ডারটি কনফার্ম করবেন?',
+  'Mark this order ready?': 'অর্ডারটি তৈরি বলে দেখাবেন?',
+  'Send this order out?': 'অর্ডারটি পাঠিয়ে দেবেন?',
+  'Close this order as delivered?': 'অর্ডারটি ডেলিভারি হয়েছে বলে বন্ধ করবেন?',
+  'Mark delivered': 'ডেলিভারি হয়েছে',
+  'gets an SMS saying so.': 'এ নিয়ে একটি SMS পাবেন।',
+  'Cancel this order?': 'অর্ডারটি বাতিল করবেন?',
+  'gets an SMS saying it is cancelled, with your reason.': 'একটি SMS পাবেন যে অর্ডার বাতিল হয়েছে, আপনার কারণসহ।',
+  'Close order': 'অর্ডার',
+  'without a delivery?': 'ডেলিভারি ছাড়াই বন্ধ করবেন?',
+  'It is marked as arrived, but nothing is added to stock and nothing is owed to the supplier.':
+    'এটি এসেছে বলে চিহ্নিত হবে, কিন্তু স্টকে কিছু যোগ হবে না আর সাপ্লায়ারের কাছে কিছু পাওনা হবে না।',
+  'Close the order': 'অর্ডার বন্ধ করুন',
+  'Switch this person off?': 'এই ব্যক্তিকে বন্ধ করবেন?',
+  'can no longer sign in, on any device, until you switch them on again.':
+    'আর কোনো ডিভাইসে সাইন ইন করতে পারবেন না, যতক্ষণ না আপনি আবার চালু করেন।',
+  'Turn this counter off?': 'এই কাউন্টার বন্ধ করবেন?',
+  'nobody can open the day or sell at it until it is turned on again.':
+    'আবার চালু না করা পর্যন্ত এখানে কেউ দিন শুরু বা বিক্রি করতে পারবেন না।',
+  'Take these pieces off stock?': 'এই পিসগুলো স্টক থেকে বাদ দেবেন?',
+  'They leave stock now, and the ledger keeps your name against it.':
+    'এগুলো এখনই স্টক থেকে বাদ যাবে, আর খাতায় আপনার নাম থাকবে।',
+  'Take them off': 'বাদ দিন',
+  'Download everything?': 'সবকিছু ডাউনলোড করবেন?',
+  'Every bill, item, customer and supplier is saved as a file on this computer.':
+    'প্রতিটি বিল, আইটেম, কাস্টমার ও সাপ্লায়ার এই কম্পিউটারে একটা ফাইল হিসেবে সেভ হবে।',
+  'Open the profit report?': 'লাভের রিপোর্ট খুলবেন?',
+  'It shows the takings, costs and profit for these dates — open it where customers cannot see the screen.':
+    'এতে এই তারিখগুলোর বিক্রি, খরচ ও লাভ দেখা যায় — কাস্টমার স্ক্রিন দেখতে পান না এমন জায়গায় খুলুন।',
+  'Open the PDF': 'PDF খুলুন',
+  'Discard your changes?': 'পরিবর্তনগুলো বাদ দেবেন?',
+  'Everything changed since the last save goes back to how it was.': 'শেষ সেভের পর যা বদলেছেন, সব আগের মতো হয়ে যাবে।',
+  'Discard them': 'বাদ দিন',
+  'Count your shop in the medicine figures?': 'ওষুধের হিসাবে আপনার দোকান গুনবেন?',
+  'From tonight, how much of each medicine your shop sells is added to the district figures — never your name, customers, prices or profit.':
+    'আজ রাত থেকে আপনার দোকানে কোন ওষুধ কতটা বিক্রি হয় তা জেলার হিসাবে যোগ হবে — কখনোই আপনার নাম, কাস্টমার, দাম বা লাভ নয়।',
+  'Stop counting your shop?': 'আপনার দোকান গোনা বন্ধ করবেন?',
+  'Stop counting it': 'গোনা বন্ধ করুন',
+  'Stop taking orders online?': 'অনলাইনে অর্ডার নেওয়া বন্ধ করবেন?',
+  'Customers can no longer order with your link. Orders already in stay on the board.':
+    'কাস্টমাররা আর আপনার লিংক দিয়ে অর্ডার করতে পারবেন না। যে অর্ডারগুলো এসে গেছে, সেগুলো বোর্ডে থাকবে।',
+  'Stop taking orders': 'অর্ডার নেওয়া বন্ধ করুন',
+  'Stop pickup from the shop?': 'দোকান থেকে নেওয়া বন্ধ করবেন?',
+  'Customers ordering with your link can no longer choose to collect it from the shop.':
+    'লিংক দিয়ে অর্ডার করা কাস্টমাররা আর দোকান থেকে নিয়ে যাওয়া বেছে নিতে পারবেন না।',
+  'Stop pickup': 'দোকান থেকে নেওয়া বন্ধ করুন',
+  'Stop home delivery?': 'হোম ডেলিভারি বন্ধ করবেন?',
+  'Customers ordering with your link can no longer ask for it to be delivered.':
+    'লিংক দিয়ে অর্ডার করা কাস্টমাররা আর ডেলিভারি চাইতে পারবেন না।',
+  'Stop delivery': 'ডেলিভারি বন্ধ করুন',
+  'Remove the picture': 'ছবিটি সরাবেন',
+  'It is deleted and comes off the printed sheet. To have it back, upload it again.':
+    'ছবিটি মুছে যাবে এবং ছাপা পাতা থেকে সরে যাবে। ফেরত চাইলে আবার আপলোড করুন।',
+  'Remove it': 'সরিয়ে দিন',
+  'Withdraw the request for': 'অনুরোধ তুলে নেবেন —',
+  'It is taken out of the queue and nobody looks at it. Ask again if you still need it.':
+    'এটি তালিকা থেকে সরে যাবে, কেউ আর দেখবে না। এখনো দরকার হলে আবার অনুরোধ করুন।',
+  'Withdraw it': 'তুলে নিন',
+  'Start over with another file?': 'অন্য ফাইল দিয়ে নতুন করে শুরু করবেন?',
+  'the columns you matched up are lost, and nothing from it is imported.':
+    'যে কলামগুলো মিলিয়েছেন সেগুলো হারিয়ে যাবে, আর এ থেকে কিছুই ইমপোর্ট হবে না।',
+  'Start over': 'নতুন করে শুরু করুন',
+  'Sign out this device?': 'এই ডিভাইস সাইন আউট করবেন?',
+  'signed out at once — whoever is using it has to sign in again.':
+    'এখনই সাইন আউট হবে — যিনি ব্যবহার করছেন, তাকে আবার সাইন ইন করতে হবে।',
+  'Sign it out': 'সাইন আউট করুন',
+  'Sign out every other device?': 'অন্য সব ডিভাইস সাইন আউট করবেন?',
+  'Every browser but this one is signed out at once — whoever is using them has to sign in again.':
+    'এটি ছাড়া সব ব্রাউজার এখনই সাইন আউট হবে — যারা ব্যবহার করছেন, তাদের আবার সাইন ইন করতে হবে।',
+  'Sign them out': 'সাইন আউট করুন',
 };
 
 export const useT = makeUseT(bn);
+
+/**
+ * A number and a full stop the way the screen's language writes them, for a
+ * sentence put together in code — `৩ লাইন।` in Bangla, `3 lines.` in English.
+ * Without it a confirmation read "1 লাইন. লাইন, কাস্টমার…".
+ */
+export function useNumerals() {
+  const lang = useUiLang();
+  return useMemo(
+    () => ({
+      num: (v: number | string) => (lang === 'bn' ? bnNumerals(String(v)) : String(v)),
+      stop: lang === 'bn' ? '।' : '.',
+    }),
+    [lang],
+  );
+}

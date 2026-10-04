@@ -22,6 +22,7 @@ import {
 import { platformApi, downloadBlob } from '../api';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import { useToast } from '@dawai/shared/components/Toast';
+import { confirmAction } from '@dawai/shared/lib/confirm';
 import { useTheme } from '@dawai/shared/hooks/useTheme';
 import type { PlatformRevenue, RevenueGranularity } from '@dawai/shared/types';
 import { CountUp, Rise, Sparkline, useSeen } from '@dawai/shared/components/motion';
@@ -174,8 +175,17 @@ export default function Revenue() {
   );
 
   /** The series as a spreadsheet — the same rows the chart is drawn from. */
-  const exportCsv = () => {
+  const exportCsv = async () => {
     if (!data) return;
+    if (
+      !(await confirmAction({
+        title: 'Export the sales figures?',
+        message: `${data.series.length} row${data.series.length === 1 ? '' : 's'} of verified subscription money, ${from} to ${to} — keep the file somewhere safe.`,
+        confirmLabel: 'Download the CSV',
+        icon: 'export',
+      }))
+    )
+      return;
     const header = ['Period', 'Sales', 'Amount (BDT)'];
     const lines = data.series.map((p) => [p.label, p.count, p.total]);
     const csv = [header, ...lines]
@@ -218,7 +228,7 @@ export default function Revenue() {
         </div>
         <button
           className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-4 py-2 text-sm font-semibold transition-colors hover:bg-muted disabled:opacity-50"
-          onClick={exportCsv}
+          onClick={() => void exportCsv()}
           disabled={!data?.series.length}
           title="Download this period's figures as a spreadsheet"
         >

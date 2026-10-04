@@ -6,6 +6,7 @@ import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import { useT, useUiLang, bnNumerals } from '../i18n/ui';
 import { useCan, type ShopPermission } from '../access';
 import Modal from './Modal';
+import { confirmAction } from '@dawai/shared/lib/confirm';
 
 /**
  * The shop's roles: what each kind of person who works here may do.
@@ -41,7 +42,16 @@ export default function ShopRoles({ onChanged }: { onChanged?: () => void }) {
   }, [load]);
 
   const remove = async (r: ShopRole) => {
-    if (!window.confirm(`${t('Delete the role')} “${r.name}”?`)) return;
+    if (
+      !(await confirmAction({
+        title: `${t('Delete the role')} “${r.name}”?`,
+        message: t('Nobody can be given it again. Staff who have it keep their access until you change it.'),
+        confirmLabel: t('Delete the role'),
+        tone: 'danger',
+        icon: 'delete',
+      }))
+    )
+      return;
     try {
       await rolesApi.remove(r.id);
       toast(t('Role deleted.'));

@@ -35,10 +35,11 @@ import BillDetail from '../components/BillDetail';
 import Receipt from '../components/Receipt';
 import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
-import { useT, useUiLang, bnNumerals } from '../i18n/ui';
+import { useT, useNumerals, useUiLang, bnNumerals } from '../i18n/ui';
 import Pager from '../components/Pager';
 import { useLinkedSearch } from '../components/useLinkedSearch';
 import Modal from '../components/Modal';
+import { confirmAction } from '@dawai/shared/lib/confirm';
 import ExportCsv from '../components/ExportCsv';
 
 /**
@@ -116,6 +117,7 @@ const ago = (iso: string | undefined, n: (v: number | string) => string, t: (k: 
 export default function Customers() {
   const canImport = useCan()('customers.manage');
   const t = useT();
+  const { stop } = useNumerals();
   const lang = useUiLang();
   const { toast } = useToast();
   const [rows, setRows] = useState<BookRow[]>([]);
@@ -191,6 +193,16 @@ export default function Customers() {
    */
   const chaseEveryone = async () => {
     if (book.owing === 0) return;
+    if (
+      !(await confirmAction({
+        title: t('Remind everyone who owes?'),
+        message: `${t('Customers who owe you')}: ${n(book.owing)}${stop} ${t('Each gets one SMS — anyone reminded in the last three days is skipped.')}`,
+        confirmLabel: t('Send the SMS'),
+        tone: 'danger',
+        icon: 'send',
+      }))
+    )
+      return;
     setChasing(true);
     try {
       const res = await shopApi.remindEveryone(1);
@@ -562,6 +574,7 @@ function CustomerSheet({
   onGone: () => void;
 }) {
   const t = useT();
+  const { stop } = useNumerals();
   const { toast } = useToast();
   /* Deleting is the back room's (the bin is an admin route); correcting a
      phone number is anybody's who stands at the counter. */
@@ -665,6 +678,16 @@ function CustomerSheet({
   /* The reason a reminder did not go is the answer — the server says it in one
      line ("reminded in the last three days"), and it is shown as it came. */
   const remind = async () => {
+    if (
+      !(await confirmAction({
+        title: t('Send a reminder?'),
+        message: `${data?.customer.name ?? ''} ${t('gets one SMS saying they owe')} ${taka(data?.balance ?? 0)}${stop}`,
+        confirmLabel: t('Send the SMS'),
+        tone: 'danger',
+        icon: 'send',
+      }))
+    )
+      return;
     setReminding(true);
     try {
       await shopApi.remindCustomer(id);

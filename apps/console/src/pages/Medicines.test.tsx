@@ -29,6 +29,8 @@ vi.mock('../api', () => ({ platformApi: mocks }));
 // every `load` callback that depends on it and refetch forever.
 const toast = vi.hoisted(() => ({ fn: vi.fn() }));
 vi.mock('@dawai/shared/components/Toast', () => ({ useToast: () => ({ toast: toast.fn }) }));
+// Deactivating asks first; the answer here is always yes.
+vi.mock('@dawai/shared/lib/confirm', () => ({ confirmAction: vi.fn(async () => true) }));
 
 const medicine = (over: Record<string, unknown> = {}) => ({
   _id: 'm1',

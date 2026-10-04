@@ -5,6 +5,7 @@ import { useToast } from '@dawai/shared/components/Toast';
 import { useAuthStore } from '@dawai/shared/store/auth.store';
 import { BTN_ICON, errorMessage } from '../lib/ui';
 import { lastSeen } from '../lib/lastSeen';
+import { confirmAction } from '@dawai/shared/lib/confirm';
 
 /**
  * The team's notes on one shop.
@@ -84,7 +85,16 @@ export default function ShopNotesCard({ shopId, isOwner }: { shopId: string; isO
   };
 
   const remove = async (n: ShopNote) => {
-    if (!window.confirm('Delete this note? It cannot be brought back.')) return;
+    if (
+      !(await confirmAction({
+        title: 'Delete this note?',
+        message: 'It cannot be brought back.',
+        confirmLabel: 'Delete',
+        tone: 'danger',
+        icon: 'delete',
+      }))
+    )
+      return;
     setBusy(n._id);
     try {
       await platformApi.deleteShopNote(shopId, n._id);

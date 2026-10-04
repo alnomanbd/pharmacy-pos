@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { BookOpenText, Check, ClipboardCheck, PenLine, RefreshCw, Search, Store, X } from 'lucide-react';
 import { platformApi, type CatalogueGaps as Gaps, type CatalogueSuggestion, type GapField } from '../api';
 import { useToast } from '@dawai/shared/components/Toast';
+import { confirmAction } from '@dawai/shared/lib/confirm';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import { useAuthStore } from '@dawai/shared/store/auth.store';
 import Modal from '../components/Modal';
@@ -144,6 +145,28 @@ function Suggestions({ gaps, canManage, onChanged }: { gaps: Gaps | null; canMan
   useEffect(() => setPage(1), [field, confidence, stockedOnly]);
 
   const decide = async (accept: boolean, all = false) => {
+    // "All" has its own dialog below; a picked handful asks here.
+    if (!all) {
+      const n = picked.size;
+      const these = n === 1 ? 'this suggestion' : `these ${num(n)} suggestions`;
+      const ok = await confirmAction(
+        accept
+          ? {
+              title: `Accept ${these}?`,
+              message: 'They are written to the catalogue every shop searches, under your name in the audit trail.',
+              confirmLabel: `Accept ${num(n)}`,
+              tone: 'danger',
+            }
+          : {
+              title: `Dismiss ${these}?`,
+              message: 'They will not be offered again.',
+              confirmLabel: `Dismiss ${num(n)}`,
+              tone: 'danger',
+              icon: 'close',
+            },
+      );
+      if (!ok) return;
+    }
     setBusy(true);
     try {
       const r = await platformApi.decideCatalogueSuggestions(all ? { filter, accept } : { ids: [...picked], accept });

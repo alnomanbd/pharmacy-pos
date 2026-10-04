@@ -19,6 +19,7 @@ import {
 import { Link, useSearchParams } from 'react-router-dom';
 import { platformApi, downloadBlob } from '../api';
 import { useToast } from '@dawai/shared/components/Toast';
+import { confirmAction } from '@dawai/shared/lib/confirm';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import NewAccountDialog from '../components/NewAccountDialog';
 import type { OrgStatus, PlatformStats } from '@dawai/shared/types';
@@ -143,7 +144,9 @@ export default function Shops() {
     org: Shop,
     payload: Parameters<typeof platformApi.updateOrganization>[1],
     message: string,
+    ask?: { title: string; message: string; confirmLabel: string },
   ) => {
+    if (ask && !(await confirmAction({ ...ask, tone: 'danger' }))) return;
     setBusyId(org._id);
     try {
       await platformApi.updateOrganization(org._id, payload);
@@ -157,6 +160,15 @@ export default function Shops() {
   };
 
   const exportOne = async (org: Shop) => {
+    if (
+      !(await confirmAction({
+        title: `Export ${org.name}’s data?`,
+        message: 'The file holds every bill, customer and product of this shop — keep it somewhere safe.',
+        confirmLabel: 'Download the file',
+        icon: 'export',
+      }))
+    )
+      return;
     setBusyId(org._id);
     try {
       const blob = await platformApi.exportOrganization(org._id);
@@ -337,9 +349,14 @@ export default function Shops() {
                         style={{ width: 'auto', padding: '4px 8px', fontSize: 12 }}
                         value={o.plan}
                         disabled={busyId === o._id}
-                        onChange={(e) =>
-                          void update(o, { plan: e.target.value }, `${o.name} moved to ${e.target.value}.`)
-                        }
+                        onChange={(e) => {
+                          const to = optionsFor(o).find((opt) => opt.key === e.target.value)?.label ?? e.target.value;
+                          void update(o, { plan: e.target.value }, `${o.name} moved to ${e.target.value}.`, {
+                            title: `Move ${o.name} to ${to}?`,
+                            message: 'It is held to the new plan’s limits at once, and billed at its price from the next payment.',
+                            confirmLabel: 'Change the plan',
+                          });
+                        }}
                       >
                         {optionsFor(o).map((opt) => (
                           <option key={opt.key} value={opt.key}>
@@ -404,7 +421,11 @@ export default function Shops() {
                             className="inline-flex items-center gap-1 rounded-md bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground disabled:opacity-50"
                             disabled={busyId === o._id}
                             onClick={() =>
-                              void update(o, { status: 'active' }, `${o.name} approved — 14-day trial started.`)
+                              void update(o, { status: 'active' }, `${o.name} approved — 14-day trial started.`, {
+                                title: `Approve ${o.name}?`,
+                                message: 'Its 14-day free trial starts now, and its staff can sign in.',
+                                confirmLabel: 'Approve and start the trial',
+                              })
                             }
                           >
                             <CheckCircle2 className="h-3.5 w-3.5" /> Approve
@@ -426,7 +447,13 @@ export default function Shops() {
                           <button
                             className="inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1 text-xs font-semibold hover:bg-muted disabled:opacity-50"
                             disabled={busyId === o._id}
-                            onClick={() => void update(o, { status: 'active' }, `${o.name} reactivated.`)}
+                            onClick={() =>
+                              void update(o, { status: 'active' }, `${o.name} reactivated.`, {
+                                title: `Reactivate ${o.name}?`,
+                                message: 'Its staff can sign in and sell again at once.',
+                                confirmLabel: 'Reactivate',
+                              })
+                            }
                           >
                             <CheckCircle2 className="h-3.5 w-3.5" /> Reactivate
                           </button>
@@ -459,7 +486,13 @@ export default function Shops() {
                             className="inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1 text-xs font-semibold hover:bg-muted disabled:opacity-50"
                             disabled={busyId === o._id}
                             title="Give this shop 14 more days"
-                            onClick={() => void update(o, { trialDays: 14 }, `${o.name} extended by 14 days.`)}
+                            onClick={() =>
+                              void update(o, { trialDays: 14 }, `${o.name} extended by 14 days.`, {
+                                title: `Give ${o.name} 14 more days?`,
+                                message: 'Its trial or paid-up date moves 14 days later, free of charge.',
+                                confirmLabel: 'Add 14 days',
+                              })
+                            }
                           >
                             <Clock className="h-3.5 w-3.5" /> +14d
                           </button>

@@ -31,6 +31,7 @@ import ShopFeaturesCard from '../components/ShopFeaturesCard';
 import ShopLimitsCard, { signupSummary } from '../components/ShopLimitsCard';
 import ShopRestoreCard from '../components/ShopRestoreCard';
 import { useToast } from '@dawai/shared/components/Toast';
+import { confirmAction } from '@dawai/shared/lib/confirm';
 import { LoadingBlock, Spinner } from '@dawai/shared/components/Spinner';
 import Modal from '../components/Modal';
 import { BTN_DANGER, BTN_OUTLINE, BTN_OUTLINE_DANGER, BTN_SECONDARY, can, errorMessage, useAccess } from '../lib/ui';
@@ -141,6 +142,17 @@ export default function ShopDetail() {
   };
 
   const setStatus = async (status: 'active' | 'suspended', reason?: string) => {
+    // Suspending already asks for a reason in its own dialog.
+    if (
+      status === 'active' &&
+      !(await confirmAction({
+        title: `Reactivate ${org?.name ?? 'this shop'}?`,
+        message: 'Its staff can sign in and sell again at once.',
+        confirmLabel: 'Reactivate',
+        tone: 'danger',
+      }))
+    )
+      return;
     setBusy('status');
     try {
       await platformApi.updateOrganization(id, status === 'suspended' ? { status, suspendedReason: reason } : { status });
@@ -193,12 +205,37 @@ export default function ShopDetail() {
     users.find((u) => u.role === 'admin' && u.isActive !== false) ?? users.find((u) => u.isActive !== false);
   const viewShop = async () => {
     if (!viewTarget) return;
+    if (
+      !(await confirmAction({
+        title: `Open ${org.name} as ${viewTarget.name}?`,
+        message: 'The shop app opens in a new tab as them, read-only for 30 minutes, and it is recorded in the audit trail.',
+        confirmLabel: 'Open the shop',
+        icon: 'question',
+      }))
+    )
+      return;
     try {
       const shop = await openSupportView(id, viewTarget._id);
       toast(`Opened ${shop} as ${viewTarget.name} in a new tab — read-only, for 30 minutes.`);
     } catch (e: unknown) {
       const res = (e as { response?: { data?: { message?: string } } }).response;
       toast(res?.data?.message || 'Could not open the support view.', 'error');
+    }
+  };
+  const exportData = async () => {
+    if (
+      !(await confirmAction({
+        title: `Export ${org.name}’s data?`,
+        message: 'The file holds every bill, customer and product of this shop — keep it somewhere safe.',
+        confirmLabel: 'Download the file',
+        icon: 'export',
+      }))
+    )
+      return;
+    try {
+      downloadBlob(await platformApi.exportOrganization(id), `${org.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.json`);
+    } catch {
+      toast('Could not export that shop.', 'error');
     }
   };
   const asked = signupSummary(org.signup);
@@ -252,12 +289,7 @@ export default function ShopDetail() {
           )}
           <button
             className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-4 py-2 text-sm font-semibold hover:bg-muted"
-            onClick={() =>
-              void platformApi
-                .exportOrganization(id)
-                .then((b) => downloadBlob(b, `${org.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.json`))
-                .catch(() => toast('Could not export that shop.', 'error'))
-            }
+            onClick={() => void exportData()}
           >
             <Download className="h-4 w-4" /> Export data
           </button>

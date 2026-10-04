@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { CalendarClock, Mail, MessageSquareText, Phone, Eye, Banknote } from 'lucide-react';
 import { platformApi, type RetentionPile, type RetentionRow, type RetentionBoard } from '../api';
 import { useToast } from '@dawai/shared/components/Toast';
+import { confirmAction } from '@dawai/shared/lib/confirm';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import { BTN_OUTLINE, can, errorMessage, useAccess } from '../lib/ui';
 import { lastSeen } from '../lib/lastSeen';
@@ -73,6 +74,18 @@ export default function Renewals() {
   }, [load]);
 
   const remind = async (r: RetentionRow, kind: 'renewal' | 'inactive' | 'setup', sms: boolean) => {
+    const about = kind === 'renewal' ? 'renewal' : kind === 'inactive' ? 'come-back' : 'getting-started';
+    const to = [r.owner.email && `email at ${r.owner.email}`, sms && r.owner.phone && `SMS at ${r.owner.phone}`].filter(Boolean).join(' and by ');
+    if (
+      !(await confirmAction({
+        title: `Send ${r.name} a ${about} reminder?`,
+        message: `${r.owner.name || 'The owner'} gets it by ${to}, and the next operator sees it was sent.`,
+        confirmLabel: sms ? 'Send email + SMS' : 'Send the email',
+        tone: 'danger',
+        icon: 'send',
+      }))
+    )
+      return;
     setBusy(`${r._id}:${sms ? 'sms' : 'email'}`);
     try {
       const res = await platformApi.remindShop(r._id, kind, sms);

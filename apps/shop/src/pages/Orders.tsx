@@ -32,6 +32,7 @@ import ConfirmWithReason from '../components/ConfirmWithReason';
 import { useT, useUiLang, bnNumerals } from '../i18n/ui';
 import Pager from '../components/Pager';
 import Modal from '../components/Modal';
+import { confirmAction } from '@dawai/shared/lib/confirm';
 import OrderSheet, { orderNo } from '../components/OrderSheet';
 
 /**
@@ -399,7 +400,19 @@ export default function Orders() {
           supplier={suppliers.find((s) => s._id === open.supplier)}
           onClose={() => setOpen(null)}
           onSend={() => move(open, 'sent', 'Marked as given to the rep.')}
-          onReceive={() => move(open, 'received', 'Marked as arrived.')}
+          onReceive={async () => {
+            if (
+              !(await confirmAction({
+                title: `${t('Close order')} ${orderNo(open)} ${t('without a delivery?')}`,
+                message: t('It is marked as arrived, but nothing is added to stock and nothing is owed to the supplier.'),
+                confirmLabel: t('Close the order'),
+                tone: 'danger',
+                icon: 'close',
+              }))
+            )
+              return;
+            void move(open, 'received', 'Marked as arrived.');
+          }}
           onDeliver={() => navigate(`/purchases?order=${open._id}`)}
           onOrderRest={() => {
             const rest = shortOf(open).map((l) => ({

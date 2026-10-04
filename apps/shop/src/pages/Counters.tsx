@@ -21,6 +21,7 @@ import { useT, useUiLang, bnNumerals } from '../i18n/ui';
 import { fetchBranchSwitcher, useBranchStore, type BranchSwitcherInfo } from '../branch';
 import { CountUp } from '../components/motion';
 import Modal from '../components/Modal';
+import { confirmAction } from '@dawai/shared/lib/confirm';
 
 /**
  * Where people stand and sell.
@@ -103,6 +104,17 @@ export default function Counters() {
   }, [load]);
 
   const toggle = async (c: ShopCounter) => {
+    if (
+      c.isActive !== false &&
+      !(await confirmAction({
+        title: t('Turn this counter off?'),
+        message: `${c.name}: ${t('nobody can open the day or sell at it until it is turned on again.')}`,
+        confirmLabel: t('Turn off'),
+        tone: 'danger',
+        icon: 'warning',
+      }))
+    )
+      return;
     try {
       await shopApi.updateCounter(c._id, { isActive: c.isActive === false });
       toast(`${c.name} ${c.isActive === false ? t('turned on') : t('turned off')}.`);

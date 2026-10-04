@@ -26,6 +26,7 @@ import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import { useT, useUiLang, bnNumerals } from '../i18n/ui';
 import { fetchBranchSwitcher, type BranchSwitcherInfo } from '../branch';
 import Modal from '../components/Modal';
+import { confirmAction } from '@dawai/shared/lib/confirm';
 
 /**
  * Who works here.
@@ -125,6 +126,17 @@ export default function Staff() {
   }, [load]);
 
   const toggle = async (m: StaffMember) => {
+    if (
+      m.isActive &&
+      !(await confirmAction({
+        title: t('Switch this person off?'),
+        message: `${m.name} ${t('can no longer sign in, on any device, until you switch them on again.')}`,
+        confirmLabel: t('Switch off'),
+        tone: 'danger',
+        icon: 'warning',
+      }))
+    )
+      return;
     setBusyId(m._id);
     try {
       await staffApi.update(m._id, { isActive: !m.isActive });

@@ -23,6 +23,8 @@ import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import Modal from '../components/Modal';
 import { useT, useUiLang, bnNumerals } from '../i18n/ui';
+import ConfirmWithReason from '../components/ConfirmWithReason';
+import { confirmAction } from '@dawai/shared/lib/confirm';
 
 /**
  * Orders from customers, through the shop's own link.
@@ -46,6 +48,14 @@ const NEXT: Partial<Record<OnlineOrderStatus, { to: OnlineOrderStatus; label: st
   confirmed: { to: 'ready', label: 'Mark ready' },
   ready: { to: 'delivered', label: 'Handed over' },
   out: { to: 'delivered', label: 'Delivered' },
+};
+
+/** What is asked before a step: every step sends the customer an SMS. */
+const STEP: Partial<Record<OnlineOrderStatus, { title: string; label: string }>> = {
+  confirmed: { title: 'Confirm this order?', label: 'Confirm' },
+  ready: { title: 'Mark this order ready?', label: 'Mark ready' },
+  out: { title: 'Send this order out?', label: 'Send out' },
+  delivered: { title: 'Close this order as delivered?', label: 'Mark delivered' },
 };
 
 const since = (iso: string) => {
@@ -78,6 +88,18 @@ export default function OnlineOrders() {
   }, [load]);
 
   const move = async (o: OnlineOrder, to: OnlineOrderStatus, extra: { reason?: string } = {}) => {
+    /* Cancelling has asked already, with its reason; every other step asks here. */
+    const step = STEP[to];
+    if (
+      step &&
+      !(await confirmAction({
+        title: t(step.title),
+        message: `${n(o.number)} · ${o.customerName} ${t('gets an SMS saying so.')}`,
+        confirmLabel: t(step.label),
+        icon: 'send',
+      }))
+    )
+      return;
     try {
       const next = await onlineOrdersApi.update(o._id, { status: to, ...extra });
       setRows((r) => (r ?? []).map((x) => (x._id === o._id ? next : x)).filter((x) => view !== 'open' || !['delivered', 'cancelled'].includes(x.status)));
@@ -251,6 +273,7 @@ function OrderDetail({
   const { toast } = useToast();
   const [billNo, setBillNo] = useState(o.billNo);
   const [busy, setBusy] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
   const phone = o.customerPhone.replace(/\D/g, '');
   const wa = `https://wa.me/${phone.startsWith('88') ? phone : `88${phone}`}`;
   const open = !['delivered', 'cancelled'].includes(o.status);
@@ -383,10 +406,7 @@ function OrderDetail({
           <button
             type="button"
             className="inline-flex items-center gap-1.5 rounded-md border border-destructive/40 px-3 py-2 text-sm font-semibold text-destructive hover:bg-destructive/10"
-            onClick={() => {
-              const reason = window.prompt(t('Why is it cancelled? The customer is told.')) ?? '';
-              if (reason !== null) void onMove(o, 'cancelled', { reason });
-            }}
+            onClick={() => setCancelling(true)}
           >
             <XCircle className="h-4 w-4" /> {t('Cancel order')}
           </button>
@@ -402,6 +422,18 @@ function OrderDetail({
           )}
         </div>
       )}
+      <ConfirmWithReason
+        open={cancelling}
+        title={t('Cancel this order?')}
+        message={`${n(o.number)} · ${o.customerName} ${t('gets an SMS saying it is cancelled, with your reason.')}`}
+        placeholder={t('Why is it cancelled? The customer is told.')}
+        confirmLabel={t('Cancel the order')}
+        onCancel={() => setCancelling(false)}
+        onConfirm={(reason) => {
+          setCancelling(false);
+          void onMove(o, 'cancelled', { reason });
+        }}
+      />
     </Modal>
   );
 }

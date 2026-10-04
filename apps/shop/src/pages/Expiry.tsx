@@ -19,8 +19,9 @@ import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import ConfirmWithReason from '../components/ConfirmWithReason';
 import Pager from '../components/Pager';
-import { useT, useUiLang, bnNumerals } from '../i18n/ui';
+import { useT, useNumerals, useUiLang, bnNumerals } from '../i18n/ui';
 import { useAlertStore } from '../alerts/useStockAlerts';
+import { confirmAction } from '@dawai/shared/lib/confirm';
 
 /**
  * What is going out of date, and what to do about it.
@@ -76,6 +77,7 @@ const worth = (r: Row) => r.qtyOnHand * (r.costPerPiece || 0);
 
 export default function Expiry() {
   const t = useT();
+  const { stop } = useNumerals();
   const lang = useUiLang();
   const { toast } = useToast();
   const [rows, setRows] = useState<Row[]>([]);
@@ -172,6 +174,17 @@ export default function Expiry() {
 
   const sendBack = async () => {
     if (!supplierId || chosen.length === 0) return;
+    const to = suppliers.find((s) => s._id === supplierId)?.name ?? '';
+    if (
+      !(await confirmAction({
+        title: t('Send these lots back to the supplier?'),
+        message: `${n(chosen.length)} ${t(chosen.length === 1 ? 'lot' : 'lots')} · ${money(chosenValue)} → ${to}${stop} ${t('Their stock leaves the shelf now, and their cost comes off what you owe this supplier.')}`,
+        confirmLabel: t('Send back'),
+        tone: 'danger',
+        icon: 'warning',
+      }))
+    )
+      return;
     setBusy(true);
     try {
       const res = await shopApi.returnToSupplier(supplierId, {

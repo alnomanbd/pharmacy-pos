@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Sparkles } from 'lucide-react';
 import { platformApi, PLAN_FEATURES, type PlanFeatureKey, type ShopPlanUsage } from '../api';
 import { useToast } from '@dawai/shared/components/Toast';
+import { confirmAction } from '@dawai/shared/lib/confirm';
 import { errorMessage } from '../lib/ui';
 
 /**
@@ -33,6 +34,24 @@ export default function ShopFeaturesCard({
   const choiceOf = (k: PlanFeatureKey): Choice => (f.overridden[k] ? (f.on[k] ? 'on' : 'off') : 'plan');
 
   const set = async (k: PlanFeatureKey, c: Choice) => {
+    // The select is controlled, so on a no it still shows what is saved.
+    const label = PLAN_FEATURES.find((p) => p.key === k)?.label ?? k;
+    const planName = usage?.planName ?? 'its';
+    if (
+      !(await confirmAction({
+        title:
+          c === 'plan'
+            ? `Put ${label} back to what the ${planName} plan says?`
+            : `Turn ${label} ${c} for this shop?`,
+        message:
+          c === 'plan'
+            ? `It goes ${f.plan[k] ? 'on' : 'off'} for this shop, and follows the plan from now on.`
+            : `This shop ${c === 'on' ? 'gets' : 'loses'} it at once, whatever the ${planName} plan says.`,
+        confirmLabel: c === 'plan' ? 'Follow the plan' : `Turn it ${c}`,
+        tone: 'danger',
+      }))
+    )
+      return;
     setBusy(k);
     try {
       await platformApi.updateFeatures(shopId, { [k]: c === 'plan' ? null : c === 'on' });

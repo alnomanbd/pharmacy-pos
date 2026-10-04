@@ -15,6 +15,7 @@ import {
 import { importApi, taka, type ImportResult } from '../api';
 import { FIELDS, guessMapping, readFile, rowsFor, templateCsv, type Cell, type Kind } from '../import/sheet';
 import { useT, useUiLang, bnNumerals } from '../i18n/ui';
+import { confirmAction } from '@dawai/shared/lib/confirm';
 
 /**
  * Moving in: the shop's stock list or its customer book, from a spreadsheet.
@@ -63,6 +64,22 @@ export default function Import() {
     setError('');
     setProgress(0);
     if (k !== kind) setParams({ what: k });
+  };
+
+  /* Leaving a file that is read and matched up throws that work away; asks first. */
+  const startOver = async (k: Kind = kind) => {
+    if (
+      (stage === 'map' || stage === 'checked') &&
+      !(await confirmAction({
+        title: t('Start over with another file?'),
+        message: `${fileName}: ${t('the columns you matched up are lost, and nothing from it is imported.')}`,
+        confirmLabel: t('Start over'),
+        tone: 'danger',
+        icon: 'close',
+      }))
+    )
+      return;
+    reset(k);
   };
 
   const load = async (file: File) => {
@@ -163,7 +180,7 @@ export default function Import() {
             key={k}
             type="button"
             disabled={busy}
-            onClick={() => reset(k)}
+            onClick={() => void startOver(k)}
             className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
               kind === k ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
             }`}
@@ -244,7 +261,7 @@ export default function Import() {
                 {n(rows.length)} {t('rows')} · {t('header on row')} {n(headerAt + 1)}
               </p>
             </div>
-            <button type="button" className="btn btn-ghost h-9" disabled={busy} onClick={() => reset()}>
+            <button type="button" className="btn btn-ghost h-9" disabled={busy} onClick={() => void startOver()}>
               <RotateCcw className="h-4 w-4" /> {t('Another file')}
             </button>
           </div>

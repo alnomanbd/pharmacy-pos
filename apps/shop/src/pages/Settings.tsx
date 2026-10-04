@@ -32,6 +32,7 @@ import DataSharingCard from '../components/DataSharingCard';
 import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import Receipt from '../components/Receipt';
+import { confirmAction } from '@dawai/shared/lib/confirm';
 import { useT, useUiLang } from '../i18n/ui';
 
 /**
@@ -775,7 +776,24 @@ export default function Settings() {
                   <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-amber-500" />
                   <strong className="font-semibold">{t('You have unsaved changes')}</strong>
                 </span>
-                <button type="button" className="btn btn-ghost h-9" onClick={() => setForm(saved)} disabled={busy}>
+                <button
+                  type="button"
+                  className="btn btn-ghost h-9"
+                  onClick={async () => {
+                    if (
+                      !(await confirmAction({
+                        title: t('Discard your changes?'),
+                        message: t('Everything changed since the last save goes back to how it was.'),
+                        confirmLabel: t('Discard them'),
+                        tone: 'danger',
+                        icon: 'delete',
+                      }))
+                    )
+                      return;
+                    setForm(saved);
+                  }}
+                  disabled={busy}
+                >
                   <RotateCcw className="h-4 w-4" /> {t('Discard')}
                 </button>
                 <button type="button" className="btn h-9" onClick={() => void save()} disabled={busy}>

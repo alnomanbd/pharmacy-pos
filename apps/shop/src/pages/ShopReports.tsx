@@ -43,6 +43,7 @@ import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import { toLocalDate } from '@dawai/shared/lib/date';
 import { useT, useUiLang, bnNumerals } from '../i18n/ui';
 import { CountUp, Rise, useSeen } from '../components/motion';
+import { confirmAction } from '@dawai/shared/lib/confirm';
 
 /**
  * Two questions, and they are not the same question.
@@ -677,7 +678,17 @@ function StretchView() {
         <button
           type="button"
           className="btn btn-ghost h-9 sm:ml-auto"
-          onClick={() => {
+          onClick={async () => {
+            /* The one sheet with the profit on it, on a screen customers can see. */
+            if (
+              !(await confirmAction({
+                title: t('Open the profit report?'),
+                message: t('It shows the takings, costs and profit for these dates — open it where customers cannot see the screen.'),
+                confirmLabel: t('Open the PDF'),
+                icon: 'export',
+              }))
+            )
+              return;
             openPdf(`/shop/reports/owner.pdf?from=${from}&to=${to}`).catch(() =>
               toast('Could not open the sheet.', 'error'),
             );

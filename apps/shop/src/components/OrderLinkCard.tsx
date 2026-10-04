@@ -5,6 +5,26 @@ import { Link } from 'react-router-dom';
 import { onlineOrdersApi, type OnlineOrderSettings } from '../api';
 import { useToast } from '@dawai/shared/components/Toast';
 import { useT, useUiLang, bnNumerals } from '../i18n/ui';
+import { confirmAction } from '@dawai/shared/lib/confirm';
+
+/** What is asked before a switch goes off — each one turns customers away. */
+const OFF = {
+  enabled: {
+    title: 'Stop taking orders online?',
+    message: 'Customers can no longer order with your link. Orders already in stay on the board.',
+    label: 'Stop taking orders',
+  },
+  pickup: {
+    title: 'Stop pickup from the shop?',
+    message: 'Customers ordering with your link can no longer choose to collect it from the shop.',
+    label: 'Stop pickup',
+  },
+  delivery: {
+    title: 'Stop home delivery?',
+    message: 'Customers ordering with your link can no longer ask for it to be delivered.',
+    label: 'Stop delivery',
+  },
+} as const;
 
 /**
  * The shop's order link, in Settings: on or off, pickup and delivery, the
@@ -46,6 +66,21 @@ export default function OrderLinkCard() {
     } finally {
       setBusy(false);
     }
+  };
+
+  const turn = async (key: keyof typeof OFF, on: boolean) => {
+    if (
+      !on &&
+      !(await confirmAction({
+        title: t(OFF[key].title),
+        message: t(OFF[key].message),
+        confirmLabel: t(OFF[key].label),
+        tone: 'danger',
+        icon: 'warning',
+      }))
+    )
+      return;
+    void save({ [key]: on });
   };
 
   if (!s) return null;
@@ -94,7 +129,7 @@ export default function OrderLinkCard() {
       </div>
 
       <label className="mt-4 flex items-center gap-2.5 text-sm font-semibold">
-        <input type="checkbox" className="h-4 w-4 accent-[hsl(var(--primary))]" checked={s.enabled} onChange={(e) => void save({ enabled: e.target.checked })} />
+        <input type="checkbox" className="h-4 w-4 accent-[hsl(var(--primary))]" checked={s.enabled} onChange={(e) => void turn('enabled', e.target.checked)} />
         {t('Take orders online')}
       </label>
 
@@ -103,11 +138,11 @@ export default function OrderLinkCard() {
           <div className="grid gap-3">
             <div className="flex flex-wrap gap-4 text-sm">
               <label className="flex items-center gap-2">
-                <input type="checkbox" className="h-4 w-4" checked={s.pickup} onChange={(e) => void save({ pickup: e.target.checked })} />
+                <input type="checkbox" className="h-4 w-4" checked={s.pickup} onChange={(e) => void turn('pickup', e.target.checked)} />
                 {t('Pickup from the shop')}
               </label>
               <label className="flex items-center gap-2">
-                <input type="checkbox" className="h-4 w-4" checked={s.delivery} onChange={(e) => void save({ delivery: e.target.checked })} />
+                <input type="checkbox" className="h-4 w-4" checked={s.delivery} onChange={(e) => void turn('delivery', e.target.checked)} />
                 {t('Home delivery')}
               </label>
             </div>
@@ -171,7 +206,16 @@ export default function OrderLinkCard() {
                   type="button"
                   className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-muted"
                   onClick={async () => {
-                    if (!window.confirm(t('Make a new link? The old link and its QR stop working.'))) return;
+                    if (
+                      !(await confirmAction({
+                        title: t('Make a new link?'),
+                        message: t('The old link and its QR stop working — customers who saved it cannot order with it.'),
+                        confirmLabel: t('Make a new link'),
+                        tone: 'danger',
+                        icon: 'warning',
+                      }))
+                    )
+                      return;
                     setS(await onlineOrdersApi.newLink());
                   }}
                 >

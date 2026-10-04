@@ -1,3 +1,4 @@
+import ConfirmHost from '@dawai/shared/components/ConfirmHost';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from '@dawai/shared/store/auth.store';
 import type { Role } from '@dawai/shared/types';
@@ -82,6 +83,9 @@ function Protected({ children }: { children: JSX.Element }) {
 
 export default function App() {
   return (
+    <>
+    {/* The one "are you sure?" dialog — see shared/lib/confirm. */}
+    <ConfirmHost />
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route
@@ -127,5 +131,6 @@ export default function App() {
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </>
   );
 }

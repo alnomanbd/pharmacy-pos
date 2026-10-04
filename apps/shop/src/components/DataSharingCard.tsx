@@ -5,6 +5,7 @@ import { useToast } from '@dawai/shared/components/Toast';
 import AddressFields, { type Address } from '@dawai/shared/components/AddressFields';
 import { useT, useUiLang } from '../i18n/ui';
 import { BRAND } from '../brand';
+import { confirmAction } from '@dawai/shared/lib/confirm';
 
 /**
  * Settings → Medicine figures: whether this shop is counted in the anonymous
@@ -52,6 +53,24 @@ export default function DataSharingCard() {
   };
 
   const set = async (v: boolean) => {
+    if (
+      !(await confirmAction(
+        v
+          ? {
+              title: t('Count your shop in the medicine figures?'),
+              message: t('From tonight, how much of each medicine your shop sells is added to the district figures — never your name, customers, prices or profit.'),
+              confirmLabel: t('Count my shop'),
+              icon: 'question',
+            }
+          : {
+              title: t('Stop counting your shop?'),
+              message: t('Switch it off and your shop stops being counted from tonight.'),
+              confirmLabel: t('Stop counting it'),
+              icon: 'question',
+            },
+      ))
+    )
+      return;
     setBusy(true);
     try {
       await getData(api.patch('/shop/data-sharing', { counted: v }));

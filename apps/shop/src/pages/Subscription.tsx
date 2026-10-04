@@ -25,6 +25,7 @@ import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import { billingApi, type Subscription as Sub, type SubscriptionPayment } from '../api';
 import { useT, useUiLang, bnNumerals } from '../i18n/ui';
 import { BRAND } from '../brand';
+import { confirmAction } from '@dawai/shared/lib/confirm';
 
 /**
  * The shop's subscription, and how it pays for it.
@@ -676,14 +677,23 @@ const taka = (v: number) => `৳ ${n(v.toLocaleString('en-IN'))}`;
         <button
           type="button"
           className="btn btn-ghost mt-3 h-10"
-          onClick={() =>
+          onClick={async () => {
+            if (
+              !(await confirmAction({
+                title: t('Download everything?'),
+                message: t('Every bill, item, customer and supplier is saved as a file on this computer.'),
+                confirmLabel: t('Download'),
+                icon: 'export',
+              }))
+            )
+              return;
             void billingApi
               .exportAll()
               .then((b) =>
                 downloadBlob(b, `${BRAND.name.toLowerCase()}-export-${new Date().toISOString().slice(0, 10)}.json`),
               )
-              .catch(() => toast(t('Could not export your data.'), 'error'))
-          }
+              .catch(() => toast(t('Could not export your data.'), 'error'));
+          }}
         >
           <FileJson className="h-4 w-4" /> {t('Everything (full backup)')}
         </button>

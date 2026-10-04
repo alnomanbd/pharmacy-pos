@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Monitor, Smartphone, LogOut, Loader2, ShieldQuestion } from 'lucide-react';
 import { sessionsApi, type SignedInSession } from '../api';
 import { useToast } from './Toast';
+import { confirmAction } from '../lib/confirm';
 
 /**
  * The devices this account is signed in on, and a way to end them.
@@ -70,7 +71,17 @@ export default function SessionList({ t = same, n = same }: { t?: Say; n?: Say }
 
   useEffect(load, [load]);
 
-  const end = async (id: string) => {
+  const end = async (id: string, label: string) => {
+    if (
+      !(await confirmAction({
+        title: t('Sign out this device?'),
+        message: `${label}: ${t('signed out at once — whoever is using it has to sign in again.')}`,
+        confirmLabel: t('Sign it out'),
+        tone: 'danger',
+        icon: 'close',
+      }))
+    )
+      return;
     setBusy(id);
     try {
       await sessionsApi.revoke(id);
@@ -85,6 +96,16 @@ export default function SessionList({ t = same, n = same }: { t?: Say; n?: Say }
   };
 
   const endOthers = async () => {
+    if (
+      !(await confirmAction({
+        title: t('Sign out every other device?'),
+        message: t('Every browser but this one is signed out at once — whoever is using them has to sign in again.'),
+        confirmLabel: t('Sign them out'),
+        tone: 'danger',
+        icon: 'close',
+      }))
+    )
+      return;
     setBusy('others');
     try {
       const res = await sessionsApi.revokeOthers();
@@ -139,7 +160,7 @@ export default function SessionList({ t = same, n = same }: { t?: Say; n?: Say }
               {!s.current && (
                 <button
                   type="button"
-                  onClick={() => void end(s.id)}
+                  onClick={() => void end(s.id, label)}
                   disabled={Boolean(busy)}
                   className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1 text-xs font-semibold hover:bg-secondary disabled:opacity-60"
                 >

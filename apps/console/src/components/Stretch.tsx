@@ -2,6 +2,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { BarChart3, Minus, TrendingDown, TrendingUp, type LucideIcon } from 'lucide-react';
 import { CountUp, Rise, Sparkline, useSeen } from '@dawai/shared/components/motion';
+import { confirmAction } from '@dawai/shared/lib/confirm';
 
 /**
  * The pieces of a "stretch" page — the console's Overview and Reports, drawn
@@ -433,8 +434,20 @@ export function RankList({
   );
 }
 
-/** Rows to a CSV the browser downloads — every table on the Reports page can leave as a file. */
-export function downloadCsv(name: string, header: string[], rows: (string | number)[][]) {
+/**
+ * Rows to a CSV the browser downloads — every table on the Reports page can
+ * leave as a file. Asks first: the figures are other people's business.
+ */
+export async function downloadCsv(name: string, header: string[], rows: (string | number)[][]) {
+  if (
+    !(await confirmAction({
+      title: 'Export this table?',
+      message: `${num(rows.length)} row${rows.length === 1 ? '' : 's'} go to ${name} on this computer — keep it somewhere safe.`,
+      confirmLabel: 'Download the CSV',
+      icon: 'export',
+    }))
+  )
+    return;
   const q = (v: string | number) => (typeof v === 'number' ? String(v) : /[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
   const text = '\uFEFF' + [header, ...rows].map((r) => r.map(q).join(',')).join('\r\n');
   const a = document.createElement('a');

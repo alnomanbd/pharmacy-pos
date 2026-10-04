@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Bug, ChevronDown, Trash2 } from 'lucide-react';
 import { platformApi, type ClientErrorRow } from '../api';
 import { useToast } from '@dawai/shared/components/Toast';
+import { confirmAction } from '@dawai/shared/lib/confirm';
 import { BTN_OUTLINE, errorMessage } from '../lib/ui';
 import { lastSeen } from '../lib/lastSeen';
 
@@ -30,6 +31,18 @@ export default function BrowserErrorsCard() {
   }, [load]);
 
   const clear = async (id?: string) => {
+    // One row is "fixed, tell me if it comes back"; all of them is a clean slate.
+    if (
+      !id &&
+      !(await confirmAction({
+        title: rows?.length === 1 ? 'Clear the browser error?' : `Clear all ${rows?.length ?? 0} browser errors?`,
+        message: 'Their stacks are gone; anything that happens again comes back as a new row.',
+        confirmLabel: 'Clear all',
+        tone: 'danger',
+        icon: 'delete',
+      }))
+    )
+      return;
     try {
       await platformApi.clearClientError(id);
       await load();

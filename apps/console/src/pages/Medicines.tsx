@@ -27,6 +27,7 @@ import {
 } from '../api';
 import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
+import { confirmAction } from '@dawai/shared/lib/confirm';
 import ConfirmDialog from '@dawai/shared/components/ConfirmDialog';
 import MedicineForm from '../components/MedicineForm';
 import MedicineImportDialog from '../components/MedicineImportDialog';
@@ -142,6 +143,17 @@ function MedicinesTab({ canManage }: { canManage: boolean }) {
    * company is asking for that company's list. Unfiltered, the whole catalogue.
    */
   const exportCsv = async () => {
+    const filtered = !!(dq || company || generic || dosageForm || active);
+    // The catalogue is what the Data API sells; a copy on a laptop is a copy given away.
+    if (
+      !(await confirmAction({
+        title: filtered ? `Export these ${total.toLocaleString()} medicines?` : 'Export the medicine catalogue?',
+        message: `${filtered ? 'It is' : `All ${total.toLocaleString()} medicines,`} the same data the Data API sells — keep the file somewhere safe.`,
+        confirmLabel: 'Download the CSV',
+        icon: 'export',
+      }))
+    )
+      return;
     setExporting(true);
     try {
       const blob = await platformApi.exportMedicines({
@@ -221,6 +233,16 @@ function MedicinesTab({ canManage }: { canManage: boolean }) {
   };
 
   const toggleActive = async (m: CatalogueMedicine) => {
+    if (
+      m.isActive &&
+      !(await confirmAction({
+        title: `Deactivate ${m.brandName}?`,
+        message: 'It is hidden from every shop — none of them can find it in the catalogue any more.',
+        confirmLabel: 'Deactivate',
+        tone: 'danger',
+      }))
+    )
+      return;
     setBusyId(m._id);
     try {
       await platformApi.updateMedicine(m._id, { isActive: !m.isActive });

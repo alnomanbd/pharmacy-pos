@@ -6,6 +6,7 @@ import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import Modal from '../components/Modal';
 import { useT, useUiLang, bnNumerals } from '../i18n/ui';
 import { useBranchStore } from '../branch';
+import { confirmAction } from '@dawai/shared/lib/confirm';
 
 /**
  * The shop's branches — the owner's page.
@@ -60,7 +61,17 @@ export default function Branches() {
   };
 
   const setActive = async (b: ShopBranch, active: boolean) => {
-    if (!active && !window.confirm(t('Close this branch? Its history stays; it stops taking new bills.'))) return;
+    if (
+      !active &&
+      !(await confirmAction({
+        title: t('Close this branch?'),
+        message: t('Its history stays; it stops taking new bills.'),
+        confirmLabel: t('Close the branch'),
+        tone: 'danger',
+        icon: 'close',
+      }))
+    )
+      return;
     try {
       await branchesApi.update(b._id, { active });
       await load();
