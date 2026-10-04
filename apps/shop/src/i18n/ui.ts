@@ -2226,6 +2226,34 @@ const bn: Record<string, string> = {
   'Every browser but this one is signed out at once — whoever is using them has to sign in again.':
     'এটি ছাড়া সব ব্রাউজার এখনই সাইন আউট হবে — যারা ব্যবহার করছেন, তাদের আবার সাইন ইন করতে হবে।',
   'Sign them out': 'সাইন আউট করুন',
+
+  /* ---- the reminder SMS, in the shop's own words ---- */
+  'Reminder SMS': 'বাকির রিমাইন্ডার SMS',
+  'What a customer who owes you gets from “Send a reminder” and “Remind them all” on Customers.':
+    'কাস্টমার পাতার “রিমাইন্ডার পাঠান” আর “সবাইকে মনে করিয়ে দিন” থেকে বাকিদার যে SMS পায়।',
+  'Your message': 'আপনার মেসেজ',
+  'Empty: the standard message goes.': 'খালি রাখলে: সাধারণ মেসেজটি যাবে।',
+  'Put in': 'বসান',
+  'Customer’s name': 'কাস্টমারের নাম',
+  'What they owe': 'বাকির পরিমাণ',
+  'Shop phone': 'দোকানের ফোন',
+  'Start from an example': 'একটা উদাহরণ থেকে শুরু করুন',
+  'How it reads': 'যেভাবে যাবে',
+  'for a customer called': 'যেমন কাস্টমার',
+  owing: 'বাকি',
+  characters: 'অক্ষর',
+  'for each customer': 'প্রতি কাস্টমারে',
+  'Bangla letters make it a Unicode SMS: 70 characters each instead of 160, so it costs more — and some keypad phones show boxes. Bangla written in English letters (apnar baki…) avoids both.':
+    'বাংলা অক্ষর থাকলে এটা ইউনিকোড SMS হয়: প্রতি SMS-এ ১৬০ এর বদলে ৭০ অক্ষর, তাই খরচ বেশি — আর কিছু বাটন ফোনে বাক্স দেখায়। ইংরেজি অক্ষরে বাংলা (apnar baki…) লিখলে দুটোই এড়ানো যায়।',
+  'Over 160 characters, so every reminder is sent as more than one SMS. Shorter is cheaper.':
+    '১৬০ অক্ষরের বেশি, তাই প্রতিটা রিমাইন্ডার একাধিক SMS হিসেবে যাবে। ছোট রাখলে খরচ কম।',
+  'Use the standard message': 'সাধারণ মেসেজ ব্যবহার করুন',
+  'Go back to the standard message?': 'সাধারণ মেসেজে ফিরে যাবেন?',
+  'What you wrote is removed, and reminders go out in the standard wording again.':
+    'আপনার লেখাটা মুছে যাবে, আর রিমাইন্ডার আবার সাধারণ মেসেজে যাবে।',
+  'gets this SMS': 'এই SMS পাবেন',
+  '‹name›': '‹নাম›',
+  '‹amount›': '‹টাকা›',
 };
 
 export const useT = makeUseT(bn);

@@ -256,6 +256,8 @@ const settingsSchema = z.object({
   drugLicenceNo: z.string().trim().max(60).optional(),
   footer: z.string().trim().max(240).optional(),
   footerBn: z.string().trim().max(240).optional(),
+  /* Three SMS segments at most — past that, one reminder costs as much as three. */
+  reminderTemplate: z.string().trim().max(480).optional(),
   paperSize: z.enum(['80', '58', 'custom']).optional(),
   /* Millimetres. 40 is narrower than any roll sold here and 210 is A4 — past
      either, somebody has typed the wrong number. */

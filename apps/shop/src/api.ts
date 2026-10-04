@@ -1525,6 +1525,8 @@ export interface ShopSettings {
   drugLicenceNo?: string;
   footer?: string;
   footerBn?: string;
+  /** The baki reminder SMS in the shop's own words — see lib/reminderSms. Empty: the standard line. */
+  reminderTemplate?: string;
   /** "80" and "58" are the two thermal rolls sold here; anything else is custom. */
   paperSize: '80' | '58' | 'custom';
   paperWidthMm: number;

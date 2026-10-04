@@ -51,6 +51,13 @@ const schema = new Schema(
     /** "আপনার সুস্থতা কামনা করি" — a line shops like to add. */
     footerBn: { type: String, default: '', trim: true, maxlength: 240 },
 
+    /**
+     * The baki reminder SMS, in the shop's own words, with {name}, {amount},
+     * {shop} and {phone} filled in when it is sent. Empty: the standard line —
+     * see shopRemind.service.
+     */
+    reminderTemplate: { type: String, default: '', trim: true, maxlength: 480 },
+
     /* ---- the paper ---- */
     /**
      * `80` and `58` are the two thermal rolls sold here; `custom` is for

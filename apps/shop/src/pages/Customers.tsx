@@ -36,6 +36,7 @@ import Receipt from '../components/Receipt';
 import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import { useT, useNumerals, useUiLang, bnNumerals } from '../i18n/ui';
+import { reminderMessage, reminderOutline } from '../lib/reminderSms';
 import Pager from '../components/Pager';
 import { useLinkedSearch } from '../components/useLinkedSearch';
 import Modal from '../components/Modal';
@@ -193,10 +194,22 @@ export default function Customers() {
    */
   const chaseEveryone = async () => {
     if (book.owing === 0) return;
+    // The wording, with each customer's own name and amount marked where they go.
+    const s = await settingsApi.get().catch(() => null);
     if (
       !(await confirmAction({
         title: t('Remind everyone who owes?'),
-        message: `${t('Customers who owe you')}: ${n(book.owing)}${stop} ${t('Each gets one SMS — anyone reminded in the last three days is skipped.')}`,
+        message: (
+          <>
+            <span>
+              {t('Customers who owe you')}: {n(book.owing)}
+              {stop} {t('Each gets one SMS — anyone reminded in the last three days is skipped.')}
+            </span>
+            <span className="mt-2 block rounded-xl rounded-tl-sm border border-border bg-muted/50 px-3 py-2 text-left text-sm text-foreground">
+              {reminderOutline(s?.reminderTemplate, { shop: s?.shopName, phone: s?.phone }, { name: t('‹name›'), amount: t('‹amount›') })}
+            </span>
+          </>
+        ),
         confirmLabel: t('Send the SMS'),
         tone: 'danger',
         icon: 'send',
@@ -574,7 +587,6 @@ function CustomerSheet({
   onGone: () => void;
 }) {
   const t = useT();
-  const { stop } = useNumerals();
   const { toast } = useToast();
   /* Deleting is the back room's (the bin is an admin route); correcting a
      phone number is anybody's who stands at the counter. */
@@ -681,7 +693,22 @@ function CustomerSheet({
     if (
       !(await confirmAction({
         title: t('Send a reminder?'),
-        message: `${data?.customer.name ?? ''} ${t('gets one SMS saying they owe')} ${taka(data?.balance ?? 0)}${stop}`,
+        // The message itself, as it will arrive — the shop's own wording if it wrote one (Settings).
+        message: (
+          <>
+            <span>
+              {data?.customer.name ?? ''} {t('gets this SMS')}:
+            </span>
+            <span className="mt-2 block rounded-xl rounded-tl-sm border border-border bg-muted/50 px-3 py-2 text-left text-sm text-foreground">
+              {reminderMessage(settings?.reminderTemplate, {
+                name: data?.customer.name,
+                amount: data?.balance ?? 0,
+                shop: settings?.shopName,
+                phone: settings?.phone,
+              })}
+            </span>
+          </>
+        ),
         confirmLabel: t('Send the SMS'),
         tone: 'danger',
         icon: 'send',

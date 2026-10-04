@@ -41,10 +41,37 @@ const money = (n: number) => Math.round((n || 0) * 100) / 100;
  * is one segment and one charge. The shop's name comes first because that is
  * what tells the reader whether the text is for them.
  */
-export function reminderText(shopName: string, balance: number, phone?: string) {
+export function reminderText(shopName: string, balance: number, phone?: string, template?: string, customerName?: string) {
+  if (template?.trim()) return fillReminder(template, { name: customerName, amount: balance, shop: shopName, phone });
   const who = shopName.trim() || 'Your pharmacy';
   const call = phone?.trim() ? ` Call ${phone.trim()}.` : '';
   return `${who}: apnar bakite ache Tk ${money(balance)}. Shubidha moto poriShodh korle krritajno thakbo.${call}`;
+}
+
+/**
+ * The shop's own wording, with the blanks filled in.
+ *
+ * `{name}` the customer, `{amount}` what they owe (a number — the shop writes
+ * "Tk" or "টাকা" itself), `{shop}` and `{phone}` the shop's. A blank with
+ * nothing to put in it goes, and so does the space it leaves, so "Call {phone}"
+ * for a shop with no number does not end in "Call ." Unknown braces are left as
+ * typed — a shop that writes "{bill}" sees it in the preview and fixes it.
+ */
+export function fillReminder(
+  template: string,
+  v: { name?: string; amount: number; shop?: string; phone?: string },
+): string {
+  const values: Record<string, string> = {
+    name: (v.name ?? '').trim(),
+    amount: String(money(v.amount)),
+    shop: (v.shop ?? '').trim(),
+    phone: (v.phone ?? '').trim(),
+  };
+  return template
+    .replace(/\{(name|amount|shop|phone)\}/gi, (_, key: string) => values[key.toLowerCase()] ?? '')
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/ +([.,!?।])/g, '$1')
+    .trim();
 }
 
 export interface RemindOutcome {
@@ -62,9 +89,9 @@ interface Chaseable {
 
 async function shopIdentity(org: string) {
   const settings = await ShopSettingsModel.findOne({ organization: org })
-    .select('shopName phone')
+    .select('shopName phone reminderTemplate')
     .lean();
-  return { name: settings?.shopName ?? '', phone: settings?.phone ?? '', org };
+  return { name: settings?.shopName ?? '', phone: settings?.phone ?? '', template: settings?.reminderTemplate ?? '', org };
 }
 
 /**
@@ -77,7 +104,7 @@ async function shopIdentity(org: string) {
  */
 async function chase(
   customer: Chaseable,
-  shop: { name: string; phone: string; org?: string },
+  shop: { name: string; phone: string; template?: string; org?: string },
   now: Date,
 ): Promise<{ ok: boolean; why?: string }> {
   if (!(customer.balance > 0)) return { ok: false, why: 'nothing owing' };
@@ -87,7 +114,7 @@ async function chase(
   if (now.getTime() - last < REMIND_COOLDOWN_MS) return { ok: false, why: 'reminded in the last three days' };
 
   try {
-    const sent = await sendSms(customer.phone.trim(), reminderText(shop.name, customer.balance, shop.phone), {
+    const sent = await sendSms(customer.phone.trim(), reminderText(shop.name, customer.balance, shop.phone, shop.template, customer.name), {
       kind: 'shop.bakiReminder',
       organization: shop.org,
     });
