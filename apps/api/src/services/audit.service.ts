@@ -155,6 +155,8 @@ const PLATFORM_ACTIONS: readonly string[] = [
   'catalogue.medicine_create',
   'catalogue.medicine_update',
   'catalogue.medicine_delete',
+  'catalogue.export',
+  'catalogue.import',
   'catalogue.ref_create',
   'catalogue.ref_update',
   'catalogue.ref_delete',

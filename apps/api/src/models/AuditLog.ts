@@ -134,6 +134,9 @@ export const AUDIT_ACTIONS = [
   'catalogue.medicine_create',
   'catalogue.medicine_update',
   'catalogue.medicine_delete',
+  /** The catalogue taken out as a spreadsheet, or a spreadsheet brought in. */
+  'catalogue.export',
+  'catalogue.import',
   'catalogue.ref_create',
   'catalogue.ref_update',
   'catalogue.ref_delete',

@@ -12,9 +12,13 @@ import {
   Layers,
   Inbox,
   Power,
+  Download,
+  Upload,
+  Loader2,
 } from 'lucide-react';
 import {
   platformApi,
+  downloadBlob,
   type CatalogueMedicine,
   type CatalogueRef,
   type CatalogueStats,
@@ -25,6 +29,7 @@ import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import ConfirmDialog from '@dawai/shared/components/ConfirmDialog';
 import MedicineForm from '../components/MedicineForm';
+import MedicineImportDialog from '../components/MedicineImportDialog';
 import RefPicker from '../components/RefPicker';
 import Modal from '../components/Modal';
 import Pager from '../components/Pager';
@@ -128,7 +133,32 @@ function MedicinesTab({ canManage }: { canManage: boolean }) {
   const [editing, setEditing] = useState<CatalogueMedicine | 'new' | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<CatalogueMedicine | null>(null);
   const [busyId, setBusyId] = useState('');
+  const [importing, setImporting] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const dq = useDebounced(q.trim(), 300);
+
+  /**
+   * What the filters show, as a spreadsheet — an operator who filtered to one
+   * company is asking for that company's list. Unfiltered, the whole catalogue.
+   */
+  const exportCsv = async () => {
+    setExporting(true);
+    try {
+      const blob = await platformApi.exportMedicines({
+        q: dq || undefined,
+        company: company?._id,
+        generic: generic?._id,
+        dosageForm: dosageForm || undefined,
+        active: active || undefined,
+      });
+      const slug = (company?.name ?? generic?.name ?? '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      downloadBlob(blob, `${['medicines', slug, new Date().toISOString().slice(0, 10)].filter(Boolean).join('-')}.csv`);
+    } catch (e) {
+      toast(errorMessage(e, 'Could not export the catalogue.'), 'error');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -301,9 +331,23 @@ function MedicinesTab({ canManage }: { canManage: boolean }) {
             {total.toLocaleString()} medicine{total === 1 ? '' : 's'}
           </h3>
           {canManage && (
-            <button type="button" className="btn btn-sm" onClick={() => setEditing('new')}>
-              <Plus className="h-4 w-4" /> Add medicine
-            </button>
+            <>
+              <button
+                type="button"
+                className={BTN_OUTLINE}
+                onClick={() => void exportCsv()}
+                disabled={exporting || total === 0}
+                title="Download what the filters show, as a spreadsheet"
+              >
+                {exporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />} Export
+              </button>
+              <button type="button" className={BTN_OUTLINE} onClick={() => setImporting(true)}>
+                <Upload className="h-3.5 w-3.5" /> Import
+              </button>
+              <button type="button" className="btn btn-sm" onClick={() => setEditing('new')}>
+                <Plus className="h-4 w-4" /> Add medicine
+              </button>
+            </>
           )}
         </div>
 
@@ -393,6 +437,16 @@ function MedicinesTab({ canManage }: { canManage: boolean }) {
 
         <Pager page={page} total={total} limit={PAGE_SIZE} onPage={setPage} />
       </div>
+
+      {importing && (
+        <MedicineImportDialog
+          onClose={() => setImporting(false)}
+          onImported={() => {
+            void load();
+            void platformApi.catalogueStats().then(setStats).catch(() => undefined);
+          }}
+        />
+      )}
 
       {editing && (
         <MedicineForm

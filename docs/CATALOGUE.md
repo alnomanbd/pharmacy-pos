@@ -46,6 +46,29 @@ The export is sorted by `_id` and deterministic. An unchanged catalogue
 produces identical files and keeps its `exportedAt` date, so git only shows a
 diff when something actually changed.
 
+## From the console: export, edit in Excel, import
+
+**Medicines → Export** downloads what the filters show as a CSV (unfiltered,
+the whole catalogue: about 46,000 rows, a few seconds). **Import** takes the
+same file back, as CSV or Excel `.xlsx`, after you edit it:
+
+- **Preview first.** A dry run says how many medicines would be added, updated
+  or left alone, which companies, generics and groups would be created, and
+  which rows fail and why. Nothing is saved until you press *Import*.
+- **Nothing is deleted.** A medicine missing from the file is left alone. To
+  retire one, set its `status` to `retired`.
+- **A row is matched by `id`**, or, with no id, by brand + strength + company +
+  dosage form. A cell that still says what the catalogue says is kept exactly
+  as stored, so an export imported straight back changes nothing.
+- **A file from another server** has ids this catalogue does not know. Tick
+  *This file came from another server* and rows are matched by brand,
+  strength, company and form instead.
+- Failing rows can be downloaded as a CSV with the reason, fixed, and imported
+  on their own.
+
+Both need `catalogue.manage`, and both are in the audit trail. For an exact
+copy of the whole catalogue, ids and all, use the archive below instead.
+
 ## Copying between databases
 
 ```bash

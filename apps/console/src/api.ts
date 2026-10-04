@@ -265,6 +265,17 @@ export interface BackupRun {
   offsite: 'ok' | 'failed' | 'off' | 'none';
   error: string;
 }
+export interface MedicineImportReport {
+  received: number;
+  created: number;
+  updated: number;
+  unchanged: number;
+  failed: { line?: number; brandName?: string; reason: string }[];
+  newCompanies: string[];
+  newGenerics: string[];
+  newGroups: string[];
+}
+
 export interface ShopRestoreState {
   configured: boolean;
   shop?: string;
@@ -1022,6 +1033,14 @@ export const platformApi = {
     page?: number;
     limit?: number;
   }) => getData<Paged<CatalogueMedicine>>(api.get('/platform/catalogue/medicines', { params })),
+  /** The medicines the filters select, as a CSV — the same columns the import takes. */
+  exportMedicines: (params?: { q?: string; company?: string; generic?: string; dosageForm?: string; active?: string }) =>
+    api.get('/platform/catalogue/medicines/export', { params, responseType: 'blob' }).then((r) => r.data as Blob),
+  medicineTemplate: () =>
+    api.get('/platform/catalogue/medicines/template', { responseType: 'blob' }).then((r) => r.data as Blob),
+  /** One batch of spreadsheet rows. `dryRun` reports what would happen without writing. */
+  importMedicines: (rows: Record<string, unknown>[], opts: { dryRun: boolean; ignoreIds: boolean }) =>
+    getData<MedicineImportReport>(api.post('/platform/catalogue/medicines/import', { rows, ...opts })),
   catalogueMedicine: (id: string) =>
     getData<CatalogueMedicine>(api.get(`/platform/catalogue/medicines/${id}`)),
   createMedicine: (payload: MedicineInput) =>

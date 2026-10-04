@@ -303,17 +303,17 @@ export async function getMedicine(id: string) {
   return loadView(oid(id));
 }
 
-export async function listMedicines(opts: {
+export interface MedicineFilters {
   q?: string;
   company?: string;
   generic?: string;
   group?: string;
   dosageForm?: string;
   active?: boolean;
-  page?: number;
-  limit?: number;
-}) {
-  const { page, limit, skip } = pageWindow(opts);
+}
+
+/** The Medicines page's filters as a query — the list and the export select the same rows. */
+async function medicineFilter(opts: MedicineFilters) {
   const filter: Record<string, unknown> = {};
   if (opts.company) filter.company = oid(opts.company, 'company');
   if (opts.generic) filter.generic = oid(opts.generic, 'generic');
@@ -340,6 +340,41 @@ export async function listMedicines(opts: {
           { dar: containsRegex(term) },
         ];
   }
+  return filter;
+}
+
+/**
+ * Every medicine the filters select, for the spreadsheet export, as they are
+ * read — 46,000 rows never pile up in memory.
+ *
+ * Company and group names are loaded once, up front: there are a few hundred
+ * of each. Populating them per row instead was two queries a medicine, and
+ * the whole catalogue took three minutes to download.
+ */
+export async function exportMedicines(opts: MedicineFilters) {
+  // Resolved before anything is sent, so a bad filter is a 400, not a broken download.
+  const filter = await medicineFilter(opts);
+  const [companies, groups] = await Promise.all([
+    MedicineCompanyModel.find({}).select('name').lean(),
+    MedicineGroupModel.find({}).select('name').lean(),
+  ]);
+  const companyName = new Map(companies.map((c) => [String(c._id), c.name]));
+  const groupName = new Map(groups.map((g) => [String(g._id), g.name]));
+  return (async function* () {
+    const cursor = MedicineModel.find(filter).sort({ brandName: 1, _id: 1 }).lean().cursor({ batchSize: 2000 });
+    for await (const m of cursor) {
+      yield {
+        ...m,
+        company: m.company ? { name: companyName.get(String(m.company)) } : null,
+        group: m.group ? { name: groupName.get(String(m.group)) } : null,
+      };
+    }
+  })();
+}
+
+export async function listMedicines(opts: MedicineFilters & { page?: number; limit?: number }) {
+  const { page, limit, skip } = pageWindow(opts);
+  const filter = await medicineFilter(opts);
 
   const [rows, total] = await Promise.all([
     MedicineModel.find(filter)

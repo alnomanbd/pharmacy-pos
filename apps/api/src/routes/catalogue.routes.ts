@@ -15,6 +15,7 @@ import {
 } from '../validators/catalogue.validator.js';
 import { ok } from '../utils/response.js';
 import { audit } from '../services/audit.service.js';
+import { buildTemplateCsv, csvHeader, csvLine, importRows, toExportRow } from '../services/formularyImport.service.js';
 import { notFound } from '../utils/AppError.js';
 
 /**
@@ -154,6 +155,88 @@ router.get(
       limit: num(req.query.limit),
     }),
   ),
+);
+
+/* ------------------------------------------------- the spreadsheet -- */
+
+/*
+ * Out to a spreadsheet and back in, in the same columns: export, edit in
+ * Excel, import — see formularyImport.service. Behind `catalogue.manage`
+ * rather than `catalogue.view`: the whole catalogue in one file is what the
+ * Data API sells, so taking it is an editor's job, and it is audited.
+ */
+router.get('/catalogue/medicines/export', canManage, async (req, res, next) => {
+  try {
+    const filters = {
+      q: str(req.query.q),
+      company: str(req.query.company),
+      generic: str(req.query.generic),
+      group: str(req.query.group),
+      dosageForm: str(req.query.dosageForm),
+      active: catalogue.activeFilter(req.query.active),
+    };
+    const rows = await catalogue.exportMedicines(filters);
+    await audit(req, 'catalogue.export', { model: 'Medicine', id: 'export', label: 'Catalogue exported' }, { after: filters });
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="medicines-${new Date().toISOString().slice(0, 10)}.csv"`);
+    // Header first (with the BOM Excel needs for Bangla), then a line per medicine as it is read.
+    res.write(csvHeader());
+    for await (const doc of rows) {
+      if (!res.write(csvLine(toExportRow(doc as never)))) await new Promise((r) => res.once('drain', r));
+    }
+    res.end();
+  } catch (err) {
+    if (res.headersSent) res.destroy(err as Error);
+    else next(err);
+  }
+});
+
+router.get('/catalogue/medicines/template', canManage, (_req, res) => {
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', 'attachment; filename="medicine-import-template.csv"');
+  res.send(buildTemplateCsv());
+});
+
+/**
+ * One batch of spreadsheet rows. The console sends a file in batches, and
+ * runs it once with `dryRun` to show what would happen before anything is
+ * written. Only the real run is audited — with what it did.
+ */
+router.post(
+  '/catalogue/medicines/import',
+  canManage,
+  validate(
+    z.object({
+      rows: z.array(z.record(z.string(), z.union([z.string(), z.number(), z.null()]).optional())).min(1).max(1000),
+      dryRun: z.boolean().optional(),
+      ignoreIds: z.boolean().optional(),
+    }),
+  ),
+  handle(async (req) => {
+    const rows = (req.body.rows as Record<string, unknown>[]).map((r) =>
+      Object.fromEntries(Object.entries(r).map(([k, v]) => [k, k === '_line' ? v : v == null ? undefined : String(v)])),
+    );
+    const report = await importRows(rows as never, { dryRun: req.body.dryRun, ignoreIds: req.body.ignoreIds });
+    if (!req.body.dryRun && (report.created || report.updated)) {
+      await audit(
+        req,
+        'catalogue.import',
+        { model: 'Medicine', id: 'import', label: `${report.created} added, ${report.updated} updated` },
+        {
+          after: {
+            rows: report.received,
+            created: report.created,
+            updated: report.updated,
+            failed: report.failed.length,
+            newCompanies: report.newCompanies.length,
+            newGenerics: report.newGenerics.length,
+            newGroups: report.newGroups.length,
+          },
+        },
+      );
+    }
+    return report;
+  }),
 );
 
 router.get('/catalogue/medicines/:id', canView, handle((req) => catalogue.getMedicine(req.params.id)));

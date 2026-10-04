@@ -5,12 +5,10 @@
  * itself exports and therefore the one that must always work — including on a
  * console machine with no internet.
  *
- * `.xlsx` is a zip of XML and needs a real library. SheetJS is **vendored** at
- * `/vendor/xlsx.full.min.js` (the patched 0.20.x build from cdn.sheetjs.com)
- * rather than installed from npm, where the published `xlsx@0.18.5` still
- * carries the prototype-pollution advisory, and rather than hot-linked, which
- * would break on an intranet. It is fetched only when someone actually picks an
- * .xlsx file, so the 900 KB never lands on anyone opening the page.
+ * `.xlsx` is a zip of XML and needs a real library: `read-excel-file`, the
+ * same one the shop app reads stock lists with. (SheetJS from npm still carries
+ * a prototype-pollution advisory.) Old `.xls` files are refused with a way
+ * forward rather than read badly.
  */
 
 /** The columns the API round-trips. Kept in step with the server's list. */
@@ -28,6 +26,8 @@ export const MEDICINE_COLUMNS = [
   'indications',
   'sideEffects',
   'status',
+  // Last, as on the server, so a file exported before it existed still lines up.
+  'dar',
 ] as const;
 
 export type MedicineColumn = (typeof MEDICINE_COLUMNS)[number];
@@ -102,55 +102,20 @@ export function toCsv(columns: readonly string[], rows: Record<string, unknown>[
   return `\uFEFF${lines.join('\r\n')}\r\n`;
 }
 
-interface SheetJs {
-  read(data: ArrayBuffer, opts: { type: 'array' }): {
-    SheetNames: string[];
-    Sheets: Record<string, unknown>;
-  };
-  utils: {
-    sheet_to_json(sheet: unknown, opts: { header: 1; raw: false; defval: string }): string[][];
-  };
-}
-
-let sheetJsPromise: Promise<SheetJs> | null = null;
-
-/** Loads the vendored SheetJS once, on first use. */
-function loadSheetJs(): Promise<SheetJs> {
-  const existing = (window as unknown as { XLSX?: SheetJs }).XLSX;
-  if (existing) return Promise.resolve(existing);
-
-  if (!sheetJsPromise) {
-    sheetJsPromise = new Promise<SheetJs>((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = '/vendor/xlsx.full.min.js';
-      script.onload = () => {
-        const lib = (window as unknown as { XLSX?: SheetJs }).XLSX;
-        if (lib) resolve(lib);
-        else reject(new Error('Spreadsheet reader loaded but did not register.'));
-      };
-      script.onerror = () => {
-        sheetJsPromise = null;
-        reject(
-          new Error(
-            'Could not load the Excel reader. Save the file as CSV (UTF-8) in Excel and try again.',
-          ),
-        );
-      };
-      document.head.appendChild(script);
-    });
-  }
-  return sheetJsPromise;
-}
-
-/** Reads the first sheet of an .xlsx/.xls file into a matrix of strings. */
+/**
+ * Reads the first sheet of an .xlsx file into a matrix of strings. The reader
+ * is loaded only when someone picks an Excel file, so it never lands on
+ * anyone just opening the page.
+ */
 async function parseWorkbook(file: File): Promise<string[][]> {
-  const XLSX = await loadSheetJs();
-  const book = XLSX.read(await file.arrayBuffer(), { type: 'array' });
-  const first = book.SheetNames[0];
-  if (!first) throw new Error('That workbook has no sheets.');
-  return XLSX.utils
-    .sheet_to_json(book.Sheets[first], { header: 1, raw: false, defval: '' })
-    .filter((r) => r.some((c) => String(c).trim() !== ''));
+  if (/\.xls$/i.test(file.name)) {
+    throw new Error('That is an old Excel file (.xls). Open it in Excel and save it as .xlsx or CSV (UTF-8), then try again.');
+  }
+  const { readSheet } = await import('read-excel-file/browser');
+  const rows = (await readSheet(file)) as unknown[][];
+  return rows
+    .map((r) => r.map((c) => (c == null ? '' : c instanceof Date ? c.toISOString().slice(0, 10) : String(c))))
+    .filter((r) => r.some((c) => c.trim() !== ''));
 }
 
 export interface ParsedSheet {
@@ -189,6 +154,7 @@ const ALIASES: Partial<Record<MedicineColumn, string[]>> = {
   indications: ['indications', 'indication', 'uses'],
   sideEffects: ['sideeffects', 'sideeffect', 'adversereaction', 'adverseeffects'],
   status: ['status', 'active', 'isactive'],
+  dar: ['dar', 'darno', 'registration', 'registrationno', 'registrationnumber', 'regno'],
 };
 
 export function guessMapping(headers: string[]): Record<MedicineColumn, number> {

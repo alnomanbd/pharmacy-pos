@@ -355,6 +355,11 @@ class RefResolver {
 
   readonly created = { company: [] as string[], generic: [] as string[], group: [] as string[] };
 
+  /** Every reference loaded, so `nameOf` answers for ones this run has not resolved. */
+  ready() {
+    return this.load();
+  }
+
   /** The stored spelling of a reference, once resolved. */
   nameOf(id?: string) {
     return id ? this.nameById.get(id) : undefined;
@@ -454,10 +459,17 @@ const same = (a: unknown, b: unknown) => String(a ?? '').trim() === String(b ?? 
  * own rows, and the client sums the reports.
  */
 export async function importRows(
-  rows: ImportRow[],
-  opts: { dryRun?: boolean } = {},
+  input: ImportRow[],
+  opts: { dryRun?: boolean; ignoreIds?: boolean } = {},
 ): Promise<ImportReport> {
   const dryRun = Boolean(opts.dryRun);
+  /*
+   * A file exported from another server carries that server's ids, which mean
+   * nothing here — every row would fail "not in this catalogue". With
+   * `ignoreIds` they are dropped and each row is matched by what it is (brand,
+   * strength, company, form), exactly as a row typed in by hand.
+   */
+  const rows = opts.ignoreIds ? input.map(({ id: _id, ...row }) => row as ImportRow) : input;
   const refs = new RefResolver(dryRun);
   const report: ImportReport = {
     received: rows.length,
@@ -513,21 +525,53 @@ export async function importRows(
     // row is looked up, or the second source silently creates a second company
     // and splits that maker's medicines across two names in the filter.
     const row = normaliseCatalogRow(raw);
+
+    /*
+     * A row that names its medicine by id keeps whatever it did not change.
+     *
+     * Without this an export imported straight back was not a no-op: the
+     * normaliser re-spelt 8 dosage forms and strengths, re-resolved 33
+     * generics to their curated names, and — worst — moved 526 medicines from
+     * "Ibn Sina Pharmaceutical Ind. Ltd." to "Ibn Sina Pharmaceuticals Ltd.",
+     * because the two names share a fingerprint. Normalising is for a list
+     * arriving from outside; a cell that still says what the catalogue says is
+     * the catalogue's own value, and stays exactly as it is.
+     */
+    const prior = isObjectId(raw.id) ? byId.get(raw.id!) : undefined;
+    const kept = new Set<string>();
+    if (prior) {
+      await refs.ready();
+      const sameText = (a: unknown, b: unknown) => String(a ?? '').trim() === String(b ?? '').trim();
+      const sameName = (a: unknown, b: unknown) => String(a ?? '').trim().toLowerCase() === String(b ?? '').trim().toLowerCase();
+      for (const f of ['brandName', 'genericName', 'dosageForm', 'strength', 'packSize'] as const) {
+        if (raw[f] !== undefined && sameText(raw[f], prior.get(f))) {
+          row[f] = String(prior.get(f) ?? '');
+          kept.add(f);
+        }
+      }
+      const linked = (key: 'company' | 'group') => (prior.get(key) ? String(prior.get(key)) : undefined);
+      if (linked('company') && sameName(raw.companyName, refs.nameOf(linked('company')))) kept.add('company');
+      if (linked('group') && sameName(raw.groupName, refs.nameOf(linked('group')))) kept.add('group');
+    }
+
     const brandName = row.brandName?.trim();
     try {
       if (!brandName) throw new Error('brandName is required');
 
       const [company, generic, group] = await Promise.all([
-        refs.resolve('company', row.companyName),
-        refs.resolve('generic', row.genericName),
-        refs.resolve('group', row.groupName),
+        kept.has('company') ? String(prior!.get('company')) : refs.resolve('company', row.companyName),
+        kept.has('genericName') && prior!.get('generic')
+          ? String(prior!.get('generic'))
+          : refs.resolve('generic', row.genericName),
+        kept.has('group') ? String(prior!.get('group')) : refs.resolve('group', row.groupName),
       ]);
 
       const rowGeneric = row.genericName?.trim();
       if (!rowGeneric) throw new Error('genericName is required');
       // The reference's spelling, not the file's - see `nameById`. Falls back to
-      // the row when the reference could not be resolved (a dry run).
-      const genericName = refs.nameOf(generic) ?? rowGeneric;
+      // the row when the reference could not be resolved (a dry run). A generic
+      // the row did not change keeps the name the medicine already has.
+      const genericName = kept.has('genericName') ? rowGeneric : (refs.nameOf(generic) ?? rowGeneric);
 
       let price: number | undefined;
       if (row.price?.trim()) {
