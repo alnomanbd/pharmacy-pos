@@ -6,6 +6,7 @@ import { restoreSession } from '@dawai/shared/api/client';
 import ErrorBoundary from '@dawai/shared/components/ErrorBoundary';
 import App from './App';
 import { installErrorReporting } from '@dawai/shared/lib/errorReporting';
+import { installPhoneticTyping } from '@dawai/shared/lib/phoneticTyping';
 import './styles/index.css';
 // After the app's own sheet: where both define a selector, the system wins.
 import '@dawai/shared/styles/theme.css';
@@ -19,6 +20,9 @@ void restoreSession();
 
 /* Crashes in this browser go to the server — see shared/lib/errorReporting. */
 installErrorReporting('console');
+
+/* Bangla from the ordinary keyboard in every text box, when the A | অ switch says so. */
+installPhoneticTyping();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

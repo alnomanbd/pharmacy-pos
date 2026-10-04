@@ -8,6 +8,7 @@ import ErrorBoundary from '@dawai/shared/components/ErrorBoundary';
 import App from './App';
 import { registerServiceWorker } from './pwa';
 import { installErrorReporting } from '@dawai/shared/lib/errorReporting';
+import { installPhoneticTyping } from '@dawai/shared/lib/phoneticTyping';
 // Loaded first: it scopes the till's browser storage to whoever signs in.
 import './branch';
 import './styles/index.css';
@@ -36,6 +37,9 @@ if (window.location.pathname.startsWith('/support/claim')) {
 registerServiceWorker();
 /* Crashes in this browser go to the server — see shared/lib/errorReporting. */
 installErrorReporting('shop');
+
+/* Bangla from the ordinary keyboard in every text box, when the A | অ switch says so. */
+installPhoneticTyping();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

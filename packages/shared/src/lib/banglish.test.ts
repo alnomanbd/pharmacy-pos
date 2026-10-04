@@ -88,3 +88,20 @@ describe('toBangla', () => {
     expect(isBanglishLetter('.')).toBe(false);
   });
 });
+
+describe('capitals', () => {
+  it('reads a capital with no meaning of its own as lowercase, as Avro does', () => {
+    expect(toBangla('Karim')).toBe(toBangla('karim'));
+    expect(toBangla('Bangladesh')).toBe('বাংলাদেশ');
+  });
+
+  it('keeps the capitals that mean something', () => {
+    expect(toBangla('sOnar')).toBe('সোনার');
+    expect(toBangla('Dhaka')).toBe('ঢাকা');
+  });
+
+  it('reads R and N at the start of a word as a name’s capital — no word starts with ড় or ণ', () => {
+    expect(toBangla('Rahim')).toBe(toBangla('rahim'));
+    expect(toBangla('Nasrin')).toBe(toBangla('nasrin'));
+  });
+});

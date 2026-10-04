@@ -436,6 +436,7 @@ export default function Stock() {
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             className="input h-9 pl-9"
+            data-latin
             placeholder={t('Brand, generic, company or code…')}
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -844,6 +845,7 @@ function Barcode({ product, onSaved }: { product: ShopProduct; onSaved: () => Pr
           className="input h-9"
           value={code}
           onChange={(e) => setCode(e.target.value)}
+          data-latin
           placeholder={t('Scan the pack, or type the code')}
           autoComplete="off"
           maxLength={64}
@@ -1611,6 +1613,7 @@ function AddItem({
                 className="input h-10"
                 value={form.barcode}
                 onChange={set('barcode')}
+                data-latin
                 placeholder={t('Scan the pack, or type the code')}
                 autoComplete="off"
                 maxLength={64}

@@ -337,6 +337,7 @@ export default function Expiry() {
                 setQ(e.target.value);
                 setPage(1);
               }}
+              data-latin
               placeholder={t('Medicine, batch or company…')}
               aria-label={t('Search')}
             />

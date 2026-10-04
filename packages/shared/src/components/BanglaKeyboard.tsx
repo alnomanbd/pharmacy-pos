@@ -5,10 +5,11 @@ import {
   useState,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
+  type CSSProperties,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { Delete, X, GripHorizontal } from 'lucide-react';
-import { insertIntoBanglaField, backspaceBanglaField, hasBanglaTarget } from './BanglaField';
+import { Delete, X, GripHorizontal, Keyboard } from 'lucide-react';
+import { insertIntoBanglaField, backspaceBanglaField, hasBanglaTarget, banglaTarget } from './BanglaField';
 import './BanglaKeyboard.css';
 
 /**
@@ -24,26 +25,33 @@ import './BanglaKeyboard.css';
  * has the cursor — not only the Bangla fields, but any input on any page,
  * because a customer's name and a supplier's name get typed in Bangla too.
  *
- * The two are complementary, not alternatives. Phonetic for speed on ordinary
- * words; this for the letter you cannot spell, the mark you cannot find, and the
- * salesman who would rather not learn a scheme at all.
+ * ## How it is laid out
  *
- * ## Why it floats, and why it is draggable
+ * Four panes — consonants with their signs, vowels, conjuncts, numbers — named
+ * in the title bar, so the keyboard is as tall as one pane and not all of them.
+ * (With every group stacked under a caption it stood taller than the page it
+ * was typing into.) Every pane is the height of the tallest, so the bottom row
+ * does not jump when the pane changes.
  *
- * It began as a panel inline in the form, directly under the switch that opened
- * it — which put five rows of keys on top of the very field being typed into.
- * You could not read what you were writing, which defeats the purpose of a
- * keyboard.
+ * One grid, twelve keys across, for every block — a vowel, a sign and a
+ * consonant are the same size and sit in the same columns. Vowels are tinted,
+ * signs sit on a dashed cap the way a primer prints `◌া`, consonants are plain.
  *
- * So it is a floating window: fixed to the viewport, in a portal (a page with
- * `overflow` would otherwise clip it), and dragged by its title bar to wherever
- * the typist's own text is not. Where they put it is remembered, because moving
- * it for every customer is its own annoyance.
+ * Space and backspace sit along the bottom, where every keyboard has them, and a
+ * line along the top shows the end of what is in the field — because the field
+ * is often under the keyboard, and that line is what stops it being typed blind.
  *
- * It is deliberately **not** a modal: no backdrop, nothing to dismiss, and the
- * page behind it stays live. A modal would take focus, and the field it types
- * into is on that page — which is also why every control here swallows its own
- * `pointerdown`/`mousedown`.
+ * ## Floating on a desk, docked on a phone
+ *
+ * On a wide screen it is a floating window, dragged by its title bar to
+ * wherever the typist's own text is not, and remembered there. It is not a
+ * modal: no backdrop, and the page stays live — every control here swallows its
+ * own `mousedown` so the field keeps its focus.
+ *
+ * A phone has no room for a window, so there it is a sheet along the bottom, the
+ * full width of the screen, like the phone's own keyboard. While it is open the
+ * phone's keyboard is told to stay down (`inputmode="none"` on the field being
+ * typed into), or the two would stack.
  */
 
 /** The rows, grouped the way a Bengali chart is — not the way a QWERTY key is. */
@@ -61,14 +69,7 @@ const MATRAS = ['া', 'ি', 'ী', 'ু', 'ূ', 'ৃ', 'ে', 'ৈ', 'ো', '
 /** Hasant, chandrabindu, anusvara, visarga, khanda ta — unreachable by guessing. */
 const MARKS = ['্', 'ঁ', 'ং', 'ঃ', 'ৎ'];
 
-/**
- * The consonants, in order, as one list.
- *
- * Not cut into rows here. Five-to-a-row is how a বর্ণমালা poster prints them,
- * and it was tried — it made a tall narrow block with two thirds of the panel
- * empty beside it, and the eye has to travel seven rows to reach `হ`. The rows
- * are computed instead, filled to the width of the panel.
- */
+/** The consonants, in chart order. The grid fills them to the panel's width. */
 const CONSONANTS = [
   'ক', 'খ', 'গ', 'ঘ', 'ঙ',
   'চ', 'ছ', 'জ', 'ঝ', 'ঞ',
@@ -84,77 +85,58 @@ const CONSONANTS = [
  *
  * Reachable by hand — `ক` `্` `ষ` — and nobody does that with a customer waiting.
  */
-const CONJUNCTS = ['ক্ষ', 'জ্ঞ', 'ঞ্জ', 'ঙ্গ', 'ত্র', 'দ্ধ', 'ন্ত', 'ম্প', 'স্থ', 'শ্র', 'হ্ম', '্য', '্র'];
+const CONJUNCTS = ['ক্ষ', 'জ্ঞ', 'ঞ্জ', 'ঙ্গ', 'ত্র', 'দ্ধ', 'ন্ত', 'ম্প', 'স্থ', 'শ্র', 'হ্ম', 'ষ্ট', 'ন্দ', 'ল্প', '্য', '্র'];
 
 const DIGITS = ['১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯', '০'];
 
-const PUNCTUATION = ['।', ',', '?', '!', '-', '(', ')', '/', '%', '৳'];
+const PUNCTUATION = ['।', ',', '?', '!', '-', '(', ')', '/', '%', '৳', ':', '.'];
+
+type Tone = 'vowel' | 'mark' | 'consonant' | 'plain';
 
 /**
- * One captioned block of keys.
+ * Four panes, so the keyboard is as tall as one of them rather than all of them.
  *
- * The caption is in Bangla, because the person reading it is looking for a
- * Bangla letter.
+ * Consonants come first and carry the কার signs with them: a word is a
+ * consonant and its sign, again and again — না, পা — and a tab between the two
+ * would be a tap per letter. The vowels stand alone (a word starts with one at
+ * most), each over its own sign, which is also how a primer teaches them.
  */
-function Group({ caption, children }: { caption: string; children: ReactNode }) {
+type Pane = 'consonants' | 'vowels' | 'conjuncts' | 'numbers';
+const PANES: [Pane, string][] = [
+  ['consonants', 'ব্যঞ্জন'],
+  ['vowels', 'স্বর'],
+  ['conjuncts', 'যুক্তাক্ষর'],
+  ['numbers', '১২৩'],
+];
+
+/** Each vowel's sign, under it — অ has none. */
+const VOWEL_SIGNS: Record<string, string> = {
+  আ: 'া', ই: 'ি', ঈ: 'ী', উ: 'ু', ঊ: 'ূ', ঋ: 'ৃ', এ: 'ে', ঐ: 'ৈ', ও: 'ো', ঔ: 'ৌ',
+};
+
+/** A sign is drawn on the dotted circle it hangs from. */
+const isSign = (c: string) => MATRAS.includes(c) || MARKS.includes(c) || c.startsWith('্');
+
+/**
+ * One block of keys on the shared grid. Named for screen readers only: the tab
+ * already says what the keys are, and a caption over every block was a row of
+ * height the keyboard could not spare.
+ */
+function Group({ name, children }: { name: string; children: ReactNode }) {
   return (
-    <div className="bnk-group">
-      <span className="bnk-cap" lang="bn">
-        {caption}
-      </span>
-      <div className="bnk-group-keys">{children}</div>
+    <div className="bnk-grid" role="group" aria-label={name} lang="bn">
+      {children}
     </div>
   );
 }
 
-/**
- * How many keys fit across the panel. Rows are filled up to this.
- *
- * Twelve rather than ten so the eleven vowels are a single full line. With ten
- * they balanced into 6 and 5 — no stub, but keys half again as wide as the
- * consonants below them, which made the sections look like different keyboards.
- */
-const PER_ROW = 12;
-
-/**
- * Splits a list into rows of nearly equal length.
- *
- * Plain chunking is what this replaces, and the difference is visible: eleven
- * vowels chunked by five give rows of 5, 5 and **1** — a single key sitting
- * alone under a full row, which reads as a mistake. Balanced, the same eleven
- * give 6 and 5.
- *
- * So: as few rows as will hold the list, and then the keys spread evenly across
- * them, so no row is ever more than one key shorter than another.
- */
-function rows<T>(items: T[], perRow = PER_ROW): T[][] {
-  const count = Math.max(1, Math.ceil(items.length / perRow));
-  const out: T[][] = [];
-  let taken = 0;
-  for (let i = 0; i < count; i++) {
-    // The remainder is spread over the first rows rather than dumped on the
-    // last one, which is what keeps the difference to a single key.
-    const size = Math.ceil((items.length - taken) / (count - i));
-    out.push(items.slice(taken, taken + size));
-    taken += size;
-  }
-  return out;
-}
-
-function Key({
-  char,
-  label,
-  tone,
-}: {
-  char: string;
-  label?: string;
-  /** `mark` for a sign that attaches to a letter — drawn quieter than a letter. */
-  tone?: 'mark';
-}) {
+function Key({ char, tone = 'plain' }: { char: string; tone?: Tone }) {
+  const label = isSign(char) ? `◌${char}` : char;
   return (
     <button
       type="button"
-      className={`bnk-key${tone === 'mark' ? ' bnk-key--mark' : ''}`}
+      className={`bnk-key bnk-key--${tone}`}
+      data-pop={label}
       // The field must not lose focus, or there is nothing to type into: a
       // click blurs before it fires, so the mousedown is swallowed here.
       onMouseDown={(e) => e.preventDefault()}
@@ -162,7 +144,7 @@ function Key({
       aria-label={`Insert ${char}`}
       lang="bn"
     >
-      {label ?? char}
+      {label}
     </button>
   );
 }
@@ -174,30 +156,44 @@ interface Position {
 }
 
 const POSITION_KEY = 'dawai.banglaKeyboard.position';
+const WIDTH_KEY = 'dawai.banglaKeyboard.width';
 
 /**
- * The panel's size before it has been rendered and measured.
- *
- * A fallback only. The real height is measured, because guessing it wrong is
- * not cosmetic: at an assumed 300px on a 720px-tall screen the panel sat low
- * enough that its consonant rows — most of the keyboard — were below the fold,
- * with nothing to scroll. The keys were there, visible to a test, and
- * unreachable by a hand.
+ * How wide the window may be made. The keys scale with it — a bigger keyboard
+ * is bigger keys, not more empty space — so the narrowest still has a Bangla
+ * letter readable on every key, and the widest is the size of a tablet's own.
  */
-const PANEL = { width: 506, height: 372 };
+const MIN_WIDTH = 380;
+const MAX_WIDTH = 900;
+/** The size it opens at, and the size its keys are drawn for: `--bnk-s` is 1 here. */
+const DEFAULT_WIDTH = 500;
+
+function clampWidth(w: number) {
+  const roomy = typeof window === 'undefined' ? MAX_WIDTH : window.innerWidth - 16;
+  return Math.round(Math.min(Math.max(MIN_WIDTH, w), Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, roomy))));
+}
+
+function storedWidth(): number {
+  try {
+    const saved = Number(localStorage.getItem(WIDTH_KEY));
+    return Number.isFinite(saved) && saved > 0 ? clampWidth(saved) : clampWidth(DEFAULT_WIDTH);
+  } catch {
+    return clampWidth(DEFAULT_WIDTH);
+  }
+}
+
+/** Narrower than this, the keyboard is a sheet along the bottom rather than a window. */
+const DOCK_BELOW = 640;
+
+/** The panel's size before it has been rendered and measured — a fallback only. */
+const PANEL = { width: 500, height: 340 };
 
 interface Size {
   width: number;
   height: number;
 }
 
-/**
- * Keeps the whole panel on screen.
- *
- * Both edges matter and for different reasons: dragged off the right or the
- * bottom it is hard to get back (and the position is remembered, so a bad drag
- * would persist), and placed too low its own lower half is unusable.
- */
+/** Keeps the whole panel on screen — dragged off an edge it is hard to get back. */
 function clampTo({ x, y }: Position, size: Size): Position {
   const maxX = Math.max(8, window.innerWidth - size.width - 8);
   const maxY = Math.max(8, window.innerHeight - size.height - 8);
@@ -223,41 +219,139 @@ function storedPosition(): Position {
     if (!raw) return defaultPosition();
     const saved = JSON.parse(raw) as Position;
     if (!Number.isFinite(saved?.x) || !Number.isFinite(saved?.y)) return defaultPosition();
-    // Clamped on read as well as on write: the window may have been resized, or
-    // this may be a different screen from the one it was placed on.
+    // Clamped on read as well: the window may have been resized since.
     return clamp(saved);
   } catch {
-    // Private mode, blocked site data, or a malformed value — none of which is
-    // a reason not to show a keyboard.
     return defaultPosition();
   }
 }
 
+const isDocked = () => typeof window !== 'undefined' && window.innerWidth < DOCK_BELOW;
+
+/** The end of what is in the field, up to the caret, and a little after it. */
+function readTarget(): { before: string; after: string } | null {
+  const el = banglaTarget();
+  if (!el) return null;
+  const caret = el.selectionStart ?? el.value.length;
+  const flat = (s: string) => s.replace(/\s*\n\s*/g, ' ⏎ ');
+  const before = flat(el.value.slice(0, caret));
+  const after = flat(el.value.slice(caret));
+  return { before: before.length > 40 ? `…${before.slice(-40)}` : before, after: after.slice(0, 12) };
+}
+
+/**
+ * Backspace that keeps going while it is held, the way every keyboard's does.
+ *
+ * The click deletes one, so a tap and the keyboard (Enter or Space on the
+ * button) behave the same. Held past a moment, it repeats; the click that ends a
+ * held press is then swallowed, or it would delete one more than was meant.
+ */
+function useRepeatingBackspace() {
+  const timers = useRef<{ wait?: number; every?: number }>({});
+  const repeated = useRef(false);
+
+  const stop = useCallback(() => {
+    window.clearTimeout(timers.current.wait);
+    window.clearInterval(timers.current.every);
+    timers.current = {};
+  }, []);
+
+  useEffect(() => stop, [stop]);
+
+  return {
+    onPointerDown: () => {
+      repeated.current = false;
+      stop();
+      timers.current.wait = window.setTimeout(() => {
+        repeated.current = true;
+        backspaceBanglaField();
+        timers.current.every = window.setInterval(backspaceBanglaField, 70);
+      }, 420);
+    },
+    onPointerUp: stop,
+    onPointerLeave: stop,
+    onPointerCancel: stop,
+    onClick: () => {
+      if (repeated.current) {
+        repeated.current = false;
+        return;
+      }
+      backspaceBanglaField();
+    },
+  };
+}
+
 export function BanglaKeyboard({ onClose }: { onClose?: () => void }) {
-  const [tab, setTab] = useState<'letters' | 'conjuncts' | 'numbers'>('letters');
+  const [tab, setTab] = useState<Pane>('consonants');
+  const [docked, setDocked] = useState(isDocked);
 
   /*
-   * Whether a tap has anywhere to go.
+   * Whether a tap has anywhere to go, and what is in that field now.
    *
-   * Without this the keyboard is silent when no text box has been focused —
+   * Without the first the keyboard is silent when no text box has been focused —
    * which is exactly what a person does: open the keyboard first, then wonder
-   * why nothing happens. Recomputed on focus changes rather than held once,
-   * because focus moves for reasons this component never hears about.
+   * why nothing happens. Both are re-read whenever focus, the text or the caret
+   * moves, because those change for reasons this component never hears about.
    */
   const [hasTarget, setHasTarget] = useState(hasBanglaTarget());
+  const [shown, setShown] = useState(readTarget);
 
   useEffect(() => {
-    const check = () => setHasTarget(hasBanglaTarget());
+    let frame = 0;
+    const check = () => {
+      cancelAnimationFrame(frame);
+      // After the event has settled, so the value and the caret are the new ones.
+      frame = requestAnimationFrame(() => {
+        setHasTarget(hasBanglaTarget());
+        setShown(readTarget());
+      });
+    };
     check();
-    document.addEventListener('focusin', check, true);
-    document.addEventListener('focusout', check, true);
+    const events = ['focusin', 'focusout', 'input', 'selectionchange', 'keyup'];
+    for (const e of events) document.addEventListener(e, check, true);
     return () => {
-      document.removeEventListener('focusin', check, true);
-      document.removeEventListener('focusout', check, true);
+      cancelAnimationFrame(frame);
+      for (const e of events) document.removeEventListener(e, check, true);
     };
   }, []);
+
+  useEffect(() => {
+    const onResize = () => setDocked(isDocked());
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  /*
+   * On a touch screen, keep the device's own keyboard down while this one is
+   * up: every text box focused while it is open gets `inputmode="none"`, and
+   * each gets back what it had when the keyboard closes.
+   */
+  useEffect(() => {
+    const touch = typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches;
+    if (!touch) return;
+    const changed = new Map<HTMLElement, string | null>();
+    const quiet = (el: Element | null) => {
+      if (!(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement)) return;
+      if (!changed.has(el)) changed.set(el, el.getAttribute('inputmode'));
+      el.setAttribute('inputmode', 'none');
+    };
+    quiet(document.activeElement);
+    const onFocus = (e: FocusEvent) => quiet(e.target as Element);
+    document.addEventListener('focusin', onFocus, true);
+    return () => {
+      document.removeEventListener('focusin', onFocus, true);
+      for (const [el, was] of changed) {
+        if (was === null) el.removeAttribute('inputmode');
+        else el.setAttribute('inputmode', was);
+      }
+    };
+  }, []);
+
   const [position, setPosition] = useState<Position>(storedPosition);
   const [dragging, setDragging] = useState(false);
+  const [width, setWidth] = useState(storedWidth);
+  const [resizing, setResizing] = useState(false);
+  const resizeFrom = useRef({ x: 0, width: 0 });
   /** Where in the panel the pointer grabbed it, so it does not jump on grab. */
   const grab = useRef<Position>({ x: 0, y: 0 });
   const panel = useRef<HTMLDivElement | null>(null);
@@ -271,21 +365,18 @@ export function BanglaKeyboard({ onClose }: { onClose?: () => void }) {
     [],
   );
 
-  /*
-   * Pulled back on screen after every render that can change its size: opening
-   * it, switching pane (the letters pane is much taller than the numbers one),
-   * and the window being resized. The first pass matters most — the initial
-   * position is computed from the fallback height, before there is anything to
-   * measure.
-   */
+  // Pulled back on screen whenever its size can have changed: opening it,
+  // switching pane, the window being resized.
   useEffect(() => {
+    if (docked) return;
     const fit = () => setPosition((p) => clampTo(p, measure()));
     fit();
     window.addEventListener('resize', fit);
     return () => window.removeEventListener('resize', fit);
-  }, [tab, measure]);
+  }, [tab, measure, docked]);
 
   const startDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (docked) return;
     // Pointer events, so a tablet drags the same way a mouse does.
     // `preventDefault` keeps focus in the field being typed into.
     event.preventDefault();
@@ -295,23 +386,14 @@ export function BanglaKeyboard({ onClose }: { onClose?: () => void }) {
 
   useEffect(() => {
     if (!dragging) return;
-
     const move = (event: PointerEvent) => {
       // A move without coordinates would set the position to NaN, which the
-      // browser silently ignores and the *stored* position then keeps — the
-      // panel would come back next time with no position at all.
+      // stored position would then keep.
       if (!Number.isFinite(event.clientX) || !Number.isFinite(event.clientY)) return;
-      setPosition(
-        clampTo(
-          { x: event.clientX - grab.current.x, y: event.clientY - grab.current.y },
-          measure(),
-        ),
-      );
+      setPosition(clampTo({ x: event.clientX - grab.current.x, y: event.clientY - grab.current.y }, measure()));
     };
     const end = () => setDragging(false);
-
-    // On the window, not the handle: a fast drag outruns the element, and
-    // releasing outside it would otherwise leave the panel stuck to the cursor.
+    // On the window, not the handle: a fast drag outruns the element.
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', end);
     window.addEventListener('pointercancel', end);
@@ -322,16 +404,55 @@ export function BanglaKeyboard({ onClose }: { onClose?: () => void }) {
     };
   }, [dragging, measure]);
 
-  // Remembered once the drag ends rather than on every frame: that would be a
-  // storage write per mouse move.
+  /*
+   * Resizing, by the corner grip: wider is bigger keys, the left edge stays
+   * where it is, and the panel is kept on screen as it grows.
+   */
+  const startResize = (event: ReactPointerEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    resizeFrom.current = { x: event.clientX, width };
+    setResizing(true);
+  };
+
   useEffect(() => {
-    if (dragging) return;
+    if (!resizing) return;
+    const move = (event: PointerEvent) => {
+      if (!Number.isFinite(event.clientX)) return;
+      setWidth(clampWidth(resizeFrom.current.width + (event.clientX - resizeFrom.current.x)));
+    };
+    const end = () => setResizing(false);
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', end);
+    window.addEventListener('pointercancel', end);
+    return () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', end);
+      window.removeEventListener('pointercancel', end);
+    };
+  }, [resizing]);
+
+  // A bigger panel may now hang off the screen; and the size is remembered.
+  useEffect(() => {
+    if (docked) return;
+    setPosition((p) => clampTo(p, measure()));
+    if (resizing) return;
+    try {
+      localStorage.setItem(WIDTH_KEY, String(width));
+    } catch {
+      /* storage unavailable — it just forgets */
+    }
+  }, [width, resizing, docked, measure]);
+
+  // Remembered once the drag ends, not on every frame.
+  useEffect(() => {
+    if (dragging || docked) return;
     try {
       localStorage.setItem(POSITION_KEY, JSON.stringify(position));
     } catch {
       /* storage unavailable — the keyboard still works, it just forgets */
     }
-  }, [dragging, position]);
+  }, [dragging, position, docked]);
 
   const nudge = useCallback(
     (dx: number, dy: number) => {
@@ -340,31 +461,35 @@ export function BanglaKeyboard({ onClose }: { onClose?: () => void }) {
     [measure],
   );
 
+  const backspace = useRepeatingBackspace();
+  const swallow = (e: { preventDefault: () => void }) => e.preventDefault();
+
   return createPortal(
     <div
       ref={panel}
-      className={`bnk bnk--float no-print ${dragging ? 'is-dragging' : ''}`}
+      className={`bnk no-print ${docked ? 'bnk--docked' : 'bnk--float'} ${dragging ? 'is-dragging' : ''} ${
+        resizing ? 'is-resizing' : ''
+      }`}
       role="group"
       aria-label="Bangla keyboard"
-      style={{ left: position.x, top: position.y, width: PANEL.width }}
+      style={
+        docked
+          ? undefined
+          : ({ left: position.x, top: position.y, width, '--bnk-s': width / DEFAULT_WIDTH } as CSSProperties)
+      }
     >
-      {!hasTarget && (
-        <p className="bnk-nowhere" role="status">
-          টাইপ করার ঘরে একবার ক্লিক করুন — তারপর এখান থেকে লিখুন।
-        </p>
-      )}
-
       {/*
-        The title bar doubles as the drag handle. It is also focusable and
+        The title bar is the drag handle on a desk. It is also focusable and
         arrow-key movable, because a pointer drag is not available to everyone.
       */}
       <div
-        className="bnk-drag"
+        className="bnk-head"
         onPointerDown={startDrag}
-        role="button"
-        tabIndex={0}
-        aria-label="Move the Bangla keyboard"
+        role={docked ? undefined : 'button'}
+        tabIndex={docked ? undefined : 0}
+        aria-label={docked ? undefined : 'Move the Bangla keyboard'}
         onKeyDown={(e) => {
+          if (docked) return;
           const step = e.shiftKey ? 40 : 12;
           const moves: Record<string, [number, number]> = {
             ArrowLeft: [-step, 0],
@@ -378,41 +503,18 @@ export function BanglaKeyboard({ onClose }: { onClose?: () => void }) {
           nudge(delta[0], delta[1]);
         }}
       >
-        <GripHorizontal className="bnk-grip h-4 w-4" />
-        <span className="bnk-title" lang="bn">
-          বাংলা কীবোর্ড
-        </span>
-        <span className="bnk-spacer" />
-        {onClose && (
-          <button
-            type="button"
-            className="bnk-win"
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={onClose}
-            aria-label="Close the Bangla keyboard"
-            title="বন্ধ করুন"
-          >
-            <X className="h-3.5 w-3.5" />
-          </button>
-        )}
-      </div>
-
-      <div className="bnk-bar">
-        <div className="bnk-tabs" role="tablist">
-          {(
-            [
-              ['letters', 'অক্ষর'],
-              ['conjuncts', 'যুক্তাক্ষর'],
-              ['numbers', 'সংখ্যা'],
-            ] as [typeof tab, string][]
-          ).map(([key, label]) => (
+        {docked ? <Keyboard className="bnk-grip h-4 w-4" /> : <GripHorizontal className="bnk-grip h-4 w-4" />}
+        {/* The panes, in the title bar: a row of its own was height the keyboard could not spare. */}
+        <div className="bnk-tabs" role="tablist" aria-label="বাংলা কীবোর্ড">
+          {PANES.map(([key, label]) => (
             <button
               key={key}
               type="button"
               role="tab"
               aria-selected={tab === key}
-              className={`bnk-tab ${tab === key ? 'is-on' : ''}`}
-              onMouseDown={(e) => e.preventDefault()}
+              className={`bnk-tab${tab === key ? ' is-on' : ''}`}
+              onMouseDown={swallow}
+              onPointerDown={(e) => e.stopPropagation()}
               onClick={() => setTab(key)}
               lang="bn"
             >
@@ -420,13 +522,136 @@ export function BanglaKeyboard({ onClose }: { onClose?: () => void }) {
             </button>
           ))}
         </div>
-
         <span className="bnk-spacer" />
+        {onClose && (
+          <button
+            type="button"
+            className="bnk-win"
+            onMouseDown={swallow}
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={onClose}
+            aria-label="Close the Bangla keyboard"
+            title="বন্ধ করুন"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
+      </div>
 
+      {/* What is in the field — often hidden under the keyboard itself. */}
+      <div className={`bnk-screen${hasTarget ? '' : ' is-empty'}`}>
+        {!hasTarget ? (
+          <span className="bnk-nowhere" role="status" lang="bn">
+            টাইপ করার ঘরে একবার ক্লিক করুন — তারপর এখান থেকে লিখুন।
+          </span>
+        ) : (
+          <span className="bnk-text" lang="bn">
+            {shown?.before}
+            <span className="bnk-caret" aria-hidden />
+            <span className="bnk-after">{shown?.after}</span>
+            {!shown?.before && !shown?.after && <span className="bnk-placeholder">লিখতে শুরু করুন…</span>}
+          </span>
+        )}
+      </div>
+
+      {/* Every pane is the height of the tallest, so the bottom row never moves. */}
+      <div className="bnk-body" role="tabpanel">
+        {tab === 'consonants' && (
+          <>
+            {/* ৎ is a consonant — খণ্ড ত — and fills the last slot of the third row. */}
+            <Group name="ব্যঞ্জনবর্ণ">
+              {[...CONSONANTS, 'ৎ'].map((c) => (
+                <Key key={c} char={c} tone="consonant" />
+              ))}
+            </Group>
+            {/* The ten signs, ঁ and ং: one row. Hasant is on the bottom row, ঃ with the vowels. */}
+            <Group name="কার ও চিহ্ন">
+              {[...MATRAS, 'ঁ', 'ং'].map((c) => (
+                <Key key={c} char={c} tone="mark" />
+              ))}
+            </Group>
+          </>
+        )}
+
+        {tab === 'vowels' && (
+          <>
+            <Group name="স্বরবর্ণ">
+              {VOWELS.map((c) => (
+                <Key key={c} char={c} tone="vowel" />
+              ))}
+            </Group>
+            <Group name="কার">
+              {VOWELS.map((c) =>
+                VOWEL_SIGNS[c] ? <Key key={c} char={VOWEL_SIGNS[c]} tone="mark" /> : <span key={c} aria-hidden />,
+              )}
+            </Group>
+            <Group name="চিহ্ন">
+              {MARKS.map((c) => (
+                <Key key={c} char={c} tone="mark" />
+              ))}
+            </Group>
+          </>
+        )}
+
+        {tab === 'conjuncts' && (
+          <>
+            <Group name="যুক্তাক্ষর">
+              {CONJUNCTS.map((c) => (
+                <Key key={c} char={c} tone={c.startsWith('্') ? 'mark' : 'consonant'} />
+              ))}
+            </Group>
+            <p className="bnk-hint" lang="bn">
+              অন্য যুক্তাক্ষর: দুই বর্ণের মাঝে <b>◌্</b> দিন — ক + ◌্ + ত = ক্ত
+            </p>
+          </>
+        )}
+
+        {tab === 'numbers' && (
+          <>
+            <Group name="সংখ্যা">
+              {DIGITS.map((c) => (
+                <Key key={c} char={c} tone="vowel" />
+              ))}
+            </Group>
+            <Group name="যতিচিহ্ন">
+              {PUNCTUATION.map((c) => (
+                <Key key={c} char={c} />
+              ))}
+            </Group>
+            <p className="bnk-hint" lang="bn">
+              ঔষধের মাত্রা ইংরেজি অঙ্কেই লেখা ভালো — <b>500 mg</b>, <b>1+0+1</b>
+            </p>
+          </>
+        )}
+      </div>
+
+      {/* Along the bottom, where every keyboard keeps them. */}
+      <div className="bnk-foot">
         <button
           type="button"
-          className="bnk-key bnk-key--util bnk-wide"
-          onMouseDown={(e) => e.preventDefault()}
+          className="bnk-key bnk-key--fn"
+          onMouseDown={swallow}
+          onClick={() => insertIntoBanglaField('্')}
+          aria-label="Insert hasant"
+          title="হসন্ত — যুক্তাক্ষর বানাতে"
+          lang="bn"
+        >
+          ◌্
+        </button>
+        <button
+          type="button"
+          className="bnk-key bnk-key--fn"
+          onMouseDown={swallow}
+          onClick={() => insertIntoBanglaField('।')}
+          aria-label="Insert দাঁড়ি"
+          lang="bn"
+        >
+          ।
+        </button>
+        <button
+          type="button"
+          className="bnk-key bnk-key--space"
+          onMouseDown={swallow}
           onClick={() => insertIntoBanglaField(' ')}
           aria-label="Insert a space"
           lang="bn"
@@ -435,108 +660,37 @@ export function BanglaKeyboard({ onClose }: { onClose?: () => void }) {
         </button>
         <button
           type="button"
-          className="bnk-key bnk-key--util"
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => backspaceBanglaField()}
+          className="bnk-key bnk-key--fn bnk-key--back"
+          onMouseDown={swallow}
+          {...backspace}
           aria-label="Backspace"
-          title="মুছুন"
+          title="মুছুন — চেপে ধরলে মুছতেই থাকবে"
         >
-          <Delete className="h-4 w-4" />
+          <Delete className="h-5 w-5" />
         </button>
       </div>
 
-      {tab === 'letters' && (
-        <div className="bnk-pad">
-          {/*
-            Captioned groups, rows filled to the width of the panel.
-
-            The captions stay because fifty keys in one undifferentiated grid is
-            a wall — স্বরবর্ণ, কার ও চিহ্ন and ব্যঞ্জনবর্ণ is how the letters are
-            named and taught, so it is how they are found.
-
-            What went: five-to-a-row (the poster layout) and the two columns it
-            forced. Five wide made the consonants seven rows tall in a block a
-            third of the panel's width, with a stub row at the bottom and empty
-            space beside all of it. Filled rows put the same letters in four
-            lines a reader can scan.
-          */}
-          <Group caption="স্বরবর্ণ">
-            {rows(VOWELS).map((row) => (
-              <div className="bnk-row" key={row.join('')}>
-                {row.map((c) => (
-                  <Key key={c} char={c} />
-                ))}
-              </div>
-            ))}
-          </Group>
-
-          <Group caption="কার ও চিহ্ন">
-            {rows([...MATRAS, ...MARKS]).map((row) => (
-              <div className="bnk-row" key={row.join('')}>
-                {row.map((c) => (
-                  <Key key={c} char={c} label={`◌${c}`} tone="mark" />
-                ))}
-              </div>
-            ))}
-          </Group>
-
-          <Group caption="ব্যঞ্জনবর্ণ">
-            {rows(CONSONANTS).map((row) => (
-              <div className="bnk-row" key={row.join('')}>
-                {row.map((c) => (
-                  <Key key={c} char={c} />
-                ))}
-              </div>
-            ))}
-          </Group>
-        </div>
-      )}
-
-      {tab === 'conjuncts' && (
-        <div className="bnk-pad">
-          {rows(CONJUNCTS).map((row) => (
-            <div className="bnk-row" key={row.join('')}>
-              {row.map((c) => (
-                <Key
-                  key={c}
-                  char={c}
-                  label={c.startsWith('্') ? `◌${c}` : c}
-                  tone={c.startsWith('্') ? 'mark' : undefined}
-                />
-              ))}
-            </div>
-          ))}
-          <p className="bnk-hint">
-            যুক্তাক্ষর নিজে বানাতে দুই বর্ণের মাঝে <span lang="bn">◌্</span> (হসন্ত) দিন।
-          </p>
-        </div>
-      )}
-
-      {tab === 'numbers' && (
-        <div className="bnk-pad">
-          <Group caption="সংখ্যা">
-            {rows(DIGITS).map((row) => (
-              <div className="bnk-row" key={row.join('')}>
-                {row.map((c) => (
-                  <Key key={c} char={c} />
-                ))}
-              </div>
-            ))}
-          </Group>
-          <Group caption="যতিচিহ্ন">
-            {rows(PUNCTUATION).map((row) => (
-              <div className="bnk-row" key={row.join('')}>
-                {row.map((c) => (
-                  <Key key={c} char={c} />
-                ))}
-              </div>
-            ))}
-          </Group>
-          <p className="bnk-hint">
-            ঔষধের মাত্রা ও তারিখ ইংরেজি অঙ্কেই লেখা ভালো — <b>500 mg</b>, <b>1+0+1</b> — কারণ
-            ফার্মেসি ও ল্যাব সেটাই পড়ে।
-          </p>
-        </div>
+      {/* The corner grip: drag to make the whole keyboard bigger or smaller. */}
+      {!docked && (
+        <div
+          className="bnk-resize"
+          onPointerDown={startResize}
+          onMouseDown={swallow}
+          role="slider"
+          tabIndex={0}
+          aria-label="Resize the Bangla keyboard"
+          aria-valuemin={MIN_WIDTH}
+          aria-valuemax={MAX_WIDTH}
+          aria-valuenow={width}
+          title="টেনে ছোট-বড় করুন"
+          onKeyDown={(e) => {
+            const step = e.shiftKey ? 60 : 20;
+            if (e.key === 'ArrowRight' || e.key === 'ArrowUp') setWidth((w) => clampWidth(w + step));
+            else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') setWidth((w) => clampWidth(w - step));
+            else return;
+            e.preventDefault();
+          }}
+        />
       )}
     </div>,
     document.body,

@@ -166,6 +166,8 @@ const bn: Record<string, string> = {
   'Light mode': 'আলো',
   'Dark mode': 'অন্ধকার',
   'Switch language': 'ভাষা বদলান',
+  'Bangla keyboard': 'বাংলা কীবোর্ড',
+  'Type Bangla letter by letter': 'অক্ষর ধরে ধরে বাংলা লিখুন',
 
   /* ---- words the whole shop uses ---- */
   Save: 'সেভ করুন',

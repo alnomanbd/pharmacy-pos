@@ -1,0 +1,71 @@
+/* The A | অ typing switch — beside the component, so no app can leave it unstyled. */
+.tmt {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 10px;
+  background: hsl(var(--muted) / 0.6);
+  flex-shrink: 0;
+}
+
+.tmt-opt {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: hsl(var(--muted-foreground));
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.tmt-opt[lang='bn'] {
+  font-size: 15px;
+}
+
+.tmt-opt:hover {
+  color: hsl(var(--foreground));
+}
+
+.tmt-opt.is-on {
+  background: hsl(var(--card));
+  color: hsl(var(--primary));
+  box-shadow: 0 1px 3px hsl(220 40% 10% / 0.15);
+}
+
+/* Bangla on is the state worth noticing: filled in the brand colour. */
+.tmt-opt.is-on[lang='bn'] {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+/* A phone's bar has no room for both: only the mode in use, which switches when tapped. */
+@media (max-width: 639px) {
+  .tmt-opt:not(.is-on) {
+    display: none;
+  }
+}
+
+.tmt-opt:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 1px;
+}
+
+.tmt .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

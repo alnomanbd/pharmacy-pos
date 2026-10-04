@@ -291,6 +291,7 @@ function MedicinesTab({ canManage }: { canManage: boolean }) {
             <input
               className="input pl-9"
               style={{ paddingLeft: 36 }}
+              data-latin
               placeholder="Brand, generic or DAR…"
               aria-label="Search medicines"
               value={q}

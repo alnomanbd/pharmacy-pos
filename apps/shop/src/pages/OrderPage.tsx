@@ -436,6 +436,7 @@ function MedicinePicker({
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <input
           className="input h-11 pl-9 pr-9"
+          data-latin
           placeholder={t.search}
           value={q}
           maxLength={40}

@@ -175,6 +175,7 @@ export default function Transfers() {
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
               className="input h-10 pl-9"
+              data-latin
               placeholder={t('Find an item on this branch’s shelf')}
               value={q}
               onChange={(e) => {

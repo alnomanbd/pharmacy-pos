@@ -50,6 +50,8 @@ import {
 } from '../api';
 import { useToast } from '@dawai/shared/components/Toast';
 import { useTheme } from '@dawai/shared/hooks/useTheme';
+import { useBanglaKeyboard } from '@dawai/shared/store/banglaKeyboard.store';
+import { TypingModeToggle } from '@dawai/shared/components/TypingModeToggle';
 import { useFullscreen } from '@dawai/shared/hooks/useFullscreen';
 import {
   flushOutbox,
@@ -172,6 +174,7 @@ export default function Till() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { theme, toggle: toggleTheme } = useTheme();
+  const keyboard = useBanglaKeyboard();
   const { isFullscreen, toggle: toggleFullscreen } = useFullscreen();
   const lang = useLangStore((s) => s.lang);
   const setLang = useLangStore((s) => s.setLang);
@@ -780,11 +783,11 @@ export default function Till() {
        phone, where the bill and the payment cannot both fit in one height. */
     <div className="shell-min-h lg-shell-h flex flex-col bg-muted/30 lg:overflow-hidden">
       {/* ------------------------------------------------- the status strip -- */}
-      <header className="flex h-12 shrink-0 items-center gap-3 border-b border-border bg-card px-3">
+      <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border bg-card px-2 sm:gap-3 sm:px-3">
         <button
           type="button"
           onClick={() => navigate('/sales')}
-          className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-semibold hover:bg-muted"
+          className="flex items-center gap-2 rounded-md px-1 py-1.5 text-sm font-semibold hover:bg-muted sm:px-2"
           title={t('Back to the shop')}
         >
           <span className="grid h-7 w-7 place-items-center rounded-md bg-primary text-primary-foreground">
@@ -795,7 +798,7 @@ export default function Till() {
 
         <span className="flex items-center gap-2 text-sm">
           <ScanLine className="h-4 w-4 text-primary" />
-          <strong>{t('POS')}</strong>
+          <strong className="hidden sm:inline">{t('POS')}</strong>
         </span>
 
         <span className="hidden min-w-0 truncate text-xs text-muted-foreground md:inline">
@@ -804,7 +807,7 @@ export default function Till() {
           {taka(shift.salesTotal)} {t('today')}
         </span>
 
-        <div className="ml-auto flex items-center gap-1.5">
+        <div className="ml-auto flex items-center gap-1 sm:gap-1.5">
           <span
             className={`pill hidden sm:inline-flex ${offline || stale ? 'danger' : 'info'}`}
             title={offline ? t('The line is down.') : t('Connected')}
@@ -817,7 +820,8 @@ export default function Till() {
             {offline ? t('Offline') : stale ? `${waiting.length}` : t('Online')}
           </span>
 
-          <Clock className="mr-1 border-r border-border pr-3" />
+          {/* Not on a phone, which shows the time already — the bar has no room for it. */}
+          <Clock className="mr-1 hidden border-r border-border pr-3 sm:flex" />
 
           <AlertBell runsTheShop={runsTheShop} />
           <IconButton
@@ -827,14 +831,29 @@ export default function Till() {
           >
             <span className="text-xs font-bold">{lang === 'bn' ? 'EN' : 'বাং'}</span>
           </IconButton>
+          {/* Off the till's bar on a phone; the back room's bar keeps it. */}
           <IconButton
+            className="hidden sm:grid"
             onClick={toggleTheme}
             title={t(theme === 'dark' ? 'Light mode' : 'Dark mode')}
             label={t(theme === 'dark' ? 'Light mode' : 'Dark mode')}
           >
             {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </IconButton>
+          {/* English or Bangla in every text box — amar → আমার. The medicine search stays English. */}
+          <TypingModeToggle />
+          {/* A customer's name in Bangla, letter by letter — see BanglaKeyboard. */}
           <IconButton
+            onClick={keyboard.toggle}
+            title={t('Type Bangla letter by letter')}
+            label={t('Bangla keyboard')}
+            active={keyboard.open}
+          >
+            <Keyboard className="h-4 w-4" />
+          </IconButton>
+          {/* Phones barely support fullscreen; the bar needs the room there. */}
+          <IconButton
+            className="hidden sm:grid"
             onClick={toggleFullscreen}
             title={t(isFullscreen ? 'Leave fullscreen' : 'Fullscreen')}
             label={t(isFullscreen ? 'Leave fullscreen' : 'Fullscreen')}
@@ -902,6 +921,7 @@ export default function Till() {
                  see pos/useShortcuts.ts. */
               data-shortcut-passthrough=""
               className="input h-14 pl-11 text-lg"
+              data-latin
               placeholder={t('Type a brand name — Napa, Seclo, Monas…')}
               value={q}
               onChange={(e) => setQ(e.target.value)}
@@ -1426,7 +1446,7 @@ export default function Till() {
                   <input
                     id={`pay-${m.key}`}
                     ref={m.key === 'cash' ? cashRef : undefined}
-                    className="input h-9 w-[5.5rem] text-right tabular-nums"
+                    className="input h-9 w-[5.5rem] min-w-[3.5rem] shrink text-right tabular-nums"
                     inputMode="decimal"
                     value={paid[m.key] ?? ''}
                     onChange={(e) => setPaid({ ...paid, [m.key]: e.target.value })}
@@ -1814,20 +1834,30 @@ function IconButton({
   onClick,
   title,
   label,
+  active,
+  className = '',
   children,
 }: {
   onClick: () => void;
   title: string;
   label: string;
+  /** A toggle that is on — drawn pressed, and announced as pressed. */
+  active?: boolean;
+  className?: string;
   children: React.ReactNode;
 }) {
   return (
     <button
       type="button"
+      // The field being typed into keeps its focus.
+      onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
       title={title}
       aria-label={label}
-      className="grid h-8 w-8 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+      aria-pressed={active}
+      className={`grid h-8 w-8 place-items-center rounded-md transition-colors hover:bg-muted hover:text-foreground ${
+        active ? 'bg-muted text-foreground' : 'text-muted-foreground'
+      } ${className}`}
     >
       {children}
     </button>
@@ -2150,7 +2180,7 @@ function CloseTill({ shift, onClosed }: { shift: Shift; onClosed: () => Promise<
     <>
       <button
         type="button"
-        className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground"
+        className="flex items-center gap-1.5 rounded-md px-1.5 py-1.5 text-xs sm:px-2 font-semibold text-muted-foreground hover:bg-muted hover:text-foreground"
         onClick={() => setOpen(true)}
       >
         <DoorClosed className="h-4 w-4" />

@@ -342,6 +342,7 @@ export default function Orders() {
                   setQ(e.target.value);
                   setPage(1);
                 }}
+                data-latin
                 placeholder={t('Company, order no. or medicine…')}
                 aria-label={t('Search')}
               />
@@ -895,6 +896,7 @@ function WriteOrder({
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             className="input h-10 pl-9"
+            data-latin
             placeholder={t('Add any item — brand or generic…')}
             value={find}
             onChange={(e) => setFind(e.target.value)}

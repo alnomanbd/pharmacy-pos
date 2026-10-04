@@ -47,6 +47,7 @@ import { signOut } from '@dawai/shared/api';
 import { useTheme } from '@dawai/shared/hooks/useTheme';
 import { useFullscreen } from '@dawai/shared/hooks/useFullscreen';
 import { BanglaKeyboard } from '@dawai/shared/components/BanglaKeyboard';
+import { TypingModeToggle } from '@dawai/shared/components/TypingModeToggle';
 import ChangePasswordDialog from '@dawai/shared/components/ChangePasswordDialog';
 import type { PlatformAccess } from '@dawai/shared/types';
 
@@ -609,6 +610,9 @@ export default function PlatformLayout() {
               >
                 {isFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
               </button>
+
+              {/* English or Bangla in every text box — amar → আমার. */}
+              <TypingModeToggle className="mx-1" />
 
               <button
                 className={`tb-icon-btn${keyboardOpen ? ' active' : ''}`}

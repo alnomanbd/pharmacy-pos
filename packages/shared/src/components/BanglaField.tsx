@@ -108,6 +108,18 @@ export function hasBanglaTarget(): boolean {
   return Boolean(focusedControl() || activeField?.current?.el || isConnected(lastPlainControl));
 }
 
+/**
+ * The field a tap on the on-screen keyboard would type into, in the same order
+ * `insertIntoBanglaField` tries them — so the keyboard can show what is in it.
+ */
+export function banglaTarget(): TextControl | null {
+  const focused = focusedControl();
+  if (focused) return focused;
+  const registered = activeField?.current?.el;
+  if (registered && registered.isConnected) return registered;
+  return isConnected(lastPlainControl) ? lastPlainControl : null;
+}
+
 function isConnected(el: TextControl | null): el is TextControl {
   return Boolean(el && el.isConnected);
 }
@@ -372,6 +384,8 @@ export function BanglaField({
     // `lang` tells the browser which font and line-breaking rules to use, and
     // Bengali needs more line height than Latin at the same size.
     lang: bangla ? 'bn' : undefined,
+    // Converting by itself: the document-wide phonetic typing leaves it alone.
+    'data-bangla-own': bangla ? '' : undefined,
     ...rest,
   };
 

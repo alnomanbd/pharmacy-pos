@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { BanglaField } from './BanglaField';
@@ -216,5 +216,66 @@ describe('BanglaKeyboard', () => {
     const user = userEvent.setup();
     render(<BanglaKeyboard />);
     await expect(user.click(key('ক'))).resolves.toBeUndefined();
+  });
+
+  it('keeps the vowels in a pane of their own, each over its sign', async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+    field().focus();
+    // Consonants and their signs first: a word is a letter and its sign, again and again.
+    expect(screen.queryByLabelText('Insert এ')).toBeNull();
+    await user.click(screen.getByRole('tab', { name: 'স্বর' }));
+    await user.click(key('এ'));
+    await user.click(key('ি'));
+    expect(field().value).toBe('এি');
+  });
+
+  it('shows the end of what is in the field, because the field may be under it', async () => {
+    const user = userEvent.setup();
+    render(<Harness initial="নাপা" />);
+    field().focus();
+    field().setSelectionRange(4, 4);
+    await user.click(key('ক'));
+    await new Promise((r) => requestAnimationFrame(() => r(null)));
+    expect(document.querySelector('.bnk-text')?.textContent).toContain('নাপাক');
+  });
+
+  it('keeps deleting while backspace is held, and only once for a tap', async () => {
+    vi.useFakeTimers();
+    try {
+      render(<Harness initial="কখগঘঙচছ" />);
+      field().focus();
+      field().setSelectionRange(7, 7);
+      const back = screen.getByLabelText('Backspace');
+      fireEvent.pointerDown(back);
+      // A tick at a time, as a browser would render between them.
+      for (const ms of [420, 70, 70, 70]) {
+        act(() => {
+          vi.advanceTimersByTime(ms);
+        });
+      }
+      fireEvent.pointerUp(back);
+      fireEvent.click(back); // the click that ends a held press does not delete again
+      expect(field().value).toBe('কখগ');
+      fireEvent.pointerDown(back);
+      fireEvent.pointerUp(back);
+      fireEvent.click(back);
+      expect(field().value).toBe('কখ');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('is made bigger from its corner, and remembers the size', () => {
+    render(<BanglaKeyboard />);
+    const panel = screen.getByRole('group', { name: 'Bangla keyboard' });
+    const grip = screen.getByLabelText('Resize the Bangla keyboard');
+    const before = parseInt(panel.style.width, 10);
+    fireEvent.keyDown(grip, { key: 'ArrowRight' });
+    const after = parseInt(panel.style.width, 10);
+    expect(after).toBeGreaterThan(before);
+    // The keys grow with it.
+    expect(Number(panel.style.getPropertyValue('--bnk-s'))).toBeCloseTo(after / 500, 3);
+    expect(Number(localStorage.getItem('dawai.banglaKeyboard.width'))).toBe(after);
   });
 });

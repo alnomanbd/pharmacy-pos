@@ -152,6 +152,21 @@ function matchAt(table: [string, ...string[]][], input: string, at: number) {
 export function toBangla(input: string): string {
   const listed = BANGLA_WORDS[input.toLowerCase()];
   if (listed) return listed;
+  /*
+   * A capital means something only where the scheme gives it a meaning — `O`
+   * is ও-কার, `T` is ট. Anywhere else it is just a name typed with a capital,
+   * as Avro reads it: `Karim` is `karim`. Left alone it came out as `Kআরিম`.
+   */
+  //
+  // `R` (ড়) and `N` (ণ) do mean something — but no Bangla word starts with
+  // either, so at the start of a word they are a name's capital: `Rahim` is
+  // রাহিম, not ড়াহিম, and `Nasrin` is নাসরিন.
+  const named = input.replace(/^[RN]/, (c) => c.toLowerCase());
+  return toBanglaRaw(named.replace(/[A-Z]/g, (c) => (convertsAsCapital(c) ? c : c.toLowerCase())));
+}
+
+/** The letter rules alone, capitals taken as written. */
+function toBanglaRaw(input: string): string {
 
   let out = '';
   let i = 0;
@@ -220,3 +235,17 @@ export function toBangla(input: string): string {
 
 /** The characters `toBangla` treats as part of one word. */
 export const isBanglishLetter = (ch: string) => /^[A-Za-z^:/]$/.test(ch);
+
+/** Whether the scheme gives this capital a meaning of its own (memoised: 26 letters at most). */
+const capitalMeans = new Map<string, boolean>();
+function convertsAsCapital(c: string): boolean {
+  let known = capitalMeans.get(c);
+  if (known === undefined) {
+    // A capital with no rule of its own is copied through unconverted; one with
+    // a rule (`O`, `T`, `D`…) comes out differently from its lowercase.
+    const asIs = toBanglaRaw(c);
+    known = asIs !== c && asIs !== toBanglaRaw(c.toLowerCase());
+    capitalMeans.set(c, known);
+  }
+  return known;
+}

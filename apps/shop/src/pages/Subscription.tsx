@@ -460,6 +460,7 @@ const taka = (v: number) => `৳ ${n(v.toLocaleString('en-IN'))}`;
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') void applyCode(codeInput, form.plan, form.months);
                   }}
+                  data-latin
                   placeholder={t('Discount code (if you have one)')}
                   aria-label={t('Discount code')}
                 />

@@ -1,5 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from '@dawai/shared/store/auth.store';
+import { useBanglaKeyboard } from '@dawai/shared/store/banglaKeyboard.store';
+import { BanglaKeyboard } from '@dawai/shared/components/BanglaKeyboard';
 import Login from './pages/Login';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
@@ -75,9 +77,16 @@ function Protected({ children }: { children: JSX.Element }) {
   return children;
 }
 
+/** The on-screen Bangla keyboard, opened from the till's or the back room's top bar. */
+function KeyboardHost() {
+  const { open, close } = useBanglaKeyboard();
+  return open ? <BanglaKeyboard onClose={close} /> : null;
+}
+
 export default function App() {
   return (
     <>
+    <KeyboardHost />
     {/* Above every screen, the till included, for as long as a support view lasts. */}
     <SupportViewBanner />
     {/* The team's announcements, also above every screen. */}

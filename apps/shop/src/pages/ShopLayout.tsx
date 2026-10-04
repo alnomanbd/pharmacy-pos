@@ -33,9 +33,12 @@ import {
   LayoutDashboard,
   ShoppingBag,
   X,
+  Keyboard,
 } from 'lucide-react';
 import { useAuthStore } from '@dawai/shared/store/auth.store';
 import { useTheme } from '@dawai/shared/hooks/useTheme';
+import { useBanglaKeyboard } from '@dawai/shared/store/banglaKeyboard.store';
+import { TypingModeToggle } from '@dawai/shared/components/TypingModeToggle';
 import FindAnything from '../components/FindAnything';
 import ProfileMenu from '../components/ProfileMenu';
 import { useT, useLangStore, bnNumerals } from '../i18n/ui';
@@ -237,6 +240,7 @@ export default function ShopLayout() {
   const setLang = useLangStore((s) => s.setLang);
   const user = useAuthStore((s) => s.user);
   const { theme, toggle } = useTheme();
+  const keyboard = useBanglaKeyboard();
   const [moreOpen, setMoreOpen] = useState(false);
   /* A switch of branch starts the page again, so nothing on it is the old branch's. */
   const branchKey = useBranchStore((s) => s.branch);
@@ -385,7 +389,8 @@ export default function ShopLayout() {
             */}
             {/* The owner's alone: setting the shop up is their job. */}
             {/* Today and the time, Dhaka, 12-hour. */}
-            <Clock className="mr-1 border-r border-border pr-3" />
+            {/* Not on a phone, which shows the time already — the bar has no room for it. */}
+            <Clock className="mr-1 hidden border-r border-border pr-3 sm:flex" />
             {/* Only drawn for a shop with more than one branch. */}
             <BranchSwitcher />
             {owns && <SetupChecklist />}
@@ -398,6 +403,22 @@ export default function ShopLayout() {
               aria-label={t('Switch language')}
             >
               {lang === 'bn' ? 'EN' : 'বাং'}
+            </button>
+            {/* English or Bangla in every text box — amar → আমার. */}
+            <TypingModeToggle />
+            <button
+              type="button"
+              // Keeps the field being typed into focused.
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={keyboard.toggle}
+              className={`rounded-md p-2 transition-colors hover:bg-muted hover:text-foreground ${
+                keyboard.open ? 'bg-muted text-foreground' : 'text-muted-foreground'
+              }`}
+              aria-label={t('Bangla keyboard')}
+              aria-pressed={keyboard.open}
+              title={t('Type Bangla letter by letter')}
+            >
+              <Keyboard className="h-4 w-4" />
             </button>
             <button
               type="button"
