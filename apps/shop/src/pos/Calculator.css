@@ -1,0 +1,289 @@
+/*
+ * The counter calculator: a card beside the payment panel on a desk, a sheet
+ * along the bottom on a phone. The app's own tokens, so it is the till's
+ * calculator and not a widget on top of it.
+ */
+.calc {
+  position: fixed;
+  z-index: 45;
+  right: 16px;
+  top: 60px;
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 18px;
+  background: hsl(var(--card));
+  color: hsl(var(--foreground));
+  box-shadow:
+    0 24px 56px -16px hsl(220 40% 10% / 0.32),
+    0 2px 8px hsl(220 40% 10% / 0.1);
+  outline: none;
+  animation: calc-in 0.14s ease-out;
+}
+
+.calc:focus-visible {
+  box-shadow:
+    0 0 0 2px hsl(var(--ring) / 0.6),
+    0 24px 56px -16px hsl(220 40% 10% / 0.32);
+}
+
+@keyframes calc-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .calc {
+    animation: none;
+  }
+}
+
+.calc-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.calc-kbd {
+  border: 1px solid hsl(var(--border));
+  border-radius: 5px;
+  padding: 0 5px;
+  font-family: ui-monospace, monospace;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: hsl(var(--muted-foreground));
+}
+
+.calc-x {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  color: hsl(var(--muted-foreground));
+}
+
+.calc-x:hover {
+  background: hsl(var(--destructive) / 0.12);
+  color: hsl(var(--destructive));
+}
+
+/* The display: the sum on a small line, the answer large under it. */
+.calc-screen {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: hsl(var(--muted) / 0.6);
+  border: 1px solid hsl(var(--border));
+  text-align: right;
+  overflow: hidden;
+}
+
+.calc-expr {
+  min-height: 18px;
+  font-size: 13px;
+  color: hsl(var(--muted-foreground));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  direction: rtl;
+  unicode-bidi: plaintext;
+  font-variant-numeric: tabular-nums;
+}
+
+.calc-result {
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
+}
+
+.calc-result.is-settled {
+  color: hsl(var(--primary));
+}
+
+.calc-pad {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.calc-key {
+  height: 44px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 11px;
+  background: linear-gradient(to bottom, hsl(var(--card)), hsl(var(--muted) / 0.5));
+  box-shadow: 0 1.5px 0 hsl(var(--border));
+  font-size: 18px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: hsl(var(--foreground));
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.1s ease, border-color 0.1s ease, transform 0.06s ease;
+}
+
+.calc-key:hover {
+  border-color: hsl(var(--primary) / 0.5);
+}
+
+.calc-key:active {
+  transform: translateY(1.5px);
+  box-shadow: none;
+  background: hsl(var(--primary) / 0.15);
+}
+
+.calc-key--fn {
+  background: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
+  font-size: 16px;
+}
+
+.calc-key--op {
+  background: hsl(var(--primary) / 0.1);
+  border-color: hsl(var(--primary) / 0.25);
+  color: hsl(var(--primary));
+  font-size: 20px;
+}
+
+.calc-key--eq {
+  background: hsl(var(--primary));
+  border-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  font-size: 22px;
+}
+
+.calc-key--eq:active {
+  background: hsl(var(--primary) / 0.85);
+}
+
+.calc-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.calc-act {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  height: 36px;
+  padding: 0 8px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
+}
+
+.calc-act:hover:not(:disabled) {
+  border-color: hsl(var(--primary) / 0.5);
+  background: hsl(var(--primary) / 0.05);
+}
+
+.calc-act--primary {
+  border-color: hsl(var(--primary));
+  background: hsl(var(--primary) / 0.08);
+  color: hsl(var(--primary));
+}
+
+.calc-act:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* The last few sums, to use an answer again. */
+.calc-history {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 6px 0 0;
+  border-top: 1px dashed hsl(var(--border));
+  list-style: none;
+}
+
+.calc-history button {
+  display: flex;
+  width: 100%;
+  gap: 8px;
+  justify-content: space-between;
+  padding: 4px 6px;
+  border-radius: 7px;
+  font-size: 12px;
+  color: hsl(var(--muted-foreground));
+  font-variant-numeric: tabular-nums;
+}
+
+.calc-history button:hover {
+  background: hsl(var(--muted));
+  color: hsl(var(--foreground));
+}
+
+.calc-history b {
+  flex-shrink: 0;
+  color: hsl(var(--foreground));
+}
+
+/*
+ * On a desk the till is two columns — the bill, and the payment panel (23rem,
+ * 26rem on a wide screen). The calculator sits just left of the panel and low,
+ * over the bill's empty space and above the key bar, so the cash box and the
+ * notes it is helping with stay in sight.
+ */
+@media (min-width: 1024px) {
+  .calc {
+    top: auto;
+    bottom: 72px;
+    right: calc(23rem + 16px);
+  }
+}
+
+@media (min-width: 1280px) {
+  .calc {
+    right: calc(26rem + 16px);
+  }
+}
+
+/* A phone: a sheet along the bottom, full width, like its own keypad. */
+@media (max-width: 639px) {
+  .calc {
+    left: 0;
+    right: 0;
+    top: auto;
+    bottom: 0;
+    width: auto;
+    border-radius: 18px 18px 0 0;
+    border-width: 1px 0 0;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    box-shadow: 0 -12px 36px -12px hsl(220 40% 10% / 0.3);
+    z-index: 60;
+  }
+
+  .calc-key {
+    height: 48px;
+  }
+
+  .calc-history {
+    display: none;
+  }
+}
+
+@media print {
+  .calc {
+    display: none !important;
+  }
+}

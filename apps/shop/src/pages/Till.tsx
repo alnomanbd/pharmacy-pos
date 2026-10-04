@@ -34,6 +34,7 @@ import {
   QrCode,
   Zap,
   Star,
+  Calculator as CalculatorIcon,
 } from 'lucide-react';
 import {
   tillApi,
@@ -79,6 +80,7 @@ import AlertBell from '../alerts/AlertBell';
 import AlertTicker from '../alerts/AlertTicker';
 import { useAlertStore, useStockAlertsPoll } from '../alerts/useStockAlerts';
 import { WalletPanel, type WalletMethod } from '../pos/WalletPanel';
+import CounterCalculator from '../pos/Calculator';
 
 /**
  * The counter.
@@ -218,6 +220,8 @@ export default function Till() {
   const [params, setParams] = useSearchParams();
   const returnBillNo = params.get('return') ?? '';
   const [keysOpen, setKeysOpen] = useState(false);
+  /** The counter calculator, beside the payment panel — F3. */
+  const [calcOpen, setCalcOpen] = useState(false);
   const [recentOpen, setRecentOpen] = useState(false);
   const [heldOpen, setHeldOpen] = useState(false);
   const [held, setHeld] = useState<HeldBill[]>(() => heldBills());
@@ -727,6 +731,7 @@ export default function Till() {
         searchRef.current?.focus();
         searchRef.current?.select();
       },
+      F3: () => setCalcOpen((v) => !v),
       F4: () => customerRef.current?.open(),
       'shift+F2': () => setRecentOpen((v) => !v),
       F5: () => discountRef.current?.focus(),
@@ -744,6 +749,8 @@ export default function Till() {
         searchRef.current?.focus();
       },
       Escape: () => {
+        // The calculator first: Escape at it must never reach the bill.
+        if (calcOpen) return setCalcOpen(false);
         if (keysOpen) return setKeysOpen(false);
         if (recentOpen) return setRecentOpen(false);
         if (heldOpen) return setHeldOpen(false);
@@ -1495,6 +1502,18 @@ export default function Till() {
               >
                 {t('Exact cash')}
               </button>
+              {/* For the sums the till does not do — three strips at this price, a part payment. */}
+              <button
+                type="button"
+                onClick={() => setCalcOpen((v) => !v)}
+                aria-pressed={calcOpen}
+                title={t('Calculator') + ' (F3)'}
+                className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-semibold ${
+                  calcOpen ? 'border-primary bg-primary text-primary-foreground' : 'border-border hover:border-primary hover:bg-primary/5'
+                }`}
+              >
+                <CalculatorIcon className="h-3.5 w-3.5" /> {t('Calculator')}
+              </button>
             </div>
 
             {/*
@@ -1708,6 +1727,20 @@ export default function Till() {
 
       {/* --------------------------------------------------------- overlays -- */}
       {keysOpen && <ShortcutSheet onClose={() => setKeysOpen(false)} />}
+      {calcOpen && (
+        <CounterCalculator
+          billTotal={total}
+          onUseAsCash={(amount) => {
+            setPaid((p) => ({ ...p, cash: amount }));
+            setCalcOpen(false);
+            cashRef.current?.focus();
+          }}
+          onClose={() => {
+            setCalcOpen(false);
+            searchRef.current?.focus();
+          }}
+        />
+      )}
 
       {heldOpen && <HeldSheet bills={held} onPick={resume} onClose={() => setHeldOpen(false)} />}
 

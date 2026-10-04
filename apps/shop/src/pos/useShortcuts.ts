@@ -46,6 +46,7 @@ export const SHORTCUT_HINTS: { keys: string; label: string }[] = [
 /** The ones that need a longer word than the bar has room for. */
 export const SHORTCUT_HELP: { keys: string; label: string }[] = [
   ...SHORTCUT_HINTS,
+  { keys: 'F3', label: 'Calculator' },
   { keys: '⇧F2', label: 'The last bills' },
   { keys: '↑ ↓', label: 'Move down the bill' },
   { keys: '+ −', label: 'One more, one less of the picked line' },
