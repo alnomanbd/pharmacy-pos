@@ -1421,6 +1421,8 @@ router.patch(
     z.object({
       bkashNumber: z.string().trim().max(20).optional(),
       nagadNumber: z.string().trim().max(20).optional(),
+      rocketNumber: z.string().trim().max(20).optional(),
+      upayNumber: z.string().trim().max(20).optional(),
       bkashApi: z
         .object({
           enabled: z.boolean().optional(),

@@ -188,7 +188,7 @@ const WORDS = {
 } as const;
 
 const METHOD_BN: Record<string, string> = {
-  cash: 'ক্যাশ', bkash: 'বিকাশ', nagad: 'নগদ', rocket: 'রকেট', card: 'কার্ড', bank: 'ব্যাংক',
+  cash: 'ক্যাশ', bkash: 'বিকাশ', nagad: 'নগদ', rocket: 'রকেট', upay: 'উপায়', card: 'কার্ড', bank: 'ব্যাংক',
 };
 
 export interface ReceiptShop extends Partial<ShopSettings> {

@@ -20,7 +20,15 @@ import { useT, useUiLang, bnNumerals } from '../i18n/ui';
  * transaction id as its reference.
  */
 
-export type WalletMethod = 'bkash' | 'nagad';
+export type WalletMethod = 'bkash' | 'nagad' | 'rocket' | 'upay';
+
+/** Each wallet in its own colours, so the customer sees which app to open. */
+const BRANDS: Record<WalletMethod, { name: string; tone: string; ring: string }> = {
+  bkash: { name: 'bKash', tone: 'from-pink-500 to-rose-600', ring: 'ring-pink-500/30' },
+  nagad: { name: 'Nagad', tone: 'from-orange-500 to-red-500', ring: 'ring-orange-500/30' },
+  rocket: { name: 'Rocket', tone: 'from-violet-500 to-purple-700', ring: 'ring-violet-500/30' },
+  upay: { name: 'Upay', tone: 'from-sky-500 to-blue-700', ring: 'ring-sky-500/30' },
+};
 
 export function WalletPanel({
   method,
@@ -48,7 +56,7 @@ export function WalletPanel({
   const [state, setState] = useState<'idle' | 'starting' | 'waiting' | 'done' | 'failed'>('idle');
   const [error, setError] = useState('');
   const poll = useRef<number | null>(null);
-  const brand = method === 'bkash' ? { name: 'bKash', tone: 'from-pink-500 to-rose-600', ring: 'ring-pink-500/30' } : { name: 'Nagad', tone: 'from-orange-500 to-red-500', ring: 'ring-orange-500/30' };
+  const brand = BRANDS[method];
   const amt = Number(value) || 0;
   const automatic = method === 'bkash' && auto;
 

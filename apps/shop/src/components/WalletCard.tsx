@@ -17,7 +17,7 @@ export default function WalletCard() {
   const t = useT();
   const { toast } = useToast();
   const [s, setS] = useState<WalletSettings | null>(null);
-  const [form, setForm] = useState({ bkashNumber: '', nagadNumber: '', enabled: false, sandbox: false, appKey: '', username: '', appSecret: '', password: '' });
+  const [form, setForm] = useState({ bkashNumber: '', nagadNumber: '', rocketNumber: '', upayNumber: '', enabled: false, sandbox: false, appKey: '', username: '', appSecret: '', password: '' });
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -25,7 +25,7 @@ export default function WalletCard() {
       .get()
       .then((w) => {
         setS(w);
-        setForm({ bkashNumber: w.bkashNumber, nagadNumber: w.nagadNumber, enabled: w.bkashApi.enabled, sandbox: w.bkashApi.sandbox, appKey: w.bkashApi.appKey, username: w.bkashApi.username, appSecret: '', password: '' });
+        setForm({ bkashNumber: w.bkashNumber, nagadNumber: w.nagadNumber, rocketNumber: w.rocketNumber ?? '', upayNumber: w.upayNumber ?? '', enabled: w.bkashApi.enabled, sandbox: w.bkashApi.sandbox, appKey: w.bkashApi.appKey, username: w.bkashApi.username, appSecret: '', password: '' });
       })
       .catch(() => undefined);
   }, []);
@@ -36,6 +36,8 @@ export default function WalletCard() {
       const w = await walletApi.save({
         bkashNumber: form.bkashNumber,
         nagadNumber: form.nagadNumber,
+        rocketNumber: form.rocketNumber,
+        upayNumber: form.upayNumber,
         bkashApi: {
           enabled: form.enabled,
           sandbox: form.sandbox,
@@ -63,7 +65,7 @@ export default function WalletCard() {
           <Smartphone className="h-5 w-5" />
         </span>
         <div>
-          <h3 className="mb-0">{t('bKash & Nagad')}</h3>
+          <h3 className="mb-0">{t('bKash, Nagad, Rocket & Upay')}</h3>
           <p className="text-sm text-muted-foreground">{t('The POS shows these with a QR and the amount, for the customer to send money to.')}</p>
         </div>
       </div>
@@ -76,6 +78,15 @@ export default function WalletCard() {
         <label className="block text-sm">
           <span className="mb-1 block text-xs font-semibold text-muted-foreground">{t('Nagad number')}</span>
           <input className="input h-10 font-mono" inputMode="tel" placeholder="01XXXXXXXXX" value={form.nagadNumber} onChange={(e) => setForm({ ...form, nagadNumber: e.target.value })} />
+        </label>
+        <label className="block text-sm">
+          <span className="mb-1 block text-xs font-semibold text-muted-foreground">{t('Rocket number')}</span>
+          {/* Rocket's are twelve digits: the phone number and a check digit. */}
+          <input className="input h-10 font-mono" inputMode="tel" placeholder="01XXXXXXXXXX" value={form.rocketNumber} onChange={(e) => setForm({ ...form, rocketNumber: e.target.value })} />
+        </label>
+        <label className="block text-sm">
+          <span className="mb-1 block text-xs font-semibold text-muted-foreground">{t('Upay number')}</span>
+          <input className="input h-10 font-mono" inputMode="tel" placeholder="01XXXXXXXXX" value={form.upayNumber} onChange={(e) => setForm({ ...form, upayNumber: e.target.value })} />
         </label>
       </div>
 

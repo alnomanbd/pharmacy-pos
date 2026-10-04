@@ -55,6 +55,7 @@ const TAKA_METHODS: Record<string, string> = {
   bkash: 'bKash',
   nagad: 'Nagad',
   rocket: 'Rocket',
+  upay: 'Upay',
   card: 'Card',
   bank: 'Bank',
   due: 'On account',

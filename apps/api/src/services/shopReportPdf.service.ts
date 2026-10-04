@@ -61,13 +61,14 @@ const METHOD_LABEL: Record<string, string> = {
   bkash: 'bKash',
   nagad: 'Nagad',
   rocket: 'Rocket',
+  upay: 'Upay',
   card: 'Card',
   bank: 'Bank',
   due: 'On account',
 };
 
 /** The methods in the order a shop reads them off a till drawer. */
-const METHOD_ORDER = ['cash', 'bkash', 'nagad', 'rocket', 'card', 'bank', 'due'];
+const METHOD_ORDER = ['cash', 'bkash', 'nagad', 'rocket', 'upay', 'card', 'bank', 'due'];
 
 /* ------------------------------------------------------------------ data -- */
 

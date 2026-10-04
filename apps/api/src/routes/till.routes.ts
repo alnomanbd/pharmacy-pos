@@ -233,7 +233,7 @@ const saleSchema = z.object({
   payments: z
     .array(
       z.object({
-        method: z.enum(['cash', 'bkash', 'nagad', 'rocket', 'card', 'bank', 'due']),
+        method: z.enum(['cash', 'bkash', 'nagad', 'rocket', 'upay', 'card', 'bank', 'due']),
         amount: z.number().min(0).max(100_000_000),
         reference: z.string().trim().max(80).optional(),
       }),

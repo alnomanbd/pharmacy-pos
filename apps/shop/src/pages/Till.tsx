@@ -31,6 +31,8 @@ import {
   CalendarClock,
   CornerDownLeft,
   Banknote,
+  CheckCircle2,
+  ChevronUp,
   QrCode,
   Zap,
   Star,
@@ -121,12 +123,20 @@ interface Line {
   pricePerPiece: number;
 }
 
-const METHODS = [
+/**
+ * How a customer pays, and any mix of them: ৳500 in cash and the rest on bKash
+ * is one bill, saved as two payments. The first four are on screen always; the
+ * rest wait behind "+ Rocket · Upay · Bank", because most evenings never use them.
+ */
+const METHODS: { key: string; label: string; dot: string; extra?: true }[] = [
   { key: 'cash', label: 'Cash', dot: 'bg-emerald-500' },
   { key: 'bkash', label: 'bKash', dot: 'bg-pink-500' },
   { key: 'nagad', label: 'Nagad', dot: 'bg-orange-500' },
   { key: 'card', label: 'Card', dot: 'bg-sky-500' },
-] as const;
+  { key: 'rocket', label: 'Rocket', dot: 'bg-violet-500', extra: true },
+  { key: 'upay', label: 'Upay', dot: 'bg-yellow-500', extra: true },
+  { key: 'bank', label: 'Bank', dot: 'bg-slate-500', extra: true },
+];
 
 /**
  * A quantity as a counter says it: so many strips, and so many loose.
@@ -196,7 +206,13 @@ export default function Till() {
   /* The transaction id for a bKash or Nagad payment, kept on the bill as its reference. */
   const [refs, setRefs] = useState<Record<string, string>>({});
   /* The shop's numbers, and whether bKash confirms itself — asked once. */
-  const [wallets, setWallets] = useState<{ bkashNumber: string; nagadNumber: string; bkashAuto: boolean } | null>(null);
+  const [wallets, setWallets] = useState<{
+    bkashNumber: string;
+    nagadNumber: string;
+    rocketNumber?: string;
+    upayNumber?: string;
+    bkashAuto: boolean;
+  } | null>(null);
   const [walletOpen, setWalletOpen] = useState<WalletMethod | null>(null);
   useEffect(() => {
     tillApi.wallets().then(setWallets).catch(() => undefined);
@@ -220,6 +236,8 @@ export default function Till() {
   const [params, setParams] = useSearchParams();
   const returnBillNo = params.get('return') ?? '';
   const [keysOpen, setKeysOpen] = useState(false);
+  /** Rocket, Upay and bank transfer on screen as well as the four everyday ones. */
+  const [otherMethods, setOtherMethods] = useState(false);
   /** The counter calculator, beside the payment panel — F3. */
   const [calcOpen, setCalcOpen] = useState(false);
   const [recentOpen, setRecentOpen] = useState(false);
@@ -471,6 +489,7 @@ export default function Till() {
     setLineAt(0);
     setDiscount('');
     setPaid({ cash: '' });
+    setOtherMethods(false);
     setRefs({});
     setUsePoints(false);
     setCustomer(null);
@@ -505,6 +524,7 @@ export default function Till() {
     setCustomerPhone(bill.customerPhone);
     setDiscount(bill.discount);
     setPaid({ cash: '' });
+    setOtherMethods(false);
     setRefs({});
     drop(bill.id);
     setHeldOpen(false);
@@ -751,6 +771,8 @@ export default function Till() {
       Escape: () => {
         // The calculator first: Escape at it must never reach the bill.
         if (calcOpen) return setCalcOpen(false);
+        // A wallet's QR is open: Escape is for it, never for the bill behind it.
+        if (walletOpen) return setWalletOpen(null);
         if (keysOpen) return setKeysOpen(false);
         if (recentOpen) return setRecentOpen(false);
         if (heldOpen) return setHeldOpen(false);
@@ -849,8 +871,19 @@ export default function Till() {
           </IconButton>
           {/* English or Bangla in every text box — amar → আমার. The medicine search stays English. */}
           <TypingModeToggle />
-          {/* A customer's name in Bangla, letter by letter — see BanglaKeyboard. */}
+          {/* The counter calculator — F3. For the sums the till does not do. */}
           <IconButton
+            onClick={() => setCalcOpen((v) => !v)}
+            title={t('Calculator') + ' (F3)'}
+            label={t('Calculator')}
+            active={calcOpen}
+          >
+            <CalculatorIcon className="h-4 w-4" />
+          </IconButton>
+          {/* A customer's name in Bangla, letter by letter — see BanglaKeyboard. */}
+          {/* Not on the narrowest phones: their own keyboard and the A | অ switch type Bangla there. */}
+          <IconButton
+            className="hidden min-[360px]:grid"
             onClick={keyboard.toggle}
             title={t('Type Bangla letter by letter')}
             label={t('Bangla keyboard')}
@@ -1430,7 +1463,7 @@ export default function Till() {
             {/* Two across: four stacked rows pushed the customer and the button
                 off a 768px screen, and cash is the only one most evenings. */}
             <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
-              {METHODS.map((m) => (
+              {METHODS.filter((m) => !m.extra || otherMethods || Number(paid[m.key]) > 0).map((m) => (
                 <div key={m.key} className="flex items-center justify-between gap-1.5">
                   <label
                     className="flex items-center gap-1.5 text-xs text-muted-foreground"
@@ -1439,10 +1472,11 @@ export default function Till() {
                     <span className={`h-2 w-2 rounded-full ${m.dot}`} aria-hidden="true" />
                     {t(m.label)}
                   </label>
-                  {(m.key === 'bkash' || m.key === 'nagad') && (
+                  {/* Every mobile wallet gets its QR: the shop's number and the amount, for the customer's camera. */}
+                  {(m.key === 'bkash' || m.key === 'nagad' || m.key === 'rocket' || m.key === 'upay') && (
                     <button
                       type="button"
-                      onClick={() => setWalletOpen(m.key)}
+                      onClick={() => setWalletOpen(m.key as WalletMethod)}
                       title={t('Show the customer a QR')}
                       aria-label={`${t(m.label)} QR`}
                       className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-border text-muted-foreground hover:border-primary hover:text-primary"
@@ -1463,11 +1497,95 @@ export default function Till() {
               ))}
             </div>
 
+            {/* The other ways to pay, until they are wanted. */}
+            {/* Opened when wanted, and folded away again — a box holding money stays. */}
+            {METHODS.some((m) => m.extra && !(Number(paid[m.key]) > 0)) && (
+              <button
+                type="button"
+                onClick={() => setOtherMethods((v) => !v)}
+                aria-expanded={otherMethods}
+                className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-semibold text-primary hover:underline"
+              >
+                {otherMethods ? (
+                  <>
+                    <ChevronUp className="h-3 w-3" /> {t('Hide')}{' '}
+                  </>
+                ) : (
+                  '+ '
+                )}
+                {METHODS.filter((m) => m.extra && !(Number(paid[m.key]) > 0))
+                  .map((m) => t(m.label))
+                  .join(' · ')}
+              </button>
+            )}
+
+            {/*
+              Splitting a bill: once part of it is paid, what is left, and one
+              tap to put it on any method. ৳500 in cash on an ৳820 bill, then
+              bKash — the salesman does not work out ৳320 in his head while the
+              customer waits with their phone out.
+            */}
+            {lines.length > 0 && plan.payments.length > 0 && plan.owing > 0 && (
+              <div className="mt-2 rounded-md border border-dashed border-primary/50 bg-primary/5 px-2.5 py-2">
+                <div className="mb-1.5 flex items-baseline justify-between gap-2 text-xs">
+                  <span className="font-semibold text-primary">{t('Left to pay')}</span>
+                  <strong className="tabular-nums text-primary">{taka(plan.owing)}</strong>
+                </div>
+                <div className="flex flex-wrap items-center gap-1">
+                  <span className="mr-0.5 text-[11px] text-muted-foreground">{t('Put the rest on')}</span>
+                  {METHODS.filter((m) => !m.extra || otherMethods || Number(paid[m.key]) > 0).map((m) => (
+                    <button
+                      key={m.key}
+                      type="button"
+                      onClick={() =>
+                        setPaid((p) => ({
+                          ...p,
+                          [m.key]: String(Math.round(((Number(p[m.key]) || 0) + plan.owing) * 100) / 100),
+                        }))
+                      }
+                      className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-2 py-0.5 text-[11px] font-semibold hover:border-primary hover:text-primary"
+                    >
+                      <span className={`h-1.5 w-1.5 rounded-full ${m.dot}`} aria-hidden="true" />
+                      {t(m.label)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Paid more than one way: the split, said back, so the salesman can check it. */}
+            {lines.length > 0 && plan.payments.length > 1 && (
+              <p className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs tabular-nums">
+                {plan.payments.map((p, i) => (
+                  <span key={p.method} className="inline-flex items-center gap-1">
+                    {i > 0 && <span className="text-muted-foreground">+</span>}
+                    <span className={`h-1.5 w-1.5 rounded-full ${METHODS.find((m) => m.key === p.method)?.dot ?? 'bg-muted-foreground'}`} aria-hidden="true" />
+                    {t(METHODS.find((m) => m.key === p.method)?.label ?? p.method)} {taka(p.amount)}
+                  </span>
+                ))}
+                <span className="text-muted-foreground">=</span>
+                <strong>{taka(plan.payments.reduce((n, p) => n + p.amount, 0))}</strong>
+                {plan.owing === 0 && (
+                  <span className="inline-flex items-center gap-0.5 font-semibold text-emerald-600 dark:text-emerald-400">
+                    <CheckCircle2 className="h-3.5 w-3.5" /> {t('Paid in full')}
+                  </span>
+                )}
+              </p>
+            )}
+
             {walletOpen && (
               <WalletPanel
                 method={walletOpen}
                 amount={Math.max(0, total - plan.payments.filter((p) => p.method !== walletOpen).reduce((x, p) => x + p.amount, 0))}
-                number={(walletOpen === 'bkash' ? wallets?.bkashNumber : wallets?.nagadNumber) ?? ''}
+                number={
+                  (walletOpen === 'bkash'
+                    ? wallets?.bkashNumber
+                    : walletOpen === 'nagad'
+                      ? wallets?.nagadNumber
+                      : walletOpen === 'rocket'
+                        ? wallets?.rocketNumber
+                        : wallets?.upayNumber) ?? ''
+                }
                 auto={!!wallets?.bkashAuto}
                 onClose={() => setWalletOpen(null)}
                 onDone={(amount, reference) => {
@@ -1501,18 +1619,6 @@ export default function Till() {
                 className="rounded-md border border-primary bg-primary/5 px-2.5 py-1 text-xs font-semibold text-primary"
               >
                 {t('Exact cash')}
-              </button>
-              {/* For the sums the till does not do — three strips at this price, a part payment. */}
-              <button
-                type="button"
-                onClick={() => setCalcOpen((v) => !v)}
-                aria-pressed={calcOpen}
-                title={t('Calculator') + ' (F3)'}
-                className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-semibold ${
-                  calcOpen ? 'border-primary bg-primary text-primary-foreground' : 'border-border hover:border-primary hover:bg-primary/5'
-                }`}
-              >
-                <CalculatorIcon className="h-3.5 w-3.5" /> {t('Calculator')}
               </button>
             </div>
 

@@ -47,6 +47,30 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  margin: -12px -12px 0;
+  padding: 10px 12px 6px;
+  border-radius: 18px 18px 0 0;
+  cursor: grab;
+  /* Without this a touch drag scrolls the page instead of moving the calculator. */
+  touch-action: none;
+  user-select: none;
+}
+
+.calc-grip {
+  flex-shrink: 0;
+  color: hsl(var(--muted-foreground) / 0.7);
+}
+
+.calc.is-dragging,
+.calc.is-dragging .calc-head {
+  cursor: grabbing;
+  user-select: none;
+}
+
+.calc.is-dragging {
+  box-shadow:
+    0 32px 70px -18px hsl(220 40% 10% / 0.4),
+    0 3px 10px hsl(220 40% 10% / 0.14);
 }
 
 .calc-kbd {
@@ -260,6 +284,15 @@
 
 /* A phone: a sheet along the bottom, full width, like its own keypad. */
 @media (max-width: 639px) {
+  .calc-head {
+    cursor: default;
+    touch-action: auto;
+  }
+
+  .calc-grip {
+    display: none;
+  }
+
   .calc {
     left: 0;
     right: 0;

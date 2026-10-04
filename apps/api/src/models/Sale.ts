@@ -44,7 +44,7 @@ const paymentSchema = new Schema(
   {
     method: {
       type: String,
-      enum: ['cash', 'bkash', 'nagad', 'rocket', 'card', 'bank', 'due'],
+      enum: ['cash', 'bkash', 'nagad', 'rocket', 'upay', 'card', 'bank', 'due'],
       required: true,
     },
     amount: { type: Number, required: true, min: 0 },

@@ -31,6 +31,9 @@ import type { Actor } from './shop.service.js';
 export interface WalletSettings {
   bkashNumber: string;
   nagadNumber: string;
+  /** Shown with a QR at the counter, as bKash's and Nagad's are. */
+  rocketNumber: string;
+  upayNumber: string;
   bkashApi: { enabled: boolean; sandbox: boolean; appKey: string; username: string; hasSecret: boolean; hasPassword: boolean };
 }
 
@@ -38,6 +41,8 @@ type Stored = {
   wallets?: {
     bkashNumber?: string;
     nagadNumber?: string;
+    rocketNumber?: string;
+    upayNumber?: string;
     bkashApi?: { enabled?: boolean; sandbox?: boolean; appKey?: string; username?: string; appSecret?: string; password?: string };
   };
 };
@@ -56,6 +61,8 @@ export async function walletSettings(org: string): Promise<WalletSettings> {
   return {
     bkashNumber: w.bkashNumber ?? '',
     nagadNumber: w.nagadNumber ?? '',
+    rocketNumber: w.rocketNumber ?? '',
+    upayNumber: w.upayNumber ?? '',
     bkashApi: {
       enabled: !!w.bkashApi?.enabled,
       sandbox: w.bkashApi?.sandbox ?? false,
@@ -72,12 +79,16 @@ export async function saveWalletSettings(
   input: {
     bkashNumber?: string;
     nagadNumber?: string;
+    rocketNumber?: string;
+    upayNumber?: string;
     bkashApi?: { enabled?: boolean; sandbox?: boolean; appKey?: string; username?: string; appSecret?: string; password?: string };
   },
 ) {
   const set: Record<string, unknown> = {};
   if (input.bkashNumber !== undefined) set['wallets.bkashNumber'] = input.bkashNumber.replace(/[^\d+]/g, '');
   if (input.nagadNumber !== undefined) set['wallets.nagadNumber'] = input.nagadNumber.replace(/[^\d+]/g, '');
+  if (input.rocketNumber !== undefined) set['wallets.rocketNumber'] = input.rocketNumber.replace(/[^\d+]/g, '');
+  if (input.upayNumber !== undefined) set['wallets.upayNumber'] = input.upayNumber.replace(/[^\d+]/g, '');
   const a = input.bkashApi;
   if (a) {
     if (a.enabled !== undefined) set['wallets.bkashApi.enabled'] = a.enabled;
@@ -104,7 +115,13 @@ async function creds(org: string): Promise<BkashCreds | null> {
 /** What the till needs to know: the numbers to show, and whether bKash can be confirmed automatically. */
 export async function counterWallets(org: string) {
   const w = await walletSettings(org);
-  return { bkashNumber: w.bkashNumber, nagadNumber: w.nagadNumber, bkashAuto: !!(await creds(org)) };
+  return {
+    bkashNumber: w.bkashNumber,
+    nagadNumber: w.nagadNumber,
+    rocketNumber: w.rocketNumber,
+    upayNumber: w.upayNumber,
+    bkashAuto: !!(await creds(org)),
+  };
 }
 
 /* ------------------------------------------------------------------ */

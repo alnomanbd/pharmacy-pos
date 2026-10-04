@@ -1,5 +1,11 @@
-import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
-import { Calculator as CalcIcon, X, Banknote, ReceiptText } from 'lucide-react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
+} from 'react';
+import { Calculator as CalcIcon, X, Banknote, ReceiptText, GripHorizontal } from 'lucide-react';
 import { useT, useLangStore, bnNumerals } from '../i18n/ui';
 import './Calculator.css';
 import { evaluate, opFor, shown, plain, OPS, type Op } from './calc';
@@ -21,6 +27,30 @@ import { evaluate, opFor, shown, plain, OPS, type Op } from './calc';
 
 const HISTORY = 4;
 
+/** Where it was dragged to, remembered on this machine. Unset: beside the payment panel. */
+const POSITION_KEY = 'dawai.calculator.position';
+type Position = { x: number; y: number };
+
+/** Narrower than this it is a sheet along the bottom, and stays put. */
+const isPhone = () => typeof window !== 'undefined' && window.innerWidth < 640;
+
+function storedPosition(): Position | null {
+  try {
+    const p = JSON.parse(localStorage.getItem(POSITION_KEY) || 'null') as Position | null;
+    return p && Number.isFinite(p.x) && Number.isFinite(p.y) ? p : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Kept wholly on screen: dragged off an edge it would be hard to get back. */
+function clampTo(p: Position, w: number, h: number): Position {
+  return {
+    x: Math.min(Math.max(8, p.x), Math.max(8, window.innerWidth - w - 8)),
+    y: Math.min(Math.max(8, p.y), Math.max(8, window.innerHeight - h - 8)),
+  };
+}
+
 export default function Calculator({
   billTotal,
   onUseAsCash,
@@ -40,6 +70,67 @@ export default function Calculator({
   const [settled, setSettled] = useState(false);
   const [history, setHistory] = useState<{ expr: string; result: number }[]>([]);
   const panel = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState<Position | null>(storedPosition);
+  const [dragging, setDragging] = useState(false);
+  const grab = useRef<Position>({ x: 0, y: 0 });
+
+  /*
+   * Moved by its title bar, wherever the counter wants it — over the bill, by
+   * the cash box, out of the way of a long list. Pointer events, so a touch
+   * screen at the counter drags it the same way a mouse does.
+   */
+  const startDrag = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (isPhone() || (e.target as HTMLElement).closest('button')) return;
+    const box = panel.current?.getBoundingClientRect();
+    if (!box) return;
+    e.preventDefault();
+    grab.current = { x: e.clientX - box.left, y: e.clientY - box.top };
+    setPosition({ x: box.left, y: box.top });
+    setDragging(true);
+  };
+
+  useEffect(() => {
+    if (!dragging) return;
+    const move = (e: PointerEvent) => {
+      const box = panel.current;
+      if (!box || !Number.isFinite(e.clientX)) return;
+      setPosition(clampTo({ x: e.clientX - grab.current.x, y: e.clientY - grab.current.y }, box.offsetWidth, box.offsetHeight));
+    };
+    const end = () => setDragging(false);
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', end);
+    window.addEventListener('pointercancel', end);
+    return () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', end);
+      window.removeEventListener('pointercancel', end);
+    };
+  }, [dragging]);
+
+  // Remembered once it is put down; pulled back on screen if the window has shrunk since.
+  useEffect(() => {
+    if (dragging || !position) return;
+    const box = panel.current;
+    if (box) {
+      const fitted = clampTo(position, box.offsetWidth, box.offsetHeight);
+      if (fitted.x !== position.x || fitted.y !== position.y) return setPosition(fitted);
+    }
+    try {
+      localStorage.setItem(POSITION_KEY, JSON.stringify(position));
+    } catch {
+      /* storage unavailable — it forgets, and opens beside the panel next time */
+    }
+  }, [dragging, position]);
+
+  /** Back beside the payment panel, where it opens by default. */
+  const resetPosition = () => {
+    setPosition(null);
+    try {
+      localStorage.removeItem(POSITION_KEY);
+    } catch {
+      /* nothing to forget */
+    }
+  };
 
   // Focused on opening, so the number pad types into it straight away.
   useEffect(() => {
@@ -149,9 +240,12 @@ export default function Calculator({
       onKeyDown={onKeyDown}
       role="dialog"
       aria-label={t('Calculator')}
-      className="calc no-print"
+      className={`calc no-print${dragging ? ' is-dragging' : ''}`}
+      style={position && !isPhone() ? { left: position.x, top: position.y, right: 'auto', bottom: 'auto' } : undefined}
     >
-      <div className="calc-head">
+      {/* The title bar is the handle; a double-click puts it back beside the payment panel. */}
+      <div className="calc-head" onPointerDown={startDrag} onDoubleClick={resetPosition} title={t('Drag to move')}>
+        <GripHorizontal className="calc-grip h-4 w-4" />
         <CalcIcon className="h-4 w-4 text-primary" />
         <strong className="text-sm">{t('Calculator')}</strong>
         <kbd className="calc-kbd">F3</kbd>

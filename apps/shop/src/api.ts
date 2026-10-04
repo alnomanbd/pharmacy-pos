@@ -1106,7 +1106,10 @@ export interface StockAlerts {
 
 export const tillApi = {
   /** The shop's bKash/Nagad numbers, and whether bKash confirms itself. */
-  wallets: () => getData<{ bkashNumber: string; nagadNumber: string; bkashAuto: boolean }>(api.get('/till/wallets')),
+  wallets: () =>
+    getData<{ bkashNumber: string; nagadNumber: string; rocketNumber?: string; upayNumber?: string; bkashAuto: boolean }>(
+      api.get('/till/wallets'),
+    ),
   startBkash: (amount: number) => getData<{ id: string; payURL: string; amount: number }>(api.post('/till/wallets/bkash', { amount })),
   walletStatus: (id: string) =>
     getData<{ status: 'pending' | 'completed' | 'failed' | 'cancelled'; trxID: string; amount: number; payer: string; message: string }>(api.get(`/till/wallets/${id}`)),
@@ -1382,6 +1385,8 @@ export interface OnlineOrderSettings {
 export interface WalletSettings {
   bkashNumber: string;
   nagadNumber: string;
+  rocketNumber?: string;
+  upayNumber?: string;
   bkashApi: { enabled: boolean; sandbox: boolean; appKey: string; username: string; hasSecret: boolean; hasPassword: boolean };
 }
 export const walletApi = {
@@ -1389,6 +1394,8 @@ export const walletApi = {
   save: (payload: {
     bkashNumber?: string;
     nagadNumber?: string;
+    rocketNumber?: string;
+    upayNumber?: string;
     bkashApi?: { enabled?: boolean; sandbox?: boolean; appKey?: string; username?: string; appSecret?: string; password?: string };
   }) => getData<WalletSettings>(api.patch('/shop/wallets', payload)),
 };

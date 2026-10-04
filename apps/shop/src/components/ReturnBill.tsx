@@ -18,7 +18,7 @@ import Modal from './Modal';
  * on a bill nobody paid hands money to somebody who has not given any.
  */
 
-const METHOD_LABEL: Record<string, string> = { bkash: 'bKash', nagad: 'Nagad', rocket: 'Rocket', card: 'card', bank: 'bank' };
+const METHOD_LABEL: Record<string, string> = { bkash: 'bKash', nagad: 'Nagad', rocket: 'Rocket', upay: 'Upay', card: 'card', bank: 'bank' };
 
 export default function ReturnBill({
   onClose,
