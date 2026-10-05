@@ -1,3 +1,5 @@
+import api from '@dawai/shared/api/client';
+import { useLangStore } from '@dawai/shared/i18n/lang';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
@@ -40,6 +42,16 @@ installErrorReporting('shop');
 
 /* Bangla from the ordinary keyboard in every text box, when the A | অ switch says so. */
 installPhoneticTyping();
+
+/*
+ * The screen's language, on every request, so the API answers a refusal in
+ * Bangla when the screen is in Bangla — and remembers it for the emails and
+ * push notifications it sends this person later. The console never sends it.
+ */
+api.interceptors.request.use((config) => {
+  config.headers['X-UI-Lang'] = useLangStore.getState().lang;
+  return config;
+});
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

@@ -2,6 +2,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { AppError } from '../utils/AppError.js';
 import { logger } from '../utils/logger.js';
 import { reportError } from '../integrations/errorReporter.js';
+import { translateMessage } from '../i18n/messages.js';
 
 export function notFoundHandler(req: Request, _res: Response, next: NextFunction) {
   next(new AppError(404, 'NOT_FOUND', `Route not found: ${req.method} ${req.originalUrl}`));
@@ -12,7 +13,8 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
   if (err instanceof AppError) {
     return res.status(err.statusCode).json({
       success: false,
-      message: err.message,
+      // In the screen's language — see i18n/messages. The code stays English, for the client to act on.
+      message: translateMessage(err.message, req.lang),
       code: err.code,
       errors: err.details,
       data: null,
@@ -30,7 +32,7 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
   });
   return res.status(500).json({
     success: false,
-    message: 'Internal server error',
+    message: translateMessage('Internal server error', req.lang),
     code: 'INTERNAL',
     errors: null,
     data: null,

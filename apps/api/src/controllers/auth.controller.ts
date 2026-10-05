@@ -23,7 +23,16 @@ function refreshTokenFrom(req: Request): string {
  * numbers nobody reads.
  */
 function sessionMetaFrom(req: Request) {
-  return { ip: req.ip ?? '', userAgent: (req.get('user-agent') ?? '').slice(0, 300) };
+  return { ip: req.ip ?? '', userAgent: (req.get('user-agent') ?? '').slice(0, 300), lang: saidLang(req) };
+}
+
+/**
+ * The language the screen asked in — only when it said so (the shop app's
+ * X-UI-Lang header). A request with no header leaves the account's remembered
+ * language to decide, rather than resetting it to English.
+ */
+function saidLang(req: Request): 'en' | 'bn' | undefined {
+  return req.headers['x-ui-lang'] ? (req.lang ?? 'en') : undefined;
 }
 
 /**
@@ -45,7 +54,7 @@ function sendSession(
 
 export async function register(req: Request, res: Response, next: NextFunction) {
   try {
-    const result = await authService.registerShop(req.body);
+    const result = await authService.registerShop(req.body, { lang: saidLang(req) });
     // No session is issued: the shop is pending until an operator approves it.
     ok(res, result, result.message);
   } catch (err) {
@@ -64,7 +73,7 @@ export async function verifyEmail(req: Request, res: Response, next: NextFunctio
 
 export async function resendEmailVerification(req: Request, res: Response, next: NextFunction) {
   try {
-    await authService.sendEmailVerification(req.user!.id);
+    await authService.sendEmailVerification(req.user!.id, saidLang(req));
     // Always the same answer, whether or not it was already verified: the state
     // of somebody else's address is not something to report back.
     ok(res, null, 'If that address still needs confirming, a link is on its way');
@@ -169,7 +178,7 @@ export async function logout(req: Request, res: Response, next: NextFunction) {
  */
 export async function forgotPassword(req: Request, res: Response, next: NextFunction) {
   try {
-    await authService.forgotPassword(req.body.email);
+    await authService.forgotPassword(req.body.email, saidLang(req));
     ok(res, null, 'If that email is registered, a reset link has been sent to the phone on file');
   } catch (err) {
     next(err);

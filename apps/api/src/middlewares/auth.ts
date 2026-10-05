@@ -48,6 +48,8 @@ declare global {
     interface Request {
       user?: AuthUser;
       tenant?: TenantContext;
+      /** The screen's language, from the shop app's X-UI-Lang header — see middlewares/uiLang. */
+      lang?: 'en' | 'bn';
     }
   }
 }
@@ -103,6 +105,17 @@ export async function requireAuth(req: Request, _res: Response, next: NextFuncti
 
     const user = await UserModel.findById(payload.sub).lean();
     if (!user || !user.isActive) throw unauthorized('Account not found or inactive');
+
+    /*
+     * Remembered per person, for what reaches them when they are not looking —
+     * an email, a push at nine in the evening. The shop app says which language
+     * its screen is in on every request; only a change is written, and not on
+     * an operator's support view of somebody else's account.
+     */
+    const said = req.headers['x-ui-lang'];
+    if ((said === 'bn' || said === 'en') && user.lang !== said && !payload.imp) {
+      void UserModel.updateOne({ _id: user._id }, { $set: { lang: said } }).catch(() => undefined);
+    }
 
     req.user = {
       id: user._id.toString(),

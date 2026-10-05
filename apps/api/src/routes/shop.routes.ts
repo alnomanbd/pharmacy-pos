@@ -6,6 +6,7 @@ import multer from 'multer';
 import { storage, keys, assertAllowed } from '../services/storage.service.js';
 import { ShopSettingsModel, OrganizationModel } from '../models/index.js';
 import { badRequest, forbidden } from '../utils/AppError.js';
+import { translateMessage } from '../i18n/messages.js';
 import * as shop from '../services/shop.service.js';
 import * as staff from '../services/shopStaff.service.js';
 import * as reports from '../services/shopReport.service.js';
@@ -410,16 +411,23 @@ const importSchema = z.object({
   dryRun: z.boolean().optional(),
 });
 
+/** The per-row notes of an import preview, in the screen's language — several are joined with "; ". */
+function importInLang<T extends { rows: { message?: string }[] }>(result: T, req: Request): T {
+  if (req.lang !== 'bn') return result;
+  const say = (m: string) => m.split('; ').map((part) => translateMessage(part, req.lang)).join('; ');
+  return { ...result, rows: result.rows.map((r) => (r.message ? { ...r, message: say(r.message) } : r)) };
+}
+
 router.post(
   '/import/stock',
   validate(importSchema),
-  handle((req) => dataImport.importStock(actorOf(req), req.body.rows, { dryRun: req.body.dryRun })),
+  handle(async (req) => importInLang(await dataImport.importStock(actorOf(req), req.body.rows, { dryRun: req.body.dryRun }), req)),
 );
 
 router.post(
   '/import/customers',
   validate(importSchema),
-  handle((req) => dataImport.importCustomers(actorOf(req), req.body.rows, { dryRun: req.body.dryRun })),
+  handle(async (req) => importInLang(await dataImport.importCustomers(actorOf(req), req.body.rows, { dryRun: req.body.dryRun }), req)),
 );
 
 router.get(
@@ -1024,7 +1032,11 @@ router.post(
 router.post(
   '/customers/remind',
   validate(z.object({ minBalance: z.number().positive().max(100_000_000) })),
-  handle((req) => remind.remindEveryone(actorOf(req), req.body), 'Reminders sent'),
+  handle(async (req) => {
+    const outcome = await remind.remindEveryone(actorOf(req), req.body);
+    /* Each "why" is shown in the Customers toast — in the screen's language. */
+    return { ...outcome, skipped: outcome.skipped.map((s) => ({ ...s, why: translateMessage(s.why, req.lang) })) };
+  }, 'Reminders sent'),
 );
 
 /* --------------------------------------------------------------- exports -- */

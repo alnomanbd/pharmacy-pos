@@ -67,6 +67,12 @@ const schema = new Schema(
      */
     accessRole: { type: Schema.Types.ObjectId, ref: 'AccessRole', default: null },
     twoFactorEnabled: { type: Boolean, default: false },
+    /**
+     * The language this person reads the shop app in — what their emails and
+     * push notifications are written in. Kept up to date from the app itself
+     * (see requireAuth); English until they switch.
+     */
+    lang: { type: String, enum: ['en', 'bn'], default: 'en' },
     twoFactorSecret: { type: String, default: '', select: false },
     /** bcrypt hashes. Each is usable once and is deleted when it is used. */
     twoFactorRecoveryCodes: { type: [String], default: [], select: false },

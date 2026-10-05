@@ -381,7 +381,12 @@ export default function Activity() {
                                   <span className="font-semibold">{r.who || t('Somebody')}</span>{' '}
                                   <span className="text-muted-foreground">{t(SAID[r.action] ?? r.action)}</span>
                                 </p>
-                                {r.label && <p className="truncate text-[12px] font-medium">{r.label}</p>}
+                                {/* The record's own words; only its amounts take Bangla digits — a bill number is an identifier. */}
+                                {r.label && (
+                                  <p className="truncate text-[12px] font-medium">
+                                    {lang === 'bn' ? r.label.replace(/৳[\d,.]+/g, (m) => bnNumerals(m)) : r.label}
+                                  </p>
+                                )}
                                 {r.reason && (
                                   <p className="mt-1 flex items-start gap-1.5 rounded-lg bg-muted/50 px-2.5 py-1.5 text-xs">
                                     <Quote className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground" />

@@ -6,6 +6,7 @@ import { validate } from '../middlewares/validate.js';
 import { z } from 'zod';
 import { claimImpersonation } from '../services/impersonation.service.js';
 import { ok } from '../utils/response.js';
+import { limitReply } from '../i18n/messages.js';
 import {
   registerSchema,
   loginSchema,
@@ -28,7 +29,7 @@ const resetLimiter = rateLimit({
   max: 5,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { success: false, message: 'Too many attempts. Please try again later.', data: null },
+  message: limitReply('Too many attempts. Please try again later.'),
 });
 
 router.post('/register', validate(registerSchema), authController.register);

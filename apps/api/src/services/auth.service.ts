@@ -84,7 +84,7 @@ export async function registerShop(payload: {
     utm?: { source?: string; medium?: string; campaign?: string; content?: string; term?: string };
   };
   intendedPlan?: string;
-}): Promise<RegistrationResult> {
+}, opts: { lang?: 'en' | 'bn' } = {}): Promise<RegistrationResult> {
   if (await UserModel.findOne({ email: payload.email.toLowerCase() })) {
     throw conflict('Email already registered');
   }
@@ -129,6 +129,8 @@ export async function registerShop(payload: {
     email: payload.email.toLowerCase(),
     phone: payload.phone,
     passwordHash: await bcrypt.hash(payload.password, 12),
+    // The language they signed up in, so the review and approval emails are in it too.
+    ...(opts.lang ? { lang: opts.lang } : {}),
   });
 
   /*
@@ -176,9 +178,9 @@ export async function registerShop(payload: {
 
   // The owner is told it is being reviewed, the operator that there is something
   // to review. Neither send can fail the registration.
-  void notify.shopRegistered({ email: owner.email, name: owner.name, shop: org.name });
+  void notify.shopRegistered({ email: owner.email, name: owner.name, shop: org.name, lang: opts.lang });
   void notify.shopAwaitingApproval(org.name);
-  void sendEmailVerification(owner.id);
+  void sendEmailVerification(owner.id, opts.lang);
 
   return {
     organizationId: org.id,
@@ -310,6 +312,8 @@ export async function login(
   // or a busy account would eventually lock itself out over months.
   user.set('failedLoginCount', 0);
   user.set('lockedUntil', null);
+  // Sign-in is not behind requireAuth, so the language is remembered here too.
+  if (meta.lang && user.organization) user.set('lang', meta.lang);
   await user.save();
 
   if (!firstEver && !known) {
@@ -321,6 +325,7 @@ export async function login(
       at: new Date(),
       ip: meta.ip ?? '',
       userAgent: meta.userAgent ?? '',
+      lang: user.organization && user.lang === 'bn' ? 'bn' : 'en',
     });
   }
 
@@ -409,7 +414,7 @@ const EMAIL_VERIFY_TTL_MS = 24 * 60 * 60 * 1000;
  * Idempotent by design — asking again simply replaces the token, because the
  * commonest reason to ask is that the first mail did not arrive.
  */
-export async function sendEmailVerification(userId: string): Promise<void> {
+export async function sendEmailVerification(userId: string, lang?: 'en' | 'bn'): Promise<void> {
   const user = await UserModel.findById(userId);
   if (!user || user.isEmailVerified) return;
 
@@ -422,6 +427,7 @@ export async function sendEmailVerification(userId: string): Promise<void> {
   await notify.verifyEmail({
     email: user.email,
     name: user.name,
+    lang: user.organization ? lang : 'en',
     url: `${base}/verify-email?token=${token}`,
   });
 }
@@ -448,7 +454,8 @@ export async function verifyEmailToken(token: string): Promise<{ email: string }
   return { email: user.email };
 }
 
-export async function forgotPassword(email: string): Promise<void> {
+/** `lang` is the screen the reset was asked from, when it said; otherwise the account's own. */
+export async function forgotPassword(email: string, lang?: 'en' | 'bn'): Promise<void> {
   const user = await UserModel.findOne({ email: email.toLowerCase() });
   if (!user || !user.isActive) return;
 
@@ -469,6 +476,7 @@ export async function forgotPassword(email: string): Promise<void> {
       phone: user.phone,
       name: user.name,
       url: link,
+      lang: user.organization ? lang : 'en',
     });
   } catch (err) {
     // The reset is already recorded; a delivery outage must not surface as a
@@ -558,6 +566,8 @@ const MAX_REFRESH_TOKENS = 10;
 export interface SessionMeta {
   ip?: string;
   userAgent?: string;
+  /** The language the shop app's screen is in, when it said — remembered on sign-in. */
+  lang?: 'en' | 'bn';
 }
 
 async function issueRefreshToken(userId: string, meta: SessionMeta = {}): Promise<string> {

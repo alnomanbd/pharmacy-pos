@@ -13,6 +13,7 @@ import { PAYMENT_METHODS } from '../models/Payment.js';
 import { exportOrganization } from '../services/tenantData.service.js';
 import { audit } from '../services/audit.service.js';
 import { quoteForShop } from '../services/coupon.service.js';
+import { translateMessage } from '../i18n/messages.js';
 import { referralSummary } from '../services/referral.service.js';
 import { startCheckout } from '../services/onlinePayment.service.js';
 import * as leaving from '../services/leaving.service.js';
@@ -54,7 +55,9 @@ router.get('/coupon', async (req, res, next) => {
   try {
     await requireOrgAdmin(actorOf(req));
     const months = Math.min(36, Math.max(1, Number(req.query.months) || 1));
-    ok(res, await quoteForShop(req.user!.org!, { code: String(req.query.code ?? ''), plan: String(req.query.plan ?? ''), months }));
+    const q = await quoteForShop(req.user!.org!, { code: String(req.query.code ?? ''), plan: String(req.query.plan ?? ''), months });
+    // The refusal is shown under the code box — in the screen's language.
+    ok(res, q.ok ? q : { ...q, reason: translateMessage(q.reason, req.lang) });
   } catch (err) {
     next(err);
   }

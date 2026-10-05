@@ -1,3 +1,5 @@
+import { uiLang } from './middlewares/uiLang.js';
+import { limitReply } from './i18n/messages.js';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -53,6 +55,7 @@ app.use(
   }),
 );
 app.use(express.json({ limit: '1mb' }));
+app.use(uiLang);
 app.use(express.urlencoded({ extended: true }));
 /*
  * The session's refresh token arrives as an httpOnly cookie rather than in the
@@ -66,6 +69,7 @@ const authLimiter = rateLimit({
   max: isProduction ? 300 : 1000,
   standardHeaders: true,
   legacyHeaders: false,
+  message: limitReply('Too many requests. Please try again shortly.'),
 });
 app.use('/api/auth', authLimiter);
 
@@ -85,11 +89,7 @@ const loginLimiter = rateLimit({
   // Successful sign-ins do not count: a busy shop where five people share a
   // connection should not run out of logins by using the product.
   skipSuccessfulRequests: true,
-  message: {
-    success: false,
-    message: 'Too many sign-in attempts from this network. Please try again later.',
-    data: null,
-  },
+  message: limitReply('Too many sign-in attempts from this network. Please try again later.'),
 });
 app.use('/api/auth/login', loginLimiter);
 
@@ -106,7 +106,7 @@ const referenceLimiter = rateLimit({
   max: isProduction ? 120 : 600,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { success: false, message: 'Too many search requests. Please slow down.', data: null },
+  message: limitReply('Too many search requests. Please slow down.'),
 });
 app.use('/api/medicines', referenceLimiter);
 
@@ -120,7 +120,7 @@ const publicLimiter = rateLimit({
   max: isProduction ? 240 : 1000,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { success: false, message: 'Too many requests. Please try again shortly.', data: null },
+  message: limitReply('Too many requests. Please try again shortly.'),
 });
 app.use('/api/public', publicLimiter);
 
@@ -131,7 +131,7 @@ const registerLimiter = rateLimit({
   max: isProduction ? 10 : 200,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { success: false, message: 'Too many sign-ups from this network. Please try again later.', data: null },
+  message: limitReply('Too many sign-ups from this network. Please try again later.'),
 });
 app.use('/api/auth/register', registerLimiter);
 
