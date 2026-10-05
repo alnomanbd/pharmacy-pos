@@ -23,7 +23,7 @@ import { staffApi, rolesApi, taka, type StaffMember, type ShopRole } from '../ap
 import ShopRoles from '../components/ShopRoles';
 import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
-import { useT, useUiLang, bnNumerals } from '../i18n/ui';
+import { useT, useUiLang, bnNumerals, useNumerals } from '../i18n/ui';
 import { fetchBranchSwitcher, type BranchSwitcherInfo } from '../branch';
 import Modal from '../components/Modal';
 import { confirmAction } from '@dawai/shared/lib/confirm';
@@ -115,7 +115,7 @@ export default function Staff() {
       setRows(await staffApi.list());
     } catch (e: unknown) {
       const res = (e as { response?: { data?: { message?: string } } }).response;
-      toast(res?.data?.message || 'Could not load the staff list.', 'error');
+      toast(res?.data?.message || t('Could not load the staff list.'), 'error');
     } finally {
       setLoading(false);
     }
@@ -140,11 +140,11 @@ export default function Staff() {
     setBusyId(m._id);
     try {
       await staffApi.update(m._id, { isActive: !m.isActive });
-      toast(m.isActive ? `${m.name} can no longer sign in.` : `${m.name} can sign in again.`);
+      toast(`${m.name} ${m.isActive ? t('can no longer sign in.') : t('can sign in again.')}`);
       await load();
     } catch (e: unknown) {
       const res = (e as { response?: { data?: { message?: string } } }).response;
-      toast(res?.data?.message || 'Could not change that.', 'error');
+      toast(res?.data?.message || t('Could not change that.'), 'error');
     } finally {
       setBusyId('');
     }
@@ -433,7 +433,7 @@ function StaffCard({
           <p className="flex items-center gap-1.5">
             {m.openShift ? (
               <span className="flex items-center gap-1.5 font-semibold text-emerald-600 dark:text-emerald-400">
-                <CircleDot className="h-3.5 w-3.5" /> {t('On')} {m.openShift.terminal || t('a counter')}
+                <CircleDot className="h-3.5 w-3.5" /> {t('Working at')} {m.openShift.terminal || t('a counter')}
               </span>
             ) : (
               <>
@@ -525,6 +525,7 @@ function EditStaff({
   onSaved: () => void;
 }) {
   const t = useT();
+  const { stop } = useNumerals();
   const { toast } = useToast();
   const [name, setName] = useState(member.name);
   const [phone, setPhone] = useState(member.phone ?? '');
@@ -550,7 +551,7 @@ function EditStaff({
         ...(member.role !== 'admin' && role !== (member.roleId ?? member.role) ? { roleId: role } : {}),
         ...(askBranches ? { branchIds: worksIn.filter((id) => branches.some((b) => b._id === id)) } : {}),
       });
-      toast(`${name.trim()} ${t('saved')}.`);
+      toast(`${name.trim()} ${t('saved')}${stop}`);
       onSaved();
     } catch (err: unknown) {
       const res = (err as { response?: { data?: { message?: string } } }).response;
@@ -686,11 +687,11 @@ function AddStaff({ roles, onClose, onAdded }: { roles: ShopRole[]; onClose: () 
         roleId: form.role,
         password: form.password,
       });
-      toast(`${form.name.trim()} can sign in now. Tell them the password.`);
+      toast(`${form.name.trim()} ${t('can sign in now. Tell them the password.')}`);
       onAdded();
     } catch (err: unknown) {
       const res = (err as { response?: { data?: { message?: string } } }).response;
-      toast(res?.data?.message || 'Could not create that account.', 'error');
+      toast(res?.data?.message || t('Could not create that account.'), 'error');
     } finally {
       setBusy(false);
     }
@@ -726,7 +727,7 @@ function AddStaff({ roles, onClose, onAdded }: { roles: ShopRole[]; onClose: () 
                 value={form.name}
                 onChange={set('name')}
                 required
-                placeholder="Rakib Hasan"
+                placeholder={t('Rakib Hasan')}
               />
             </div>
             <div>
@@ -783,7 +784,7 @@ function AddStaff({ roles, onClose, onAdded }: { roles: ShopRole[]; onClose: () 
               {t('Cancel')}
             </button>
             <button type="submit" className="btn" disabled={busy}>
-              {busy && <Loader2 className="h-4 w-4 animate-spin" />} Create the account
+              {busy && <Loader2 className="h-4 w-4 animate-spin" />} {t('Create the account')}
             </button>
           </div>
         </form>
@@ -802,11 +803,11 @@ function SetPassword({ member, onClose }: { member: StaffMember; onClose: () => 
     setBusy(true);
     try {
       await staffApi.setPassword(member._id, password);
-      toast(`${member.name}'s password is set. Tell them what it is.`);
+      toast(`${member.name}${t("'s password is set. Tell them what it is.")}`);
       onClose();
     } catch (e: unknown) {
       const res = (e as { response?: { data?: { message?: string } } }).response;
-      toast(res?.data?.message || 'Could not set that password.', 'error');
+      toast(res?.data?.message || t('Could not set that password.'), 'error');
     } finally {
       setBusy(false);
     }
@@ -815,7 +816,7 @@ function SetPassword({ member, onClose }: { member: StaffMember; onClose: () => 
   return (
     <Modal onClose={onClose} className="w-full max-w-sm">
         <h3 className="flex items-center gap-2">
-          <KeyRound className="h-4 w-4" /> New password for {member.name}
+          <KeyRound className="h-4 w-4" /> {t('New password for')} {member.name}
         </h3>
         <p className="text-xs text-muted-foreground">
           {t('Every machine they are signed in on is signed out when you do this.')}
@@ -838,7 +839,7 @@ function SetPassword({ member, onClose }: { member: StaffMember; onClose: () => 
             disabled={busy || password.length < 8}
             onClick={() => void save()}
           >
-            {busy && <Loader2 className="h-4 w-4 animate-spin" />} Set it
+            {busy && <Loader2 className="h-4 w-4 animate-spin" />} {t('Set it')}
           </button>
         </div>
     </Modal>

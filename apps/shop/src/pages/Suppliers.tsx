@@ -17,7 +17,7 @@ import { shopApi, taka, type Supplier, type SupplierKind } from '../api';
 import SupplierStatement from '../components/SupplierStatement';
 import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
-import { useT, useUiLang, bnNumerals } from '../i18n/ui';
+import { useT, useUiLang, bnNumerals, useNumerals } from '../i18n/ui';
 import Modal from '../components/Modal';
 import ExportCsv from '../components/ExportCsv';
 import ConfirmWithReason from '../components/ConfirmWithReason';
@@ -81,6 +81,7 @@ const KIND_TONE: Record<SupplierKind, string> = {
 
 export default function Suppliers() {
   const t = useT();
+  const { stop } = useNumerals();
   const lang = useUiLang();
   const { toast } = useToast();
   const [rows, setRows] = useState<Supplier[]>([]);
@@ -118,7 +119,7 @@ export default function Suppliers() {
       setRows(await shopApi.suppliers());
     } catch (e: unknown) {
       const res = (e as { response?: { data?: { message?: string } } }).response;
-      toast(res?.data?.message || 'Could not load the companies.', 'error');
+      toast(res?.data?.message || t('Could not load the companies.'), 'error');
     } finally {
       setLoading(false);
     }
@@ -182,7 +183,7 @@ export default function Suppliers() {
     setBusy(true);
     try {
       await shopApi.binIt('supplier', s._id, reason);
-      toast(`${s.name} ${t('moved to the Recycle Bin')}.`);
+      toast(`${s.name} ${t('moved to the Recycle Bin')}${stop}`);
       setBinning(null);
       if (openId === s._id) setOpenId('');
       await load();
@@ -606,6 +607,7 @@ function CompanyForm({
   onSaved: () => void;
 }) {
   const t = useT();
+  const { stop } = useNumerals();
   const { toast } = useToast();
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({
@@ -637,18 +639,18 @@ function CompanyForm({
     try {
       if (company) {
         await shopApi.updateSupplier(company._id, payload);
-        toast(`${payload.name} ${t('saved')}.`);
+        toast(`${payload.name} ${t('saved')}${stop}`);
       } else {
         await shopApi.createSupplier({
           ...payload,
           openingBalance: form.openingBalance ? Number(form.openingBalance) : undefined,
         });
-        toast(`${payload.name} added.`);
+        toast(`${payload.name} ${t('added')}${stop}`);
       }
       onSaved();
     } catch (err: unknown) {
       const res = (err as { response?: { data?: { message?: string } } }).response;
-      toast(res?.data?.message || 'Could not save that company.', 'error');
+      toast(res?.data?.message || t('Could not save that company.'), 'error');
     } finally {
       setBusy(false);
     }
@@ -708,7 +710,7 @@ function CompanyForm({
             onChange={set('name')}
             required
             minLength={2}
-            placeholder="Incepta Pharmaceuticals"
+            placeholder={t('Incepta Pharmaceuticals')}
             autoFocus
           />
         </div>
@@ -723,7 +725,7 @@ function CompanyForm({
               className="input h-10"
               value={form.contactPerson}
               onChange={set('contactPerson')}
-              placeholder="Jashim"
+              placeholder={t('Jashim')}
             />
           </div>
           <div>
@@ -751,7 +753,7 @@ function CompanyForm({
               className="input h-10"
               value={form.repName}
               onChange={set('repName')}
-              placeholder="Jashim Uddin"
+              placeholder={t('Jashim Uddin')}
             />
             <input
               className="input mt-2 h-10"

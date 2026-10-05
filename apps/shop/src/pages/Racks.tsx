@@ -19,7 +19,7 @@ import { Link } from 'react-router-dom';
 import { shopApi, type ShopRack, type RackRule } from '../api';
 import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
-import { useT, useUiLang, bnNumerals } from '../i18n/ui';
+import { useT, useUiLang, bnNumerals, useNumerals } from '../i18n/ui';
 import Modal from '../components/Modal';
 import ConfirmWithReason from '../components/ConfirmWithReason';
 import Pager from '../components/Pager';
@@ -79,6 +79,7 @@ const MATCH_SHOWN = 4;
 
 export default function Racks() {
   const t = useT();
+  const { stop } = useNumerals();
   const lang = useUiLang();
   const { toast } = useToast();
   const [rows, setRows] = useState<ShopRack[]>([]);
@@ -98,7 +99,7 @@ export default function Racks() {
       setRows(await shopApi.racks());
     } catch (e: unknown) {
       const res = (e as { response?: { data?: { message?: string } } }).response;
-      toast(res?.data?.message || 'Could not load the shelves.', 'error');
+      toast(res?.data?.message || t('Could not load the shelves.'), 'error');
     } finally {
       setLoading(false);
     }
@@ -149,7 +150,7 @@ export default function Racks() {
     setBusy(true);
     try {
       await shopApi.binIt('rack', rack._id, reason);
-      toast(`${rack.name} ${t('moved to the Recycle Bin')}.`);
+      toast(`${rack.name} ${t('moved to the Recycle Bin')}${stop}`);
       setBinning(null);
       await load();
     } catch (e: unknown) {
@@ -477,6 +478,7 @@ function RackForm({
   onSaved: () => void;
 }) {
   const t = useT();
+  const { stop } = useNumerals();
   const { toast } = useToast();
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({
@@ -506,15 +508,15 @@ function RackForm({
     try {
       if (rack) {
         await shopApi.updateRack(rack._id, payload);
-        toast(`${payload.name} ${t('saved')}.`);
+        toast(`${payload.name} ${t('saved')}${stop}`);
       } else {
         await shopApi.createRack(payload);
-        toast(`${payload.name} added.`);
+        toast(`${payload.name} ${t('added')}${stop}`);
       }
       onSaved();
     } catch (err: unknown) {
       const res = (err as { response?: { data?: { message?: string } } }).response;
-      toast(res?.data?.message || 'Could not save that shelf.', 'error');
+      toast(res?.data?.message || t('Could not save that shelf.'), 'error');
     } finally {
       setBusy(false);
     }
@@ -540,7 +542,7 @@ function RackForm({
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
             required
-            placeholder="R2 · Syrup shelf · Fridge"
+            placeholder={t('R2 · Syrup shelf · Fridge')}
             autoFocus
           />
           {rack && rack.items > 0 && (

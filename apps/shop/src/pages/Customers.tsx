@@ -118,7 +118,7 @@ const ago = (iso: string | undefined, n: (v: number | string) => string, t: (k: 
 export default function Customers() {
   const canImport = useCan()('customers.manage');
   const t = useT();
-  const { stop } = useNumerals();
+  const { stop, num } = useNumerals();
   const lang = useUiLang();
   const { toast } = useToast();
   const [rows, setRows] = useState<BookRow[]>([]);
@@ -222,12 +222,12 @@ export default function Customers() {
       const held = res.skipped.length;
       toast(
         held > 0
-          ? `Sent ${res.sent}. ${held} not sent — ${res.skipped[0].why}${held > 1 ? ' and others' : ''}.`
-          : `Sent ${res.sent}.`,
+          ? `${t('Sent')} ${num(res.sent)}${stop} ${num(held)} ${t('not sent')} — ${res.skipped[0].why}${held > 1 ? ` ${t('and others')}` : ''}${stop}`
+          : `${t('Sent')} ${num(res.sent)}${stop}`,
       );
     } catch (e: unknown) {
       const res = (e as { response?: { data?: { message?: string } } }).response;
-      toast(res?.data?.message || 'Could not send those.', 'error');
+      toast(res?.data?.message || t('Could not send those.'), 'error');
     } finally {
       setChasing(false);
     }
@@ -587,6 +587,7 @@ function CustomerSheet({
   onGone: () => void;
 }) {
   const t = useT();
+  const { num, stop } = useNumerals();
   const { toast } = useToast();
   /* Deleting is the back room's (the bin is an admin route); correcting a
      phone number is anybody's who stands at the counter. */
@@ -660,7 +661,7 @@ function CustomerSheet({
     setBusy(true);
     try {
       await tillApi.payCustomer(id, { amount: n, method, note: note.trim() || undefined });
-      toast(`${taka(n)} taken off the account.`);
+      toast(`${taka(n)} ${t('taken off the account')}${stop}`);
       setAmount('');
       setNote('');
       await load();
@@ -677,7 +678,7 @@ function CustomerSheet({
     setBinBusy(true);
     try {
       await shopApi.binIt('customer', id, reason);
-      toast(`${data?.customer.name ?? ''} ${t('moved to the Recycle Bin')}.`);
+      toast(`${data?.customer.name ?? ''} ${t('moved to the Recycle Bin')}${stop}`);
       onGone();
     } catch (e: unknown) {
       const res = (e as { response?: { data?: { message?: string } } }).response;
@@ -718,10 +719,10 @@ function CustomerSheet({
     setReminding(true);
     try {
       await shopApi.remindCustomer(id);
-      toast('Reminder sent.');
+      toast(t('Reminder sent.'));
     } catch (e: unknown) {
       const res = (e as { response?: { data?: { message?: string } } }).response;
-      toast(res?.data?.message || 'Could not send that.', 'error');
+      toast(res?.data?.message || t('Could not send that.'), 'error');
     } finally {
       setReminding(false);
     }
@@ -745,9 +746,9 @@ function CustomerSheet({
                     </span>
                   )}
                   <span>
-                    {data.bills.length} bill{data.bills.length === 1 ? '' : 's'}
+                    {num(data.bills.length)} {t(data.bills.length === 1 ? 'bill' : 'bills')}
                   </span>
-                  <span>{taka(data.totals.bought)} bought in all</span>
+                  <span>{taka(data.totals.bought)} {t('bought in all')}</span>
                 </p>
                 {(data.customer.address || data.customer.note) && (
                   <p className="text-xs text-muted-foreground">
@@ -801,8 +802,8 @@ function CustomerSheet({
               </div>
               {data.customer.creditLimit ? (
                 <p className="text-[11px] text-muted-foreground">
-                  Limit {taka(data.customer.creditLimit)}
-                  {data.balance > data.customer.creditLimit ? ' — over it' : ''}
+                  {t('Limit')} {taka(data.customer.creditLimit)}
+                  {data.balance > data.customer.creditLimit ? ` — ${t('over it')}` : ''}
                 </p>
               ) : null}
               {data.balance > 0 && (
@@ -999,8 +1000,8 @@ function CustomerSheet({
                             {b.billNo}
                           </button>
                           <span className="block text-[11px] text-muted-foreground">
-                            {when(b.soldAt)} · {b.items} item{b.items === 1 ? '' : 's'}
-                            {b.status === 'returned' ? ' · taken back' : ''}
+                            {when(b.soldAt)} · {num(b.items)} {t(b.items === 1 ? 'item' : 'items')}
+                            {b.status === 'returned' ? ` · ${t('taken back')}` : ''}
                           </span>
                         </td>
                         <td className="hidden text-muted-foreground sm:table-cell">

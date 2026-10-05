@@ -26,7 +26,7 @@ import { useToast } from '@dawai/shared/components/Toast';
 import DeliveryDetail from '../components/DeliveryDetail';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import { todayLocal } from '@dawai/shared/lib/date';
-import { useT, useUiLang, bnNumerals } from '../i18n/ui';
+import { useT, useUiLang, bnNumerals, useNumerals } from '../i18n/ui';
 import Pager from '../components/Pager';
 import Modal from '../components/Modal';
 import { expiryMonth, monthPassed } from '../pos/expiry';
@@ -103,7 +103,7 @@ export default function Purchases() {
         setFromOrder(o);
         setAdding(true);
       })
-      .catch(() => toast('Could not open that order.', 'error'));
+      .catch(() => toast(t('Could not open that order.'), 'error'));
   }, [orderId, toast]);
 
   const closeDelivery = () => {
@@ -138,7 +138,7 @@ export default function Purchases() {
       if (res.thisMonth) setMonth(res.thisMonth);
     } catch (e: unknown) {
       const res = (e as { response?: { data?: { message?: string } } }).response;
-      toast(res?.data?.message || 'Could not load the deliveries.', 'error');
+      toast(res?.data?.message || t('Could not load the deliveries.'), 'error');
     } finally {
       setLoading(false);
     }
@@ -161,7 +161,7 @@ export default function Purchases() {
     try {
       setOpen(await shopApi.purchase(id));
     } catch {
-      toast('Could not open that delivery.', 'error');
+      toast(t('Could not open that delivery.'), 'error');
     } finally {
       setOpening(false);
     }
@@ -565,6 +565,7 @@ function NewDelivery({
   onSaved: () => void;
 }) {
   const t = useT();
+  const { num } = useNumerals();
   const { toast } = useToast();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [products, setProducts] = useState<ShopProduct[]>([]);
@@ -628,10 +629,10 @@ function NewDelivery({
   /* What is wrong with a line's expiry, if anything — shown under the field
      and holding the save button, so the invoice is fixed before it is sent. */
   const expiryProblem = (l: DraftLine): string | null => {
-    if (!l.expiry.trim()) return l.isMedicine ? 'Expiry needed' : null;
+    if (!l.expiry.trim()) return l.isMedicine ? t('Expiry needed') : null;
     const ym = expiryMonth(l.expiry);
-    if (!ym) return 'Write it as MM/YY';
-    if (monthPassed(ym)) return 'Already expired';
+    if (!ym) return t('Write it as MM/YY');
+    if (monthPassed(ym)) return t('Already expired');
     return null;
   };
   const expiryOk = lines.every((l) => expiryProblem(l) === null);
@@ -660,13 +661,13 @@ function NewDelivery({
       useAlertStore.getState().refresh();
       toast(
         order
-          ? 'Delivery recorded — stock is in, and the order shows what came.'
-          : 'Delivery recorded — stock and the company’s balance are updated.',
+          ? t('Delivery recorded — stock is in, and the order shows what came.')
+          : t('Delivery recorded — stock and the company’s balance are updated.'),
       );
       onSaved();
     } catch (e: unknown) {
       const res = (e as { response?: { data?: { message?: string } } }).response;
-      toast(res?.data?.message || 'Could not record that delivery.', 'error');
+      toast(res?.data?.message || t('Could not record that delivery.'), 'error');
     } finally {
       setBusy(false);
     }
@@ -770,7 +771,7 @@ function NewDelivery({
                   </div>
 
                   <div className="grid gap-2 sm:grid-cols-6">
-                    <Field label="Batch">
+                    <Field label={t('Batch')}>
                       <input
                         className="input h-9"
                         value={l.batchNo}
@@ -778,7 +779,7 @@ function NewDelivery({
                         placeholder="B-7741"
                       />
                     </Field>
-                    <Field label={l.isMedicine ? 'Expiry *' : 'Expiry'}>
+                    <Field label={l.isMedicine ? `${t('Expiry')} *` : t('Expiry')}>
                       <input
                         className={`input h-9 tabular-nums ${
                           l.expiry && expiryProblem(l) ? 'border-destructive' : ''
@@ -799,7 +800,7 @@ function NewDelivery({
                         </span>
                       )}
                     </Field>
-                    <Field label="Box">
+                    <Field label={t('Box')}>
                       <input
                         className="input h-9"
                         inputMode="numeric"
@@ -807,7 +808,7 @@ function NewDelivery({
                         onChange={(e) => setLine(i, 'boxes', e.target.value)}
                       />
                     </Field>
-                    <Field label="Strip">
+                    <Field label={t('Strip')}>
                       <input
                         className="input h-9"
                         inputMode="numeric"
@@ -815,7 +816,7 @@ function NewDelivery({
                         onChange={(e) => setLine(i, 'strips', e.target.value)}
                       />
                     </Field>
-                    <Field label="Bonus strip">
+                    <Field label={t('Bonus strip')}>
                       <input
                         className="input h-9"
                         inputMode="numeric"
@@ -824,7 +825,7 @@ function NewDelivery({
                         placeholder="0"
                       />
                     </Field>
-                    <Field label="Trade / pc">
+                    <Field label={t('Trade / pc')}>
                       <input
                         className="input h-9"
                         inputMode="decimal"
@@ -837,18 +838,18 @@ function NewDelivery({
 
                   <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
                     <span className="tabular-nums">
-                      {piecesOf(l)} pieces charged
+                      {num(piecesOf(l))} {t('pieces charged')}
                       {bonusOf(l) > 0 && (
                         <>
                           {' '}
-                          <Gift className="inline h-3 w-3" /> +{bonusOf(l)} free
+                          <Gift className="inline h-3 w-3" /> +{num(bonusOf(l))} {t('free')}
                         </>
                       )}
                     </span>
                     <span className="tabular-nums">{taka(lineTotal(l))}</span>
                     {piecesOf(l) + bonusOf(l) > 0 && lineTotal(l) > 0 && (
                       <span className="tabular-nums">
-                        cost {taka(lineTotal(l) / (piecesOf(l) + bonusOf(l)))} / pc
+                        {t('cost')} {taka(lineTotal(l) / (piecesOf(l) + bonusOf(l)))} / {t('pc')}
                       </span>
                     )}
                   </div>
@@ -891,10 +892,10 @@ function NewDelivery({
               type="button"
               className="btn"
               disabled={busy || !supplierId || lines.length === 0 || !expiryOk}
-              title={expiryOk ? undefined : 'Every medicine needs its expiry, as MM/YY'}
+              title={expiryOk ? undefined : t('Every medicine needs its expiry, as MM/YY')}
               onClick={() => void submit()}
             >
-              {busy && <Loader2 className="h-4 w-4 animate-spin" />} Save delivery
+              {busy && <Loader2 className="h-4 w-4 animate-spin" />} {t('Save delivery')}
             </button>
           </div>
         </div>

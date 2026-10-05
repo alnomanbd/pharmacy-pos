@@ -84,7 +84,7 @@ export default function CountStock() {
       setSheet(await shopApi.startCount(rackId || undefined));
     } catch (e: unknown) {
       const res = (e as { response?: { data?: { message?: string } } }).response;
-      toast(res?.data?.message || 'Could not start a count.', 'error');
+      toast(res?.data?.message || t('Could not start a count.'), 'error');
     } finally {
       setBusy(false);
     }
@@ -101,7 +101,7 @@ export default function CountStock() {
     try {
       await shopApi.saveCount(sheet._id, [{ lineId: line._id, counted }]);
     } catch {
-      toast('That one did not save — check the connection before you finish.', 'error');
+      toast(t('That one did not save — check the connection before you finish.'), 'error');
     }
   };
 
@@ -129,15 +129,15 @@ export default function CountStock() {
       const done = await shopApi.applyCount(sheet._id, note.trim() || undefined);
       toast(
         done.shortPieces || done.extraPieces
-          ? `Stock updated — ${done.shortPieces} short, ${done.extraPieces} extra.`
-          : 'Stock updated — the shelf and the screen agreed.',
+          ? `${t('Stock updated —')} ${num(done.shortPieces)} ${t('short')}, ${num(done.extraPieces)} ${t('extra')}${stop}`
+          : t('Stock updated — the shelf and the screen agreed.'),
       );
       setConfirming(false);
       setNote('');
       await load();
     } catch (e: unknown) {
       const res = (e as { response?: { data?: { message?: string } } }).response;
-      toast(res?.data?.message || 'Could not apply that count.', 'error');
+      toast(res?.data?.message || t('Could not apply that count.'), 'error');
     } finally {
       setBusy(false);
     }
@@ -158,11 +158,11 @@ export default function CountStock() {
     setBusy(true);
     try {
       await shopApi.abandonCount(sheet._id);
-      toast('Count dropped. Nothing on the shelf was changed.');
+      toast(t('Count dropped. Nothing on the shelf was changed.'));
       await load();
     } catch (e: unknown) {
       const res = (e as { response?: { data?: { message?: string } } }).response;
-      toast(res?.data?.message || 'Could not drop that count.', 'error');
+      toast(res?.data?.message || t('Could not drop that count.'), 'error');
     } finally {
       setBusy(false);
     }
@@ -325,7 +325,7 @@ export default function CountStock() {
             <ClipboardCheck className="h-5 w-5" /> {sheet.rackLabel || t('The whole shop')}
           </h1>
           <p className="text-sm text-muted-foreground">
-            {totals.counted} / {totals.of} {t('counted')} · {t('started')}{' '}
+            {totals.counted} / {num(totals.of)} {t('counted')} · {t('started')}{' '}
             {new Date(sheet.startedAt).toLocaleString('en-GB', {
               day: '2-digit',
               month: 'short',
@@ -422,7 +422,7 @@ export default function CountStock() {
                             delta < 0 ? 'text-destructive' : ''
                           }`}
                         >
-                          {delta > 0 ? `+${delta}` : delta} against the screen
+                          {delta > 0 ? `+${num(delta)}` : num(delta)} {t('against the screen')}
                         </span>
                       )}
                     </td>

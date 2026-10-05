@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { Tags, Printer, Loader2, ArrowLeft, Search } from 'lucide-react';
-import { shopApi, taka, packOf, type ShopProduct, type ShopRack } from '../api';
+import { shopApi, taka, takaPlain, packOfPlain as packOf, type ShopProduct, type ShopRack } from '../api';
 import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import { useT, useUiLang, bnNumerals } from '../i18n/ui';
@@ -69,7 +69,7 @@ export default function Labels() {
       setPicked(new Set(products.data.map((p) => p._id)));
     } catch (e: unknown) {
       const res = (e as { response?: { data?: { message?: string } } }).response;
-      toast(res?.data?.message || 'Could not load the shelf.', 'error');
+      toast(res?.data?.message || t('Could not load the shelf.'), 'error');
       setRows([]);
     }
   }, [rackId, toast]);
@@ -202,7 +202,7 @@ export default function Labels() {
                   </span>
                   <span className="block text-[11px] text-muted-foreground">
                     {p.rackLabel ? `${t('rack')} ${p.rackLabel} · ` : ''}
-                    {n(taka(p.mrpPerPiece))} / {t('pc')}
+                    {taka(p.mrpPerPiece)} / {t('pc')}
                   </span>
                 </span>
               </label>
@@ -294,11 +294,11 @@ function LabelSheet({ rows, onDone }: { rows: ShopProduct[]; onDone: () => void 
           </div>
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
             <div>
-              <div className="price">{taka(p.mrpPerPiece)}</div>
+              <div className="price">{takaPlain(p.mrpPerPiece)}</div>
               {/* What a customer actually asks for — one strip, not one
                   tablet — worked out from the same pack rule the till uses. */}
               <div className="sub">
-                {packOf(p.piecesPerStrip, p)} · {taka(p.mrpPerPiece * p.piecesPerStrip)}
+                {packOf(p.piecesPerStrip, p)} · {takaPlain(p.mrpPerPiece * p.piecesPerStrip)}
               </div>
             </div>
             {p.rackLabel && <span className="rack">{p.rackLabel}</span>}

@@ -29,7 +29,7 @@ import {
 import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import ConfirmWithReason from '../components/ConfirmWithReason';
-import { useT, useUiLang, bnNumerals } from '../i18n/ui';
+import { useT, useUiLang, bnNumerals, useNumerals } from '../i18n/ui';
 import Pager from '../components/Pager';
 import Modal from '../components/Modal';
 import { confirmAction } from '@dawai/shared/lib/confirm';
@@ -149,7 +149,7 @@ export default function Orders() {
       setSuppliers(companies);
     } catch (e: unknown) {
       const res = (e as { response?: { data?: { message?: string } } }).response;
-      toast(res?.data?.message || 'Could not load the orders.', 'error');
+      toast(res?.data?.message || t('Could not load the orders.'), 'error');
       setOrders([]);
     }
   }, [toast]);
@@ -166,7 +166,7 @@ export default function Orders() {
       await load();
     } catch (e: unknown) {
       const res = (e as { response?: { data?: { message?: string } } }).response;
-      toast(res?.data?.message || 'Could not save that.', 'error');
+      toast(res?.data?.message || t('Could not save that.'), 'error');
     }
   };
 
@@ -175,12 +175,12 @@ export default function Orders() {
     setDropping(true);
     try {
       await shopApi.setOrderStatus(cancelling._id, { status: 'cancelled', reason });
-      toast('Order cancelled.');
+      toast(t('Order cancelled.'));
       setCancelling(null);
       await load();
     } catch (e: unknown) {
       const res = (e as { response?: { data?: { message?: string } } }).response;
-      toast(res?.data?.message || 'Could not cancel that.', 'error');
+      toast(res?.data?.message || t('Could not cancel that.'), 'error');
     } finally {
       setDropping(false);
     }
@@ -365,7 +365,7 @@ export default function Orders() {
                   order={o}
                   n={n}
                   onOpen={() => setOpen(o)}
-                  onSend={() => void move(o, 'sent', 'Marked as given to the rep.')}
+                  onSend={() => void move(o, 'sent', t('Marked as given to the rep.'))}
                   onDeliver={() => navigate(`/purchases?order=${o._id}`)}
                 />
               ))}
@@ -399,7 +399,7 @@ export default function Orders() {
           order={open}
           supplier={suppliers.find((s) => s._id === open.supplier)}
           onClose={() => setOpen(null)}
-          onSend={() => move(open, 'sent', 'Marked as given to the rep.')}
+          onSend={() => move(open, 'sent', t('Marked as given to the rep.'))}
           onReceive={async () => {
             if (
               !(await confirmAction({
@@ -411,7 +411,7 @@ export default function Orders() {
               }))
             )
               return;
-            void move(open, 'received', 'Marked as arrived.');
+            void move(open, 'received', t('Marked as arrived.'));
           }}
           onDeliver={() => navigate(`/purchases?order=${open._id}`)}
           onOrderRest={() => {
@@ -713,6 +713,7 @@ function WriteOrder({
   onWritten: () => Promise<void>;
 }) {
   const t = useT();
+  const { num } = useNumerals();
   const { toast } = useToast();
   const [supplierId, setSupplierId] = useState(initial?.supplierId ?? '');
   const [suggested, setSuggested] = useState<SuggestedLine[] | null>(null);
@@ -836,21 +837,21 @@ function WriteOrder({
 
   const submit = async () => {
     if (!supplierId) {
-      toast('Which company is this order for?', 'error');
+      toast(t('Which company is this order for?'), 'error');
       return;
     }
     if (lines.length === 0) {
-      toast('Put something on the list first.', 'error');
+      toast(t('Put something on the list first.'), 'error');
       return;
     }
     setBusy(true);
     try {
       await shopApi.createOrder({ supplierId, note: note.trim() || undefined, lines });
-      toast('Order written.');
+      toast(t('Order written.'));
       await onWritten();
     } catch (e: unknown) {
       const res = (e as { response?: { data?: { message?: string } } }).response;
-      toast(res?.data?.message || 'Could not write that order.', 'error');
+      toast(res?.data?.message || t('Could not write that order.'), 'error');
     } finally {
       setBusy(false);
     }
@@ -866,7 +867,7 @@ function WriteOrder({
             <p className="text-xs text-muted-foreground">
               {initial
                 ? t('What came short, with the amount still to come. Change an amount, clear it to leave a line off, or add anything else below.')
-                : 'Everything at or below its reorder level, with the company it last came from.'}
+                : t('Everything at or below its reorder level, with the company it last came from.')}
             </p>
           </div>
         </div>
@@ -901,7 +902,7 @@ function WriteOrder({
             </>
           )}
           <span className="ml-auto text-xs text-muted-foreground">
-            {lines.length} on the list
+            {num(lines.length)} {t('on the list')}
           </span>
         </div>
 
@@ -928,7 +929,7 @@ function WriteOrder({
                     <span className="text-muted-foreground">{p.strength}</span>
                   </span>
                   <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                    {p.onHand} {t('on hand')}
+                    {num(p.onHand)} {t('on hand')}
                   </span>
                 </button>
               ))}
@@ -974,12 +975,12 @@ function WriteOrder({
                       </span>
                       {r.reorderLevel > 0 && (
                         <span className="block text-[11px] text-muted-foreground">
-                          level {r.reorderLevel}
+                          {t('level')} {num(r.reorderLevel)}
                         </span>
                       )}
                     </td>
                     <td className="text-muted-foreground">
-                      {r.lastSupplierName || (extra.some((x) => x.productId === r.productId) ? '—' : 'Never bought')}
+                      {r.lastSupplierName || (extra.some((x) => x.productId === r.productId) ? '—' : t('Never bought'))}
                     </td>
                     <td className="text-right">
                       <input
@@ -1065,9 +1066,9 @@ function OrderDetail({
               <span className={`pill ${STATUS_PILL[order.status] ?? 'neutral'}`}>
                 {t(STATUS_LABEL[order.status] ?? order.status)}
               </span>{' '}
-              · written {when(order.createdAt)} by {order.createdByName}
-              {order.sentAt ? ` · given ${when(order.sentAt)}` : ''}
-              {order.receivedAt ? ` · arrived ${when(order.receivedAt)}` : ''}
+              · {t('written')} {when(order.createdAt)} {t('by')} {order.createdByName}
+              {order.sentAt ? ` · ${t('given')} ${when(order.sentAt)}` : ''}
+              {order.receivedAt ? ` · ${t('arrived')} ${when(order.receivedAt)}` : ''}
             </p>
           </div>
         </div>

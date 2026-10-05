@@ -238,7 +238,7 @@ export default function Stock() {
       if (res.summary) setSummary(res.summary);
     } catch (e: unknown) {
       const res = (e as { response?: { data?: { message?: string } } }).response;
-      toast(res?.data?.message || 'Could not load the stock list.', 'error');
+      toast(res?.data?.message || t('Could not load the stock list.'), 'error');
     } finally {
       setLoading(false);
     }
@@ -819,13 +819,13 @@ function Barcode({ product, onSaved }: { product: ShopProduct; onSaved: () => Pr
     setBusy(true);
     try {
       await shopApi.updateProduct(product._id, { barcode: next });
-      toast(next ? 'Code saved.' : 'Code cleared.');
+      toast(next ? t('Code saved.') : t('Code cleared.'));
       await onSaved();
     } catch (err: unknown) {
       const res = (err as { response?: { data?: { message?: string } } }).response;
       /* The server names the product that already holds the code, which is the
          only useful thing to say here — the person is holding two boxes. */
-      toast(res?.data?.message || 'Could not save that code.', 'error');
+      toast(res?.data?.message || t('Could not save that code.'), 'error');
       setCode(product.barcode ?? '');
     } finally {
       setBusy(false);
@@ -894,7 +894,7 @@ function Batches({
     setBusy(true);
     try {
       await shopApi.binIt('product', productId, why);
-      toast(`${product.name} ${t('moved to the Recycle Bin')}.`);
+      toast(`${product.name} ${t('moved to the Recycle Bin')}${stop}`);
       onGone();
     } catch (e: unknown) {
       const res = (e as { response?: { data?: { message?: string } } }).response;
@@ -933,7 +933,7 @@ function Batches({
     try {
       await shopApi.adjust({ batchId, qtyDelta: -Math.abs(n), move, reason: reason.trim() });
       useAlertStore.getState().refresh();
-      toast('Stock adjusted.');
+      toast(t('Stock adjusted.'));
       setAdjusting('');
       setQty('');
       setReason('');
@@ -941,7 +941,7 @@ function Batches({
       await onChanged();
     } catch (e: unknown) {
       const res = (e as { response?: { data?: { message?: string } } }).response;
-      toast(res?.data?.message || 'Could not adjust that.', 'error');
+      toast(res?.data?.message || t('Could not adjust that.'), 'error');
     } finally {
       setBusy(false);
     }
@@ -1411,11 +1411,11 @@ function AddItem({
            own dialog; this is here for the one being held at the time. */
         barcode: form.barcode.trim() || undefined,
       });
-      toast('Added to your list.');
+      toast(t('Added to your list.'));
       onAdded();
     } catch (err: unknown) {
       const res = (err as { response?: { data?: { message?: string } } }).response;
-      toast(res?.data?.message || 'Could not add that.', 'error');
+      toast(res?.data?.message || t('Could not add that.'), 'error');
     } finally {
       setBusy(false);
     }
@@ -1570,7 +1570,7 @@ function AddItem({
             </div>
           </div>
           <p className="-mt-1 text-[11px] text-muted-foreground">
-            A bottle or a tube is 1 and 1 — one rule for everything, so nothing is a special case.
+            {t('A bottle or a tube is 1 and 1 — one rule for everything, so nothing is a special case.')}
           </p>
 
           <div className="grid gap-3 sm:grid-cols-2">
@@ -1640,7 +1640,7 @@ function AddItem({
               {t('Cancel')}
             </button>
             <button type="submit" className="btn" disabled={busy || !ready}>
-              {busy && <Loader2 className="h-4 w-4 animate-spin" />} Add item
+              {busy && <Loader2 className="h-4 w-4 animate-spin" />} {t('Add item')}
             </button>
           </div>
         </form>

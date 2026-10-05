@@ -117,7 +117,7 @@ export default function Expiry() {
       if (sup.length === 1) setSupplierId(sup[0]._id);
     } catch (e: unknown) {
       const res = (e as { response?: { data?: { message?: string } } }).response;
-      toast(res?.data?.message || 'Could not load the expiry list.', 'error');
+      toast(res?.data?.message || t('Could not load the expiry list.'), 'error');
     } finally {
       setLoading(false);
       setReloading(false);
@@ -192,12 +192,12 @@ export default function Expiry() {
         reason: 'Expiry and damage',
       });
       useAlertStore.getState().refresh();
-      toast(`${chosen.length} lots sent back · ${taka(res.credit)} off what you owe.`);
+      toast(`${n(chosen.length)} ${t(chosen.length === 1 ? 'lot' : 'lots')} ${t('sent back')} · ${taka(res.credit)} ${t('off what you owe')}${stop}`);
       setPicked({});
       await load();
     } catch (e: unknown) {
       const err = (e as { response?: { data?: { message?: string } } }).response;
-      toast(err?.data?.message || 'Could not send those back.', 'error');
+      toast(err?.data?.message || t('Could not send those back.'), 'error');
     } finally {
       setBusy(false);
     }
@@ -213,13 +213,13 @@ export default function Expiry() {
         reason: `Expired ${new Date(row.expiry ?? '').toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}`,
       });
       useAlertStore.getState().refresh();
-      toast(`${nameOf(row)} written off.`);
+      toast(`${nameOf(row)} ${t('written off')}${stop}`);
       setWritingOff(null);
       setPicked((prev) => ({ ...prev, [row._id]: false }));
       await load();
     } catch (e: unknown) {
       const err = (e as { response?: { data?: { message?: string } } }).response;
-      toast(err?.data?.message || 'Could not write that off.', 'error');
+      toast(err?.data?.message || t('Could not write that off.'), 'error');
     } finally {
       setBusy(false);
     }

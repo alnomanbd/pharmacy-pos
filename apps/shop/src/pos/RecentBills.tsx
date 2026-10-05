@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Loader2, ReceiptText, Printer, Ban, CloudOff } from 'lucide-react';
 import { tillApi, taka, type BillRow, type Sale } from '../api';
 import { useToast } from '@dawai/shared/components/Toast';
-import { useT } from '../i18n/ui';
+import { useT, useNumerals } from '../i18n/ui';
 import Modal from '../components/Modal';
 
 /**
@@ -27,6 +27,7 @@ export default function RecentBills({
   onChanged: () => void;
 }) {
   const t = useT();
+  const { stop, num } = useNumerals();
   const { toast } = useToast();
   const [rows, setRows] = useState<BillRow[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -63,7 +64,7 @@ export default function RecentBills({
     setBusy(voiding._id);
     try {
       await tillApi.voidSale(voiding._id, reason.trim());
-      toast(`${t('Bill')} ${voiding.billNo} ${t('cancelled')}.`);
+      toast(`${t('Bill')} ${voiding.billNo} ${t('cancelled')}${stop}`);
       setVoiding(null);
       setReason('');
       await load();
@@ -125,7 +126,7 @@ export default function RecentBills({
                       minute: '2-digit',
                       hour12: true,
                     })}{' '}
-                    · {s.items} {t('items')}
+                    · {num(s.items)} {t('items')}
                     {s.customerName ? ` · ${s.customerName}` : ''}
                     {s.due > 0 ? ` · ${taka(s.due)} ${t('on account')}` : ''}
                   </span>

@@ -53,9 +53,10 @@ import AnnouncementBar from './components/AnnouncementBar';
 const PLATFORM_ROLES = ['platformAdmin', 'platformStaff'];
 
 function Hydrating() {
+  const t = useT();
   return (
     <div className="grid min-h-screen place-items-center bg-background">
-      <span className="sr-only">Restoring your session…</span>
+      <span className="sr-only">{t('Restoring your session…')}</span>
     </div>
   );
 }

@@ -17,7 +17,7 @@ import { shopApi, taka, type ShopCounter } from '../api';
 import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import ConfirmWithReason from '../components/ConfirmWithReason';
-import { useT, useUiLang, bnNumerals } from '../i18n/ui';
+import { useT, useUiLang, bnNumerals, useNumerals } from '../i18n/ui';
 import { fetchBranchSwitcher, useBranchStore, type BranchSwitcherInfo } from '../branch';
 import { CountUp } from '../components/motion';
 import Modal from '../components/Modal';
@@ -67,6 +67,7 @@ const initials = (name: string) =>
 
 export default function Counters() {
   const t = useT();
+  const { stop } = useNumerals();
   const lang = useUiLang();
   const { toast } = useToast();
   const [rows, setRows] = useState<ShopCounter[]>([]);
@@ -117,7 +118,7 @@ export default function Counters() {
       return;
     try {
       await shopApi.updateCounter(c._id, { isActive: c.isActive === false });
-      toast(`${c.name} ${c.isActive === false ? t('turned on') : t('turned off')}.`);
+      toast(`${c.name} ${c.isActive === false ? t('turned on') : t('turned off')}${stop}`);
       await load();
     } catch (e: unknown) {
       const res = (e as { response?: { data?: { message?: string } } }).response;
@@ -130,7 +131,7 @@ export default function Counters() {
     setBusy(true);
     try {
       await shopApi.binIt('counter', binning._id, reason);
-      toast(`${binning.name} ${t('moved to the Recycle Bin')}.`);
+      toast(`${binning.name} ${t('moved to the Recycle Bin')}${stop}`);
       setBinning(null);
       await load();
     } catch (e: unknown) {
@@ -479,6 +480,7 @@ function CounterForm({
   onSaved: () => void;
 }) {
   const t = useT();
+  const { stop } = useNumerals();
   const { toast } = useToast();
   const [name, setName] = useState(counter?.name ?? '');
   const [note, setNote] = useState(counter?.note ?? '');
@@ -502,7 +504,7 @@ function CounterForm({
       };
       if (counter) await shopApi.updateCounter(counter._id, payload);
       else await shopApi.createCounter(payload);
-      toast(counter ? t('Saved.') : `${payload.name} added.`);
+      toast(counter ? t('Saved.') : `${payload.name} ${t('added')}${stop}`);
       onSaved();
     } catch (e: unknown) {
       const res = (e as { response?: { data?: { message?: string } } }).response;

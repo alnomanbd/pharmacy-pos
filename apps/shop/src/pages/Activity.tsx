@@ -214,7 +214,7 @@ export default function Activity() {
     const diff = Math.round((start(new Date()) - start(d)) / 86_400_000);
     if (diff === 0) return t('Today');
     if (diff === 1) return t('Yesterday');
-    return n(d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }));
+    return n(d.toLocaleDateString(lang === 'bn' ? 'bn-BD' : 'en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }));
   };
   const clock = (at: string) => n(new Date(at).toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit', hour12: true }));
 

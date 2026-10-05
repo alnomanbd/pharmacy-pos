@@ -151,7 +151,7 @@ export default function Settings() {
       setPics({ logo: !!s.logo, header: !!s.letterheadHeader, footer: !!s.letterheadFooter });
     } catch (e: unknown) {
       const res = (e as { response?: { data?: { message?: string } } }).response;
-      toast(res?.data?.message || 'Could not load your settings.', 'error');
+      toast(res?.data?.message || t('Could not load your settings.'), 'error');
     }
   }, [toast]);
 
@@ -208,7 +208,7 @@ export default function Settings() {
       toast(t('Saved. The next bill prints like this.'));
     } catch (e: unknown) {
       const res = (e as { response?: { data?: { message?: string } } }).response;
-      toast(res?.data?.message || 'Could not save that.', 'error');
+      toast(res?.data?.message || t('Could not save that.'), 'error');
     } finally {
       setBusy(false);
     }
@@ -307,7 +307,7 @@ export default function Settings() {
                   className="input h-10"
                   value={form.address ?? ''}
                   onChange={(e) => set('address', e.target.value)}
-                  placeholder="Mirpur 10, Dhaka"
+                  placeholder={t('Mirpur 10, Dhaka')}
                 />
               </Field>
               <Field label={t('Phone')} htmlFor="s-phone">
@@ -655,7 +655,7 @@ export default function Settings() {
                   className="input h-10"
                   value={invoice.signatureLabel}
                   onChange={(e) => setInvoice('signatureLabel', e.target.value)}
-                  placeholder="Checked and received by"
+                  placeholder={t('Checked and received by')}
                 />
               </Field>
               <Field label={t('Small print at the foot')} htmlFor="s-inv-terms">
@@ -664,7 +664,7 @@ export default function Settings() {
                   className="input h-10"
                   value={invoice.terms}
                   onChange={(e) => setInvoice('terms', e.target.value)}
-                  placeholder="Claims for breakage within 48 hours"
+                  placeholder={t('Claims for breakage within 48 hours')}
                 />
               </Field>
             </div>

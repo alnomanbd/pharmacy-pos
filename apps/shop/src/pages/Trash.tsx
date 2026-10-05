@@ -24,7 +24,7 @@ import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import ConfirmWithReason from '../components/ConfirmWithReason';
 import Pager from '../components/Pager';
-import { useT, useUiLang, bnNumerals } from '../i18n/ui';
+import { useT, useUiLang, bnNumerals, useNumerals } from '../i18n/ui';
 
 /**
  * The bin.
@@ -78,11 +78,11 @@ const KINDS = [
 /** Lines per page. The bin comes whole; this is how much one screen shows. */
 const PAGE_SIZE = 20;
 
-const time = (iso: string) =>
-  iso ? new Date(iso).toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit', hour12: true }) : '';
+const time = (iso: string, lang: string) =>
+  iso ? new Date(iso).toLocaleTimeString(lang === 'bn' ? 'bn-BD' : 'en-GB', { hour: 'numeric', minute: '2-digit', hour12: true }) : '';
 
 /** A day's heading in the timeline: Today, Yesterday, or the date. */
-const dayHeading = (iso: string, t: (k: string) => string) => {
+const dayHeading = (iso: string, t: (k: string) => string, lang: string) => {
   if (!iso) return t('Undated');
   const d = new Date(iso);
   const today = new Date();
@@ -90,11 +90,13 @@ const dayHeading = (iso: string, t: (k: string) => string) => {
   const diff = Math.round((start(today) - start(d)) / 86_400_000);
   if (diff === 0) return t('Today');
   if (diff === 1) return t('Yesterday');
-  return d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  // The browser writes a Bangla date itself — বুধবার, ৩০ সেপ্টেম্বর ২০২৬ — month and day names included.
+  return d.toLocaleDateString(lang === 'bn' ? 'bn-BD' : 'en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 };
 
 export default function Trash() {
   const t = useT();
+  const { stop } = useNumerals();
   const lang = useUiLang();
   const { toast } = useToast();
   const [rows, setRows] = useState<BinItem[]>([]);
@@ -157,7 +159,7 @@ export default function Trash() {
     try {
       if (asking.kind === 'sale') await shopApi.restoreSale(asking.id);
       else await shopApi.unbin(asking.kind, asking.id);
-      toast(`${asking.title} ${t('is back')}.`);
+      toast(`${asking.title} ${t('is back')}${stop}`);
       setAsking(null);
       await load();
     } catch (e: unknown) {
@@ -204,7 +206,7 @@ export default function Trash() {
   const days = useMemo(() => {
     const groups: { heading: string; items: BinItem[] }[] = [];
     for (const r of shown) {
-      const heading = dayHeading(r.deletedAt, t);
+      const heading = dayHeading(r.deletedAt, t, lang);
       const last = groups[groups.length - 1];
       if (last && last.heading === heading) last.items.push(r);
       else groups.push({ heading, items: [r] });
@@ -338,7 +340,7 @@ export default function Trash() {
                             )}
                             <p className="mt-1 text-[11px] text-muted-foreground">
                               {t('Deleted by')} <span className="font-medium text-foreground">{r.deletedByName || '—'}</span> ·{' '}
-                              {n(time(r.deletedAt))}
+                              {n(time(r.deletedAt, lang))}
                             </p>
                           </div>
                           <button

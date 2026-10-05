@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Gift, FileText, Loader2 } from 'lucide-react';
 import { taka, openPdf, type Purchase } from '../api';
 import { useToast } from '@dawai/shared/components/Toast';
-import { useT } from '../i18n/ui';
+import { useT, useNumerals } from '../i18n/ui';
 import Modal from './Modal';
 
 const when = (iso: string) =>
@@ -31,6 +31,7 @@ const supplierName = (p: Purchase) =>
  */
 export default function DeliveryDetail({ purchase, onClose }: { purchase: Purchase; onClose: () => void }) {
   const t = useT();
+  const { num } = useNumerals();
   const { toast } = useToast();
   const [opening, setOpening] = useState(false);
 
@@ -41,7 +42,7 @@ export default function DeliveryDetail({ purchase, onClose }: { purchase: Purcha
     try {
       await openPdf(`/shop/purchases/${purchase._id}/delivery.pdf`);
     } catch {
-      toast('Could not open that sheet.', 'error');
+      toast(t('Could not open that sheet.'), 'error');
     } finally {
       setOpening(false);
     }
@@ -145,9 +146,8 @@ export default function DeliveryDetail({ purchase, onClose }: { purchase: Purcha
                 <p className="flex items-start gap-2">
                   <Gift className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                   <span>
-                    {bonus} free piece{bonus === 1 ? '' : 's'} came with this delivery. They are not
-                    free on the shelf — their cost is spread across everything that arrived, which
-                    is why the cost per piece is under the rate.
+                    {num(bonus)} {t(bonus === 1 ? 'free piece' : 'free pieces')} {t('came with this delivery.')}{' '}
+                    {t('They are not free on the shelf — their cost is spread across everything that arrived, which is why the cost per piece is under the rate.')}
                   </span>
                 </p>
               </div>

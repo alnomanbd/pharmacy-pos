@@ -4,7 +4,7 @@ import { Loader2 } from 'lucide-react';
 import {
   shopApi,
   settingsApi,
-  packOf,
+  packOfPlain as packOf,
   type ShopOrder,
   type ShopSettings,
   type Supplier,

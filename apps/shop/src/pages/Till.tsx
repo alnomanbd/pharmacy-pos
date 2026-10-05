@@ -304,7 +304,7 @@ export default function Till() {
              the counter can reprint it if the customer is still there. */
           setLastBill((prev) => res.posted.find((p) => p.clientRef === prev?._id)?.sale ?? prev);
           if (announce) {
-            toast(`${res.sent} bill${res.sent === 1 ? '' : 's'} sent to the shop's records.`);
+            toast(`${num(res.sent)} ${t(res.sent === 1 ? 'bill' : 'bills')} ${t("sent to the shop's records")}${stop}`);
           }
           await loadShift();
         }
@@ -436,14 +436,14 @@ export default function Till() {
       if (days !== null && days <= EXPIRY_WARN_DAYS) {
         toast(
           days < 0
-            ? `${p.name} — the oldest lot is already out of date. Check the strip.`
-            : `${p.name} — the oldest lot goes out of date in ${days} days.`,
+            ? `${p.name} — ${t('the oldest lot is already out of date. Check the strip.')}`
+            : `${p.name} — ${t('the oldest lot goes out of date in')} ${num(days)} ${t('days')}${stop}`,
           days < 0 ? 'error' : 'warning',
         );
       }
       add(p, qty);
     },
-    [add, toast],
+    [add, toast, t, num, stop],
   );
 
   /*
@@ -635,7 +635,7 @@ export default function Till() {
          still standing there, and a bill printed later is a bill nobody takes. */
       if (settings?.autoPrint !== false) setPrinting(bill);
       toast(
-        `Bill ${bill.billNo} · ${taka(bill.total)}` +
+        `${t('Bill')} ${bill.billNo} · ${taka(bill.total)}` +
           (bill.loyalty?.earned ? ` · +${bill.loyalty.earned} ${t('points')}` : ''),
       );
       /* That bill may have emptied a shelf; the bell should know before the
@@ -685,7 +685,7 @@ export default function Till() {
       );
       setLastBill(slip);
       if (settings?.autoPrint !== false) setPrinting(slip);
-      toast(`${taka(total)} taken — the bill goes to the shop when the line is back.`);
+      toast(`${taka(total)} ${t('taken — the bill goes to the shop when the line is back.')}`);
       clear();
     } finally {
       setBusy(false);
@@ -851,7 +851,7 @@ export default function Till() {
 
         <span className="hidden min-w-0 truncate text-xs text-muted-foreground md:inline">
           {shift.userName}
-          {shift.terminal ? ` · ${shift.terminal}` : ''} · {shift.salesCount} {t('bills')} ·{' '}
+          {shift.terminal ? ` · ${shift.terminal}` : ''} · {num(shift.salesCount)} {t('bills')} ·{' '}
           {taka(shift.salesTotal)} {t('today')}
         </span>
 
@@ -946,7 +946,7 @@ export default function Till() {
             </span>
             {waiting.some((w) => w.error) && (
               <span className="ml-2 text-[11px] font-semibold text-destructive">
-                {waiting.find((w) => w.error)?.error}
+                {t(waiting.find((w) => w.error)?.error ?? '')}
               </span>
             )}
           </div>
@@ -1034,7 +1034,7 @@ export default function Till() {
                         </span>
                         <span className="mt-1 flex flex-wrap gap-1">
                           <span className={`pill !py-0 text-[10.5px] tabular-nums ${lowStock ? 'danger' : 'neutral'}`}>
-                            {p.onHand} {t('left')}
+                            {num(p.onHand)} {t('left')}
                           </span>
                           {p.nearestExpiry && (
                             <span
@@ -1149,7 +1149,7 @@ export default function Till() {
                           </span>
                           {over && (
                             <span className="block text-[11px] font-semibold text-destructive">
-                              {t('Only')} {l.product.onHand} {t('on the shelf')}
+                              {t('Only')} {num(l.product.onHand)} {t('on the shelf')}
                             </span>
                           )}
                         </div>
@@ -1265,7 +1265,7 @@ export default function Till() {
                           >
                             {' '}
                             · {l.qtyPieces > l.product.onHand ? `${t('Only')} ` : ''}
-                            {l.product.onHand} {t('on the shelf')}
+                            {num(l.product.onHand)} {t('on the shelf')}
                           </span>
                         </span>
                       </td>
@@ -1446,7 +1446,7 @@ export default function Till() {
                 {t('To pay')}
               </span>
               <span className="text-xs text-muted-foreground">
-                {lines.length} {t(lines.length === 1 ? 'line' : 'lines')} · {pieces} {t(pieces === 1 ? 'piece' : 'pieces')}
+                {num(lines.length)} {t(lines.length === 1 ? 'line' : 'lines')} · {num(pieces)} {t(pieces === 1 ? 'piece' : 'pieces')}
               </span>
             </div>
             <div className="text-4xl font-semibold tabular-nums">{taka(total)}</div>
@@ -1629,7 +1629,7 @@ export default function Till() {
                   onClick={() => setPaid((p) => ({ ...p, cash: String((Number(p.cash) || 0) + n) }))}
                   className="rounded-md border border-border px-2.5 py-1 text-xs font-semibold tabular-nums hover:border-primary hover:bg-primary/5"
                 >
-                  ৳{n}
+                  ৳{num(n)}
                 </button>
               ))}
               <button
@@ -1736,7 +1736,7 @@ export default function Till() {
             <div className="shrink-0 border-t border-border px-4 py-2.5 text-xs">
               <div className="flex items-baseline justify-between text-muted-foreground">
                 <span>
-                  {lines.length} {lines.length === 1 ? t('item') : t('items')} · {pieces}{' '}
+                  {num(lines.length)} {lines.length === 1 ? t('item') : t('items')} · {num(pieces)}{' '}
                   {t(pieces === 1 ? 'piece' : 'pieces')}
                 </span>
                 <span className="tabular-nums">{taka(subTotal)}</span>
@@ -1913,7 +1913,7 @@ export default function Till() {
         >
             <h3 className="mb-1 text-base">{t('Save this bill?')}</h3>
             <p className="text-xs text-muted-foreground">
-              {lines.length} {lines.length === 1 ? t('item') : t('items')} · {pieces} {t(pieces === 1 ? 'piece' : 'pieces')}
+              {num(lines.length)} {lines.length === 1 ? t('item') : t('items')} · {num(pieces)} {t(pieces === 1 ? 'piece' : 'pieces')}
             </p>
 
             <div className="mt-4 rounded-lg border border-border bg-muted/40 px-3 py-2.5 text-sm">
@@ -2135,7 +2135,7 @@ function HeldSheet({
                 >
                   <span className="font-semibold">{b.label}</span>
                   <span className="block text-[11px] text-muted-foreground">
-                    {b.lines.length} {t(b.lines.length === 1 ? 'line' : 'lines')} · {taka(b.total)} ·{' '}
+                    {num(b.lines.length)} {t(b.lines.length === 1 ? 'line' : 'lines')} · {taka(b.total)} ·{' '}
                     {new Date(b.at).toLocaleTimeString('en-GB', {
                       hour: 'numeric',
                       minute: '2-digit',
@@ -2228,7 +2228,7 @@ function OpenTill({ onOpened }: { onOpened: () => Promise<void> }) {
       await onOpened();
     } catch (e: unknown) {
       const res = (e as { response?: { data?: { message?: string } } }).response;
-      toast(res?.data?.message || 'Could not start the day.', 'error');
+      toast(res?.data?.message || t('Could not start the day.'), 'error');
     } finally {
       setBusy(false);
     }
@@ -2319,6 +2319,7 @@ function OpenTill({ onOpened }: { onOpened: () => Promise<void> }) {
 /** And at the end of it, the count. */
 function CloseTill({ shift, onClosed }: { shift: Shift; onClosed: () => Promise<void> }) {
   const t = useT();
+  const { stop } = useNumerals();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [counted, setCounted] = useState('');
@@ -2330,10 +2331,10 @@ function CloseTill({ shift, onClosed }: { shift: Shift; onClosed: () => Promise<
       const res = await tillApi.closeShift({ countedCash: Number(counted) || 0 });
       toast(
         res.difference === 0
-          ? 'The box matches the screen.'
+          ? t('The box matches the screen.')
           : res.difference > 0
-            ? `${taka(res.difference)} more in the box than expected.`
-            : `${taka(Math.abs(res.difference))} short.`,
+            ? `${taka(res.difference)} ${t('more in the box than expected')}${stop}`
+            : `${taka(Math.abs(res.difference))} ${t('short')}${stop}`,
         res.difference === 0 ? undefined : 'error',
       );
       setOpen(false);
@@ -2341,7 +2342,7 @@ function CloseTill({ shift, onClosed }: { shift: Shift; onClosed: () => Promise<
       await onClosed();
     } catch (e: unknown) {
       const err = (e as { response?: { data?: { message?: string } } }).response;
-      toast(err?.data?.message || 'Could not close the day.', 'error');
+      toast(err?.data?.message || t('Could not close the day.'), 'error');
     } finally {
       setBusy(false);
     }
@@ -2427,6 +2428,7 @@ function LoyaltyRow({
   onToggle: () => void;
 }) {
   const t = useT();
+  const { num } = useNumerals();
   const enough = have !== null && have >= rules.minRedeem;
   return (
     <div className="mt-2 flex items-center justify-between gap-2 rounded-md border border-amber-500/30 bg-amber-500/[0.07] px-2.5 py-2 text-xs">
@@ -2440,7 +2442,7 @@ function LoyaltyRow({
           )}
           {earns > 0 && (
             <span className="text-muted-foreground">
-              {have !== null ? ' · ' : ''}+{earns} {t('on this bill')}
+              {have !== null ? ' · ' : ''}+{num(earns)} {t('on this bill')}
             </span>
           )}
         </span>

@@ -67,7 +67,7 @@ export default function Login() {
         // Right credential, wrong door. Drop the session rather than keeping
         // one this app will refuse on the next screen anyway.
         logout();
-        setError('That is an operator account. This door is for the shop.');
+        setError(t('That is an operator account. This door is for the shop.'));
         return;
       }
       login(res.user, res.accessToken);
@@ -75,7 +75,7 @@ export default function Login() {
       navigate(res.user.role === 'salesman' ? '/' : '/dashboard');
     } catch (err: unknown) {
       const res = (err as { response?: { data?: { message?: string } } }).response;
-      setError(res?.data?.message || 'Sign-in failed');
+      setError(res?.data?.message || t('Sign-in failed'));
     } finally {
       setLoading(false);
     }

@@ -33,7 +33,7 @@ import { LoadingBlock } from '@dawai/shared/components/Spinner';
 import { toLocalDate } from '@dawai/shared/lib/date';
 import ConfirmWithReason from '../components/ConfirmWithReason';
 import Pager from '../components/Pager';
-import { useT, useUiLang, bnNumerals } from '../i18n/ui';
+import { useT, useUiLang, bnNumerals, useNumerals } from '../i18n/ui';
 import Modal from '../components/Modal';
 
 /**
@@ -116,6 +116,7 @@ export function ExpensesView({
 }: { range?: { from: string; to: string }; onChanged?: () => void } = {}) {
   const embedded = !!range;
   const t = useT();
+  const { stop } = useNumerals();
   const lang = useUiLang();
   const { toast } = useToast();
   const [from, setFrom] = useState(() => monthStart(0));
@@ -196,7 +197,7 @@ export function ExpensesView({
     setBusy(true);
     try {
       await shopApi.binIt('expense', binning._id, reason);
-      toast(`${taka(binning.amount)} ${t('moved to the Recycle Bin')}.`);
+      toast(`${taka(binning.amount)} ${t('moved to the Recycle Bin')}${stop}`);
       setBinning(null);
       await load();
       onChanged?.();

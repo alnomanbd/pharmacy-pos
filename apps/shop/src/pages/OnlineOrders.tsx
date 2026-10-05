@@ -232,6 +232,7 @@ function OrderCard({
 }
 
 function Photo({ k }: { k: string }) {
+  const t = useT();
   const [url, setUrl] = useState('');
   useEffect(() => {
     let made = '';
@@ -249,7 +250,7 @@ function Photo({ k }: { k: string }) {
   if (!url) return <span className="grid h-40 place-items-center rounded-xl bg-muted"><Loader2 className="h-5 w-5 animate-spin" /></span>;
   return (
     <a href={url} target="_blank" rel="noopener noreferrer" className="block overflow-hidden rounded-xl border border-border">
-      <img src={url} alt="Prescription" className="max-h-80 w-full object-contain bg-black/5" />
+      <img src={url} alt={t('Prescription')} className="max-h-80 w-full object-contain bg-black/5" />
     </a>
   );
 }

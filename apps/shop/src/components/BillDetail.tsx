@@ -16,7 +16,7 @@ import { shopApi, tillApi, taka, type Sale } from '../api';
 import { useToast } from '@dawai/shared/components/Toast';
 import { bdMobile, BD_MOBILE_MESSAGE } from '@dawai/shared/lib/phone';
 import ConfirmWithReason from './ConfirmWithReason';
-import { useT } from '../i18n/ui';
+import { useT, useNumerals } from '../i18n/ui';
 import Modal from './Modal';
 
 /** The payment methods, in the words the counter uses. */
@@ -63,6 +63,7 @@ export default function BillDetail({
   onChanged?: (sale: Sale) => void;
 }) {
   const t = useT();
+  const { num } = useNumerals();
   const { toast } = useToast();
   /* One at a time: correcting a bill and cancelling it are different acts and
      the reason box belongs to whichever one is open. */
@@ -264,7 +265,7 @@ export default function BillDetail({
             )}
             {returned > 0 && (
               <p className="mt-2 text-[11px] text-muted-foreground">
-                {returned} piece{returned === 1 ? '' : 's'} came back against this bill.
+                {num(returned)} {t(returned === 1 ? 'piece' : 'pieces')} {t('came back against this bill.')}
               </p>
             )}
           </div>

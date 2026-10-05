@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import QRCode from 'qrcode';
-import { taka, type Sale, type ShopSettings } from '../api';
+import { takaPlain as taka, type Sale, type ShopSettings } from '../api';
 import { bnNumerals } from '../i18n/ui';
 import { bnAmountInWords } from './bnWords';
 import { BRAND } from '../brand';
@@ -117,7 +117,7 @@ export function receiptQrText(shop: ReceiptShop, sale: Sale, when: string) {
  * module with `shapeRendering="crispEdges"`, so a thermal head puts down whole
  * dots instead of grey edges.
  */
-export function QrSquare({ text, mm }: { text: string; mm: number }) {
+export function QrSquare({ text, mm, label = 'Shop details and this bill' }: { text: string; mm: number; label?: string }) {
   const qr = useMemo(() => {
     try {
       return QRCode.create(text, { errorCorrectionLevel: 'M' });
@@ -154,7 +154,7 @@ export function QrSquare({ text, mm }: { text: string; mm: number }) {
          does nothing and the square sits against the left edge. */
       style={{ display: 'block', margin: '0 auto' }}
       role="img"
-      aria-label="Shop details and this bill"
+      aria-label={label}
     >
       <rect x="0" y="0" width={span} height={span} fill="#fff" />
       {rects.map((at) => {
@@ -176,14 +176,14 @@ const WORDS = {
     cancelled: '*** CANCELLED ***', reference: 'Reference', bill: 'Bill', date: 'Date', soldBy: 'Sold by',
     customer: 'Customer', discount: 'Discount', total: 'Total', given: 'Cash given', change: 'Change',
     baki: 'On account (baki)', words: 'In words', only: 'taka only', saved: 'You saved',
-    scan: 'Scan for our address, phone and this bill', batch: 'B',
+    scan: 'Scan for our address, phone and this bill', batch: 'B', qr: 'Shop details and this bill',
   },
   bn: {
     mob: 'মোবাইল', licence: 'ড্রাগ লাইসেন্স', follow: 'বিল নম্বর পরে দেওয়া হবে — স্লিপটা রাখুন',
     cancelled: '*** বাতিল ***', reference: 'রেফারেন্স', bill: 'বিল', date: 'তারিখ', soldBy: 'বিক্রেতা',
     customer: 'ক্রেতা', discount: 'ছাড়', total: 'মোট', given: 'দেওয়া টাকা', change: 'ফেরত',
     baki: 'বাকি', words: 'কথায়', only: 'টাকা মাত্র', saved: 'আপনার সাশ্রয়',
-    scan: 'ঠিকানা, ফোন আর এই বিলের জন্য স্ক্যান করুন', batch: 'ব্যাচ',
+    scan: 'ঠিকানা, ফোন আর এই বিলের জন্য স্ক্যান করুন', batch: 'ব্যাচ', qr: 'দোকানের তথ্য আর এই বিল',
   },
 } as const;
 
@@ -500,7 +500,7 @@ export default function Receipt({
             inside it that leaves about half a millimetre per module, which is
             four dots on the 203dpi head these shops own and the point at which
             a phone stops struggling. */}
-        <QrSquare text={qrText} mm={narrow ? 22 : 26} />
+        <QrSquare text={qrText} mm={narrow ? 22 : 26} label={w.qr} />
         <div className="muted" style={{ fontSize: narrow ? '8px' : '9px' }}>
           {w.scan}
         </div>

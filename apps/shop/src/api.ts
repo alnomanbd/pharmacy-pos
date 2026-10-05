@@ -1,6 +1,6 @@
+import { useLangStore, bnNumerals } from '@dawai/shared/i18n/lang';
 import api, { getData } from '@dawai/shared/api/client';
 import { downloadBlob } from '@dawai/shared/api';
-import { useLangStore } from '@dawai/shared/i18n/lang';
 import type { SupportMessage, SupportThread } from '@dawai/shared/types';
 
 /**
@@ -804,9 +804,25 @@ export const shopApi = {
     ),
 };
 
-/** Money, the way a shop writes it. */
-export const taka = (n: number) =>
+/**
+ * Money for paper and for anything that leaves the screen: always Latin digits.
+ * The receipt and the shelf labels use this and turn the digits to Bangla
+ * themselves when the shop prints in Bangla — the screen's language is not
+ * the paper's.
+ */
+export const takaPlain = (n: number) =>
   `৳${(Math.round((n || 0) * 100) / 100).toLocaleString('en-BD', { maximumFractionDigits: 2 })}`;
+
+/**
+ * Money on screen, the way a shop writes it — in Bangla digits when the screen
+ * is in Bangla (৳১,২৫০), as everything shown is except identifiers. Read
+ * from the language store as it is drawn; every screen re-renders on a
+ * language switch, because every screen uses `t()`.
+ */
+export const taka = (n: number) => {
+  const s = takaPlain(n);
+  return useLangStore.getState().lang === 'bn' ? bnNumerals(s) : s;
+};
 
 /**
  * A quantity in the words the shop uses.
@@ -815,7 +831,7 @@ export const taka = (n: number) =>
  * the person holding the box wants to read. Pieces alone are correct and
  * useless; both together are what a shelf check needs.
  */
-export function packOf(pieces: number, p: { piecesPerStrip: number; stripsPerBox: number }) {
+export function packOfPlain(pieces: number, p: { piecesPerStrip: number; stripsPerBox: number }) {
   const perStrip = Math.max(1, p.piecesPerStrip || 1);
   const perBox = Math.max(1, p.stripsPerBox || 1) * perStrip;
   const boxes = Math.floor(pieces / perBox);
@@ -828,6 +844,20 @@ export function packOf(pieces: number, p: { piecesPerStrip: number; stripsPerBox
   if (strips) parts.push(`${strips} strip`);
   if (loose) parts.push(`${loose} pc`);
   return parts.join(' ') || '0';
+}
+
+/** The pack words as a Bangla counter says them. */
+const PACK_BN: Record<string, string> = { box: 'বক্স', strip: 'পাতা', pc: 'পিস' };
+
+/**
+ * A quantity on screen, in the screen's language — "২ বক্স ৩ পাতা ৮ পিস" in
+ * Bangla. Paper (the order sheet, the shelf labels) uses `packOfPlain`, which
+ * the sheet turns to Bangla itself when it is printed in Bangla.
+ */
+export function packOf(pieces: number, p: { piecesPerStrip: number; stripsPerBox: number }) {
+  const s = packOfPlain(pieces, p);
+  if (useLangStore.getState().lang !== 'bn') return s;
+  return bnNumerals(s.replace(/\b(box|strip|pc)\b/g, (w) => PACK_BN[w]));
 }
 
 /* ------------------------------------------------------------- the till -- */

@@ -10,7 +10,7 @@ import {
 } from '../api';
 import { useToast } from '@dawai/shared/components/Toast';
 import { LoadingBlock } from '@dawai/shared/components/Spinner';
-import { useT } from '../i18n/ui';
+import { useT, useNumerals } from '../i18n/ui';
 import DeliveryDetail from './DeliveryDetail';
 
 /**
@@ -60,6 +60,7 @@ export default function SupplierStatement({
   onClose: () => void;
 }) {
   const t = useT();
+  const { num, stop } = useNumerals();
   const { toast } = useToast();
   const [data, setData] = useState<Statement | null>(null);
   const [tab, setTab] = useState<'account' | 'deliveries'>('account');
@@ -101,7 +102,7 @@ export default function SupplierStatement({
     setBusy(true);
     try {
       await shopApi.paySupplier(id, { amount: value, method, reference: reference.trim() });
-      toast(`${taka(value)} paid.`);
+      toast(`${taka(value)} ${t('paid')}${stop}`);
       setAmount('');
       setReference('');
       setPaying(false);
@@ -329,7 +330,7 @@ export default function SupplierStatement({
                       {d.invoiceNo || t('No invoice number')}
                     </button>
                     <span className="block text-[11px] text-muted-foreground">
-                      {when(d.invoiceDate)} · {d.lines} line{d.lines === 1 ? '' : 's'}
+                      {when(d.invoiceDate)} · {num(d.lines)} {t(d.lines === 1 ? 'line' : 'lines')}
                     </span>
                   </td>
                   <td className="hidden py-2 pr-3 text-muted-foreground sm:table-cell">

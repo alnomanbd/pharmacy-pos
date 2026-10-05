@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Loader2, Search, Undo2 } from 'lucide-react';
 import { tillApi, taka, type Sale } from '../api';
 import { useToast } from '@dawai/shared/components/Toast';
-import { useT } from '../i18n/ui';
+import { useT, useNumerals } from '../i18n/ui';
 import Modal from './Modal';
 
 /**
@@ -31,6 +31,7 @@ export default function ReturnBill({
   billNo?: string;
 }) {
   const t = useT();
+  const { stop } = useNumerals();
   const { toast } = useToast();
   const [billNo, setBillNo] = useState(prefill);
   const [hits, setHits] = useState<Sale[] | null>(null);
@@ -75,14 +76,14 @@ export default function ReturnBill({
       const parts = [
         res.againstDue > 0 && `${taka(res.againstDue)} ${t('off their account')}`,
         res.cashBack > 0 && `${taka(res.cashBack)} ${t('cash from the drawer')}`,
-        (res.otherBack ?? 0) > 0 && `${taka(res.otherBack ?? 0)} ${t('to send back by')} ${METHOD_LABEL[res.otherMethod ?? ''] ?? res.otherMethod}`,
+        (res.otherBack ?? 0) > 0 && `${taka(res.otherBack ?? 0)} ${t('to send back by')} ${t(METHOD_LABEL[res.otherMethod ?? ''] ?? res.otherMethod ?? '')}`,
       ].filter(Boolean);
-      toast(`${taka(res.refund)} ${t('returned')}${parts.length ? ` — ${parts.join(', ')}` : ''}.`);
+      toast(`${taka(res.refund)} ${t('returned')}${parts.length ? ` — ${parts.join(', ')}` : ''}${stop}`);
       onDone();
       onClose();
     } catch (e: unknown) {
       const err = (e as { response?: { data?: { message?: string } } }).response;
-      toast(err?.data?.message || 'Could not take that back.', 'error');
+      toast(err?.data?.message || t('Could not take that back.'), 'error');
     } finally {
       setBusy(false);
     }
@@ -110,7 +111,7 @@ export default function ReturnBill({
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
             <h3 className="mb-0 flex items-center gap-2 text-base">
-              <Undo2 className="h-4 w-4" /> Take something back
+              <Undo2 className="h-4 w-4" /> {t('Take something back')}
             </h3>
             <p className="text-xs text-muted-foreground">
               {t('Find the bill they are holding. The strips go back to the lot they came from.')}
@@ -133,7 +134,7 @@ export default function ReturnBill({
                 />
               </div>
               <button type="button" className="btn h-11" disabled={busy} onClick={() => void find()}>
-                {busy && <Loader2 className="h-4 w-4 animate-spin" />} Find
+                {busy && <Loader2 className="h-4 w-4 animate-spin" />} {t('Find')}
               </button>
             </div>
 
@@ -251,7 +252,7 @@ export default function ReturnBill({
                   disabled={busy || refund <= 0}
                   onClick={() => void send()}
                 >
-                  {busy && <Loader2 className="h-4 w-4 animate-spin" />} Take it back
+                  {busy && <Loader2 className="h-4 w-4 animate-spin" />} {t('Take it back')}
                 </button>
               </div>
             </div>

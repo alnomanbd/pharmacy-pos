@@ -57,7 +57,7 @@ import ConfirmWithReason from '../components/ConfirmWithReason';
 import Pager from '../components/Pager';
 import Modal from '../components/Modal';
 import { CountUp } from '../components/motion';
-import { useT, useUiLang, bnNumerals } from '../i18n/ui';
+import { useT, useUiLang, bnNumerals, useNumerals } from '../i18n/ui';
 
 
 /** This month in Dhaka, as the server keys it — `2026-09`. */
@@ -148,8 +148,8 @@ const MOVE_LOOK: Record<CashMoveKind, { icon: typeof Gift; tone: string }> = {
   bank_withdrawal: BOOK_LOOK.bank_withdrawal,
 };
 
-const fmtDay = (key: string) =>
-  new Date(`${key}T00:00:00.000Z`).toLocaleDateString('en-GB', {
+const fmtDay = (key: string, lang: string) =>
+  new Date(`${key}T00:00:00.000Z`).toLocaleDateString(lang === 'bn' ? 'bn-BD' : 'en-GB', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
@@ -579,6 +579,7 @@ function CashBook({
   onPage: (p: number) => void;
 }) {
   const t = useT();
+  const lang = useUiLang();
   const groups = useMemo(() => {
     const out: { day: string; lines: BookLine[] }[] = [];
     for (const l of data.book.lines) {
@@ -644,7 +645,7 @@ function CashBook({
         return (
           <section key={g.day}>
             <h3 className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              <span>{n(fmtDay(g.day))}</span>
+              <span>{n(fmtDay(g.day, lang))}</span>
               <span className="h-px min-w-8 flex-1 bg-border" />
               <span className="normal-case tracking-normal text-emerald-600 dark:text-emerald-400">+ {money(day.in)}</span>
               <span className="normal-case tracking-normal text-destructive">− {money(day.out)}</span>
@@ -736,6 +737,7 @@ function IncomeView({
   onChanged: () => void;
 }) {
   const t = useT();
+  const { stop } = useNumerals();
   const { toast } = useToast();
   const [rows, setRows] = useState<ShopIncome[] | null>(null);
   const [editing, setEditing] = useState<ShopIncome | 'new' | null>(null);
@@ -763,7 +765,7 @@ function IncomeView({
     setBusy(true);
     try {
       await shopApi.binIt('income', binning._id, reason);
-      toast(`${taka(binning.amount)} ${t('moved to the Recycle Bin')}.`);
+      toast(`${taka(binning.amount)} ${t('moved to the Recycle Bin')}${stop}`);
       setBinning(null);
       await load();
       onChanged();
@@ -1060,6 +1062,7 @@ function OwnerBank({
   onChanged: () => void;
 }) {
   const t = useT();
+  const { stop } = useNumerals();
   const { toast } = useToast();
   const [rows, setRows] = useState<CashMove[] | null>(null);
   const [editing, setEditing] = useState<CashMove | 'new' | null>(null);
@@ -1087,7 +1090,7 @@ function OwnerBank({
     setBusy(true);
     try {
       await shopApi.binIt('cashmove', binning._id, reason);
-      toast(`${taka(binning.amount)} ${t('moved to the Recycle Bin')}.`);
+      toast(`${taka(binning.amount)} ${t('moved to the Recycle Bin')}${stop}`);
       setBinning(null);
       await load();
       onChanged();
@@ -1343,6 +1346,7 @@ const monthName = (m: string, lang: string) =>
  */
 function MonthClose({ n, money, onChanged }: { n: (v: number | string) => string; money: (v: number) => string; onChanged: () => void }) {
   const t = useT();
+  const { stop } = useNumerals();
   const lang = useUiLang();
   const { toast } = useToast();
   const [rows, setRows] = useState<MonthRow[] | null>(null);
@@ -1369,7 +1373,7 @@ function MonthClose({ n, money, onChanged }: { n: (v: number | string) => string
     setBusy(true);
     try {
       await shopApi.reopenMonth(reopening, reason);
-      toast(`${monthName(reopening, lang)} ${t('reopened')}.`);
+      toast(`${monthName(reopening, lang)} ${t('reopened')}${stop}`);
       setReopening(null);
       await load();
       onChanged();
@@ -1511,6 +1515,7 @@ function CloseForm({
   onDone: () => void;
 }) {
   const t = useT();
+  const { stop } = useNumerals();
   const lang = useUiLang();
   const { toast } = useToast();
   const [data, setData] = useState<ShopAccounts | null>(null);
@@ -1532,7 +1537,7 @@ function CloseForm({
     setBusy(true);
     try {
       await shopApi.closeMonth(month, { countedCash: counted === '' ? null : Number(counted), note: note.trim() });
-      toast(`${monthName(month, lang)} ${t('closed')}.`);
+      toast(`${monthName(month, lang)} ${t('closed')}${stop}`);
       onDone();
     } catch (e: unknown) {
       const res = (e as { response?: { data?: { message?: string } } }).response;

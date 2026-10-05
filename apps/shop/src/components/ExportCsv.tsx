@@ -64,7 +64,7 @@ export default function ExportCsv({
       await shopApi.exportCsv(what, params);
     } catch (e: unknown) {
       const res = (e as { response?: { data?: { message?: string } } }).response;
-      toast(res?.data?.message || 'Could not make that file.', 'error');
+      toast(res?.data?.message || t('Could not make that file.'), 'error');
     } finally {
       setBusy(false);
     }

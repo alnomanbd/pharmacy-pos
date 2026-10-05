@@ -210,7 +210,7 @@ function TodayView({ backRoom }: { backRoom: boolean }) {
       setCameIn(today.cameIn);
     } catch (e: unknown) {
       const res = (e as { response?: { data?: { message?: string } } }).response;
-      toast(res?.data?.message || 'Could not load the figures.', 'error');
+      toast(res?.data?.message || t('Could not load the figures.'), 'error');
     } finally {
       setLoading(false);
     }
@@ -243,7 +243,7 @@ function TodayView({ backRoom }: { backRoom: boolean }) {
           type="button"
           className="btn btn-ghost h-9"
           onClick={() => {
-            openPdf('/shop/reports/today.pdf').catch(() => toast('Could not open the sheet.', 'error'));
+            openPdf('/shop/reports/today.pdf').catch(() => toast(t('Could not open the sheet.'), 'error'));
           }}
         >
           <FileDown className="h-4 w-4" /> {t('PDF')}
@@ -611,7 +611,7 @@ function StretchView() {
       setReport(await shopApi.ownerReport({ from, to }));
     } catch (e: unknown) {
       const res = (e as { response?: { data?: { message?: string } } }).response;
-      toast(res?.data?.message || 'Could not load the figures.', 'error');
+      toast(res?.data?.message || t('Could not load the figures.'), 'error');
     } finally {
       setLoading(false);
     }
@@ -690,7 +690,7 @@ function StretchView() {
             )
               return;
             openPdf(`/shop/reports/owner.pdf?from=${from}&to=${to}`).catch(() =>
-              toast('Could not open the sheet.', 'error'),
+              toast(t('Could not open the sheet.'), 'error'),
             );
           }}
         >

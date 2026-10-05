@@ -64,6 +64,9 @@ const T = {
     another: 'Place another order',
     closed: 'This shop is not taking orders online right now.',
     pay: 'You pay when you collect it, or to the delivery person.',
+    remove: 'Remove',
+    unit: 'Unit',
+    failed: 'Could not send the order',
   },
   bn: {
     order: 'ঔষধ অর্ডার করুন',
@@ -98,6 +101,9 @@ const T = {
     another: 'আরেকটি অর্ডার দিন',
     closed: 'এই দোকান এখন অনলাইনে অর্ডার নিচ্ছে না।',
     pay: 'টাকা দেবেন নেওয়ার সময়, বা ডেলিভারিম্যানকে।',
+    remove: 'বাদ দিন',
+    unit: 'একক',
+    failed: 'অর্ডার পাঠানো যায়নি',
   },
 };
 
@@ -156,7 +162,7 @@ export default function OrderPage() {
       for (const p of photos) fd.append('photos', p.file);
       const r = await fetch(`/api/public/order/${encodeURIComponent(code)}`, { method: 'POST', body: fd });
       const j = (await r.json()) as { data?: { number: string; phone: string }; message?: string };
-      if (!r.ok || !j.data) throw new Error(j.message || 'Could not send the order');
+      if (!r.ok || !j.data) throw new Error(j.message || t.failed);
       setPlaced(j.data);
     } catch (err) {
       setError((err as Error).message);
@@ -277,7 +283,7 @@ export default function OrderPage() {
                           <img src={p.url} alt="" className="h-full w-full object-cover" />
                           <button
                             type="button"
-                            aria-label="Remove"
+                            aria-label={t.remove}
                             onClick={() => setPhotos(photos.filter((_, j) => j !== i))}
                             className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-full bg-black/60 text-white"
                           >
@@ -499,14 +505,14 @@ function MedicinePicker({
                   <Plus className="h-3.5 w-3.5" />
                 </button>
               </span>
-              <select className="h-8 rounded-lg border border-border bg-card px-1.5 text-xs" value={l.unit} onChange={(e) => set(l.key, { unit: e.target.value as Unit })} aria-label="unit">
+              <select className="h-8 rounded-lg border border-border bg-card px-1.5 text-xs" value={l.unit} onChange={(e) => set(l.key, { unit: e.target.value as Unit })} aria-label={t.unit}>
                 {(['strip', 'piece', 'box'] as Unit[]).map((u) => (
                   <option key={u} value={u}>
                     {t.units[u]}
                   </option>
                 ))}
               </select>
-              <button type="button" aria-label="Remove" onClick={() => onChange(lines.filter((x) => x.key !== l.key))} className="grid h-8 w-8 place-items-center text-muted-foreground hover:text-destructive">
+              <button type="button" aria-label={t.remove} onClick={() => onChange(lines.filter((x) => x.key !== l.key))} className="grid h-8 w-8 place-items-center text-muted-foreground hover:text-destructive">
                 <X className="h-4 w-4" />
               </button>
             </li>
